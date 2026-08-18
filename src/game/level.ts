@@ -150,7 +150,7 @@ export class Level {
     const addWalkable = (x: number, z: number, width: number, depth: number, zone?: ZoneId): void => {
       const floor = new THREE.Mesh(
         new THREE.BoxGeometry(width, 0.32, depth),
-        toon(zone === 'boss' ? 0x2f3938 : COLORS.ground),
+        toon(zone === 'boss' ? COLORS.groundAlt : COLORS.ground),
       );
       floor.position.set(x, -0.18, z);
       floor.receiveShadow = true;
@@ -253,7 +253,7 @@ export class Level {
   #makeConveyor(x: number, z: number, width: number, depth: number, velocity: THREE.Vector3): Conveyor {
     const root = new THREE.Group();
     root.position.set(x, 0.08, z);
-    const base = new THREE.Mesh(new THREE.BoxGeometry(width, 0.22, depth), toon(0x1d282b));
+    const base = new THREE.Mesh(new THREE.BoxGeometry(width, 0.22, depth), toon(COLORS.structureDark));
     base.receiveShadow = true;
     root.add(base);
     const strips: THREE.Mesh[] = [];

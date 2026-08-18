@@ -73,23 +73,23 @@ The player-controlled rejected prototype that awakens inside the Abandoned Tank 
 _Avoid_: Character, hero
 
 **Hull Heading**:
-The forward orientation of the Tank's chassis. It governs forward and reverse driving, steering, and the direction of Overdrive.
-_Avoid_: Aim direction, camera direction
+The visual forward orientation of the Tank's chassis. It turns to follow the current direct movement direction but does not constrain WASD input or Turret Aim.
+_Avoid_: Movement input, aim direction
 
 **Turret Aim**:
-The independently controlled direction of the Tank's turret and weapon. It follows the player's camera aim without changing Hull Heading.
-_Avoid_: Hull heading, movement direction
+The independently controlled direction of the Tank's turret and weapon. It follows the mouse cursor's projected ground position without changing movement direction.
+_Avoid_: Hull heading, movement input
 
-**Combat Camera**:
-The freely orbiting third-person camera behind and above the Tank. It controls Turret Aim, remains independent of Hull Heading, and automatically shortens its distance to avoid environmental obstruction.
-_Avoid_: First-person sight, fixed camera, automatic hull-follow camera
+**Isometric Camera**:
+The fixed 45-degree three-quarter camera that follows the Tank's ground position. It defines the screen-relative WASD basis but never rotates in response to movement or mouse input.
+_Avoid_: Combat Camera, free orbit, mouse-look camera
 
 **Standard Cannon**:
 The Tank's sole starting weapon: a semi-automatic cannon that fires visible, straight, unguided projectiles for strong direct-hit damage and minor splash damage. It consumes no ammunition and has no reload cycle because Heat alone limits its use.
 _Avoid_: Hitscan gun, machine gun, interchangeable ammunition
 
 **Overdrive**:
-A traversal ability earned from an Elite that continuously accelerates the Tank along Hull Heading up to 1.5 times its normal speed while generating Heat. Its maximum speed is sufficient to overcome an opposing Conveyor Gate.
+A traversal ability earned from an Elite that continuously accelerates the Tank along its current direct movement direction up to 1.5 times normal speed while generating Heat. Its maximum speed is sufficient to overcome an opposing Conveyor Gate.
 _Avoid_: Dash, sprint, cooldown-based boost
 
 **Overdrive Ram**:

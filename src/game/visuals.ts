@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 const gradient = new THREE.DataTexture(
-  new Uint8Array([32, 32, 32, 128, 128, 128, 230, 230, 230]),
+  new Uint8Array([84, 84, 84, 172, 172, 172, 245, 245, 245]),
   3,
   1,
   THREE.RedFormat,
@@ -12,10 +12,10 @@ gradient.magFilter = THREE.NearestFilter;
 
 export const COLORS = {
   ink: 0x101719,
-  ground: 0x263438,
-  groundAlt: 0x314348,
-  structure: 0x41636a,
-  structureDark: 0x263b40,
+  ground: 0x40565c,
+  groundAlt: 0x526b72,
+  structure: 0x63858c,
+  structureDark: 0x3b5258,
   yellow: 0xf3c84b,
   teal: 0x49c6b5,
   orange: 0xf08a3e,

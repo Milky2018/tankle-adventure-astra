@@ -13,10 +13,9 @@ Open the address printed by Vite. The game targets a desktop browser with keyboa
 
 ## Controls
 
-- `W` / `S`: drive forward or reverse
-- `A` / `D`: steer the hull
-- Mouse: orbit the camera and aim the turret
-- Left mouse button: fire
+- `W` / `A` / `S` / `D`: move directly in screen space
+- Mouse: choose a ground target
+- Left mouse button: fire once toward the cursor
 - `Shift`: engage Overdrive after acquiring it
 - `E`: activate a Repair Hive
 - `Tab`: open or close the Region Map

@@ -14,10 +14,10 @@ const MAP_RECTS: Record<ZoneId, readonly [number, number, number, number]> = {
 };
 
 const ACTION_LABELS: ReadonlyArray<readonly [Action, string]> = [
-  ['forward', 'DRIVE FORWARD'],
-  ['backward', 'DRIVE BACKWARD'],
-  ['left', 'STEER LEFT'],
-  ['right', 'STEER RIGHT'],
+  ['forward', 'MOVE UP'],
+  ['backward', 'MOVE DOWN'],
+  ['left', 'MOVE LEFT'],
+  ['right', 'MOVE RIGHT'],
   ['overdrive', 'OVERDRIVE'],
   ['map', 'REGION MAP'],
   ['interact', 'INTERACT'],
@@ -31,6 +31,7 @@ export class UI {
   #heat = required<HTMLElement>('#heat-gauge');
   #speed = required<HTMLElement>('#speed-gauge');
   #boss = required<HTMLElement>('#boss-bar');
+  #reticle = required<HTMLElement>('#reticle');
   #hint = required<HTMLElement>('#input-hint');
   #damage = required<HTMLElement>('#damage-flash');
   #minimap = required<HTMLCanvasElement>('#minimap');
@@ -64,6 +65,8 @@ export class UI {
     this.#heat.classList.toggle('overheated', snapshot.overheated);
     this.#speed.style.setProperty('--value', `${snapshot.speed}`);
     this.#speed.classList.toggle('active', snapshot.speed > 0.01);
+    this.#reticle.style.left = `${snapshot.aimScreen.x}px`;
+    this.#reticle.style.top = `${snapshot.aimScreen.y}px`;
 
     if (snapshot.bossHealth === null) {
       this.#boss.classList.add('hidden');

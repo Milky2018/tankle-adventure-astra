@@ -14,13 +14,12 @@ const STORAGE_KEY = 'rejected-prototype-bindings';
 
 export class Input {
   readonly bindings: BindingMap;
-  sensitivity = 1;
 
   #keys = new Set<string>();
   #pressed = new Set<string>();
-  #mouseX = 0;
-  #mouseY = 0;
-  #firing = false;
+  #pointerX = innerWidth / 2;
+  #pointerY = innerHeight / 2;
+  #shotRequested = false;
   #enabled = false;
 
   constructor(private readonly target: HTMLElement) {
@@ -30,7 +29,6 @@ export class Input {
     addEventListener('blur', this.#clear);
     addEventListener('mousemove', this.#onMouseMove);
     target.addEventListener('mousedown', this.#onMouseDown);
-    addEventListener('mouseup', this.#onMouseUp);
     target.addEventListener('contextmenu', (event) => event.preventDefault());
   }
 
@@ -60,15 +58,14 @@ export class Input {
     return true;
   }
 
-  get firing(): boolean {
-    return this.#enabled && this.#firing;
+  get pointer(): Readonly<{ x: number; y: number }> {
+    return { x: this.#pointerX, y: this.#pointerY };
   }
 
-  consumeMouseDelta(): Readonly<{ x: number; y: number }> {
-    const delta = { x: this.#mouseX * this.sensitivity, y: this.#mouseY * this.sensitivity };
-    this.#mouseX = 0;
-    this.#mouseY = 0;
-    return delta;
+  consumeShot(): boolean {
+    if (!this.#enabled || !this.#shotRequested) return false;
+    this.#shotRequested = false;
+    return true;
   }
 
   bind(action: Action, code: string): void {
@@ -94,7 +91,6 @@ export class Input {
     removeEventListener('blur', this.#clear);
     removeEventListener('mousemove', this.#onMouseMove);
     this.target.removeEventListener('mousedown', this.#onMouseDown);
-    removeEventListener('mouseup', this.#onMouseUp);
   }
 
   #loadBindings(): BindingMap {
@@ -119,24 +115,17 @@ export class Input {
   };
 
   #onMouseMove = (event: MouseEvent): void => {
-    if (!this.#enabled) return;
-    this.#mouseX += event.movementX;
-    this.#mouseY += event.movementY;
+    this.#pointerX = event.clientX;
+    this.#pointerY = event.clientY;
   };
 
   #onMouseDown = (event: MouseEvent): void => {
-    if (event.button === 0) this.#firing = true;
-  };
-
-  #onMouseUp = (event: MouseEvent): void => {
-    if (event.button === 0) this.#firing = false;
+    if (this.#enabled && event.button === 0) this.#shotRequested = true;
   };
 
   #clear = (): void => {
     this.#keys.clear();
     this.#pressed.clear();
-    this.#firing = false;
-    this.#mouseX = 0;
-    this.#mouseY = 0;
+    this.#shotRequested = false;
   };
 }

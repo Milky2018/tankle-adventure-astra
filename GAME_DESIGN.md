@@ -8,7 +8,7 @@ Technical architecture and later-level content are deliberately outside this doc
 
 ## Vision
 
-The game is a three-dimensional tank Metroidvania with a freely orbiting third-person combat camera. Driving and aiming evoke an arcade interpretation of a tank game: the hull determines movement, the turret aims independently, and the player can drive in one direction while firing in another.
+The game is a three-dimensional tank Metroidvania presented through a fixed 45-degree isometric camera and played on a two-dimensional ground plane. WASD moves directly in screen space, the hull turns to follow movement, and the turret independently aims at the mouse cursor.
 
 The first level must prove one complete Metroidvania loop:
 
@@ -23,9 +23,9 @@ The game uses an exaggerated industrial cartoon style. It is not a realistic mil
 
 ## Design Pillars
 
-### Tank body and turret are separate
+### Direct movement and independent aim
 
-Hull Heading governs forward and reverse driving, steering, and Overdrive. Turret Aim follows the player's camera independently. The player can drive forward while observing or firing to the side or rear.
+WASD directly controls screen-relative movement without tank-style steering. Hull Heading follows the current movement direction for animation and silhouette, while Turret Aim follows the cursor's projected ground position. The player can move and fire in different directions.
 
 ### Abilities change both traversal and combat
 
@@ -122,25 +122,23 @@ The first level communicates this premise through action:
 
 ### Input
 
-- `W / S`: drive forward or reverse along Hull Heading.
-- `A / D`: steer the hull, including reduced-speed pivoting while nearly stationary.
-- Mouse: orbit the Combat Camera and control Turret Aim.
-- Left mouse button: fire the Standard Cannon.
-- `Shift`: hold Overdrive while driving forward.
+- `W / A / S / D`: move directly up, left, down, or right relative to the screen; diagonal movement is normalized.
+- Mouse: choose a ground target for Turret Aim.
+- Left mouse button: fire one Standard Cannon shot toward the cursor target.
+- `Shift`: hold Overdrive while moving.
 - `Tab`: open the Region Map.
 - `E`: activate a Repair Hive.
 - `Space`: skip the death animation.
 
 All controls may be rebound in the system settings.
 
-### Combat Camera
+### Isometric Camera
 
-- The camera freely orbits behind and above the Tank at roughly eight metres away and four metres high with an approximately 60-degree field of view.
-- Vertical orbit is limited to useful combat angles.
-- The camera automatically shortens its distance to avoid walls and machinery, then restores it smoothly.
-- Movement never forces the camera to recenter behind Hull Heading.
-- The same camera remains active during the Boss encounter.
-- The first version has no first-person view, scope, manual zoom, or shoulder switching.
+- The camera uses a fixed three-quarter orientation at approximately 45 degrees of elevation.
+- It follows the Tank's ground position smoothly without rotating, zooming, or accepting mouse-look input.
+- Camera orientation defines the screen-space WASD basis and remains unchanged during every encounter, including the Final Boss.
+- The high angle keeps the player and nearby routes readable over low machinery.
+- The first version has no free orbit, first-person view, scope, manual zoom, or shoulder switching.
 
 ## Core Status Systems
 
@@ -163,7 +161,7 @@ All controls may be rebound in the system settings.
 - Cooling removes 25 Heat per second.
 - At 100 Heat, the Tank becomes Overheated and cannot fire or engage Overdrive.
 - Overheated ends only when Heat returns fully to zero.
-- Normal driving and steering remain available while Overheated.
+- Normal direct movement remains available while Overheated.
 
 The Heat bar shifts from cool teal through orange to flashing red. Near Overheat it shakes and emits increasingly intense steam. No percentage or status word is displayed.
 
@@ -172,9 +170,8 @@ The Heat bar shifts from cool teal through orange to flashing red. Near Overheat
 - The sole starting weapon is semi-automatic.
 - Projectiles travel in a straight line with no gravity, guidance, lock-on, or aim correction.
 - A projectile takes roughly 0.6 seconds to cross an ordinary combat room.
-- The turret turns quickly but at a finite rate.
-- A central reticle shows desired aim while a smaller muzzle indicator shows the cannon's current physical direction.
-- The player may fire before the turret is aligned; the projectile always follows the real muzzle direction.
+- The on-screen reticle follows the mouse cursor and indicates its projected ground target.
+- The turret turns directly toward that target, and each click fires along the same ground-plane direction.
 - Minimum shot interval is approximately 0.5 seconds.
 - Direct impact deals full damage; a small splash area deals approximately 25 percent damage.
 - Projectiles may destroy designated fragile scrap and Gate Relays but not ordinary walls or major machinery.
@@ -185,15 +182,15 @@ The Heat bar shifts from cool teal through orange to flashing red. Near Overheat
 
 The Overdrive Prototype's defeated power module grants Overdrive.
 
-- Overdrive operates only while the Tank is driving forward.
+- Overdrive operates only while the Tank is receiving non-zero movement input.
 - Holding it accelerates from 1.0x to 1.5x speed over 1.2 seconds.
-- Releasing forward or Overdrive returns speed to 1.0x over approximately 0.35 seconds.
+- Releasing movement or Overdrive returns speed to 1.0x over approximately 0.35 seconds.
 - Heat continues to accumulate while the Tank remains above 1.0x during deceleration.
 - Cooling delay begins only after speed returns fully to 1.0x and the cannon is not generating Heat.
 - Re-engaging during deceleration resumes acceleration from the current multiplier.
-- At maximum speed, hull steering retains approximately half its normal responsiveness.
-- Turret Aim and the Combat Camera remain fully independent during Overdrive.
-- Overdrive cannot accelerate reverse movement, pivoting, or stationary motion.
+- Direction changes remain immediate at maximum speed so WASD always preserves direct control.
+- Turret Aim remains fully independent during Overdrive.
+- Overdrive cannot accelerate stationary motion.
 
 ### Overdrive Ram
 
@@ -212,7 +209,7 @@ Ramming becomes offensive at 1.3x speed or higher.
 - Normal Tank speed is defined as 1.0x; an opposing Conveyor Gate moves at approximately 1.15x.
 - Normal driving therefore loses ground against the conveyor.
 - During Overdrive the Tank transitions from being pushed back, through equilibrium, into slow forward progress.
-- The Tank retains steering and may leave laterally wherever physical walls permit.
+- The Tank retains direct movement control and may leave laterally wherever physical walls permit.
 - Location A's narrow walls make its conveyor the only forward route.
 - The Location A gate is short enough for a cold Tank to cross with roughly two seconds of sustained Overdrive, consuming about half its Heat budget.
 - The B–C conveyor is slightly shorter and becomes the first safe practical use after ability acquisition.
@@ -236,7 +233,7 @@ There is no Repair Hive immediately before the Final Boss.
 
 - At zero HP, tracks stop, the turret drops, headlights turn off, and black smoke rises.
 - Music stops while the remaining machinery slows audibly.
-- The camera holds its last direction for approximately one second.
+- The fixed camera holds on the destroyed Tank for approximately one second.
 - A Repair Hive-shaped mechanical iris closes the screen.
 - The last activated Repair Hive rebuilds the Tank as the iris opens.
 - HP returns to 50, Heat returns to zero, and ordinary enemies respawn according to the Souls-like Rest Point loop.
@@ -398,7 +395,7 @@ Normal Boss attacks deal approximately 8–10 HP. The most strongly telegraphed 
 ### Furnace Hazards
 
 - Furnace channels are shallow traversable molten-waste areas, not bottomless pits.
-- The Tank retains full steering and must drive to a physical side ramp to escape.
+- The Tank retains full direct movement and must drive to a physical side ramp to escape.
 - Damage is 5 HP every 0.5 seconds.
 - Hazard damage ignores direct-hit protection.
 - Overdrive makes escape faster but is not the sole available exit method.
@@ -420,7 +417,7 @@ Normal Boss attacks deal approximately 8–10 HP. The most strongly telegraphed 
 - Always visible in the upper-right HUD and hidden while the Region Map is open.
 - Fixed north-up and centred on the player's local area.
 - Shows discovered walls, paths, conveyors, Furnace Hazards, activated Repair Hives, and known Conveyor Gates.
-- A broad arrow shows Hull Heading; a thin line shows Turret Aim.
+- A broad arrow shows movement-facing Hull Heading; a thin line shows cursor-driven Turret Aim.
 - Ordinary enemies appear only while currently visible and disappear immediately when sight is lost.
 - Elite and Final Boss receive large icons after combat begins.
 - It never shows an objective route or unexplored room.
@@ -428,8 +425,8 @@ Normal Boss attacks deal approximately 8–10 HP. The most strongly telegraphed 
 ### Combat HUD
 
 - Lower-left: unlabelled segmented HP bar with no number.
-- Centre: cartoon industrial reticle and real muzzle-direction marker.
-- Around the reticle: unlabelled semicircular Heat bar.
+- Cursor position: cartoon industrial targeting reticle.
+- Lower-left: unlabelled Heat and Overdrive bars beside HP.
 - During Overdrive: a graphical acceleration gauge indicates progress from normal to maximum speed without numeric text.
 - Upper-right: Minimap.
 - Top-centre: unlabelled Elite or Boss health bar during those encounters only.
@@ -464,7 +461,7 @@ The level provides opportunities to discover mechanics without deliberate guidan
 The slice succeeds when playtesting demonstrates all of the following:
 
 - The clean first playthrough remains close to ten minutes without making C feel like two empty corridors.
-- A player understands Hull Heading and independent Turret Aim without forced guidance.
+- A player understands screen-relative movement and independent cursor aim without forced guidance.
 - A player discovers that the Location A conveyor cannot be crossed at normal speed.
 - Both C branches are readable from the central landmark and can be completed in either order.
 - The Overdrive Prototype communicates the relationship between acceleration and Overheat before the ability is acquired.

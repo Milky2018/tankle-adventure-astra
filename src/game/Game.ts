@@ -46,7 +46,6 @@ export class Game {
     this.#input.enabled = true;
     this.#audio.resume();
     this.#showScreen('playing');
-    this.#requestPointerLock();
   }
 
   #loop = (now: number): void => {
@@ -63,7 +62,6 @@ export class Game {
           document.body.classList.remove('ending');
           this.#showScreen('complete');
           this.#input.enabled = false;
-          document.exitPointerLock();
         }
       }
     }
@@ -76,13 +74,11 @@ export class Game {
     required<HTMLButtonElement>('#resume-button').addEventListener('click', () => {
       this.#showScreen('playing');
       this.#input.enabled = true;
-      this.#requestPointerLock();
     });
     required<HTMLButtonElement>('#restart-button').addEventListener('click', () => {
       this.#world?.respawn();
       this.#showScreen('playing');
       this.#input.enabled = true;
-      this.#requestPointerLock();
     });
     required<HTMLButtonElement>('#title-button').addEventListener('click', () => this.#returnToTitle());
     required<HTMLButtonElement>('#completion-title').addEventListener('click', () => this.#returnToTitle());
@@ -107,14 +103,6 @@ export class Game {
       this.#audio.setVolume(Number(volume.value));
       localStorage.setItem('rejected-prototype-volume', volume.value);
     });
-    const sensitivity = required<HTMLInputElement>('#sensitivity-setting');
-    sensitivity.value = localStorage.getItem('rejected-prototype-sensitivity') ?? '1';
-    this.#input.sensitivity = Number(sensitivity.value);
-    sensitivity.addEventListener('input', () => {
-      this.#input.sensitivity = Number(sensitivity.value);
-      localStorage.setItem('rejected-prototype-sensitivity', sensitivity.value);
-    });
-
     addEventListener('keydown', (event) => {
       if (event.code === this.#input.bindings.map && this.#screen === 'playing' && this.#endingTimer <= 0) {
         event.preventDefault();
@@ -127,15 +115,10 @@ export class Game {
       } else if (this.#screen === 'playing') {
         this.#showScreen('paused');
         this.#input.enabled = false;
-        document.exitPointerLock();
       } else if (this.#screen === 'paused') {
         this.#showScreen('playing');
         this.#input.enabled = true;
-        this.#requestPointerLock();
       }
-    });
-    this.viewport.addEventListener('click', () => {
-      if (this.#screen === 'playing') this.#requestPointerLock();
     });
   }
 
@@ -167,20 +150,10 @@ export class Game {
     required<HTMLButtonElement>('#continue-button').classList.toggle('hidden', !loadProgress());
   }
 
-  #requestPointerLock(): void {
-    if (document.pointerLockElement !== this.#world?.renderer.domElement) {
-      void this.#world?.renderer.domElement.requestPointerLock().catch(() => {
-        // Pointer Lock may be unavailable in embedded or automated browsers.
-      });
-    }
-  }
-
   #setMapOpen(value: boolean): void {
     this.#mapOpen = value;
     this.#ui.setMapVisible(value, this.#snapshot ?? undefined);
     this.#input.enabled = this.#screen === 'playing' && !value;
-    if (value) document.exitPointerLock();
-    else if (this.#screen === 'playing') this.#requestPointerLock();
   }
 }
 

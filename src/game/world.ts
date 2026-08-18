@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { AudioSystem } from './audio';
+import { aimHeading, movementDirection } from './controls';
 import { Input } from './input';
 import { Level } from './level';
 import {
@@ -57,6 +58,7 @@ export type WorldSnapshot = Readonly<{
   playerPosition: THREE.Vector3;
   hullHeading: number;
   turretAim: number;
+  aimScreen: Readonly<{ x: number; y: number }>;
   enemies: ReadonlyArray<Readonly<{ position: THREE.Vector3; kind: EnemyKind }>>;
   discovered: ReadonlyArray<ZoneId>;
   progress: Readonly<Progress>;
@@ -86,8 +88,10 @@ export class World {
   #enemies: Enemy[] = [];
   #projectiles: Projectile[] = [];
   #effects: Effect[] = [];
-  #cameraYaw = 0;
-  #cameraPitch = 0.42;
+  #aimHeading = Math.PI / 4;
+  #aimScreen = { x: innerWidth / 2, y: innerHeight / 2 };
+  #raycaster = new THREE.Raycaster();
+  #groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   #enemyId = 0;
   #dead = false;
   #deathTime = 0;
@@ -103,7 +107,7 @@ export class World {
     this.#progress = structuredClone(progress);
     this.scene.background = new THREE.Color(0x0d1518);
     this.scene.fog = new THREE.FogExp2(0x0d1518, 0.0125);
-    this.camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 170);
+    this.camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 170);
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.renderer.setSize(innerWidth, innerHeight);
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -165,7 +169,7 @@ export class World {
       this.#updateProgress(input);
     }
 
-    this.#updateCamera(dt, input);
+    this.#updateCamera(dt);
     this.audio.update(dt, this.#bossActive ? 1 : this.#enemies.some((enemy) => enemy.visual.position.distanceTo(this.#player.visual.position) < 16) ? 0.55 : 0.1);
     this.renderer.render(this.scene, this.camera);
     return this.snapshot();
@@ -180,7 +184,8 @@ export class World {
       overheated: this.#player.thermal.overheated,
       playerPosition: this.#player.visual.position.clone(),
       hullHeading: this.#player.visual.rotation.y,
-      turretAim: this.#cameraYaw,
+      turretAim: this.#aimHeading,
+      aimScreen: { ...this.#aimScreen },
       enemies: this.#enemies
         .filter((enemy) => enemy.visual.visible && enemy.visual.position.distanceTo(this.#player.visual.position) < 22)
         .map((enemy) => ({ position: enemy.visual.position.clone(), kind: enemy.kind })),
@@ -217,29 +222,28 @@ export class World {
     player.fireCooldown -= delta;
     player.damageGrace -= delta;
 
-    const turn = (input.down('left') ? 1 : 0) - (input.down('right') ? 1 : 0);
-    const drive = (input.down('forward') ? 1 : 0) - (input.down('backward') ? 1 : 0);
+    const horizontal = (input.down('right') ? 1 : 0) - (input.down('left') ? 1 : 0);
+    const vertical = (input.down('forward') ? 1 : 0) - (input.down('backward') ? 1 : 0);
+    const direction = movementDirection(horizontal, vertical);
+    const moving = direction.x !== 0 || direction.z !== 0;
     const wantsOverdrive =
       this.#progress.overdrive &&
-      drive > 0 &&
+      moving &&
       input.down('overdrive') &&
       canUseHotSystem(player.thermal);
     player.speedMultiplier = updateSpeedMultiplier(player.speedMultiplier, delta, wantsOverdrive);
 
-    const steeringScale = THREE.MathUtils.lerp(1, 0.5, overdriveIntensity(player.speedMultiplier));
-    player.visual.rotation.y += turn * delta * 2.15 * steeringScale * (drive < 0 ? -0.72 : 1);
-
-    const forward = new THREE.Vector3(
-      -Math.sin(player.visual.rotation.y),
-      0,
-      -Math.cos(player.visual.rotation.y),
-    );
-    const driveSpeed = RULES.baseSpeed * player.speedMultiplier * (drive < 0 ? 0.62 : drive);
-    const movement = forward.multiplyScalar(driveSpeed * delta);
+    const driveSpeed = moving ? RULES.baseSpeed * player.speedMultiplier : 0;
+    const movement = new THREE.Vector3(direction.x, 0, direction.z).multiplyScalar(driveSpeed * delta);
     movement.addScaledVector(this.level.conveyorVelocityAt(player.visual.position), delta);
     this.#moveActor(player.visual, movement, player.radius);
 
-    player.visual.userData.turret.rotation.y = this.#cameraYaw - player.visual.rotation.y;
+    if (moving) {
+      const heading = aimHeading({ x: 0, z: 0 }, direction);
+      player.visual.rotation.y = this.#rotateToward(player.visual.rotation.y, heading, delta * 9);
+    }
+    this.#updateAim(input);
+    player.visual.userData.turret.rotation.y = this.#aimHeading - player.visual.rotation.y;
     for (const wheel of player.visual.userData.wheels) wheel.rotation.x += driveSpeed * delta * 2.4;
     const barrel = player.visual.userData.barrel;
     barrel.position.z = THREE.MathUtils.lerp(
@@ -247,15 +251,15 @@ export class World {
       barrel.userData.restZ as number,
       1 - Math.exp(-delta * 12),
     );
-    player.visual.userData.antenna.rotation.z = Math.sin(this.#elapsed * 9) * 0.05 * Math.abs(drive);
+    player.visual.userData.antenna.rotation.z = Math.sin(this.#elapsed * 9) * 0.05 * (moving ? 1 : 0);
     player.visual.userData.body.rotation.z = THREE.MathUtils.lerp(
       player.visual.userData.body.rotation.z,
-      -turn * 0.045 * player.speedMultiplier,
+      0,
       1 - Math.exp(-delta * 8),
     );
 
     let shots = 0;
-    if (input.firing && player.fireCooldown <= 0 && canUseHotSystem(player.thermal)) {
+    if (input.consumeShot() && player.fireCooldown <= 0 && canUseHotSystem(player.thermal)) {
       this.#firePlayer();
       player.fireCooldown = RULES.fireInterval;
       shots = 1;
@@ -569,7 +573,7 @@ export class World {
     const muzzle = this.#player.visual.userData.muzzle;
     const position = new THREE.Vector3();
     muzzle.getWorldPosition(position);
-    const direction = new THREE.Vector3(-Math.sin(this.#cameraYaw), 0, -Math.cos(this.#cameraYaw));
+    const direction = new THREE.Vector3(-Math.sin(this.#aimHeading), 0, -Math.cos(this.#aimHeading));
     this.#spawnProjectile(position, direction.multiplyScalar(24), 'player', 1, COLORS.yellow, 0.18);
     this.#player.visual.userData.barrel.position.z += 0.25;
     this.audio.shoot();
@@ -663,9 +667,12 @@ export class World {
 
   #resetPlayer(): void {
     this.#player.visual.position.copy(this.level.spawnFor(this.#progress.checkpoint));
-    this.#player.visual.rotation.set(0, 0, 0);
+    this.#player.visual.rotation.set(0, Math.PI / 4, 0);
     this.#player.visual.userData.turret.rotation.set(0, 0, 0);
-    this.#cameraYaw = 0;
+    this.#aimHeading = Math.PI / 4;
+    const target = this.#player.visual.position.clone().add(new THREE.Vector3(0, 0.9, 0));
+    this.camera.position.copy(target).add(new THREE.Vector3(12, 17, 12));
+    this.camera.lookAt(target);
   }
 
   #moveActor(visual: THREE.Object3D, movement: THREE.Vector3, radius: number): void {
@@ -677,18 +684,28 @@ export class World {
     if (this.level.canOccupy(z, radius)) visual.position.z = z.z;
   }
 
-  #updateCamera(delta: number, input: Input): void {
-    const mouse = input.consumeMouseDelta();
-    this.#cameraYaw -= mouse.x * 0.0024;
-    this.#cameraPitch = THREE.MathUtils.clamp(this.#cameraPitch - mouse.y * 0.0018, 0.14, 0.78);
-    const target = this.#player.visual.position.clone().add(new THREE.Vector3(0, 1.4, 0));
-    const distance = 8;
-    const desired = target.clone().add(new THREE.Vector3(
-      Math.sin(this.#cameraYaw) * Math.cos(this.#cameraPitch) * distance,
-      Math.sin(this.#cameraPitch) * distance + 1.4,
-      Math.cos(this.#cameraYaw) * Math.cos(this.#cameraPitch) * distance,
-    ));
-    this.camera.position.lerp(desired, 1 - Math.exp(-delta * 11));
+  #updateAim(input: Input): void {
+    const pointer = input.pointer;
+    const bounds = this.renderer.domElement.getBoundingClientRect();
+    this.#aimScreen = {
+      x: THREE.MathUtils.clamp(pointer.x, bounds.left, bounds.right),
+      y: THREE.MathUtils.clamp(pointer.y, bounds.top, bounds.bottom),
+    };
+    const normalized = new THREE.Vector2(
+      ((pointer.x - bounds.left) / bounds.width) * 2 - 1,
+      -((pointer.y - bounds.top) / bounds.height) * 2 + 1,
+    );
+    this.#raycaster.setFromCamera(normalized, this.camera);
+    const target = new THREE.Vector3();
+    if (!this.#raycaster.ray.intersectPlane(this.#groundPlane, target)) return;
+    if (horizontalDistance(target, this.#player.visual.position) < 0.4) return;
+    this.#aimHeading = aimHeading(this.#player.visual.position, target);
+  }
+
+  #updateCamera(delta: number): void {
+    const target = this.#player.visual.position.clone().add(new THREE.Vector3(0, 0.9, 0));
+    const desired = target.clone().add(new THREE.Vector3(12, 17, 12));
+    this.camera.position.lerp(desired, 1 - Math.exp(-delta * 9));
     this.camera.lookAt(target);
   }
 
