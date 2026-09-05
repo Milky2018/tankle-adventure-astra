@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { AudioSystem } from './audio';
 import { aimHeading, movementDirection } from './controls';
+import { shouldTrackPlayer } from './enemyAi';
 import { Input } from './input';
 import { Level } from './level';
 import {
@@ -285,10 +286,18 @@ export class World {
       const distance = toPlayer.length();
       const direction = toPlayer.normalize();
       const aim = Math.atan2(-direction.x, -direction.z);
-      enemy.visual.userData.turret.rotation.y = aim - enemy.visual.rotation.y;
 
-      const activationRadius = enemy.kind === 'boss' ? 18 : enemy.kind === 'elite' ? 10 : enemy.kind === 'guard' ? 11 : 9.5;
-      if (enemy.kind !== 'boss' && playerPosition.distanceTo(enemy.spawn) > activationRadius) {
+      const encounterUnlocked = enemy.kind !== 'elite' || (this.#progress.westRelay && this.#progress.eastRelay);
+      if (enemy.kind !== 'boss' && !shouldTrackPlayer(
+        enemy.kind,
+        playerPosition.distanceTo(enemy.spawn),
+        encounterUnlocked,
+      )) {
+        enemy.visual.userData.turret.rotation.y = this.#rotateToward(
+          enemy.visual.userData.turret.rotation.y,
+          0,
+          delta * 2.5,
+        );
         if (enemy.kind !== 'turret' && enemy.visual.position.distanceTo(enemy.spawn) > 0.25) {
           const home = enemy.spawn.clone().sub(enemy.visual.position).normalize();
           const homeAim = Math.atan2(-home.x, -home.z);
@@ -296,6 +305,10 @@ export class World {
           this.#moveActor(enemy.visual, home.multiplyScalar(delta * 3.2), enemy.radius);
         }
         continue;
+      }
+
+      if (enemy.kind !== 'boss') {
+        enemy.visual.userData.turret.rotation.y = aim - enemy.visual.rotation.y;
       }
 
       if (enemy.kind === 'scout') {
@@ -369,8 +382,13 @@ export class World {
   }
 
   #updateBoss(enemy: Enemy, delta: number, _direction: THREE.Vector3, distance: number, aim: number): void {
-    if (!this.#bossActive && distance < 18) this.#bossActive = true;
+    if (!this.#bossActive && shouldTrackPlayer('boss', distance)) this.#bossActive = true;
     if (!this.#bossActive) {
+      enemy.visual.userData.turret.rotation.y = this.#rotateToward(
+        enemy.visual.userData.turret.rotation.y,
+        0,
+        delta * 1.5,
+      );
       this.level.setBossConveyorsActive(false, false);
       return;
     }
@@ -380,6 +398,7 @@ export class World {
       conveyorPulse && (enemy.leftCooling ?? 0) > 0,
       conveyorPulse && (enemy.rightCooling ?? 0) > 0,
     );
+    enemy.visual.userData.turret.rotation.y = aim - enemy.visual.rotation.y;
     enemy.visual.rotation.y = this.#rotateToward(enemy.visual.rotation.y, aim, delta * 0.42);
     if (enemy.cooldown <= 0 && distance < 27) {
       const phaseTwo = (enemy.leftCooling ?? 0) <= 0 && (enemy.rightCooling ?? 0) <= 0;

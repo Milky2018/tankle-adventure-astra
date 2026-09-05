@@ -32,4 +32,4 @@ npm test
 npm run build
 ```
 
-The complete game design is recorded in [GAME_DESIGN.md](./GAME_DESIGN.md). Architectural decisions live in [docs/adr](./docs/adr).
+The complete game design is recorded in [GAME_DESIGN.md](../GAME_DESIGN.md). Architectural decisions live in [docs/adr](./docs/adr).
