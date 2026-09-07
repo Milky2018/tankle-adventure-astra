@@ -1,7 +1,7 @@
 import * as T from 'three';
 import './style.css';
 import { makeWorld, tankModel, box, sphere, ring, mat, C, rooms, hazardDefinitions, elevation } from './world.js';
-import { MAX_HP, BASE_SPEED, DEFAULT_BINDINGS, newPlayer, shootHeat, updateHeat, screenMovement, damagePlayer, inside, clamp, angleDelta, segmentCircle } from './mechanics.js';
+import { MAX_HP, BASE_SPEED, OVERDRIVE_MAX_SPEED, DEFAULT_BINDINGS, newPlayer, shootHeat, updateHeat, screenMovement, damagePlayer, inside, clamp, angleDelta, segmentCircle } from './mechanics.js';
 import { FactoryAudio } from './audio.js';
 
 const $=id=>document.getElementById(id);
@@ -34,14 +34,13 @@ for(const h of world.hives)h.active=visitedHives.has(h.id);
 if(saved){player.x=world.hives[anchor].x;player.z=world.hives[anchor].z+2;}
 let time=0,deathTime=-1,endingTime=-1,opening=1.8,acquiredUntil=0,damageFlash=0,recoil=0,lastHazard=-1,repairCooldown=0,repairPulse=-1;
 let paused=false,mapOpen=false,rebind=null,resetArmed=false,area='a',lastArea='a';
-let keys=new Set(),pointer={x:innerWidth*.55,y:innerHeight*.48},aim=new T.Vector3(0,0,-5),moving=false;
+let keys=new Set(),pointer={x:innerWidth*.55,y:innerHeight*.48},aim=new T.Vector3(0,0,-5),moving=false,pointerOverGame=true;
 let usedMove=false,usedFire=false,usedMap=false,usedRepair=false,readySound=true;
 const cameraFocus=new T.Vector3(player.x,0,player.z),cameraOffset=new T.Vector3(28,39.6,28);
 const bullets=[],effects=[],enemies=[];
 const hpEl=$('hp');for(let i=0;i<10;i++)hpEl.append(document.createElement('i'));
 const projectileGeometry=new T.SphereGeometry(.23,10,6),particleGeometry=new T.IcosahedronGeometry(1,1);
 const bulletMaterials={player:mat(0xfff1b0,true),enemy:mat(0xff783e,true)};
-const reticleRing=ring(scene,.43,.035,0,.14,0,mat(0xffeaba,true));
 const enemyDefs=[['scout',27,0],['scout',17,40],['scout',26,45],['turret',15,46],['guard',79,41],['turret',83,25],['elite',52,65],['boss',0,-51]];
 const healths={scout:1,turret:2,guard:3,elite:9,boss:14};
 function makeEnemy(type,x,z){
@@ -385,8 +384,7 @@ const raycaster=new T.Raycaster(),ground=new T.Plane(new T.Vector3(0,1,0),0);
 function updateAim(){
   ground.constant=-playerHeight();
   raycaster.setFromCamera(new T.Vector2(pointer.x/innerWidth*2-1,1-pointer.y/innerHeight*2),camera);raycaster.ray.intersectPlane(ground,aim);
-  reticleRing.position.set(aim.x,elevation(aim.x,aim.z)+.18,aim.z);reticleRing.visible=!paused&&!mapOpen&&player.hp>0;
-  $('reticle').style.left=`${pointer.x}px`;$('reticle').style.top=`${pointer.y}px`;$('reticle').style.color=player.overheated?'#ff7655':'#fff1c2';
+  $('reticle').style.left=`${pointer.x}px`;$('reticle').style.top=`${pointer.y}px`;
 }
 function drawMap(canvas,large=false){
   const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
@@ -413,9 +411,10 @@ function drawMap(canvas,large=false){
 }
 function updateHUD(){
   for(let i=0;i<10;i++){const value=player.hp-i*5;hpEl.children[i].className=value<=0?'empty':value<5?'half':'';}
-  $('heat').firstElementChild.style.width=`${player.heat}%`;
-  $('heat').firstElementChild.style.background=player.overheated?'':player.heat>65?'#f3a75a':'#7bd7b6';
-  $('status').classList.toggle('hot',player.overheated);$('overdrive').style.opacity=player.overdrive?'1':'.15';$('overdrive').lastElementChild.firstElementChild.style.width=`${(player.speed-1)*200}%`;
+  $('heat').style.strokeDashoffset=String(100-clamp(player.heat,0,100));
+  $('reticle').style.setProperty('--heat-color',player.overheated?'#ff7655':player.heat>65?'#f3a75a':'#7bd7b6');
+  $('reticle').classList.toggle('hot',player.overheated);
+  $('overdrive').style.opacity=player.overdrive?'1':'.15';$('overdrive').lastElementChild.firstElementChild.style.width=`${clamp((player.speed-1)/(OVERDRIVE_MAX_SPEED-1),0,1)*100}%`;
   const active=[elite,boss].find(e=>e.active&&e.hp>0);
   $('boss-health').style.display=active?'flex':'none';if(active)$('boss-health').querySelector('span').style.width=`${active.hp/active.max*100}%`;
   $('glyphs').style.opacity=usedMove&&usedFire&&usedMap?'0':'.7';
@@ -424,7 +423,7 @@ function updateHUD(){
   const near=world.hives.find(h=>Math.hypot(h.x-player.x,h.z-player.z)<3.5&&(h.id!==2||bossDead));
   $('interaction').style.display=near&&player.hp>0&&!mapOpen&&!paused&&endingTime<0?'block':'none';
   if(near){const v=new T.Vector3(near.x,3,near.z).project(camera);$('interaction').style.left=`${(v.x*.5+.5)*innerWidth}px`;$('interaction').style.top=`${(-v.y*.5+.5)*innerHeight}px`;}
-  $('minimap-wrap').style.display=mapOpen?'none':'block';$('reticle').style.display=paused||mapOpen?'none':'block';
+  $('minimap-wrap').style.display=mapOpen?'none':'block';$('reticle').style.display=paused||mapOpen||player.hp<=0||!pointerOverGame?'none':'block';
   $('damage').style.opacity=damageFlash*.6;
   drawMap($('minimap'));if(mapOpen)drawMap($('region-map'),true);
 }
@@ -491,7 +490,8 @@ window.addEventListener('keydown',e=>{
   if(Object.values(bindings).includes(e.code)||rebind){e.preventDefault();audio.start();handleInput(e.code,e.repeat);}
 });
 window.addEventListener('keyup',e=>keys.delete(e.code));
-window.addEventListener('pointermove',e=>{pointer.x=e.clientX;pointer.y=e.clientY;});
+window.addEventListener('pointermove',e=>{pointer.x=e.clientX;pointer.y=e.clientY;pointerOverGame=e.target===$('game');});
+$('game').addEventListener('pointerleave',()=>{pointerOverGame=false;});
 window.addEventListener('pointerdown',e=>{
   if(rebind){e.preventDefault();e.stopPropagation();handleInput(`Mouse${e.button}`);return;}
   if(e.target!==$('game')&&e.target!==$('region-map'))return;

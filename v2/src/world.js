@@ -103,8 +103,8 @@ export const rooms = [
   {id:'pocket3',x:52,z:-6,w:6,d:8}
 ];
 export const beltDefinitions = [
-  {id:'a-gate',x:-3,z:-19,w:6,d:2,dx:0,dz:1,gate:true},
-  {id:'bc-gate',x:42,z:15,w:6,d:1.6,dx:0,dz:1,gate:true},
+  {id:'a-gate',x:-3,z:-19.5,w:6,d:3,dx:0,dz:1,gate:true},
+  {id:'bc-gate',x:42,z:14.6,w:6,d:2.4,dx:0,dz:1,gate:true},
   {id:'practice',x:46,z:73,w:12,d:2,dx:1,dz:0,practice:true},
   {id:'boss-left',x:-15,z:-49,w:7,d:16,dx:-1,dz:0,boss:0},
   {id:'boss-right',x:8,z:-49,w:7,d:16,dx:1,dz:0,boss:1}

@@ -152,10 +152,10 @@ All controls may be rebound in the system settings.
 
 ### Heat
 
-- Heat ranges internally from 0 to 100 but is shown only as an unlabelled bar.
+- Heat ranges internally from 0 to 100 but is shown only as an unlabelled circular gauge around the cursor reticle.
 - Each Standard Cannon shot adds 20 Heat.
 - A cold Tank may safely fire four consecutive shots; the fifth reaches the red threshold and causes Overheat.
-- Overdrive adds 25 Heat per second at full use.
+- Overdrive adds 10 Heat per second while accelerating, at full use, and during deceleration.
 - Shooting and Overdrive Heat are additive.
 - After all Heat-generating activity ends, cooling begins after a 0.75-second delay.
 - Cooling removes 25 Heat per second.
@@ -163,14 +163,14 @@ All controls may be rebound in the system settings.
 - Overheated ends only when Heat returns fully to zero.
 - Normal direct movement remains available while Overheated.
 
-The Heat bar shifts from cool teal through orange to flashing red. Near Overheat it shakes and emits increasingly intense steam. No percentage or status word is displayed.
+The Heat ring fills clockwise and shifts from cool teal through orange to flashing red. Near Overheat the Tank emits increasingly intense steam. No percentage or status word is displayed.
 
 ## Standard Cannon
 
 - The sole starting weapon is semi-automatic.
 - Projectiles travel in a straight line with no gravity, guidance, lock-on, or aim correction.
 - A projectile takes roughly 0.6 seconds to cross an ordinary combat room.
-- The on-screen reticle follows the mouse cursor and indicates its projected ground target.
+- A single on-screen reticle follows the mouse cursor. The projected ground target is used for aiming internally, without a separate world-space marker.
 - The turret turns directly toward that target, and each click fires along the same ground-plane direction.
 - Minimum shot interval is approximately 0.5 seconds.
 - Direct impact deals full damage; a small splash area deals approximately 25 percent damage.
@@ -183,7 +183,7 @@ The Heat bar shifts from cool teal through orange to flashing red. Near Overheat
 The Overdrive Prototype's defeated power module grants Overdrive.
 
 - Overdrive operates only while the Tank is receiving non-zero movement input.
-- Holding it accelerates from 1.0x to 1.5x speed over 1.2 seconds.
+- Holding it accelerates from 1.0x to 1.6x speed over 0.5 seconds.
 - Releasing movement or Overdrive returns speed to 1.0x over approximately 0.35 seconds.
 - Heat continues to accumulate while the Tank remains above 1.0x during deceleration.
 - Cooling delay begins only after speed returns fully to 1.0x and the cannon is not generating Heat.
@@ -211,7 +211,7 @@ Ramming becomes offensive at 1.3x speed or higher.
 - During Overdrive the Tank transitions from being pushed back, through equilibrium, into slow forward progress.
 - The Tank retains direct movement control and may leave laterally wherever physical walls permit.
 - Location A's narrow walls make its conveyor the only forward route.
-- The Location A gate is short enough for a cold Tank to cross with roughly two seconds of sustained Overdrive, consuming about half its Heat budget.
+- The Location A gate allows a cold Tank to cross with roughly two seconds of sustained Overdrive, consuming about one fifth of its Heat budget. The A and B–C gate surfaces are about 50 percent longer than the initial prototype, preserving a visible traversal while leaving Heat for subsequent actions.
 - The B–C conveyor is slightly shorter and becomes the first safe practical use after ability acquisition.
 - Animated surface blocks, rollers, debris, and particles show conveyor direction without written arrows.
 
@@ -425,8 +425,8 @@ Normal Boss attacks deal approximately 8–10 HP. The most strongly telegraphed 
 ### Combat HUD
 
 - Lower-left: unlabelled segmented HP bar with no number.
-- Cursor position: cartoon industrial targeting reticle.
-- Lower-left: unlabelled Heat and Overdrive bars beside HP.
+- Cursor position: one cartoon industrial targeting reticle surrounded by an unlabelled circular Heat gauge. The native cursor is hidden over gameplay, and no projected ground marker is drawn.
+- Lower-left: an unlabelled Overdrive bar beside HP. Heat is displayed only at the reticle.
 - During Overdrive: a graphical acceleration gauge indicates progress from normal to maximum speed without numeric text.
 - Upper-right: Minimap.
 - Top-centre: unlabelled Elite or Boss health bar during those encounters only.

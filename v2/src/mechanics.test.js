@@ -13,13 +13,20 @@ test('stationary Overdrive produces neither acceleration nor heat',()=>{
  const p=newPlayer();p.overdrive=true;tick(p,0,2,true,false);assert.equal(p.speed,1);assert.equal(p.heat,0);
 });
 test('acceleration, release heat and re-engagement preserve the shared budget',()=>{
- const p=newPlayer();p.overdrive=true;tick(p,0,1.2,true,true);assert(Math.abs(p.speed-1.5)<1e-6);assert(Math.abs(p.heat-30)<1e-6);assert(shootHeat(p,1.2));assert(Math.abs(p.heat-50)<1e-6);tick(p,1.2,.1,false,true);assert(p.speed>1&&p.speed<1.5);assert(p.heat>50);const speed=p.speed;tick(p,1.3,.1,true,true);assert(p.speed>speed);tick(p,1.4,.35,false,false);assert.equal(p.speed,1);const heat=p.heat;tick(p,1.75,.6);assert.equal(p.heat,heat);tick(p,2.35,.3);assert(p.heat<heat);
+ const p=newPlayer();p.overdrive=true;
+ tick(p,0,.25,true,true);assert(Math.abs(p.speed-1.3)<1e-6);assert(Math.abs(p.heat-2.5)<1e-6);
+ tick(p,.25,.25,true,true);assert.equal(p.speed,1.6);assert(Math.abs(p.heat-5)<1e-6);
+ assert(shootHeat(p,.5));assert(Math.abs(p.heat-25)<1e-6);
+ tick(p,.5,.1,false,true);assert(p.speed>1&&p.speed<1.6);assert(Math.abs(p.heat-26)<1e-6);
+ const speed=p.speed;tick(p,.6,.1,true,true);assert(p.speed>speed);
+ tick(p,.7,.35,false,false);assert.equal(p.speed,1);
+ const heat=p.heat;tick(p,1.05,.6);assert.equal(p.heat,heat);tick(p,1.65,.3);assert(p.heat<heat);
 });
 test('screen-relative movement is normalized and preserves orthogonal axes',()=>{
  const up=screenMovement(0,-1),right=screenMovement(1,0),diagonal=screenMovement(1,-1);assert(Math.abs(Math.hypot(diagonal.x,diagonal.z)-1)<1e-9);assert(Math.abs(up.x*right.x+up.z*right.z)<1e-9);assert(up.x<0&&up.z<0);assert(right.x>0&&right.z<0);
 });
 test('opposing belt defeats normal movement and becomes traversable only above equilibrium',()=>{
- assert(BASE_SPEED-BASE_SPEED*1.15<0);assert(BASE_SPEED*1.5-BASE_SPEED*1.15>0);
+ assert(BASE_SPEED-BASE_SPEED*1.15<0);assert(BASE_SPEED*1.6-BASE_SPEED*1.15>0);
 });
 test('direct protection does not block furnace damage or normal movement',()=>{
  const p=newPlayer();assert(damagePlayer(p,8,1));assert(!damagePlayer(p,8,1.3));assert(damagePlayer(p,5,1.3,true));assert.equal(p.hp,37);assert(damagePlayer(p,8,1.7));assert.equal(p.hp,29);
