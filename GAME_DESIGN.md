@@ -114,6 +114,7 @@ The first level communicates this premise through action:
 - A and B use a sparse arrangement; C adds mechanical layers; Elite and Boss encounters intensify the same musical identity.
 - Acquiring Overdrive reveals the full main melody for the first time.
 - There are no vocals, spoken announcements, or intelligible broadcast language.
+- Driving produces a continuous engine sound; Overdrive progressively increases its volume and pitch, and stopping fades it out.
 - Heat raises engine pitch and exhaust tempo so approaching Overheat is audible without looking at the HUD.
 - Overheat, cannon readiness, Repair Hive activation, and heavy attack warnings each use a distinct sound shape.
 - Important threats support positional audio.
@@ -149,13 +150,14 @@ All controls may be rebound in the system settings.
 - HP is restored only through Repair Hives and respawning.
 - Direct hits grant approximately 0.6 seconds of repeated-hit protection to prevent stacked collision events from deleting HP instantly.
 - Continuous Furnace Hazard damage bypasses this protection.
+- Combat hurtboxes are independent of solid-body collision. The player uses an inset hurtbox (0.8 world-unit radius); enemy body hurtboxes and Boss weak points receive 15 percent additional radius for forgiving edge hits. Armour and vulnerability rules still apply. Enemy charge damage uses the player hurtbox; walls, body separation, and Furnace Hazards retain their existing physical rules.
 
 ### Heat
 
 - Heat ranges internally from 0 to 100 but is shown only as an unlabelled circular gauge around the cursor reticle.
 - Each Standard Cannon shot adds 20 Heat.
 - A cold Tank may safely fire four consecutive shots; the fifth reaches the red threshold and causes Overheat.
-- Overdrive adds 10 Heat per second while accelerating, at full use, and during deceleration.
+- Overdrive adds 15 Heat per second while accelerating, at full use, and during deceleration.
 - Shooting and Overdrive Heat are additive.
 - After all Heat-generating activity ends, cooling begins after a 0.75-second delay.
 - Cooling removes 25 Heat per second.
@@ -211,7 +213,7 @@ Ramming becomes offensive at 1.3x speed or higher.
 - During Overdrive the Tank transitions from being pushed back, through equilibrium, into slow forward progress.
 - The Tank retains direct movement control and may leave laterally wherever physical walls permit.
 - Location A's narrow walls make its conveyor the only forward route.
-- The Location A gate allows a cold Tank to cross with roughly two seconds of sustained Overdrive, consuming about one fifth of its Heat budget. The A and B–C gate surfaces are about 50 percent longer than the initial prototype, preserving a visible traversal while leaving Heat for subsequent actions.
+- The Location A gate allows a cold Tank to cross with roughly two seconds of sustained Overdrive, consuming about 30 percent of its Heat budget. The A and B–C gate surfaces are about 50 percent longer than the initial prototype, preserving a visible traversal while leaving Heat for subsequent actions.
 - The B–C conveyor is slightly shorter and becomes the first safe practical use after ability acquisition.
 - Animated surface blocks, rollers, debris, and particles show conveyor direction without written arrows.
 
@@ -350,7 +352,7 @@ The level contains six ordinary enemies, one Elite, and one Final Boss.
 - Wide rectangular front, heavy tracks, and a small turret.
 - Dark armour with industrial warning structures and a bright side/rear radiator.
 - Slow turning makes flanking possible.
-- Front armour strongly reduces damage.
+- Front armour reduces damage by 60%. A front hit briefly flashes the armour plate, throws pale sparks back toward the incoming shot, and plays a distinct metallic ricochet. Side/rear damage retains orange impact bursts and the normal damage sound.
 - Three radiator hits destroy it.
 - Heavy cannon damage to the Tank: 10 HP.
 
@@ -365,7 +367,7 @@ The Overdrive Prototype demonstrates the ability before granting it.
 3. The player avoids the charge using lateral movement and arena machinery.
 4. The Prototype becomes Overheated and exposes its rear radiator.
 5. The player attacks during this short vulnerability window while managing cannon Heat.
-6. The cycle repeats approximately three times.
+6. The Prototype has 9 HP. Vulnerability windows have no damage cap; the number of cycles depends on successful hits and Heat management.
 
 The later part of the fight adds ordinary cannon shots but no summoned enemies. A Prototype cannon hit deals approximately 8 HP; its direct charge deals approximately 12 HP.
 

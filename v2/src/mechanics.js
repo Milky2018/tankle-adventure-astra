@@ -1,6 +1,8 @@
 export const MAX_HP = 50;
 export const BASE_SPEED = 7;
 export const OVERDRIVE_MAX_SPEED = 1.6;
+export const PLAYER_HURT_RADIUS = 0.8;
+export const ENEMY_HURT_SCALE = 1.15;
 export const DEFAULT_BINDINGS = { up: 'KeyW', left: 'KeyA', down: 'KeyS', right: 'KeyD', fire: 'Mouse0', overdrive: 'ShiftLeft', map: 'Tab', repair: 'KeyE', skip: 'Space', pause: 'Escape' };
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const approach = (a, b, amount) => a < b ? Math.min(a + amount, b) : Math.max(a - amount, b);
@@ -21,7 +23,7 @@ export function updateHeat(p, dt, time, boost, moving) {
   p.speed = approach(p.speed, active ? OVERDRIVE_MAX_SPEED : 1, dt * speedRange / (active ? 0.5 : 0.35));
   if (p.speed > 1.00001) {
     // The shared engine budget continues during deceleration, including an overheat coast.
-    p.heat = Math.min(100, p.heat + 10 * dt);
+    p.heat = Math.min(100, p.heat + 15 * dt);
     p.lastHeat = time;
   } else if (time - p.lastHeat >= 0.75) {
     p.heat = Math.max(0, p.heat - 25 * dt);

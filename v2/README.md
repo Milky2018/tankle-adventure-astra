@@ -46,7 +46,7 @@ The Overdrive Prototype telegraphs a straight charge, collides with cover, and v
 
 The Furnace Overseer combines slow heavy shells, fans, conveyors, and molten channels. Its outward-facing cooling assemblies open alternately and retract after two hits. Destroying each assembly stops its conveyor. The exposed central core ends the encounter; the third Repair Hive opens the exterior light and completes the level.
 
-The game contains six ordinary enemies, one Elite, one Boss, and exactly three Repair Hives. Ordinary enemies respawn on resting or death; destroyed relays and defeated special encounters persist. There are no field healing items, collectibles, weapon slots, or objective arrows.
+The game contains six ordinary enemies, one Elite, one Boss, and exactly three Repair Hives. The Furnace Guard distinguishes reduced frontal damage with a brief armour flash, outward white sparks, and a metallic ricochet; side/rear hits keep the normal orange damage burst and impact sound. Ordinary enemies respawn on resting or death; destroyed relays and defeated special encounters persist. There are no field healing items, collectibles, weapon slots, or objective arrows.
 
 ## Implementation
 
@@ -56,7 +56,7 @@ The game contains six ordinary enemies, one Elite, one Boss, and exactly three R
 - `src/audio.js`: gesture-activated Web Audio engine, mechanical percussion, melodic layers, and positional effects.
 - `src/style.css`: graphical HUD and system menus.
 
-A single mouse-following reticle carries a clockwise Heat ring; there is no separate ground-target marker or Heat bar beside HP. The camera never rotates or zooms in gameplay. Movement uses the same fixed camera basis in every area. Heat is shared by the cannon and Overdrive, including the deceleration tail. Overdrive reaches 1.6x speed in 0.5 seconds and adds 10 Heat per second; release deceleration remains 0.35 seconds. The A and B–C conveyor surfaces are 3 and 2.4 world units long, respectively. Direct-hit protection does not suppress furnace damage. Furnace channels retain physical movement and never teleport or reset the tank.
+A single mouse-following reticle carries a clockwise Heat ring; there is no separate ground-target marker or Heat bar beside HP. The camera never rotates or zooms in gameplay. Movement uses the same fixed camera basis in every area. Heat is shared by the cannon and Overdrive, including the deceleration tail. Overdrive reaches 1.6x speed in 0.5 seconds and adds 15 Heat per second; release deceleration remains 0.35 seconds. The engine sounds while driving, becomes louder and higher-pitched through acceleration, and fades out on stopping; pause, death, and the sound-effects setting mute it. The A and B–C conveyor surfaces are 3 and 2.4 world units long, respectively. The player uses a smaller 0.8-unit combat hurtbox; enemies and Boss weak points have 15 percent larger damage-detection radii, independently of solid-body collision. Direct-hit protection does not suppress furnace damage. Furnace channels retain physical movement and never teleport or reset the tank.
 
 ## Verification
 

@@ -14,10 +14,10 @@ test('stationary Overdrive produces neither acceleration nor heat',()=>{
 });
 test('acceleration, release heat and re-engagement preserve the shared budget',()=>{
  const p=newPlayer();p.overdrive=true;
- tick(p,0,.25,true,true);assert(Math.abs(p.speed-1.3)<1e-6);assert(Math.abs(p.heat-2.5)<1e-6);
- tick(p,.25,.25,true,true);assert.equal(p.speed,1.6);assert(Math.abs(p.heat-5)<1e-6);
- assert(shootHeat(p,.5));assert(Math.abs(p.heat-25)<1e-6);
- tick(p,.5,.1,false,true);assert(p.speed>1&&p.speed<1.6);assert(Math.abs(p.heat-26)<1e-6);
+ tick(p,0,.25,true,true);assert(Math.abs(p.speed-1.3)<1e-6);assert(Math.abs(p.heat-3.75)<1e-6);
+ tick(p,.25,.25,true,true);assert.equal(p.speed,1.6);assert(Math.abs(p.heat-7.5)<1e-6);
+ assert(shootHeat(p,.5));assert(Math.abs(p.heat-27.5)<1e-6);
+ tick(p,.5,.1,false,true);assert(p.speed>1&&p.speed<1.6);assert(Math.abs(p.heat-29)<1e-6);
  const speed=p.speed;tick(p,.6,.1,true,true);assert(p.speed>speed);
  tick(p,.7,.35,false,false);assert.equal(p.speed,1);
  const heat=p.heat;tick(p,1.05,.6);assert.equal(p.heat,heat);tick(p,1.65,.3);assert(p.heat<heat);

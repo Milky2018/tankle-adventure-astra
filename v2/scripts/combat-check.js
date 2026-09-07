@@ -4,10 +4,11 @@ async (page) => {
     const check=(name,condition,detail)=>results.push({name,passed:!!condition,detail});
     const setup=(x,z)=>{g.setInput([]);g.scenario({player:{x,z,hp:50,heat:0,overheated:false,speed:1,lastShot:-10,lastHeat:-10,invincible:0,underpass:false}});g.step(.02);};
     setup(52,59);g.scenario({enemies:{elite:{x:52,z:65,hp:9,state:'idle',timer:50,heading:Math.PI}}});g.aimAt(52,65);g.fire();g.step(.6);check('Elite armour rejects cannon outside vent',g.snapshot().enemies[6].hp===9);
-    for(let cycle=0;cycle<3;cycle++){
-      setup(52,71);g.scenario({enemies:{elite:{x:52,z:65,state:'vent',timer:4.3,heading:Math.PI,hitCycle:0}}});
-      for(let i=0;i<3;i++){g.aimAt(52,65);g.fire();g.step(.6);}
-      check('Elite vent cycle '+(cycle+1),g.snapshot().enemies[6].hp===6-cycle*3,g.snapshot().enemies[6].hp);
+    setup(52,59);g.scenario({enemies:{elite:{state:'vent',timer:4.3,heading:Math.PI}}});g.aimAt(52,65);g.fire();g.step(.6);check('Elite front armour still rejects cannon during vent',g.snapshot().enemies[6].hp===9);
+    for(let cycle=0;cycle<2;cycle++){
+      setup(52,71);g.scenario({enemies:{elite:{x:52,z:65,state:'vent',timer:4.3,heading:Math.PI}}});
+      for(let i=0;i<(cycle===0?5:4);i++){g.aimAt(52,65);g.fire();g.step(.6);}
+      check('Elite accepts more than three hits in vent cycle '+(cycle+1),g.snapshot().enemies[6].hp===(cycle===0?4:0),g.snapshot().enemies[6].hp);
     }
     check('Defeated Elite grants persistent Overdrive',g.snapshot().eliteDead&&g.snapshot().player.overdrive);
     // Verify each physical weak point, then the newly exposed central core.

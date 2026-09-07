@@ -1,11 +1,13 @@
+import { clamp, OVERDRIVE_MAX_SPEED } from './mechanics.js';
+
 export class FactoryAudio {
   constructor(){this.ctx=null;this.volume=.55;this.music=true;this.sfx=true;this.nextBeat=0;this.beat=0;}
   start(){
     if(!this.ctx){
       this.ctx=new AudioContext();this.master=this.ctx.createGain();this.master.gain.value=this.volume*.4;this.master.connect(this.ctx.destination);
       this.engine=this.ctx.createOscillator();this.engine.type='sawtooth';this.engine.frequency.value=43;
-      const filter=this.ctx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=170;
-      this.engineGain=this.ctx.createGain();this.engineGain.gain.value=.012;this.engine.connect(filter);filter.connect(this.engineGain);this.engineGain.connect(this.master);this.engine.start();
+      this.engineFilter=this.ctx.createBiquadFilter();this.engineFilter.type='lowpass';this.engineFilter.frequency.value=250;
+      this.engineGain=this.ctx.createGain();this.engineGain.gain.value=0;this.engine.connect(this.engineFilter);this.engineFilter.connect(this.engineGain);this.engineGain.connect(this.master);this.engine.start();
     }
     if(this.ctx.state==='suspended')this.ctx.resume();
   }
@@ -22,6 +24,7 @@ export class FactoryAudio {
     if(!this.sfx||!this.ctx)return;
     if(name==='shot'){this.tone(145,.2,'triangle',.65,-110,pan);this.noise(.12,.45,pan);}
     if(name==='hit'){this.tone(280,.12,'square',.16,-200,pan);this.noise(.16,.3,pan);}
+    if(name==='armor'){this.tone(980,.24,'sine',.32,-180,pan);this.tone(1760,.14,'sine',.17,-260,pan);this.tone(2630,.07,'triangle',.07,-350,pan);this.noise(.035,.12,pan);}
     if(name==='explode'){this.tone(85,.6,'sine',.8,-60,pan);this.noise(.6,.65,pan);}
     if(name==='warn'){this.tone(280,.45,'sawtooth',.12,420,pan);this.tone(425,.3,'sine',.1,250,pan);}
     if(name==='heat'){this.noise(.8,.3);this.tone(430,.6,'triangle',.24,-330);}
@@ -30,9 +33,14 @@ export class FactoryAudio {
     if(name==='death'){this.tone(160,1.3,'sawtooth',.3,-135);this.noise(.8,.4);}
     if(name==='ram'){this.tone(75,.22,'square',.3,-40,pan);this.noise(.18,.4,pan);}
   }
-  update(time,p,combat,area,paused){
+  update(time,p,combat,area,paused,moving=false){
     if(!this.ctx)return;const t=this.ctx.currentTime;
-    this.master.gain.setTargetAtTime(this.volume*.4,t,.15);this.engine.frequency.setTargetAtTime(42+p.heat*.65+(p.speed-1)*100,t,.12);this.engineGain.gain.setTargetAtTime(this.sfx&&!paused&&p.hp>0?.015:0,t,.1);
+    const boost=clamp((p.speed-1)/(OVERDRIVE_MAX_SPEED-1),0,1);
+    const running=this.sfx&&!paused&&p.hp>0&&(moving||boost>0);
+    this.master.gain.setTargetAtTime(this.volume*.4,t,.15);
+    this.engine.frequency.setTargetAtTime(65+boost*100+p.heat*.2,t,.12);
+    this.engineFilter.frequency.setTargetAtTime(250+boost*350,t,.12);
+    this.engineGain.gain.setTargetAtTime(running?.075+boost*.105:0,t,.1);
     if(paused||p.hp<=0||!this.music){this.nextBeat=time;return;}
     if(time<this.nextBeat)return;this.nextBeat=time+(combat?.24:.34);
     const notes=p.overdrive?[0,7,12,14,16,12,7,4,0,7,11,14,12,7,4,2]:[0,7,12,7,0,4,7,4];

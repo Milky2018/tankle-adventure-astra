@@ -10,9 +10,9 @@ async (page) => {
     const setup=(x,z)=>{g.setInput([]);g.scenario({player:{x,z,hp:50,heat:0,overheated:false,speed:1,lastShot:-10,lastHeat:-10,invincible:0,underpass:false}});g.step(.02);};
     // Actual movement and collision, with fixed simulation time for reproducibility.
     setup(0,-16);g.scenario({player:{overdrive:false}});g.setInput(['KeyW','KeyD']);g.step(4);check('ordinary movement loses to gate',g.snapshot().player.z>-19,g.snapshot().player.z);
-    setup(0,-16);g.scenario({player:{overdrive:true}});g.setInput(['KeyW','KeyD','ShiftLeft']);g.step(2.5);check('Overdrive crosses longer gate with heat to spare',g.snapshot().player.z<-22&&g.snapshot().player.heat<30,{z:g.snapshot().player.z,heat:g.snapshot().player.heat});
+    setup(0,-16);g.scenario({player:{overdrive:true}});g.setInput(['KeyW','KeyD','ShiftLeft']);g.step(2.5);check('Overdrive crosses longer gate with heat to spare',g.snapshot().player.z<-22&&g.snapshot().player.heat<40,{z:g.snapshot().player.z,heat:g.snapshot().player.heat});
     setup(45,18);g.scenario({player:{overdrive:false}});g.setInput(['KeyW','KeyD']);g.step(2);check('B-C return blocked before acquisition',g.snapshot().player.z>15,g.snapshot().player.z);
-    setup(45,18);g.scenario({player:{overdrive:true}});g.setInput(['KeyW','KeyD','ShiftLeft']);g.step(2);check('Longer B-C return opens with heat to spare',g.snapshot().player.z<14&&g.snapshot().player.heat<25,{z:g.snapshot().player.z,heat:g.snapshot().player.heat});
+    setup(45,18);g.scenario({player:{overdrive:true}});g.setInput(['KeyW','KeyD','ShiftLeft']);g.step(2);check('Longer B-C return opens with heat to spare',g.snapshot().player.z<14&&g.snapshot().player.heat<35,{z:g.snapshot().player.z,heat:g.snapshot().player.heat});
     setup(23,0);g.aimAt(27,0);g.fire();g.step(.3);check('Scouts die to one cannon hit',g.snapshot().enemies[0].hp===0,g.snapshot().enemies[0].hp);
     setup(83,21);g.aimAt(83,25);g.fire();g.step(.6);g.aimAt(83,25);g.fire();g.step(.3);check('Turret dies to two cannon hits',g.snapshot().enemies[5].hp===0,g.snapshot().enemies[5].hp);
     setup(16,25);g.aimAt(16,29);g.fire();g.step(.6);g.aimAt(16,29);g.fire();g.step(.4);check('West relay breaks',g.snapshot().relays[0].hp===0,g.snapshot().relays[0].hp);

@@ -70,14 +70,14 @@ export function tankModel(type = 'player') {
   const antenna=new T.Group();antenna.position.set(.7,1.4,-.9);body.add(antenna);cylinder(antenna,.045,1.45,0,.72,0,C.dark,6);sphere(antenna,.115,0,1.5,0,yellow?C.lightYellow:C.red);
   const radiator=box(body,1.1,.5,.18,0,1.1,-1.35,mat(elite?C.orange:C.red,true));
   for(let i=0;i<5;i++)box(body,.09,.55,.04,-.45+i*.22,1.1,-1.46,C.dark,.015);
-  if(guard)box(body,2.65,1.3,.65,0,1.25,1.22,C.dark,.12);
+  const frontArmor=guard?box(body,2.65,1.3,.65,0,1.25,1.22,mat(C.dark),.12):null;
   if(elite){box(body,.7,.55,1.7,-.8,1.6,-.5,C.orange);box(body,.7,.55,1.7,.8,1.6,-.5,C.orange);root.scale.setScalar(1.35);}
   if(boss){root.scale.setScalar(2.8);box(body,2.5,.75,1.8,0,1.7,-.6,C.dark,.2);for(const s of [-1,1]){box(body,.85,1.9,1.15,s*1.65,1.6,-.2,C.teal,.2);box(body,.6,1.0,.15,s*1.65,1.6,.41,C.dark);}}
   const outlineMat=new T.MeshBasicMaterial({color:0x183731,side:T.BackSide});
   const shells=[];root.traverse(m=>{if(m.isMesh&&m.material.isMeshToonMaterial&&m.geometry.type==='RoundedBoxGeometry'){const outline=new T.Mesh(m.geometry,outlineMat);outline.scale.setScalar(1.035);shells.push([m,outline]);}});
   for(const [m,o]of shells)m.add(o);
   return {
-    root,body,turret,barrel,tracks,antenna,headlights,radiator,
+    root,body,turret,barrel,tracks,antenna,headlights,radiator,frontArmor,
     rollWheels(angle) {
       // The mounting rotation maps each cylinder's local Y axle to hull -X.
       for (const wheel of tracks) wheel.rotateY(-angle);
