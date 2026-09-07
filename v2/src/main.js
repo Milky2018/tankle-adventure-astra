@@ -428,7 +428,8 @@ function drawMap(canvas,large=false){
 function updateHUD(){
   for(let i=0;i<10;i++){const value=player.hp-i*5;hpEl.children[i].className=value<=0?'empty':value<5?'half':'';}
   $('heat').style.strokeDashoffset=String(100-clamp(player.heat,0,100));
-  $('reticle').style.setProperty('--heat-color',player.overheated?'#ff7655':player.heat>65?'#f3a75a':'#7bd7b6');
+  const heatColorRatio=player.overheated?1:clamp(player.heat/100,0,1);
+  $('reticle').style.setProperty('--heat-color',`hsl(${48-40*heatColorRatio} 100% ${82-15*heatColorRatio}%)`);
   $('reticle').classList.toggle('hot',player.overheated);
   $('overdrive').style.opacity=player.overdrive?'1':'.15';$('overdrive').lastElementChild.firstElementChild.style.width=`${clamp((player.speed-1)/(OVERDRIVE_MAX_SPEED-1),0,1)*100}%`;
   const active=[elite,boss].find(e=>e.active&&e.hp>0);

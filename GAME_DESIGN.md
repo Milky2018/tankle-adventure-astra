@@ -165,7 +165,7 @@ All controls may be rebound in the system settings.
 - Overheated ends only when Heat returns fully to zero.
 - Normal direct movement remains available while Overheated.
 
-The Heat ring fills clockwise and shifts from cool teal through orange to flashing red. Near Overheat the Tank emits increasingly intense steam. No percentage or status word is displayed.
+The Heat ring fills clockwise and shifts continuously from pale yellow through orange to flashing red, remaining red throughout Overheated cooldown. Near Overheat the Tank emits increasingly intense steam. No percentage or status word is displayed.
 
 ## Standard Cannon
 
