@@ -3,6 +3,11 @@ export const BASE_SPEED = 7;
 export const OVERDRIVE_MAX_SPEED = 1.6;
 export const PLAYER_HURT_RADIUS = 0.8;
 export const ENEMY_HURT_SCALE = 1.15;
+// Telegraphs and movement share the same physical charge envelope.
+export const CHARGE = {
+  scout: { radius: 1.5, speed: 13, duration: 0.75 },
+  elite: { radius: 1.9, speed: 19, duration: 1.2 }
+};
 export const DEFAULT_BINDINGS = { up: 'KeyW', left: 'KeyA', down: 'KeyS', right: 'KeyD', fire: 'Mouse0', overdrive: 'ShiftLeft', map: 'Tab', repair: 'KeyE', skip: 'Space', pause: 'Escape' };
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const approach = (a, b, amount) => a < b ? Math.min(a + amount, b) : Math.max(a - amount, b);

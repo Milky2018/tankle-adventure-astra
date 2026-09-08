@@ -35,3 +35,32 @@ test('wheel contact points roll opposite forward travel, and reverse for backwar
     }
   }
 });
+
+test('charge telegraphs cover the swept body, including start and end caps', async () => {
+  const { chargeWarning } = await import('./world.js');
+  const { CHARGE } = await import('./mechanics.js');
+  for (const type of ['scout', 'elite']) {
+    const { root, shape } = chargeWarning(type);
+    root.updateMatrixWorld(true);
+    shape.geometry.computeBoundingBox();
+    const bounds = shape.geometry.boundingBox.clone().applyMatrix4(shape.matrixWorld);
+    const { radius, speed, duration } = CHARGE[type];
+    assert(bounds.min.x <= -radius + 1e-5 && bounds.max.x >= radius - 1e-5);
+    assert(bounds.min.z <= -radius + 1e-5 && bounds.max.z >= speed * duration + radius - 1e-5);
+    // The previously invisible Scout hit at 1.6 units must overlap the painted area.
+    if (type === 'scout') assert(bounds.max.x > 1.6 - 0.8);
+  }
+});
+
+test('each factory enemy constructs and animates through its encounter states', () => {
+  for (const type of ['scout', 'turret', 'guard', 'elite', 'boss']) {
+    const model = tankModel(type);
+    for (const state of ['idle', 'warn', 'charge', 'vent', 'idle']) {
+      model.animate(state, 0.4, 1, 1 / 60, true);
+      model.rollWheels(0.3);
+      model.root.updateMatrixWorld(true);
+      model.root.traverse(object => assert(object.matrixWorld.elements.every(Number.isFinite), `${type}: ${state}`));
+    }
+    if (type === 'guard') assert(model.frontArmor.material !== tankModel('guard').frontArmor.material, 'armour impact light must not leak to another guard');
+  }
+});

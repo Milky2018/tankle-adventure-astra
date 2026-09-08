@@ -23,6 +23,12 @@ export class FactoryAudio {
   event(name,pan=0){
     if(!this.sfx||!this.ctx)return;
     if(name==='shot'){this.tone(145,.2,'triangle',.65,-110,pan);this.noise(.12,.45,pan);}
+    if(name==='welder-shot'){this.tone(720,.16,'triangle',.22,-590,pan);this.noise(.07,.18,pan);}
+    if(name==='guard-shot'){this.tone(110,.3,'triangle',.5,-75,pan);this.noise(.2,.35,pan);}
+    if(name==='foundry-shot'){this.tone(58,.65,'sine',.75,-30,pan);this.tone(116,.22,'triangle',.25,-60,pan);this.noise(.35,.4,pan);}
+    if(name==='crusher'){this.tone(48,.6,'sine',.13,-20,pan);this.noise(.28,.09,pan);}
+    if(name==='clamp-warn'){this.tone(370,.7,'triangle',.16,390,pan);this.tone(1480,.09,'sine',.09,-400,pan);}
+    if(name==='press-warn'){this.tone(65,1.5,'sawtooth',.15,165,pan);this.tone(130,1.2,'sine',.2,330,pan);}
     if(name==='hit'){this.tone(280,.12,'square',.16,-200,pan);this.noise(.16,.3,pan);}
     if(name==='armor'){this.tone(980,.24,'sine',.32,-180,pan);this.tone(1760,.14,'sine',.17,-260,pan);this.tone(2630,.07,'triangle',.07,-350,pan);this.noise(.035,.12,pan);}
     if(name==='explode'){this.tone(85,.6,'sine',.8,-60,pan);this.noise(.6,.65,pan);}
@@ -42,11 +48,15 @@ export class FactoryAudio {
     this.engineFilter.frequency.setTargetAtTime(250+boost*350,t,.12);
     this.engineGain.gain.setTargetAtTime(running?.075+boost*.105:0,t,.1);
     if(paused||p.hp<=0||!this.music){this.nextBeat=time;return;}
-    if(time<this.nextBeat)return;this.nextBeat=time+(combat?.24:.34);
-    const notes=p.overdrive?[0,7,12,14,16,12,7,4,0,7,11,14,12,7,4,2]:[0,7,12,7,0,4,7,4];
-    if(this.beat%2===0)this.tone(110*2**(notes[(this.beat/2)%notes.length]/12),.23,'sine',.065);
-    if(this.beat%4===0)this.tone(58,.14,'triangle',combat?.28:.15,-30);
-    if(combat||area==='c'||this.beat%4===2){this.tone(this.beat%2?1260:820,.045,'triangle',.035);if(this.beat%4===2)this.noise(.045,.065);}
+    if(time<this.nextBeat)return;this.nextBeat=time+(combat?.32:1.15);
+    // Sparse, unresolved notes leave room for machinery; combat adds a restrained pulse.
+    const notes=p.overdrive?[0,7,14,10,7,3,12,7]:[0,7,10,7,2,0,7,3];
+    if(this.beat%2===0)this.tone(110*2**(notes[(this.beat/2)%notes.length]/12),combat?.65:2.6,'sine',.055);
+    if(this.beat%8===0){this.tone(area==='boss'?41.2:55,3.5,'sine',.09);this.tone(165,2.7,'sine',.025);}
+    if(combat){
+      if(this.beat%2===0)this.tone(58,.18,'triangle',.19,-30);
+      if(this.beat%4===2)this.noise(.055,.045);
+    }
     this.beat++;
   }
 }

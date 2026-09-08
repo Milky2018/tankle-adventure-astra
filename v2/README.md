@@ -1,6 +1,6 @@
 # Furnace Born
 
-A playable, wordless, isometric tank Metroidvania built independently from the root `GAME_DESIGN.md`. All implementation lives in `v2`. No `v1` source or assets were used.
+A playable, wordless, isometric tank Metroidvania built from the first-level design in [Gamespec.md](../Gamespec.md), the single source for all game-design decisions and proposals. All implementation lives in `v2`. No `v1` source or assets were used.
 
 The game uses Three.js, procedural rounded industrial models, stepped lighting, real ground-plane collisions, and a synthesized mechanical soundtrack. There are no remote models, textures, fonts, audio files, or runtime CDN requests.
 
@@ -42,11 +42,17 @@ Every action, including fire and pause, can be rebound to keyboard or mouse butt
 
 The entrance conveyor defeats ordinary movement. A maintenance detour leads through a forward conveyor into the assembly courtyard. Its two branches loop around machinery; the east branch has an elevated firing gallery, ramps, and a ground-level underpass. Each branch contains a destructible relay. Both relays power the Elite barrier.
 
-The Overdrive Prototype telegraphs a straight charge, collides with cover, and vents through its exposed rear radiator. Three successful damage windows defeat it and transfer its module. The acquired engine enables ramming, the return across the B–C conveyor, and the original entrance gate.
+The Overdrive Prototype telegraphs a straight charge, collides with cover, and vents through its exposed rear radiator. It has 9 HP and no per-window damage cap; defeating it transfers its module. The acquired engine enables ramming, the return across the B–C conveyor, and the original entrance gate.
 
-The Furnace Overseer combines slow heavy shells, fans, conveyors, and molten channels. Its outward-facing cooling assemblies open alternately and retract after two hits. Destroying each assembly stops its conveyor. The exposed central core ends the encounter; the third Repair Hive opens the exterior light and completes the level.
+The Furnace Overseer combines slow heavy shells, fans, conveyors, and molten channels. Its outward-facing cooling assemblies open alternately for a timed window with no hit quota. Destroying each assembly stops its conveyor. The exposed central core ends the encounter; the third Repair Hive opens the exterior light and completes the level.
 
 The game contains six ordinary enemies, one Elite, one Boss, and exactly three Repair Hives. The Furnace Guard distinguishes reduced frontal damage with a brief armour flash, outward white sparks, and a metallic ricochet; side/rear hits keep the normal orange damage burst and impact sound. Ordinary enemies respawn on resting or death; destroyed relays and defeated special encounters persist. There are no field healing items, collectibles, weapon slots, or objective arrows.
+
+## Art and sound
+
+Enemies are repurposed factory tools: a reclaiming clamp, a welding turret, a refractory shield carrier, a pressing prototype, and a mobile crucible. Jaws, welding hoods, radiator lids, and the Boss core doors communicate their attack and recovery states. Charge warnings cover the entire swept body, including endpoint caps.
+
+Warm inspection decks, brown scrap sorting machinery, and cool gallery pipes distinguish the routes. Discarded hulls pass through an operating reclamation press beside the entrance; scanning and articulated Hive repair tools express rejection and repair without dialogue. Muted enamel, warm/cool lighting, and contact shadows support the existing rounded industrial style. Sparse exploration music leaves space for distinct mechanical attack sounds and the speed-sensitive player engine.
 
 ## Implementation
 
@@ -65,7 +71,7 @@ npm test
 npm run build
 ```
 
-Ten Node tests cover shot cadence, the fifth-shot overheat threshold, cooling delay and lockout, Overdrive acceleration/deceleration, stationary input, normalized screen movement, conveyor equilibrium, damage protection, swept projectile collisions, and wheel-axis stability and rolling direction through hull turns.
+Twelve Node tests cover shot cadence, the fifth-shot overheat threshold, cooling delay and lockout, Overdrive acceleration/deceleration, stationary input, normalized screen movement, conveyor equilibrium, damage protection, swept projectile collisions, wheel-axis stability and rolling direction through hull turns, charge telegraph coverage of the full swept body, and construction/animation of every enemy form.
 
 The Playwright CLI scenario scripts run against `http://127.0.0.1:5174/?test`, in this order:
 
@@ -73,10 +79,11 @@ The Playwright CLI scenario scripts run against `http://127.0.0.1:5174/?test`, i
 npm run dev -- --port 5174
 playwright-cli -s=furnace-v2 open 'http://127.0.0.1:5174/?test'
 playwright-cli -s=furnace-v2 run-code "$(cat scripts/browser-check.js)"
+playwright-cli -s=furnace-v2 run-code "$(cat scripts/polish-check.js)"
 playwright-cli -s=furnace-v2 run-code "$(cat scripts/combat-check.js)"
 ```
 
-The 25 browser scenario checks exercise both conveyor gates, ordinary combat, both relays, barrier collision, repair and enemy reset, physical furnace damage, the underpass, death/respawn, Elite vulnerability and acquisition, Boss assembly/core damage, the exit gate, and completion. Scenarios place the tank and configure encounter windows for deterministic checks, then exercise the actual simulation and projectiles. They clear the test browser's game save; use a dedicated browser session. The inspection surface is gated by both development mode and `?test`, and is absent from production builds.
+The 33 browser scenario checks exercise both conveyor gates, ordinary combat, both relays, barrier collision, repair and enemy reset, physical furnace damage, the underpass, death/respawn, Elite vulnerability and acquisition, Boss assembly/core damage without window quotas, charge-warning boundary fairness, guard armour, the exit gate, and completion. Scenarios place the tank and configure encounter windows for deterministic checks, then exercise the actual simulation and projectiles. They clear the test browser's game save; use a dedicated browser session. The inspection surface is gated by both development mode and `?test`, and is absent from production builds.
 
 Real browser keyboard movement, map toggling, key rebinding, and settings persistence were also checked. Screenshots from the local verification session are in the ignored `output/playwright/` directory.
 

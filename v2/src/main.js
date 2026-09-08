@@ -1,7 +1,7 @@
 import * as T from 'three';
 import './style.css';
-import { makeWorld, tankModel, box, sphere, ring, mat, C, rooms, hazardDefinitions, elevation } from './world.js';
-import { MAX_HP, BASE_SPEED, OVERDRIVE_MAX_SPEED, PLAYER_HURT_RADIUS, ENEMY_HURT_SCALE, DEFAULT_BINDINGS, newPlayer, shootHeat, updateHeat, screenMovement, damagePlayer, inside, clamp, angleDelta, segmentCircle } from './mechanics.js';
+import { makeWorld, tankModel, chargeWarning, floorColors, box, sphere, ring, mat, C, rooms, hazardDefinitions, elevation } from './world.js';
+import { MAX_HP, BASE_SPEED, OVERDRIVE_MAX_SPEED, PLAYER_HURT_RADIUS, ENEMY_HURT_SCALE, CHARGE, DEFAULT_BINDINGS, newPlayer, shootHeat, updateHeat, screenMovement, damagePlayer, inside, clamp, angleDelta, segmentCircle } from './mechanics.js';
 import { FactoryAudio } from './audio.js';
 
 const $=id=>document.getElementById(id);
@@ -12,12 +12,12 @@ const saved=readStored(SAVE_KEY),prefs=readStored(SETTINGS_KEY)||{};
 let bindings={...DEFAULT_BINDINGS,...prefs.bindings};
 const renderer=new T.WebGLRenderer({canvas:$('game'),antialias:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
-renderer.outputColorSpace=T.SRGBColorSpace;renderer.setClearColor(0x153634);
-const scene=new T.Scene();scene.background=new T.Color(0x153634);scene.fog=new T.Fog(0x153634,65,150);
+renderer.outputColorSpace=T.SRGBColorSpace;renderer.setClearColor(0x192c30);
+const scene=new T.Scene();scene.background=new T.Color(0x192c30);scene.fog=new T.Fog(0x192c30,65,150);
 const camera=new T.OrthographicCamera(-24,24,17,-17,.1,220);
-const ambient=new T.HemisphereLight(0xe8fbd8,0x46615b,2.15);scene.add(ambient);
-const sun=new T.DirectionalLight(0xffe8b7,3.0);sun.position.set(-18,40,16);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-40;sun.shadow.camera.right=40;sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;sun.shadow.camera.far=110;sun.shadow.normalBias=.04;sun.shadow.bias=-.0001;scene.add(sun,sun.target);
-const fill=new T.DirectionalLight(0x75c6b7,.7);fill.position.set(20,12,-30);scene.add(fill);
+const ambient=new T.HemisphereLight(0xf8ecd4,0x405763,1.75);scene.add(ambient);
+const sun=new T.DirectionalLight(0xffe5b7,3.2);sun.position.set(-18,40,16);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-40;sun.shadow.camera.right=40;sun.shadow.camera.top=40;sun.shadow.camera.bottom=-40;sun.shadow.camera.far=110;sun.shadow.normalBias=.04;sun.shadow.bias=-.0001;scene.add(sun,sun.target);
+const fill=new T.DirectionalLight(0x9ac9d5,.65);fill.position.set(20,12,-30);scene.add(fill);
 const world=makeWorld(scene), audio=new FactoryAudio();
 const player=newPlayer(),model=tankModel();
 player.underpass=false;
@@ -45,13 +45,20 @@ const enemyDefs=[['scout',27,0],['scout',17,40],['scout',26,45],['turret',15,46]
 const healths={scout:1,turret:2,guard:3,elite:9,boss:14};
 function makeEnemy(type,x,z){
   const m=tankModel(type);scene.add(m.root);
-  const e={type,x,z,sx:x,sz:z,hp:healths[type],max:healths[type],heading:type==='boss'?0:Math.PI,aim:Math.PI,model:m,r:type==='boss'?4.8:type==='elite'?1.9:type==='turret'?1:1.5,state:'idle',timer:1.5,cooldown:0,active:false,flash:0,armorFlash:0,chargeX:0,chargeZ:0,ramAt:-10,hitCycle:0,cycle:0,assemblies:[4,4],core:6,openSide:-1};
+  const e={type,x,z,sx:x,sz:z,hp:healths[type],max:healths[type],heading:type==='boss'?0:Math.PI,aim:Math.PI,model:m,r:CHARGE[type]?.radius??(type==='boss'?4.8:type==='turret'?1:1.5),state:'idle',timer:1.5,cooldown:0,active:false,flash:0,armorFlash:0,chargeX:0,chargeZ:0,ramAt:-10,cycle:0,assemblies:[4,4],core:6,openSide:-1};
   e.hurtRadius=e.r*ENEMY_HURT_SCALE;
-  const warning=new T.Group();scene.add(warning);e.warning=warning;
-  const wm=new T.MeshBasicMaterial({color:C.orange,transparent:true,opacity:.25,depthWrite:false,side:T.DoubleSide});
-  const shape=box(warning,type==='elite'?3:type==='boss'?3:1.2,.025,type==='elite'?19:22,0,.09,type==='elite'?10:12,wm,0);shape.castShadow=false;e.warningShape=shape;warning.visible=false;
+  if(CHARGE[type]){
+    const {root,shape}=chargeWarning(type);e.warning=root;e.warningShape=shape;
+  }else{
+    e.warning=new T.Group();
+    const wm=new T.MeshBasicMaterial({color:C.orange,transparent:true,opacity:.25,depthWrite:false});
+    e.warningShape=box(e.warning,type==='boss'?1.1:.28,.025,22,0,.1,12,wm,0);
+    e.warningShape.castShadow=false;
+  }
+  scene.add(e.warning);e.warning.visible=false;
   if(type==='boss'){
     e.coreMesh=box(m.body,1.1,.9,.18,0,1.25,1.58,mat(C.dark,true),.12);
+    e.coreDoors=[-1,1].map(side=>box(m.body,.58,1.02,.14,side*.3,1.25,1.72,C.metal));
     e.weakpoints=[];for(const side of [-1,1]){const group=new T.Group();scene.add(group);group.visible=false;const core=box(group,.6,2,1.6,0,1.5,0,mat(C.orange,true),.15);const shield=box(group,.3,2.3,1.9,side*.55,1.5,0,C.dark,.15);box(group,2.2,.65,.7,-side*1.3,1,0,C.teal,.12);e.weakpoints.push({group,core,shield});}
   }
   return e;
@@ -168,22 +175,22 @@ function hitBoss(b){
     for(let side=0;side<2;side++){
       const w=boss.weakpoints[side].group.position;
       if(boss.openSide===side&&boss.assemblies[side]>0&&(side===0?b.dx>0:b.dx<0)&&segmentCircle(b.px,b.pz,b.x,b.z,w.x,w.z,1.35*ENEMY_HURT_SCALE)){
-        boss.assemblies[side]=Math.max(0,boss.assemblies[side]-b.damage);boss.hitCycle++;if(boss.hitCycle>=2)boss.openSide=-1;boss.hp=boss.assemblies[0]+boss.assemblies[1]+boss.core;burst(w.x,w.z,C.orange,10,2);audio.event('hit',pan(w.x,w.z));
+        boss.assemblies[side]=Math.max(0,boss.assemblies[side]-b.damage);boss.hp=boss.assemblies[0]+boss.assemblies[1]+boss.core;burst(w.x,w.z,C.orange,10,2);audio.event('hit',pan(w.x,w.z));
         if(boss.assemblies[side]===0)explosion(w.x,w.z,1.5);
         return true;
       }
     }
     return false;
   }
-  if(boss.state==='vent'&&boss.hitCycle<2&&segmentCircle(b.px,b.pz,b.x,b.z,boss.x+dx*4.2,boss.z+dz*4.2,2.1*ENEMY_HURT_SCALE)){
-    boss.core=Math.max(0,boss.core-b.damage);boss.hitCycle++;boss.hp=boss.core;boss.flash=.2;burst(boss.x,boss.z,C.orange,8,3);audio.event('hit');if(!boss.hp)killEnemy(boss);return true;
+  if(boss.state==='vent'&&segmentCircle(b.px,b.pz,b.x,b.z,boss.x+dx*4.2,boss.z+dz*4.2,2.1*ENEMY_HURT_SCALE)){
+    boss.core=Math.max(0,boss.core-b.damage);boss.hp=boss.core;boss.flash=.2;burst(boss.x,boss.z,C.orange,8,3);audio.event('hit');if(!boss.hp)killEnemy(boss);return true;
   }
   return false;
 }
 function resetOrdinary(){
   for(const e of enemies){
     if((e.type==='elite'&&eliteDead)||(e.type==='boss'&&bossDead))continue;
-    e.x=e.sx;e.z=e.sz;e.hp=e.max;e.heading=e.type==='boss'?0:Math.PI;e.state='idle';e.timer=2;e.active=false;e.cooldown=0;e.armorFlash=0;if(e.model.frontArmor)e.model.frontArmor.material.emissiveIntensity=0;e.hitCycle=0;e.cycle=0;e.assemblies=[4,4];e.core=6;e.openSide=-1;e.warning.visible=false;e.model.root.visible=true;
+    e.x=e.sx;e.z=e.sz;e.hp=e.max;e.heading=e.type==='boss'?0:Math.PI;e.state='idle';e.timer=2;e.active=false;e.cooldown=0;e.armorFlash=0;if(e.model.frontArmor)e.model.frontArmor.material.emissiveIntensity=0;e.cycle=0;e.assemblies=[4,4];e.core=6;e.openSide=-1;e.warning.visible=false;e.model.root.visible=true;
     e.model.root.scale.setScalar(e.type==='boss'?2.8:e.type==='elite'?1.35:1);
   }
   for(const b of bullets)scene.remove(b.mesh);bullets.length=0;
@@ -202,11 +209,12 @@ function respawn(){
 function enemyShoot(e,offset=0,heavy=false){
   const a=Math.atan2(player.x-e.x,player.z-e.z)+offset,r=e.type==='boss'?5:e.type==='turret'?2:2.3;
   emitBullet(e.x+Math.sin(a)*r,e.z+Math.cos(a)*r,a,'enemy',heavy?15:e.type==='guard'?10:8,heavy?13:e.type==='boss'?12:18,elevation(e.x,e.z)+1.1,heavy);
-  audio.event('shot',pan(e.x,e.z));e.model.barrel.position.z=-.3;
+  audio.event(e.type==='boss'?'foundry-shot':e.type==='turret'?'welder-shot':'guard-shot',pan(e.x,e.z));e.model.barrel.position.z=-.3;
 }
 function updateEnemies(dt){
   for(const e of enemies){
     if(e.hp<=0)continue;
+    const previousPosition={x:e.x,z:e.z};
     const dx=player.x-e.x,dz=player.z-e.z,dist=Math.hypot(dx,dz),a=Math.atan2(dx,dz),ordinary=!['elite','boss'].includes(e.type);
     const engaged=dist<22&&lineClear(e.x,e.z,player.x,player.z);
     // Arena membership starts special encounters; distance and sight start ordinary encounters.
@@ -223,15 +231,16 @@ function updateEnemies(dt){
         if(e.state==='idle'){
           e.heading+=angleDelta(e.heading,a)*Math.min(1,dt*5);
           if(dist>6)moveEntity(e,(dx/dist+Math.cos(time+e.sx)*.3)*2.3*dt,(dz/dist+Math.sin(time+e.sz)*.3)*2.3*dt,1.1);
-          if(e.timer<=0&&dist<14){e.state='warn';e.timer=1.05;e.chargeX=Math.sin(a);e.chargeZ=Math.cos(a);audio.event('warn',pan(e.x,e.z));burst(e.x,e.z,0xe5edcf,6,1,.4);}
+          if(e.timer<=0&&dist<14){e.state='warn';e.timer=1.05;e.chargeX=Math.sin(a);e.chargeZ=Math.cos(a);audio.event('clamp-warn',pan(e.x,e.z));burst(e.x,e.z,0xe5edcf,6,1,.4);}
         }else if(e.state==='warn'){
-          e.warning.visible=true;e.heading=Math.atan2(e.chargeX,e.chargeZ);e.model.body.rotation.x=.15;
-          if(e.timer<=0){e.state='charge';e.timer=.75;}
+          e.warning.visible=true;e.heading=Math.atan2(e.chargeX,e.chargeZ);
+          if(e.timer<=0){e.state='charge';e.timer=CHARGE.scout.duration;}
         }else if(e.state==='charge'){
           const previousX=e.x,previousZ=e.z;
-          const blocked=moveEntity(e,e.chargeX*13*dt,e.chargeZ*13*dt,1.1);
+          const travel=CHARGE.scout.speed*Math.min(dt,Math.max(0,e.timer+dt));
+          const blocked=moveEntity(e,e.chargeX*travel,e.chargeZ*travel,1.1);
           if(segmentCircle(previousX,previousZ,e.x,e.z,player.x,player.z,e.r+PLAYER_HURT_RADIUS))hitPlayer(5,e.x,e.z);
-          if(e.timer<=0||blocked){e.state='idle';e.timer=2;e.model.body.rotation.x=0;}
+          if(e.timer<=0||blocked){e.state='idle';e.timer=2;}
         }
       }else if(e.type==='turret'||e.type==='guard'){
         if(e.type==='guard'){e.heading+=clamp(angleDelta(e.heading,a),-dt*.65,dt*.65);if(dist>9)moveEntity(e,Math.sin(e.heading)*1.1*dt,Math.cos(e.heading)*1.1*dt,1.4);}
@@ -240,14 +249,15 @@ function updateEnemies(dt){
       }else if(e.type==='elite'){
         if(e.state==='idle'){
           e.heading+=angleDelta(e.heading,a)*Math.min(1,dt*2);
-          if(e.timer<=0){e.state='warn';e.timer=1.7;e.chargeX=Math.sin(a);e.chargeZ=Math.cos(a);audio.event('warn',pan(e.x,e.z));}
+          if(e.timer<=0){e.state='warn';e.timer=1.7;e.chargeX=Math.sin(a);e.chargeZ=Math.cos(a);audio.event('press-warn',pan(e.x,e.z));}
         }else if(e.state==='warn'){
           e.heading=Math.atan2(e.chargeX,e.chargeZ);e.warning.visible=true;
           if(Math.random()<dt*25)burst(e.x,e.z,C.orange,1,1,.5);
-          if(e.timer<=0){e.state='charge';e.timer=1.2;audio.event('ram',pan(e.x,e.z));}
+          if(e.timer<=0){e.state='charge';e.timer=CHARGE.elite.duration;audio.event('ram',pan(e.x,e.z));}
         }else if(e.state==='charge'){
           const previousX=e.x,previousZ=e.z;
-          const blocked=moveEntity(e,e.chargeX*19*dt,e.chargeZ*19*dt,e.r);
+          const travel=CHARGE.elite.speed*Math.min(dt,Math.max(0,e.timer+dt));
+          const blocked=moveEntity(e,e.chargeX*travel,e.chargeZ*travel,e.r);
           if(segmentCircle(previousX,previousZ,e.x,e.z,player.x,player.z,e.r+PLAYER_HURT_RADIUS))hitPlayer(12,e.x,e.z);
           if(e.timer<=0||blocked){e.state='vent';e.timer=4.3;burst(e.x,e.z,0xc9d9c5,16,2,.5);audio.event('heat',pan(e.x,e.z));}
         }else if(e.state==='vent'){
@@ -263,7 +273,7 @@ function updateEnemies(dt){
         else if(e.state==='warn'){e.warning.visible=true;if(e.timer<=0){enemyShoot(e,0,true);e.state='fan';e.timer=3.2;e.cooldown=.5;}}
         else if(e.state==='fan'){
           if(e.cooldown<=0){for(const offset of [-.52,-.26,0,.26,.52])enemyShoot(e,offset);e.cooldown=phase2?.55:.85;}
-          if(e.timer<=0){e.state='vent';e.hitCycle=0;e.timer=phase2?3.2:3.6;e.openSide=e.cycle%2;if(e.assemblies[e.openSide]===0)e.openSide=1-e.openSide;pulse(e.x,e.z,C.orange,10);}
+          if(e.timer<=0){e.state='vent';e.timer=phase2?3.2:3.6;e.openSide=e.cycle%2;if(e.assemblies[e.openSide]===0)e.openSide=1-e.openSide;pulse(e.x,e.z,C.orange,10);}
         }else if(e.state==='vent'){
           if(e.timer<=0){e.state='idle';e.timer=phase2?2.5:4;e.cycle++;e.openSide=-1;}
         }
@@ -274,14 +284,15 @@ function updateEnemies(dt){
           w.group.visible=e.assemblies[i]>0;w.shield.position.y=T.MathUtils.damp(w.shield.position.y,e.openSide===i?3.7:1.5,8,dt);
           w.core.material.color.setHex(e.openSide===i?C.orange:C.dark);
         }
-        e.model.radiator.material.color.setHex(phase2&&e.state==='vent'&&e.hitCycle<2?C.orange:C.dark);e.coreMesh.material.color.setHex(phase2&&e.state==='vent'&&e.hitCycle<2?C.orange:C.dark);
+        e.coreDoors.forEach((door,i)=>door.position.x=T.MathUtils.damp(door.position.x,(i?1:-1)*(phase2&&e.state==='vent'?.93:.3),9,dt));
+        e.model.radiator.material.color.setHex(phase2&&e.state==='vent'?C.orange:C.dark);e.coreMesh.material.color.setHex(phase2&&e.state==='vent'?C.orange:C.dark);
       }
     }
     if(!e.active){e.warning.visible=false;if(!ordinary&&e.state!=='idle'){e.state='idle';e.timer=2;e.openSide=-1;}}
     e.warning.position.set(e.x,elevation(e.x,e.z),e.z);e.warning.rotation.y=e.type==='elite'||e.type==='scout'?e.heading:e.aim;
     e.warningShape.material.opacity=.12+Math.sin(time*14)*.07+(e.state==='warn'?.13:0);
     e.model.root.position.set(e.x,elevation(e.x,e.z)+Math.sin(time*3+e.sx)*.025,e.z);e.model.body.rotation.y=e.heading;e.model.turret.rotation.y=e.type==='elite'?e.heading:e.aim;
-    e.model.antenna.rotation.z=Math.sin(time*7)*.12;e.model.root.visible=true;
+    e.model.rollWheels(((e.x-previousPosition.x)*Math.sin(e.heading)+(e.z-previousPosition.z)*Math.cos(e.heading))/.26);e.model.animate(e.state,e.timer,time,dt,e.active);e.model.root.visible=true;
     if(e.flash>0)e.model.root.scale.setScalar((e.type==='boss'?2.8:e.type==='elite'?1.35:1)*(1+e.flash*.2));else e.model.root.scale.setScalar(e.type==='boss'?2.8:e.type==='elite'?1.35:1);
     // Shared solid-body response: rams deal their type-specific effect but never pass through a body.
     const nd=Math.hypot(player.x-e.x,player.z-e.z),min=e.r+.9;
@@ -348,10 +359,26 @@ function updateWorld(dt){
   for(const h of world.hives){
     const near=Math.hypot(player.x-h.x,player.z-h.z)<4;
     h.petals.forEach((p,i)=>{p.rotation.x=T.MathUtils.damp(p.rotation.x,near?-1.05:0,5,dt);});
+    const repairing=near&&time-repairPulse<1.6&&anchor===h.id;
+    h.tools.forEach(tool=>{tool.root.rotation.z=T.MathUtils.damp(tool.root.rotation.z,repairing?tool.side*(.65+Math.sin(time*17)*.08):near?tool.side*.25:0,8,dt);tool.tip.visible=near;});
     h.beacon.rotation.y=time*.5;h.beacon.position.y=Math.sin(time*2)*.15;h.beacon.visible=h.active||near;
     h.root.visible=h.id!==2||bossDead;
   }
-  for(const a of world.animated){if(a.kind==='fan')a.mesh.rotation.y+=dt*.65;else a.mesh.position.y=.19+Math.sin(time*2+a.phase)*.025;}
+  for(const a of world.animated){
+    if(a.kind==='fan')a.mesh.rotation.y+=dt*.65;
+    else if(a.kind==='lava')a.mesh.position.y=.19+Math.sin(time*2+a.phase)*.025;
+    else if(a.kind==='recycler'){
+      const cycle=time%8;
+      a.refuse.forEach((wreck,i)=>{const travel=(time*.75+i*6)%18;wreck.position.set(Math.sin(i*2)*.25,.06,9-travel);wreck.rotation.y=Math.sin(i*3)*.15;wreck.scale.y=travel>17?Math.max(.12,1-(travel-17)*1.1):1;wreck.visible=travel<17.8;});
+      a.press.position.y=T.MathUtils.damp(a.press.position.y,cycle>6.8&&cycle<7.9?1:3.6,cycle>6.8&&cycle<7.9?12:2,dt);
+      if(cycle>=6.8&&(time-dt)%8<6.8&&Math.hypot(player.x+16,player.z+3)<25)audio.event('crusher',pan(-16,-3));
+      a.mouth.material.color.setHSL(.065,.85,.56+Math.sin(time*7)*.035);
+    }else if(a.kind==='inspection'){
+      const scanTime=time%10;
+      a.scan.position.z=-3+Math.min(scanTime,4)*1.5;a.scan.visible=scanTime<4;
+      a.reject.visible=scanTime>=4;
+    }
+  }
   world.exitDoor.position.y=T.MathUtils.damp(world.exitDoor.position.y,endingTime>=0||finished?6:2.8,1.7,dt);world.exitLight.visible=endingTime>=0||finished;
   for(const e of [elite,boss])if(e.hp<=0){e.warning.visible=false;e.weakpoints?.forEach(w=>w.group.visible=false);}
 }
@@ -409,7 +436,7 @@ function drawMap(canvas,large=false){
   const px=x=>ox+x*scale,pz=z=>oz+z*scale;
   ctx.strokeStyle='#8dae9b0d';ctx.lineWidth=1;
   for(let x=ox%24;x<w;x+=24){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}for(let z=oz%24;z<h;z+=24){ctx.beginPath();ctx.moveTo(0,z);ctx.lineTo(w,z);ctx.stroke();}
-  for(const r of rooms){if(!discovered.has(r.id))continue;ctx.fillStyle=r.id==='boss'?'#745948':'#496e62';ctx.strokeStyle='#90bba07a';ctx.lineWidth=large?2:1;ctx.fillRect(px(r.x),pz(r.z),r.w*scale,r.d*scale);ctx.strokeRect(px(r.x),pz(r.z),r.w*scale,r.d*scale);}
+  for(const r of rooms){if(!discovered.has(r.id))continue;ctx.fillStyle='#'+floorColors[r.id].toString(16).padStart(6,'0');ctx.strokeStyle='#90bba07a';ctx.lineWidth=large?2:1;ctx.fillRect(px(r.x),pz(r.z),r.w*scale,r.d*scale);ctx.strokeRect(px(r.x),pz(r.z),r.w*scale,r.d*scale);}
   // Undiscovered neighboring spaces reveal only short, vague connection stubs.
   if(large)for(const r of rooms){if(discovered.has(r.id))continue;for(const known of rooms.filter(k=>discovered.has(k.id))){const ax=Math.max(r.x,known.x),az=Math.max(r.z,known.z),bx=Math.min(r.x+r.w,known.x+known.w),bz=Math.min(r.z+r.d,known.z+known.d);if(ax<=bx&&az<=bz){ctx.fillStyle='#76948635';ctx.fillRect(px((ax+bx)/2)-5,pz((az+bz)/2)-5,10,10);}}}
   const seen=(x,z)=>rooms.some(r=>discovered.has(r.id)&&inside(x,z,r));

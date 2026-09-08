@@ -14,14 +14,14 @@ async (page) => {
     // Verify each physical weak point, then the newly exposed central core.
     setup(-12,-49.2);g.scenario({enemies:{boss:{x:0,z:-51,hp:14,assemblies:[4,4],core:6,state:'idle',timer:50,heading:0}}});g.aimAt(-7.5,-49.2);g.fire();g.step(.6);check('Closed Boss cooling assembly rejects damage',g.snapshot().enemies[7].hp===14,g.snapshot().enemies[7].hp);
     for(let side=0;side<2;side++){
-      for(let hit=0;hit<4;hit++){
-        setup(side?12:-12,-49.2);g.scenario({enemies:{boss:{state:'vent',timer:3.6,openSide:side,heading:0,hitCycle:0}}});g.step(.02);g.aimAt(side?7.5:-7.5,-49.2);g.fire();g.step(.5);
-      }
-      check('Cooling assembly '+side+' destroyed',g.snapshot().enemies[7].assemblies[side]===0,g.snapshot().enemies[7].assemblies);
+      setup(side?12:-12,-49.2);g.scenario({enemies:{boss:{state:'vent',timer:3.6,openSide:side,heading:0}}});g.step(.02);
+      for(let hit=0;hit<4;hit++){g.aimAt(side?7.5:-7.5,-49.2);g.fire();g.step(.6);}
+      check('Cooling assembly '+side+' accepts four hits in one window',g.snapshot().enemies[7].assemblies[side]===0,g.snapshot().enemies[7].assemblies);
     }
-    for(let i=0;i<6;i++){
-      setup(0,-41);g.scenario({enemies:{boss:{state:'vent',timer:3.2,heading:0,hitCycle:0}}});g.aimAt(0,-51);g.fire();g.step(.6);
-    }
+    setup(0,-41);g.scenario({enemies:{boss:{state:'vent',timer:3.2,heading:0}}});
+    for(let i=0;i<5;i++){g.aimAt(0,-51);g.fire();g.step(.6);}
+    check('Core accepts five shots in one vent; Heat supplies the limit',g.snapshot().enemies[7].core===1&&g.snapshot().player.overheated,g.snapshot().enemies[7]);
+    setup(0,-41);g.scenario({enemies:{boss:{state:'vent',timer:3.2,heading:0}}});g.aimAt(0,-51);g.fire();g.step(.6);
     check('Core hits defeat Overseer',g.snapshot().bossDead,g.snapshot().enemies[7]);
     setup(0,-60);g.setInput(['KeyW','KeyD']);g.step(1.2);g.setInput([]);check('Boss defeat opens physical exit gate',g.snapshot().player.z<-65,g.snapshot().player.z);
     setup(0,-70);g.repair();g.step(3.3);check('Third Hive completes level and persists ending',g.snapshot().finished&&g.snapshot().anchor===2&&document.getElementById('completion').hidden===false);
