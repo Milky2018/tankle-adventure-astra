@@ -8,7 +8,7 @@ This is the single source of truth for game design: the existing playable level,
 
 The confirmed direction is a lonely, mysterious journey through a lost mechanical civilization, ending in passing on the flame (传火). The eight-ability roster and the complete story linking seven regions, ability acquisition, persistent map changes, and voluntary furnace docking are accepted design directions. On 2026-09-09 the user accepted the Super Metroid-inspired exploration structure: layered regional access, direct inter-region loops, Mortar acquisition in familiar loading works, independently sufficient Flotation or Laser approaches to Phoenix, and a full exploration act after Water Circulation. The acquisition and story sections below incorporate that revision. Explicitly labelled proposals and unspecified room layouts, encounter values, timing, production scope, and implementation details remain open.
 
-The playable build now includes the Recycling Foundry and the much larger Empty Transit Hub, including Magnetic Traction and an early Mortar route. The implementation record below defines their exact scope. Flotation, Laser, Phoenix, Water Circulation, the interiors of subsequent regions, and the final story acts remain future work. All future game-design decisions belong in this document; implementation and execution instructions belong in the version README.
+The playable build now includes the Recycling Foundry, Empty Transit Hub, and Sunken Gardens, including Magnetic Traction, Flotation, and both approaches to the original Mortar rig. The implementation records below define their exact scope. Laser, Phoenix, Water Circulation, the interiors of R4–R7, and the final story acts remain future work. All future game-design decisions belong in this document; implementation and execution instructions belong in the version README.
 
 ### Emotional identity
 
@@ -333,7 +333,7 @@ A new player's test should establish whether they remember a relevant earlier ob
 
 This story direction was accepted on 2026-09-08 and its exploration topology was revised with user approval on 2026-09-09. It connects escape from recycling, discovery of a city consuming itself, recovery of modules from failed prototypes, restoration of regional infrastructure, recognition of previous furnace bearers, and voluntary passing on the flame. The seven-region structure, acquisition placement, wordless recurring scenes, and map-changing return routes form the accepted narrative and progression baseline. Detailed encounter choreography, exact room geometry, optional scene variants, and final interaction/save implementation remain open wherever identified below. Design names and region identifiers are authoring vocabulary and must not appear as gameplay text.
 
-Preserve the first level's existing local progression and mechanics. The current two-region build continues through its exit into the transit region; the local repair and saved completion remain, while the former completion menu is removed. Total playtime, room count, optional-content volume, and numerical encounter balance remain unspecified.
+Preserve the first level's existing local progression and mechanics. The current three-region build continues through its exit into transit and the gardens; the local repair and saved completion remain, while the former completion menu is removed. Total playtime, room count, optional-content volume, and numerical encounter balance remain unspecified.
 
 ### Underlying history — what happened before play
 
@@ -443,7 +443,7 @@ The outer shore is visible and partially accessible from the first transit visit
 
 Reach a ferry maintenance cradle and recover the Flotation Chassis from an immobilized transport shell. The first water crossing is short, calm, and leads to a visible ramp. Later water routes lead to the old loading works and the less obvious R5 rear entrance, while flooded chambers introduce enemies and alternate firing positions. The loading-works outlet is the likely continuation; the testworks route rewards earlier recognition of the water network. A pump restoration sequence uses movable counterweights and ordinary physical controls; it does not require any removed thermal-transfer or electrical-link ability.
 
-Restoring the pump drains part of the transit underpass and gives an immediate dry return route. Other connected deep water remains, so acquiring flotation is not invalidated by draining the entire region. An optional side pool contains a dormant small machine with no mandatory item reward; its location can later appear in the ending.
+Restoring the pump recovers an immediate dry return route into transit. In the playable layout, draining the maintenance bridge’s ballast raises its submerged deck; the main reservoir remains flooded. Other connected deep water remains, so acquiring flotation is not invalidated by draining the entire region. An optional side pool contains a dormant small machine with no mandatory item reward; its location can later appear in the ending.
 
 The observatory later reconnects to the upper pump works, and Water Circulation opens the separate supported industrial return network through this region. The garden therefore has several depths of access without draining away the value of Flotation. The revealed infrastructure shows deliberate isolation: valves were shut toward the outer gardens while return pipes to the centre remained open. The player learns that the centre survived by giving up its edges.
 
@@ -548,7 +548,7 @@ Use repeated shapes, spatial placement, motion, and sound together. Essential co
 
 R2 continues directly north through the Foundry exterior door. Completing the third Foundry Hive saves the local ending and raises the door, then returns control without a completion modal. Existing first-level saves remain valid. The journey is continuous; a separate second-region preview is available in system settings and uses its own save slot.
 
-The region now contains 28 connected floor sections, five additional Repair Hives, and 24 enemies arranged into 11 local encounters. Its supported floor union is 19,640 square world units, compared with 5,468 in R1: approximately 3.6 times the first region's area before props and blocked mechanisms are subtracted. The density revision removes 28 percent of the previous 27,284-unit floor footprint, divides yards into smaller bays and service lanes, and concentrates decisions around cover and machinery. The turntable and garden shore remain quiet orientation and recovery spaces.
+The region now contains 31 connected floor sections, five additional Repair Hives, and 24 enemies arranged into 11 local encounters. Its supported floor union, including the shunting pocket, is 20,720 square world units, compared with 5,468 in R1: approximately 3.8 times the first region's area before props and blocked mechanisms are subtracted. The current footprint remains 24 percent smaller than the earlier 27,284-unit floor footprint, divides yards into smaller bays and service lanes, and concentrates decisions around cover and machinery. The turntable and garden shore remain quiet orientation and recovery spaces.
 
 The playable milestone is restoring the Garden Shore Hive. Its pulse and the reactivated central signal express a local repair; the game remains open for exploration. Mortar, the observatory approach, and the optional carrier repair are independent discoveries, not a checklist required to reach that milestone. No additional Boss closes R2.
 
@@ -576,7 +576,7 @@ flowchart LR
 - The Mortar cradle is reachable through the east yard without Magnetic Traction. Cover, guards, and an enemy lob launcher make this an optional combat route. The short Foundry return opens from the loading-works side only after a shell lands inside its enclosure.
 - The north optical approach requires a second recessed Mortar latch. The connecting archive bridge is initially shut and opens with a lever on the observatory side, so the magnetic path cannot silently bypass the optical requirement.
 - Six persistent gates form these routes. A seventh persistent action restores the small carrier at its dock. Four counterweights have visible rails, end stops, coils, and physical cable runs; the two recessed latches have open tops and solid sides.
-- Shore water has no supporting floor and cannot be crossed by ordinary tracks. The distant mechanical garden, observatory apparatus, and reinforced express wreck preview later abilities. Full R3/R4 interiors and their rewards are not included in R2; the preview does not grant Flotation, Laser, or Phoenix.
+- Shore water has no supporting floor and cannot be crossed by ordinary tracks. The distant mechanical garden, observatory apparatus, and reinforced express wreck preview later abilities. The shore now continues into the R3 implementation described below. R4 remains a threshold preview. The second-region preview does not grant Flotation, Laser, or Phoenix.
 
 ## Magnetic Traction implementation
 
@@ -647,6 +647,114 @@ The turntable and amber signal establish an orienting landmark. Rust freight car
 Repair Hives restore HP and Heat and reset ordinary encounters. Acquired tools, activated Hives, discovered rooms, gate releases, counterweight positions, carrier restoration, and the shore milestone persist. Projectiles and temporary shield displacement reset. The large map fits discovered rooms as the journey expands; it does not reveal the entire new region or add destination arrows.
 
 These numerical values are the implemented second-region balance pass. Automated route and combat checks establish reachability and consistent mechanics; first-time discovery pace and an uninterrupted human completion time remain playtest questions.
+
+---
+
+# Third Playable Region — Sunken Gardens
+
+## Scope and progression
+
+R3 continues west from the existing Garden Shore Hive, with no loading screen or chapter reset. It adds 30 mapped floor/water sections, 14 ordinary enemies in eight local encounters, four dry Repair Hives, Flotation, a pump restoration loop, an optional maintenance tender, and a continuous canal return to the old loading works. The reservoir is framed by compact shores and abandoned growing frames, rather than increasing its size through empty combat yards. A separate third-region preview starts at the existing shore with Cannon, Overdrive, and Magnetic Traction; it grants neither Flotation nor Mortar and uses its own save slot.
+
+The entrance counterweight opens a mounted service panel. The supported approach passes a shield carrier and clamp, then a gun covering the maintenance gallery, and reaches the ferry cradle without crossing water. Neither Mortar nor Laser is required. The immobilized ferry visibly shares the player's chassis vocabulary; its paired pontoon module is acquired with the ordinary interaction key.
+
+```mermaid
+flowchart LR
+  S[R2 garden shore] -->|Magnetic service panel| F[Ferry cradle: Flotation]
+  F -->|Calm first crossing| B[Far bank and growing frames]
+  B --> C[Canopy and sluice loop]
+  C --> P[Reservoir pump island]
+  F -->|Water flank| P
+  P -->|Pull feed counterweight; operate pump| R[Supported return to R2 shore]
+  F -->|Southern water channel| D[Lower pump and canal dock]
+  D -->|Cargo canal and safe landing jetty| M[Existing old-loading Mortar rig]
+  M -->|Mortar latch| O[Foundry return and observatory route]
+  C --> T[Testworks rear threshold: future R5]
+  P -.-> I[Optional maintenance tender islet]
+```
+
+The first crossing is approximately 30 units long, calm, and free of enemy fire. Matching mooring posts and a low landing deck show where it ends. Beyond it, the supported outer shore and flooded centre form alternate approaches to the pump. The northern spur reaches the visible rear Testworks threshold; its closed hatch explicitly marks the end of the currently built region. Phoenix and the R5 interior are not implemented or silently awarded. The future observatory and Water Circulation connections retain their whole-game design roles and are not presented as completed routes.
+
+The pool visible from the original R2 Garden Shore is now traversable with Flotation and connects to the pump return; its submerged growing frames retain the earlier landmark. The southern channel is an independently useful continuation. A lower pump bank, a Repair Hive dock, cargo remains, and an armed canal island break up the return. The landing jetty reaches the safe east side of the old loading belt, so the normal garden approach does not strand the player against a lateral conveyor. It reaches the same Mortar rig used by the demanding earlier R2 route. An already acquired Mortar stays acquired; this branch creates no duplicate module or mandatory revisit checklist.
+
+## Flotation rules and feedback
+
+- F toggles deployment and can be rebound to a keyboard or mouse input. Acquiring the module briefly shows its paired-pontoon glyph and the current binding. The small persistent tool glyph indicates whether the chassis is deployed.
+- Deployment extends two visible pontoons with a mechanical opening sound. Deployed travel is 75 percent of normal driving speed (5.25 world units/second), with the same immediate directional controls and fixed camera.
+- Ordinary tracks stop at unsupported water, including during Overdrive. Deployed floats support the whole hull over connected water; they do not cross unrelated voids, walls, or closed gates. Shore entries have low edges and marked ramps.
+- Overdrive is unavailable while the pontoons are deployed, including on land. Deploying cancels the speed multiplier immediately. Retract on supported ground to resume ordinary acceleration and ram attacks. Wheels stop rolling while afloat; a low wake and gentler engine pitch distinguish water travel.
+- Retraction requires support beneath the whole collision footprint. Attempting to retract in deep water gives a short rejection sound and warm ripple while leaving the floats deployed. There is no sinking timer, forced teleport, or hidden HP cost.
+- Flotation consumes no Heat and stays usable during Overheat. Cannon, Mortar, and Magnetic Traction retain their own Heat and weapon-lock rules; the 0.75-second cooling delay and current 50 Heat/second cooling rate remain shared.
+- Shots travel across water in both directions. Flotation grants no immunity to bullets, blast damage, or overhead shells. The existing inset player hurtbox remains in use.
+- A short section of the southern channel has a 1.2-unit/second current, shown by moving surface streaks. The 5.25-unit/second chassis can return against it, stop against a shore, or turn out of it. This is a handling variation, not a one-way trap or a future Water Circulation gate.
+- Rest and death preserve the acquired module. Death returns to the selected dry Hive with the pontoons retracted. No new resource or refill system is introduced.
+
+## Combat through changing ground
+
+| Space | Pressure | Useful physical response |
+| --- | --- | --- |
+| Service court | A shield carrier and clamp cover a cargo partition | Pull the shield, bait a charge, or ignite the nearby pressure vessel |
+| Maintenance gallery | A single turret watches a narrow supported approach | Use the offset machinery as cover and counterattack its cooling window |
+| Far bank | A gun and shield carrier defend the land route | Move the magnetic cover or float around the bank for another firing angle |
+| Canopy | A moving spotter supports a Mortar behind cargo | Remove the spotter, interrupt its charge, or retreat across the reservoir |
+| Sluice | A turret and shield carrier overlap near pipe housings | Choose the narrow dry flank or the wider exposed water approach |
+| Pump island | A carrier and gun defend different sides of the pump body | Approach from another bank and use the pump itself to divide their fire |
+| Lower pump | Two stationary guns cover the downstream channel | Leave the shell's fixed landing point; approach the bank through a side angle |
+| Cargo canal island | A turret fires across the route beside a breakable partition | Bait a committed volley, pass on the opposite bank, or land and counterattack |
+
+R3 uses the established 2-HP reinforced clamp, 2-HP turret, 2-HP Mortar, and 3-HP shield carrier. Telegraphs, 60 percent frontal reduction, stagger, cooling vulnerability, sighting sharing, friendly fire, and environmental blast rules are retained. Six wooden cargo partitions and six pressure vessels serve these specific encounters. Ground enemies cannot follow the tank into unsupported water; their ranged allies still cover that space. The ability advantage is the new approach direction, balanced by slower movement and loss of Overdrive. There is no region-end Boss, kill-all door, or damage quota.
+
+## Pump restoration and environmental story
+
+Pulling the pump-feed counterweight reconnects the intake. The physical control then becomes operable from the island's shore. Operating it starts the six-bladed pump rotor, lights its centre-facing return, and empties the submerged maintenance bridge's ballast. The deck rises into a supported shortcut to the old Garden Shore. Flotation can already cross its flooded footprint; restoration makes the same route available to ordinary tracks. The reservoir, first crossing, and return canal remain water, preserving the new ability's value. Neither Mortar nor a removed abstract ability is part of this sequence.
+
+The upright stems of the metal growth frames have narrow solid collision for both vehicles and direct fire. Different submerged terrace levels, stopped growth frames, the stranded ferry, and dismantled canal carriers describe a gradual shutdown. Capped outer supply pipes contrast with the restored return pipe toward the centre. Sparse music and broad water reflections leave space between machinery and fights.
+
+A small maintenance tender survives on a reservoir islet. The ordinary interaction repairs it: its head lifts, its eye warms, and its articulated tending arms resume motion. It grants no item, healing, or mandatory gate and is independent of pump restoration. Its repair state is saved for the later world's continuity; no final-ending scene is implemented here.
+
+Repair Hives, ability ownership, counterweight travel, service-panel opening, pump restoration, tender restoration, and discovered spaces persist. Ordinary enemies, temporary damage, pressure-vessel fuses, and projectiles reset as elsewhere. The map draws discovered water beneath dry islands, keeping banks and supported returns readable. Existing normal and second-preview saves remain compatible; the new control avoids taking over a previously assigned binding.
+
+---
+
+# Small Environmental Puzzles in R2 and R3
+
+Status: implemented with attack and movement interactions. Two optional route puzzles and one optional restoration scene use the tank's ordinary hull movement and Standard Cannon. Reaching the garden locations still follows the established Flotation gate. Solving these mechanisms needs no acquired ability, special ammunition, extra input binding, numerical code, or separate puzzle screen.
+
+Physical partitions screen the mechanisms from nearby firing lanes; combat is not globally suspended. Every incomplete state is recoverable locally, and completed shortcuts and restoration persist through repair, death, and reload. The intended route-puzzle discovery time is roughly one to two minutes; first-time human discovery time has not been measured. Input-driven browser traversal verifies functionality rather than subjective discovery quality.
+
+## R2: drive the treadles and release the maintenance carrier
+
+A compact shunting yard branches from the arrival area and connects west to the existing carrier bay through a barred crossing. Driving over either striped treadle flips its connected track blades once. Staying on a treadle does not repeatedly toggle it; leaving and crossing it again changes the setting back. The treadles visibly depress, their short rods lead to the rails, and switch lamps distinguish the selected branch.
+
+A Cannon impact releases the parked carrier's brake. The small powered vehicle follows the selected route at four world units per second. Setting both branches toward the service siding routes it onto a pressure catch, immediately retracting both crossing barriers. There is no extra switch-reset step after docking. The catch-to-barrier linkage and movement explain the reward directly.
+
+Any incorrect route returns the carrier to its accessible start, ready for another shot. The old signal lever remains an E-operated recall control only while the carrier is moving; E cannot launch it. Shooting a moving carrier does not reverse it or repeatedly retrigger the motor. Track changes are blocked during travel, and the carrier waits if the player or a living enemy occupies its path. No timed shot, towing ability, or rideable vehicle is required.
+
+Reloading an unfinished journey returns the carrier to its start while retaining track settings. A docked carrier stays secured and keeps the crossing open; older saves with a docked but not yet fully released crossing migrate to the directly open state. This shortcut joins already accessible freight spaces and does not open the magnetic garden gate or the Mortar receiver route.
+
+## R3: hold the pump with the hull and shoot the retaining pin
+
+A small cistern beside the post-Flotation canopy shore offers a dry connection around the far-bank guards. Its low pontoon deck initially blocks the passage. Parking the tank on a striped pump plate fills the basin in three seconds and raises the deck. The tank's weight holds the water level indefinitely, leaving time to aim. At full height, a protective sleeve rises to expose the nearby retaining pin. Shooting that pin drives the catches into the deck supports.
+
+Driving off the plate releases the pump and drains the basin automatically. With the catches engaged, the bridge stays raised and the dry passage beneath opens permanently. Leaving before shooting simply lowers the deck and permits another attempt. Shots into the lowered sleeve give a metallic rejection response; E operates neither the pump nor the pin. This is a position-and-aim problem using ordinary movement and the initial weapon, without a speed or heat threshold.
+
+The pump plate and firing position remain on a supported dry strip. Rising water closes glazed flood grates at both ends, blocking entry even with Flotation. The pump and retaining pin reject an occupied basin, preventing the mechanism from trapping a body. The inlet, outlet, level marks, retaining sleeve, and physical connections communicate the sequence. The raised deck and side walls fade when the tank enters underneath.
+
+This changes only the small cistern. The reservoir, initial water crossing, return canal, and magnetic pump restoration retain their existing rules. Both shortcut endpoints lie beyond the first Flotation crossing. Deck catches, water level, and completion are saved. Reload never preserves absent tank weight on the pump: an unfinished basin drains unless occupied again, while a secured bridge remains raised.
+
+## Optional R3: push the gutter cranks and break the pipe's rust plug
+
+A leaking pipe beside the first garden landing feeds two hinged open gutters. Each has a low, yellow crank connected to its hinge. Driving the hull into a crank turns the gutter to its next detent; the player must withdraw before pushing again. Holding the tank against a crank does not cycle it repeatedly, and neither shots nor E turn these cranks. Their offset orange paddles and the gutter's gradual rotation show the changed direction.
+
+The first gutter must feed the second, which must feed the planter below. A rust-coloured plug on the pipe's low service outlet initially restricts the supply to a trickle. One Cannon hit breaks it permanently and starts the full flow. The plug can be broken before or after arranging the gutters. A wrong alignment spills harmlessly onto the ground, and moving gutters visibly redirect their falling streams; the planter fills only after both gutters actually settle into alignment.
+
+Two seconds of connected full flow fills the planter, raises a metal stem, unfolds five leaves, and lights a small blossom. Interrupting the flow before completion drains the planter and permits another attempt. The restored plant remains alive and its completed gutter alignment stays fixed. This optional act of care opens no gate and grants no collectible, healing, or ability; it remains separate from the maintenance tender repair. A low bed partition screens the cranks from the far-bank gun and also blocks player shots at the pipe.
+
+## Projectile handling, verification, and save compatibility
+
+Puzzle impacts use the existing player Cannon projectiles and shared Heat rules, including shots whose muzzle would otherwise extend into nearby solid machinery. Earlier walls and cover still intercept those shots. Impacts consume the projectile and provide sparks and a mechanical impact or rejection sound. Enemy fire does not silently operate puzzle mechanisms. The moving carrier remains a solid obstacle; broken pipe casing removes only its own extra collision.
+
+Normal play and both regional previews retain their separate save slots. Older unsolved saves initialize the new pressure/contact inputs unheld. Existing completed plants also restore an open pipe, preserving their completed appearance. Tests cover incorrect routing, obstruction and recall, docking migration, weight release, premature shots, occupancy rejection, gutter detents, continuous contact, interrupted rotation and flow, and saved completion. Full-world and browser checks retain the original regional ability gates and verify actual Cannon impacts, local driving, close-range mouse fire, wall interception, repair, and reload.
 
 ---
 
@@ -808,7 +916,7 @@ All controls may be rebound in the system settings.
 - Overdrive adds 15 Heat per second while accelerating, at full use, and during deceleration.
 - Shooting and Overdrive Heat are additive.
 - After all Heat-generating activity ends, cooling begins after a 0.75-second delay.
-- Cooling removes 25 Heat per second.
+- Cooling removes 50 Heat per second.
 - At 100 Heat, the Tank becomes Overheated and cannot fire or engage Overdrive.
 - Overheated ends only when Heat returns fully to zero.
 - Normal direct movement remains available while Overheated.

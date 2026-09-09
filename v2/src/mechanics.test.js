@@ -7,7 +7,7 @@ test('four safe shots, fifth overheats; holding fire cannot bypass the interval'
  const p=newPlayer();for(let i=0;i<4;i++){assert.equal(shootHeat(p,i*.5),true);assert.equal(shootHeat(p,i*.5+.1),false);assert.equal(p.overheated,false);}assert.equal(p.heat,80);assert.equal(shootHeat(p,2),true);assert.equal(p.overheated,true);assert.equal(shootHeat(p,3),false);
 });
 test('cooling waits and overheated lockout lasts until completely cold',()=>{
- const p=newPlayer();for(let i=0;i<5;i++)shootHeat(p,i*.5);tick(p,2,.7);assert.equal(p.heat,100);tick(p,2.7,1);assert(p.heat<80&&p.heat>70);assert.equal(p.overheated,true);assert.equal(shootHeat(p,4),false);tick(p,3.7,4);assert.equal(p.heat,0);assert.equal(p.overheated,false);assert.equal(shootHeat(p,8),true);
+ const p=newPlayer();for(let i=0;i<5;i++)shootHeat(p,i*.5);tick(p,2,.7);assert.equal(p.heat,100);tick(p,2.7,1);assert(p.heat<55&&p.heat>50);assert.equal(p.overheated,true);assert.equal(shootHeat(p,3.7),false);tick(p,3.7,1.1);assert.equal(p.heat,0);assert.equal(p.overheated,false);assert.equal(shootHeat(p,4.8),true);
 });
 test('stationary Overdrive produces neither acceleration nor heat',()=>{
  const p=newPlayer();p.overdrive=true;tick(p,0,2,true,false);assert.equal(p.speed,1);assert.equal(p.heat,0);

@@ -32,6 +32,7 @@ The production output is `dist/`; it can be served by any static web server. A w
 | Left click | One shot with the selected weapon; holding does not autofire |
 | Q, after Mortar acquisition | Switch Cannon / Mortar |
 | Right mouse, after magnetic acquisition | Hold to pull the aimed rail or light enemy |
+| F, after acquisition | Deploy / retract Flotation on supported ground; cross water while deployed |
 | Shift, after acquisition | Hold Overdrive while moving |
 | E, near a Hive, module, or lever | Repair and save, acquire a tool, or operate the mechanism |
 | Tab | Toggle the progressively revealed region map |
@@ -48,7 +49,11 @@ The Overdrive Prototype telegraphs a straight charge, collides with cover, and v
 
 The Furnace Overseer combines slow heavy shells, fans, conveyors, and molten channels. Its outward-facing cooling assemblies open alternately for a timed window with no hit quota. Destroying each assembly stops its conveyor. The exposed central core ends the encounter; the third Repair Hive opens the exterior door and continues into the Empty Transit Hub without pausing the game.
 
-The Foundry contains six ordinary enemies, one Elite, one Boss, and three Repair Hives. The connected Empty Transit Hub adds 28 floor sections, 24 enemies in 11 local encounters, five Hives, Magnetic Traction, and an optional early Mortar acquisition. The Furnace Guard distinguishes reduced frontal damage with a brief armour flash, outward white sparks, and a metallic ricochet; side/rear hits keep the normal orange damage burst and impact sound. Ordinary enemies respawn on resting or death; destroyed relays and defeated special encounters persist. There are no field healing items, collectible currencies, or objective arrows. Q switches the two owned weapons; right mouse holds Magnetic Traction.
+The Foundry contains six ordinary enemies, one Elite, one Boss, and three Repair Hives. The connected Empty Transit Hub adds 31 floor sections, 24 enemies in 11 local encounters, five Hives, Magnetic Traction, and an optional early Mortar acquisition. The Furnace Guard distinguishes reduced frontal damage with a brief armour flash, outward white sparks, and a metallic ricochet; side/rear hits keep the normal orange damage burst and impact sound. Ordinary enemies respawn on resting or death; destroyed relays and defeated special encounters persist. There are no field healing items, collectible currencies, or objective arrows. Q switches the two owned weapons; right mouse holds Magnetic Traction.
+
+The Sunken Gardens continue west from the Garden Shore. Pull the service panel, recover Flotation at the ferry, cross to the growing frames, and restore the reservoir pump to raise a return bridge. The southern water canal reaches the existing Mortar loading rig; the northern Testworks hatch previews the next region. Four Hives, 14 enemies across eight encounters, a reversible current, and an optional repairable tender support this third region. F deploys the pontoons; retraction requires dry support. Water travel retains shooting and shared Heat, uses 75 percent movement speed, and disables Overdrive while deployed. Settings include a separate `?chapter=3` preview save starting with Magnetic Traction.
+
+Three optional environmental puzzles use ordinary driving and the Standard Cannon: drive over rail treadles and shoot the carrier brake to open a freight crossing; hold a pump plate with the hull, shoot the exposed bridge pin, and drive away to drain the cistern; push two gutter cranks with the chassis and shoot a rust plug to revive a mechanical plant. E only recalls a moving carrier. Incorrect actions are recoverable, and completed states survive repair and reload. The garden puzzles sit beyond the existing Flotation gate and do not replace it.
 
 ## Art and sound
 
@@ -63,7 +68,12 @@ Warm inspection decks, brown scrap sorting machinery, and cool gallery pipes dis
 - `src/transit-layout.js`: second-region room and encounter placement.
 - `src/transit.js`: rail mechanisms, persistent gates, tool cradles, loading receivers, and regional scenery.
 - `src/combat-props.js`: breakable cargo, delayed pressure-vessel explosions, and encounter cover reset.
-- `src/abilities.js`: bounded Mortar targeting and arc trajectory.
+- `src/garden-layout.js`: third-region shores, water network, encounters, and ability connections.
+- `src/gardens.js`: continuous animated water, pontoon assembly, ballast bridge, pump and tender restoration, current and regional scenery.
+- `src/puzzle-layout.js`: compact puzzle rooms, physical controls, and carrier routes.
+- `src/puzzle-rules.js`: independently testable carrier, cistern, and gutter state rules.
+- `src/small-puzzles.js`: animated mechanisms, collision, interaction, feedback, and persistence.
+- `src/abilities.js`: bounded Mortar targeting, arc trajectory, and whole-hull flotation support rules.
 - `src/main.js`: fixed-step simulation, collision, encounter state machines, save/load, maps, controls, and presentation.
 - `src/audio.js`: gesture-activated Web Audio engine, mechanical percussion, melodic layers, and positional effects.
 - `src/style.css`: graphical HUD and system menus.
@@ -77,7 +87,7 @@ npm test
 npm run build
 ```
 
-Twenty-one Node tests cover shot cadence, the fifth-shot overheat threshold, cooling delay and lockout, Overdrive acceleration/deceleration, stationary input, normalized screen movement, conveyor equilibrium, damage protection, swept projectile collisions, wheel-axis stability and rolling direction through hull turns, charge telegraph coverage of the full swept body, and construction/animation of the factory enemy forms, Mortar targeting and cooldown, regional area, both initial acquisition routes, gated boundaries, counterweight persistence, and the independent optical route.
+Forty-one Node tests cover shot cadence, the fifth-shot overheat threshold, cooling delay and lockout, Overdrive acceleration/deceleration, stationary input, normalized screen movement, conveyor equilibrium, damage protection, swept projectile collisions, wheel-axis stability and rolling direction through hull turns, charge telegraph coverage of the full swept body, and construction/animation of the factory enemy forms, Mortar targeting and cooldown, regional area, both initial acquisition routes, gated boundaries, counterweight persistence, and the independent optical route.
 
 The Playwright CLI scenario scripts run against `http://127.0.0.1:5174/?test`, in this order:
 
@@ -91,6 +101,9 @@ playwright-cli -s=furnace-v2 run-code "$(cat scripts/transit-check.js)"
 playwright-cli -s=furnace-v2 run-code "$(cat scripts/transit-walk-check.js)"
 playwright-cli -s=furnace-v2 run-code "$(cat scripts/transit-ui-check.js)"
 playwright-cli -s=furnace-v2 run-code "$(cat scripts/encounter-check.js)"
+playwright-cli -s=furnace-v2 run-code "$(cat scripts/garden-walk-check.js)"
+playwright-cli -s=furnace-v2 run-code "$(cat scripts/garden-check.js)"
+playwright-cli -s=furnace-v2 run-code "$(cat scripts/puzzle-check.js)"
 ```
 
 The 33 Foundry browser scenario checks exercise both conveyor gates, ordinary combat, both relays, barrier collision, repair and enemy reset, physical furnace damage, the underpass, death/respawn, Elite vulnerability and acquisition, Boss assembly/core damage without window quotas, charge-warning boundary fairness, guard armour, the exit gate, and completion. Scenarios place the tank and configure encounter windows for deterministic checks, then exercise the actual simulation and projectiles. They clear the test browser's game save; use a dedicated browser session. The inspection surface is gated by both development mode and `?test`, and is absent from production builds.
@@ -101,8 +114,12 @@ The encounter script checks cargo destruction by Cannon and Overdrive, baited ch
 
 The UI script verifies real Q/right-mouse input, a single clamped Mortar reticle, tall-obstacle interception, and old-save continuation.
 
-The density pass reduces the second region's floor footprint by 28 percent, retains both acquisition orders, and places destructible cover and reusable armour carts into specific firing lanes. Its full gameplay rules and encounter table are recorded in `Gamespec.md`.
+Including the new shunting pocket, the second region's floor footprint remains 24 percent smaller than before the density pass. It retains both acquisition orders, and places destructible cover and reusable armour carts into specific firing lanes. Its full gameplay rules and encounter table are recorded in `Gamespec.md`.
 
 Real browser keyboard movement, map toggling, key rebinding, and settings persistence were also checked. Screenshots from the local verification session are in the ignored `output/playwright/` directory.
 
-This is a two-region playable balance pass. A clean, uninterrupted human playthrough near the design's ten-minute target has not been measured. Automated checks establish mechanics and progression, not first-time discovery quality or subjective audio balance.
+The garden traversal check drives 23 consecutive legs with real collision and movement inputs, without teleporting between objectives. It verifies the magnetic entrance, dry module acquisition, first water crossing, outer shore and reservoir approaches, pump return, normal Mortar outlet, and persisted progression. Enemies are disabled in this check to isolate navigation. Separate scenarios verify water combat, currents, heat, Overdrive exclusion, retraction, real F input, settings, and death recovery. Node checks prove the gate relationships against the full terrain and obstacle union.
+
+The puzzle suite adds 20 browser checks and 23 local movement legs. It covers Cannon release of the carrier, pressure-operated track selection, immediate docking reward, weight-held water, shooting the exposed retaining pin, automatic drainage, hull-driven gutter cranks, the shootable pipe plug, wall interception, close-range real mouse fire, repair, and reload. It uses one starting fixture per region and disables enemies to isolate navigation. Fourteen Node tests cover the mechanism state rules, contact debounce, physical collision, access, and old-save migration.
+
+This is a three-region playable balance pass. A clean, uninterrupted human playthrough near the design's ten-minute target has not been measured. Automated checks establish mechanics and progression, not first-time discovery quality or subjective audio balance.

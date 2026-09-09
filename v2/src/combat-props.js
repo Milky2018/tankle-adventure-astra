@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { gardenProps } from './garden-layout.js';
 import { box, cylinder, ring, mat, C } from './world.js';
 
 // Each placement serves a specific firing lane, flank, or chain reaction.
@@ -12,7 +13,8 @@ export const combatPropDefs=[
   ['crate',64,-82,3,7],['tank',72,-84,1.6,1.6],['tank',75,-80,1.6,1.6],
   ['crate',92,-177,6,2],['tank',90,-173,1.6,1.6],
   ['crate',88,-232,3,8],['tank',97,-235,1.6,1.6],
-  ['crate',25,-233,3,8],['tank',30,-228,1.6,1.6]
+  ['crate',25,-233,3,8],['tank',30,-228,1.6,1.6],
+  ...gardenProps
 ];
 export const VOLATILE={fuse:.8,radius:5.5,enemyDamage:3,playerDamage:8};
 export function makeCombatProps(scene,world){

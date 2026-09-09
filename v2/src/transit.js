@@ -5,7 +5,7 @@ import { magneticRails, transitGateDefs, mortarLatches, transitModules } from '.
 
 export function makeTransit(scene, world, saved = {}) {
   const fixed = new T.Group(); scene.add(fixed);
-  const opened = new Set((saved?.opened || []).filter(id => [...transitGateDefs.map(g => g.id), 'carrier'].includes(id)));
+  const opened = new Set((saved?.opened || []).filter(id => [...transitGateDefs.map(g => g.id), 'carrier', 'garden-feed'].includes(id)));
   const obstacle = (x,z,w,d,h=3,color=C.dark) => {
     const bounds={x:x-w/2,z:z-d/2,w,d,h,active:true};world.obstacles.push(bounds);
     box(fixed,w,h,d,x,h/2,z,color,.12);return bounds;
@@ -53,6 +53,9 @@ export function makeTransit(scene, world, saved = {}) {
     const module=new T.Group();root.add(module);
     if(def.id==='magnet'){
       for(const x of [-.65,.65]){box(module,.5,1.1,.5,x,1.5,0,C.metal);box(module,.55,.35,.55,x,2.15,0,mat(C.mint,true));}box(module,1.8,.4,.55,0,1,0,C.metal);
+    }else if(def.id==='flotation'){
+      for(const x of [-.9,.9]){box(module,.65,.65,2.7,x,1.4,0,C.yellow,.2);box(module,.3,.1,2.3,x,1.78,0,C.metal);}
+      box(module,1.8,.22,.45,0,1.2,0,C.dark);
     }else{const barrel=cylinder(module,.5,1.9,0,1.7,0,C.yellow);barrel.rotation.z=-.4;box(module,1.7,.4,1.7,0,.9,0,C.dark);}
     for(const x of [-2.3,2.3])box(fixed,.18,2.4,.18,def.x+x,1.2,def.z,C.dark);
     return {...def,root,module};
@@ -108,18 +111,6 @@ export function makeTransit(scene, world, saved = {}) {
   obstacle(20,-268,16,5,4.4,0x615c50);
   for(const x of [14,18,22,26])box(fixed,.3,4.7,5.1,x,2.35,-268,C.dark);
   for(const x of [15,25])box(fixed,.15,.06,15,x,.2,-258,C.yellow);
-  // Water and a distant garden make the next capability boundary legible without a text wall.
-  const water=new T.Mesh(new T.PlaneGeometry(76,50),new T.MeshPhongMaterial({color:0x315c68,specular:0x8baeb1,shininess:65}));
-  water.rotation.x=-Math.PI/2;water.position.set(-54,-.4,-291);scene.add(water);
-  for(let i=0;i<7;i++){box(fixed,2,.18,6,-59+i*5,.05,-262,0x7b8880);}
-  const ripples=[];
-  for(const [x,z] of [[-64,-278],[-40,-278],[-25,-285],[-72,-291]]){
-    const ripple=ring(scene,2.4,.025,x,-.34,z,new T.MeshBasicMaterial({color:0x90b7b6,transparent:true,opacity:.25,depthWrite:false}));ripples.push(ripple);
-  }
-  for(const [x,z] of [[-82,-292],[-68,-306],[-31,-303]]){
-    cylinder(fixed,5,2,x,-1,z,0x334e4c,16);
-    for(let i=0;i<5;i++){const a=i*2.4;const stem=cylinder(fixed,.16,5+i*.4,x+Math.sin(a)*2,2,z+Math.cos(a)*2,0x789b89,8);stem.rotation.z=Math.sin(a)*.3;ring(fixed,1.1,.1,stem.position.x,4+i*.4,stem.position.z,0x91aa8a);}
-  }
   // The observatory is a quiet outer court; a mirror points into the unbuilt interior.
   obstacle(108,-249,4,4,6,0x6d8491);
   const dish=new T.Group();scene.add(dish);dish.position.set(107,6,-249);dish.rotation.z=.65;
@@ -137,7 +128,7 @@ export function makeTransit(scene, world, saved = {}) {
     box(fixed,.16,4,.16,x,2,z,C.dark);box(fixed,1.4,.3,.65,x,4,z,C.metal);box(fixed,1.1,.1,.5,x,3.8,z,mat(0xffdf9d,true));
     const pool=new T.Mesh(new T.CircleGeometry(3.5,20),new T.MeshBasicMaterial({color:0xffdb9a,transparent:true,opacity:.06,depthWrite:false}));pool.rotation.x=-Math.PI/2;pool.position.set(x,.14,z);fixed.add(pool);
   }
-  for(const x of [-125,130]){box(fixed,8,35,10,x,12,-202,0x30464a);box(fixed,3,47,4,x,19,-202,0x30464a);}
+  for(const x of [-215,130]){box(fixed,8,35,10,x,12,-202,0x30464a);box(fixed,3,47,4,x,19,-202,0x30464a);}
   batchStatic(fixed);
   function update(dt,time,player,restored=false){
     signal.rotation.y=restored?time*.18:Math.PI/4;signalLamp.material.color.setHex(restored?C.mint:0xa48552);
@@ -148,7 +139,7 @@ export function makeTransit(scene, world, saved = {}) {
     const carrierX=T.MathUtils.damp(carrier.position.x,-88+(opened.has('carrier')?Math.sin(time*.3)*5:0),.7,dt);
     if(Math.abs(player.z+96)>2.6||Math.abs(player.x-carrierX)>3)carrier.position.x=carrierX;
     lamp.visible=opened.has('carrier');carrierBounds.x=carrier.position.x-2;
-    ripples.forEach((r,i)=>{const phase=(time*.18+i*.25)%1;r.scale.setScalar(1+phase*2);r.material.opacity=Math.sin(phase*Math.PI)*.2;});dish.rotation.y=Math.sin(time*.05)*.05;
+    dish.rotation.y=Math.sin(time*.05)*.05;
   }
   function serialize(){return {opened:[...opened],rails:Object.fromEntries(rails.map(r=>[r.id,r[r.axis]]))};}
   return {gates,rails,modules,latches,lever,open,pull,hitLatch,opened,update,serialize};

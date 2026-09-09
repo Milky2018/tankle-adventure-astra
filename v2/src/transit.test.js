@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import * as T from 'three';
 import { makeWorld, rooms } from './world.js';
 import { makeTransit } from './transit.js';
+import { makeSmallPuzzles } from './small-puzzles.js';
 import { makeCombatProps } from './combat-props.js';
 import { transitRooms, transitModules, transitEnemies } from './transit-layout.js';
 import { inside, newPlayer, shootHeat } from './mechanics.js';
@@ -17,7 +18,7 @@ test('mortar lands at a fixed bounded target after its flight and shares weapon 
 });
 
 const scene=new T.Scene(),world=makeWorld(scene),transit=makeTransit(scene,world);
-makeCombatProps(scene,world);
+makeCombatProps(scene,world);makeSmallPuzzles(scene,world);
 function blocked(x,z,r=.88){return [[r,0],[-r,0],[0,r],[0,-r]].some(([dx,dz])=>!world.available(x+dx,z+dz))||world.obstacles.some(o=>o.active!==false&&inside(x,z,o,r));}
 function reachable(start){
   const seen=new Set(),queue=[start];seen.add(start.join(','));
@@ -33,12 +34,12 @@ function reachable(start){
 function near(set,x,z){return [...set].some(k=>{const [a,b]=k.split(',').map(Number);return Math.hypot(a-x,b-z)<3.3;});}
 test('second region is at least three times the first region floor area',()=>{
   const area=rs=>{let n=0;for(let x=-114;x<118;x++)for(let z=-284;z<82;z++)if(rs.some(r=>inside(x+.5,z+.5,r)))n++;return n;};
-  const first=area(rooms.filter(r=>!r.id.startsWith('r2-'))),second=area(transitRooms);
+  const first=area(rooms.filter(r=>!r.id.startsWith('r'))),second=area(transitRooms);
   assert.ok(second/first>=3,`${second} / ${first} = ${second/first}`);
 });
 test('both modules are reachable without either ability, while garden and optical court remain gated',()=>{
   const seen=reachable([0,-112]);
-  for(const m of transitModules)assert.ok(near(seen,m.x,m.z),m.id);
+  for(const m of transitModules.filter(m=>m.id!=='flotation'))assert.ok(near(seen,m.x,m.z),m.id);
   assert.ok(!near(seen,-57,-250),'garden remains behind magnetic gate');
   assert.ok(!near(seen,66,-240),'optical court remains behind mortar gate');
 });

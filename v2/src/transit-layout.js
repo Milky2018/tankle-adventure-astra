@@ -1,3 +1,4 @@
+import { gardenRails, gardenGates, flotationModule } from './garden-layout.js';
 // R2 joins the north exit of R1. Rectangles describe supported floor, never water.
 export const transitRooms = [
   ['arrival',-6,-116,12,38,'stone'],['turntable',-20,-148,40,36,'stone'],
@@ -31,6 +32,7 @@ export const transitEnemies=[
 ];
 export const transitHives=[[-10,-119,3],[-97,-194,4],[108,-119,5],[-57,-250,6],[66,-240,7]];
 export const magneticRails=[
+  ...gardenRails,
   {id:'crane',x:-75,z:-191,axis:'x',min:-75,max:-64,goal:-64,opens:'crane-return'},
   {id:'spine',x:-8,z:-186,axis:'x',min:-8,max:5,goal:5,opens:'spine'},
   {id:'garden',x:-34,z:-218,axis:'x',min:-34,max:-26,goal:-26,opens:'garden'},
@@ -40,6 +42,7 @@ export const magneticRails=[
   {id:'carrier',x:-88,z:-92,axis:'x',min:-88,max:-78,goal:-78,opens:'carrier'}
 ];
 export const transitGateDefs=[
+  ...gardenGates,
   {id:'crane-return',x:-52,z:-196,span:24,axis:'x'},
   {id:'spine',x:0,z:-165,span:24,axis:'z'},
   {id:'garden',x:-30,z:-225,span:16,axis:'z'},
@@ -51,4 +54,4 @@ export const mortarLatches=[
   {id:'loading-latch',x:59,z:-93,opens:'foundry-return'},
   {id:'optical-latch',x:94,z:-187,opens:'optical'}
 ];
-export const transitModules=[{id:'magnet',x:-84,z:-196},{id:'mortar',x:54,z:-78}];
+export const transitModules=[flotationModule,{id:'magnet',x:-84,z:-196},{id:'mortar',x:54,z:-78}];

@@ -22,6 +22,9 @@ export class FactoryAudio {
   }
   event(name,pan=0){
     if(!this.sfx||!this.ctx)return;
+    if(name==='lever'){this.tone(155,.15,'triangle',.18,-75,pan);this.noise(.08,.15,pan);}
+    if(name==='blocked'){this.tone(85,.13,'square',.1,-30,pan);}
+    if(name==='flotation'){this.noise(.4,.15,pan);this.tone(160,.35,'triangle',.16,160,pan);}
     if(name==='fuse'){this.noise(.65,.2,pan);this.tone(240,.8,'sawtooth',.13,440,pan);}
     if(name==='crate'){this.noise(.25,.4,pan);this.tone(90,.15,'triangle',.2,-55,pan);}
     if(name==='vent'){this.noise(.65,.14,pan);this.tone(290,.4,'sine',.1,-160,pan);}
@@ -49,11 +52,11 @@ export class FactoryAudio {
     const boost=clamp((p.speed-1)/(OVERDRIVE_MAX_SPEED-1),0,1);
     const running=this.sfx&&!paused&&p.hp>0&&(moving||boost>0);
     this.master.gain.setTargetAtTime(this.volume*.4,t,.15);
-    this.engine.frequency.setTargetAtTime(65+boost*100+p.heat*.2,t,.12);
+    this.engine.frequency.setTargetAtTime((p.afloat?48:65)+boost*100+p.heat*.2,t,.12);
     this.engineFilter.frequency.setTargetAtTime(250+boost*350,t,.12);
     this.engineGain.gain.setTargetAtTime(running?.075+boost*.105:0,t,.1);
     if(paused||p.hp<=0||!this.music){this.nextBeat=time;return;}
-    if(time<this.nextBeat)return;this.nextBeat=time+(combat?.32:area.startsWith('r2-')?1.8:1.15);
+    if(time<this.nextBeat)return;this.nextBeat=time+(combat?.32:area.startsWith('r3-')?2.3:area.startsWith('r2-')?1.8:1.15);
     // Sparse, unresolved notes leave room for machinery; combat adds a restrained pulse.
     const notes=p.overdrive?[0,7,14,10,7,3,12,7]:[0,7,10,7,2,0,7,3];
     if(this.beat%2===0)this.tone(110*2**(notes[(this.beat/2)%notes.length]/12),combat?.65:2.6,'sine',.055);
