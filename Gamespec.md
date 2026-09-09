@@ -8,7 +8,7 @@ This is the single source of truth for game design: the existing playable level,
 
 The confirmed direction is a lonely, mysterious journey through a lost mechanical civilization, ending in passing on the flame (传火). The eight-ability roster and the complete story linking seven regions, ability acquisition, persistent map changes, and voluntary furnace docking are accepted design directions. On 2026-09-09 the user accepted the Super Metroid-inspired exploration structure: layered regional access, direct inter-region loops, Mortar acquisition in familiar loading works, independently sufficient Flotation or Laser approaches to Phoenix, and a full exploration act after Water Circulation. The acquisition and story sections below incorporate that revision. Explicitly labelled proposals and unspecified room layouts, encounter values, timing, production scope, and implementation details remain open.
 
-The existing first-level specification remains the playable baseline. Later abilities, regions, story revelations, and puzzles described here are not implemented features. All future game-design decisions belong in this document; implementation and execution instructions belong in the version README.
+The playable build now includes the Recycling Foundry and the much larger Empty Transit Hub, including Magnetic Traction and an early Mortar route. The implementation record below defines their exact scope. Flotation, Laser, Phoenix, Water Circulation, the interiors of subsequent regions, and the final story acts remain future work. All future game-design decisions belong in this document; implementation and execution instructions belong in the version README.
 
 ### Emotional identity
 
@@ -54,7 +54,7 @@ The roster is now **eight abilities including the starting Standard Cannon**: St
 
 The user specified the Mortar's arcing, delayed impact; the Phoenix Engine's 3.2x maximum speed, unchanged acceleration, lethal full-speed ordinary-enemy ramming, obstacle breaking, and inter-region express routes; and the Laser's very long reach, mirror reflections, puzzle applications, and indirect weak-point attacks. Water Circulation adds the required ability to accelerate while Overheated, a red-hot hull, and double contact/ram damage against any enemy. The Water Circulation agreement also confirms passive installation without a new key or water-refill system, retained weapon lock during Overheat, stacking with Phoenix, sustained reverse-transport lanes as the primary ability gate, and a small number of thermally released impact seals that may allow physically consistent alternate solutions. Red-hot contact remains a close-range alternative against the rear-only ranged-weapon Boss. These are confirmed design decisions. The route dependencies in the accepted acquisition structure are confirmed design requirements. Exact gate geometry, unconfirmed controls, resource costs, and numerical balance below remain proposals for implementation planning.
 
-Standard Cannon and Overdrive are implemented in the first playable level. This whole-game plan does not change that implementation. Phoenix Engine is a direct Overdrive upgrade using the same action, counted as one of the eight progression acquisitions while sharing the original engine controls. Water Circulation is a separate passive upgrade that changes Overheat behaviour for either engine.
+Standard Cannon and Overdrive are implemented in the first playable level; Magnetic Traction and Mortar are implemented in the second playable region. The other acquisitions below remain planned. Phoenix Engine is a direct Overdrive upgrade using the same action, counted as one of the eight progression acquisitions while sharing the original engine controls. Water Circulation is a separate passive upgrade that changes Overheat behaviour for either engine.
 
 Every ability needs exploration access and useful combat behaviour. Phoenix Engine's combat role is overwhelming ordinary enemies while traversing; it explicitly does not need a Boss application.
 
@@ -84,7 +84,7 @@ Passing on the flame remains the ending direction. Its proposed input is a conte
 - **Exploration:** break fragile scrap or sever an exposed relay across a railing. These baseline gates establish material damage and line of sight rather than a later acquisition requirement.
 - **Combat:** remain the dependable direct-damage choice after the other weapons arrive. Moving targets at ordinary combat distances should often favour the Cannon over delayed Mortar impacts or sustained Laser exposure.
 - **Teaching:** a visible fragile support releases a walkway when shot. Indestructible structure responds distinctly from damageable scrap.
-- **Limits and Heat:** retain the current 20 Heat per shot, cadence, and solid obstruction rules as the implemented baseline. Ordinary structural walls do not gradually become destructible through unlimited shots.
+- **Limits and Heat:** retain 20 Heat per shot, the 0.5-second cadence, and solid obstruction rules. The density revision bounds Cannon travel to approximately 24 units from the hull. Ordinary structural walls do not gradually become destructible through unlimited shots.
 
 #### 2. Overdrive — momentum
 
@@ -333,7 +333,7 @@ A new player's test should establish whether they remember a relevant earlier ob
 
 This story direction was accepted on 2026-09-08 and its exploration topology was revised with user approval on 2026-09-09. It connects escape from recycling, discovery of a city consuming itself, recovery of modules from failed prototypes, restoration of regional infrastructure, recognition of previous furnace bearers, and voluntary passing on the flame. The seven-region structure, acquisition placement, wordless recurring scenes, and map-changing return routes form the accepted narrative and progression baseline. Detailed encounter choreography, exact room geometry, optional scene variants, and final interaction/save implementation remain open wherever identified below. Design names and region identifiers are authoring vocabulary and must not appear as gameplay text.
 
-Preserve the first level's existing local progression and mechanics. For a future full-game build, its exit continues into the transit region instead of ending the whole game; the current v2 completion sequence remains the vertical-slice implementation. Total playtime, room count, optional-content volume, and numerical encounter balance remain unspecified.
+Preserve the first level's existing local progression and mechanics. The current two-region build continues through its exit into the transit region; the local repair and saved completion remain, while the former completion menu is removed. Total playtime, room count, optional-content volume, and numerical encounter balance remain unspecified.
 
 ### Underlying history — what happened before play
 
@@ -541,6 +541,114 @@ Use repeated shapes, spatial placement, motion, and sound together. Essential co
 - Persistent restoration has visible consequences after passing on the flame, without requiring a hidden collection percentage.
 - The ending offers a deliberate commitment and a proposed pre-docking exploration continuation; exact final UX remains open.
 
+
+# Second Playable Region — Empty Transit Hub
+
+## Implemented scope
+
+R2 continues directly north through the Foundry exterior door. Completing the third Foundry Hive saves the local ending and raises the door, then returns control without a completion modal. Existing first-level saves remain valid. The journey is continuous; a separate second-region preview is available in system settings and uses its own save slot.
+
+The region now contains 28 connected floor sections, five additional Repair Hives, and 24 enemies arranged into 11 local encounters. Its supported floor union is 19,640 square world units, compared with 5,468 in R1: approximately 3.6 times the first region's area before props and blocked mechanisms are subtracted. The density revision removes 28 percent of the previous 27,284-unit floor footprint, divides yards into smaller bays and service lanes, and concentrates decisions around cover and machinery. The turntable and garden shore remain quiet orientation and recovery spaces.
+
+The playable milestone is restoring the Garden Shore Hive. Its pulse and the reactivated central signal express a local repair; the game remains open for exploration. Mortar, the observatory approach, and the optional carrier repair are independent discoveries, not a checklist required to reach that milestone. No additional Boss closes R2.
+
+## Routes and capability locks
+
+```mermaid
+flowchart LR
+  R1[Foundry exit] --> T[Central turntable and Hive]
+  T --> W[Western freight yard]
+  W --> M[Crane hall: Magnetic Traction]
+  M -->|Pull crane counterweight| A[Empty archives]
+  A -->|Pull spine counterweight| T
+  A -->|Pull pump counterweight| G[Garden shore and Hive]
+  W -->|Optional magnetic repair| C[Quiet carrier dock]
+  T --> E[Eastern loading yard]
+  E --> L[Old loading works: Mortar]
+  L -->|Lob into recessed latch| R1
+  E -->|Mortar hits optical latch| O[Observatory outer court and Hive]
+  O -->|Far-side mechanical lever| S[Signal hall]
+  S --- A
+  S --> P[Blocked express spur]
+```
+
+- The first crane approach and module cradle are reachable with Cannon and Overdrive. Pulling the counterweight opens the archive return; the player can then open the central spine or continue directly to the garden approach.
+- The Mortar cradle is reachable through the east yard without Magnetic Traction. Cover, guards, and an enemy lob launcher make this an optional combat route. The short Foundry return opens from the loading-works side only after a shell lands inside its enclosure.
+- The north optical approach requires a second recessed Mortar latch. The connecting archive bridge is initially shut and opens with a lever on the observatory side, so the magnetic path cannot silently bypass the optical requirement.
+- Six persistent gates form these routes. A seventh persistent action restores the small carrier at its dock. Four counterweights have visible rails, end stops, coils, and physical cable runs; the two recessed latches have open tops and solid sides.
+- Shore water has no supporting floor and cannot be crossed by ordinary tracks. The distant mechanical garden, observatory apparatus, and reinforced express wreck preview later abilities. Full R3/R4 interiors and their rewards are not included in R2; the preview does not grant Flotation, Laser, or Phoenix.
+
+## Magnetic Traction implementation
+
+Hold the right mouse button while aiming at a rail coil or a light enemy. The default binding is remappable. The tether has a 13-unit range and requires an unobstructed line; solid walls and other cargo interrupt it. Targets do not jump into the player's inventory.
+
+Three additional armoured freight carts can be moved repeatedly in both directions along their rails. They never latch. Their solid bodies block both teams' direct fire, obstruct movement, and stop before intersecting another solid object or living enemy. Cart positions persist with the other rail positions.
+
+A counterweight moves along its visible rail toward the player's position at 3 units/second, stopping short of the hull. Reaching the end detent latches it and permanently opens its linked mechanism. Partial positions persist when the tether is released and through resting, death, or reload; a latched mechanism never needs replaying.
+
+Traction generates 10 Heat/second, reduces driving speed to 55 percent while connected, occupies the weapon, and stops on Overheat. The existing cooling delay and full-cool lockout apply. Pulling a reclaiming clamp interrupts its charge. Pulling a guard opens its shield visibly and leaves it vulnerable to full frontal fire for 2.5 seconds after release. Bolted turrets and heavier special enemies are not valid pull targets.
+
+## Mortar implementation
+
+Picking up Mortar equips it. Q switches between Cannon and Mortar; left click fires the selected weapon. Switching does not reset Heat or bypass the preceding weapon's cooldown. No ammunition pickups or inventory screen are added.
+
+| Rule | Implemented value |
+| --- | --- |
+| Maximum landing distance | 24 world units |
+| Flight duration | 1.15 seconds |
+| Arc rise | 8 units above the interpolated start/end height |
+| Heat per launch | 35 |
+| Minimum firing interval | 1.05 seconds |
+| Ground blast radius | 3 units, tested against enemy hurtboxes |
+| Ordinary-enemy damage | 3 |
+
+The landing point is fixed at firing time. The visible projectile follows a sampled arc; low cover can be cleared, while taller solid geometry intercepts it. Ground blasts respect intervening walls. Overhead hits bypass an ordinary guard's front shield but do not turn an Elite or Boss's protected roof into a rear weak point.
+
+There is still exactly one reticle. In Mortar mode its ring is dashed and it stops at the actual maximum-range landing point instead of leaving an unreachable cursor target. The Heat ring retains the pale-yellow-to-red progression. A lob impact inside either recessed latch releases that physical gate; ordinary cannon shots collide with the enclosure walls.
+
+Three bolted lob launchers teach the rule before and after acquisition. They have 2 HP, a raised barrel, a fixed circular ground warning for 1.1 seconds, a visible 1.15-second shell flight, and a 3.8-second recovery. Their blast deals 8 damage within 2.5 units plus the player's hurt radius. The warning encloses that complete damage area. Moving after the warning avoids the original landing point; the shell never tracks the tank.
+
+## Encounter density and combat choices
+
+The second-region revision addresses passive long-range shooting and encounters that previously had little relationship to their surroundings. It retains small, readable groups and continuous exploration. Ordinary combat never locks the room, requires a specific finishing move, or awards a new currency.
+
+| Encounter | Spatial situation | Available tactics |
+| --- | --- | --- |
+| Freight approach | Reinforced clamps approach through a crate-lined lane | Shoot, ram through cargo, take the narrow flank, or bait a charge into the barricade |
+| Western switchyard | A guard and clamp approach beside a supporting turret; pressure vessels sit along the flank | Reposition to separate the group, ignite a chain reaction, or align enemies with friendly fire |
+| Crane hall | A guard and turret cover the exit side of a rail-mounted armour plate | Pull cover to close the firing lane, reopen it for a counterattack, or circle the freight car |
+| Archives | A guard screens a bolted turret across shelves and a movable cart | Pull the guard's shield, rearrange the line of fire, or use Mortar overhead after an early acquisition |
+| Eastern loading yard | Guard and clamp advance while a spotter-assisted Mortar pressures the protected side | Leave the marked landing area, remove the spotter, or lure the guard into its ally's shell |
+| Old loading works | Crates and pressure vessels divide the approach to the weapon cradle | Use the conveyor flank, break an opening, or set off a delayed blast before closing on the launcher |
+| Optical approach | A guard spots for a Mortar behind a recessed receiver | Clear the guard, cross its last reported firing position, or use the player's Mortar through the open top |
+| Observatory court and signal hall | Freight partitions separate a protected gun from its flank | Reuse earlier tools in a new approach direction; attack through the gap or exploit the gun's cooling window |
+
+### Enemy interaction rules
+
+- R2 clamps have 2 HP and a visible reinforcing plate that breaks away after damage; R1 clamps remain at 1 HP. R2 clamps approach at 3.5 units/second, choose an unobstructed local steering direction, and retain the readable 1.05-second charge warning. Colliding with solid scenery or another enemy leaves them staggered for 1.8 seconds. The charge breaks wooden cargo, primes a pressure vessel, or deals 2 damage to the struck ally. Overdrive still kills an ordinary clamp outright.
+- R2 turrets retain 2 HP. They warn for 1.15 seconds, stop tracking during the final 0.6 seconds, and fire three shots at 0.2-second intervals along the committed direction. A 2.5-second cooling window opens the hood, exposes the orange radiator, and doubles incoming damage. A single well-timed Cannon hit can finish a full-health turret during that window. There is no hit quota or invulnerable damage phase.
+- R2 guards retain 3 HP and 60 percent frontal reduction, and move at 1.8 units/second around clear nearby approaches. Their physical shield can absorb another enemy's shots. Magnetic shield displacement preserves the existing 2.5-second exposure, allowing an aligned volley to hurt them fully.
+- R2 direct enemy shots deal 5 damage to the player and 1 damage to an intervening ordinary ally; they stop at the first solid target. Enemy Mortar blasts deal 8 damage to the player and 3 to other R2 enemies at the fixed landing point. The launcher itself is excluded from its own friendly-fire blast. Both teams can ignite pressure vessels and break crates.
+- Members of a local encounter share their last visible sighting for four seconds. A surviving spotter can therefore support indirect Mortar fire over cover. Killing or evading the spotter lets that sighting expire; the launcher does not track unseen movement. New attacks require the attacker to be on screen and within 30 units. Leaving the screen cancels an unfinished windup, burst, or charge, so returning does not produce an unannounced attack.
+- The Standard Cannon now travels approximately 24 units from the hull, including its muzzle offset. This applies in both regions and prevents shooting far beyond an ordinary enemy's awareness. Heat, the 0.5-second Cannon interval, first-level special encounters, and the existing armour rules remain in force.
+
+### Destructible and reusable cover
+
+There are ten diagonally braced wooden cargo crates and twelve red pressure vessels. Wooden cargo has 2 HP; shooting it, ramming it, or baiting a clamp into it creates a real passage through its former collider. Riveted steel freight cars and magnetic armour carts remain solid, giving the materials distinct meanings.
+
+A pressure vessel ignites after one hit or a ram. It hisses and displays a ground danger ring for 0.8 seconds before exploding; repeated hits never shorten this fuse. Its radius is 5.5 units, tested against hurtboxes, with 3 damage to enemies and 8 to the player. Its ring includes the player's full damage margin. Nearby vessels start their own complete fuse, making the chain reaction readable and escapable. Solid cover blocks the blast; explosion targets are determined before cover breaks, preventing iteration order from allowing damage through walls. A vessel's blast can break wooden cargo or stun the encounter through casualties, but does not unlock an unrelated progression gate.
+
+Repair or death rebuilds combat crates and pressure vessels, clears lit fuses and projectiles, and restores ordinary enemies. Persistent gates, acquired abilities, and rail positions stay intact. None of these temporary destructible objects is a one-way requirement for progression.
+
+## Spatial tone and persistence
+
+The turntable and amber signal establish an orienting landmark. Rust freight cargo and a suspended crane identify the west route; empty mechanical cradles and shelves suggest the former passengers. Slate loading bays, the upward-firing launcher, and recessed receivers identify the east route. Quiet dock water and distant metal growth frame the next region; a tilted dish and mirror hint at the observatory's later optical vocabulary. Exploration music leaves longer gaps in this region.
+
+Repair Hives restore HP and Heat and reset ordinary encounters. Acquired tools, activated Hives, discovered rooms, gate releases, counterweight positions, carrier restoration, and the shore milestone persist. Projectiles and temporary shield displacement reset. The large map fits discovered rooms as the journey expands; it does not reveal the entire new region or add destination arrows.
+
+These numerical values are the implemented second-region balance pass. Automated route and combat checks establish reachability and consistent mechanics; first-time discovery pace and an uninterrupted human completion time remain playtest questions.
+
+---
 
 # First Playable Level — Established Design
 
@@ -993,10 +1101,10 @@ The level provides opportunities to discover mechanics without deliberate guidan
 - The Furnace Overseer's defeat opens the rear door.
 - The player remains in control and drives to Repair Hive 3.
 - Activating the Hive restores and saves the Tank, then sends a light pulse toward the exit.
-- The exit opens only far enough to reveal bright, undefined exterior light.
+- The exit opens toward the transit approach; a brief light pulse preserves the local escape beat.
 - The Tank looks toward the opening and raises its antenna.
-- After approximately three seconds the image fades to a system-level completion menu.
-- No future biome, creature, character, or detailed plot point is shown.
+- After approximately three seconds control resumes and the Foundry completion is saved. The Tank can drive directly into the transit hub.
+- The former standalone-slice completion menu is replaced by this continuous region connection.
 
 ## First-Version Validation Criteria
 

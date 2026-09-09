@@ -24,7 +24,7 @@ async (page) => {
     setup(0,-41);g.scenario({enemies:{boss:{state:'vent',timer:3.2,heading:0}}});g.aimAt(0,-51);g.fire();g.step(.6);
     check('Core hits defeat Overseer',g.snapshot().bossDead,g.snapshot().enemies[7]);
     setup(0,-60);g.setInput(['KeyW','KeyD']);g.step(1.2);g.setInput([]);check('Boss defeat opens physical exit gate',g.snapshot().player.z<-65,g.snapshot().player.z);
-    setup(0,-70);g.repair();g.step(3.3);check('Third Hive completes level and persists ending',g.snapshot().finished&&g.snapshot().anchor===2&&document.getElementById('completion').hidden===false);
+    setup(0,-70);g.repair();g.step(3.3);check('Third Hive saves completion and continues into the next region',g.snapshot().finished&&g.snapshot().anchor===2&&!g.snapshot().paused&&document.getElementById('completion')===null);
     const failed=results.filter(r=>!r.passed);if(failed.length)throw new Error(JSON.stringify(results));return results;
   });
 }

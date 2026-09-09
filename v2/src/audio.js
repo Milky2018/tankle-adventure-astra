@@ -22,6 +22,11 @@ export class FactoryAudio {
   }
   event(name,pan=0){
     if(!this.sfx||!this.ctx)return;
+    if(name==='fuse'){this.noise(.65,.2,pan);this.tone(240,.8,'sawtooth',.13,440,pan);}
+    if(name==='crate'){this.noise(.25,.4,pan);this.tone(90,.15,'triangle',.2,-55,pan);}
+    if(name==='vent'){this.noise(.65,.14,pan);this.tone(290,.4,'sine',.1,-160,pan);}
+    if(name==='mortar'){this.tone(95,.45,'sine',.7,-65,pan);this.noise(.23,.4,pan);this.tone(550,.75,'sine',.08,-380,pan);}
+    if(name==='magnet'){this.tone(130,.8,'triangle',.22,110,pan);this.tone(260,.6,'sine',.1,220,pan);}
     if(name==='shot'){this.tone(145,.2,'triangle',.65,-110,pan);this.noise(.12,.45,pan);}
     if(name==='welder-shot'){this.tone(720,.16,'triangle',.22,-590,pan);this.noise(.07,.18,pan);}
     if(name==='guard-shot'){this.tone(110,.3,'triangle',.5,-75,pan);this.noise(.2,.35,pan);}
@@ -48,7 +53,7 @@ export class FactoryAudio {
     this.engineFilter.frequency.setTargetAtTime(250+boost*350,t,.12);
     this.engineGain.gain.setTargetAtTime(running?.075+boost*.105:0,t,.1);
     if(paused||p.hp<=0||!this.music){this.nextBeat=time;return;}
-    if(time<this.nextBeat)return;this.nextBeat=time+(combat?.32:1.15);
+    if(time<this.nextBeat)return;this.nextBeat=time+(combat?.32:area.startsWith('r2-')?1.8:1.15);
     // Sparse, unresolved notes leave room for machinery; combat adds a restrained pulse.
     const notes=p.overdrive?[0,7,14,10,7,3,12,7]:[0,7,10,7,2,0,7,3];
     if(this.beat%2===0)this.tone(110*2**(notes[(this.beat/2)%notes.length]/12),combat?.65:2.6,'sine',.055);
