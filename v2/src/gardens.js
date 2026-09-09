@@ -19,8 +19,8 @@ export function makeGardens(scene,world,transit,saved={}){
   const fixed=new T.Group();scene.add(fixed);let restored=!!saved?.restored,tenderRepaired=!!saved?.tender;world.state.drained=restored;
   const obstacle=(x,z,w,d,h=2.5,color=0x627b70)=>{const b={x:x-w/2,z:z-d/2,w,d,h,active:true};world.obstacles.push(b);box(fixed,w,h,d,x,h/2,z,color,.12);return b;};
   // One continuous surface mesh avoids seams where canals overlap the reservoir.
-  const positions=[],waterRooms=gardenRooms.filter(r=>['water','drain'].includes(r.kind));
-  for(let x=-186;x<58;x+=2)for(let z=-328;z<-96;z+=2)if(waterRooms.some(r=>inside(x+1,z+1,r))){
+  const positions=[],waterRooms=world.rooms.filter(r=>['water','drain'].includes(r.kind));
+  for(let x=-186;x<58;x+=2)for(let z=-368;z<-96;z+=2)if(waterRooms.some(r=>inside(x+1,z+1,r))){
     positions.push(x,0,z,x,0,z+2,x+2,0,z,x+2,0,z,x,0,z+2,x+2,0,z+2);
   }
   const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));geometry.computeVertexNormals();
@@ -72,8 +72,7 @@ export function makeGardens(scene,world,transit,saved={}){
   box(bridge,drain.w,.5,drain.d,drain.x+drain.w/2,-.3,drain.z+drain.d/2,0x6a8275);
   for(let x=drain.x+1;x<drain.x+drain.w;x+=2)box(bridge,.15,.08,drain.d-.8,x,.03,drain.z+drain.d/2,C.metal);
   bridge.position.y=restored?0:-1.7;
-  // This is only the testworks threshold; the later region and Phoenix are not awarded here.
-  obstacle(-163,-343,22,1.4,5,0x4b6663);
+  // The former sealed threshold now overlooks the testworks water entrance.
   for(const side of [-1,1]){cylinder(fixed,1,7,-163+side*10,3,-341,C.dark);box(fixed,.25,4,.12,-163+side*10,3,-339.8,C.yellow);}
   for(const x of [-168,-158])box(fixed,.14,.08,17,x,.12,-332,C.metal);
   // Repeated dismantled carriers make the long outlet readable as transport infrastructure.

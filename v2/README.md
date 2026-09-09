@@ -29,11 +29,11 @@ The production output is `dist/`; it can be served by any static web server. A w
 | --- | --- |
 | W / A / S / D | Screen-relative movement |
 | Mouse | Independent turret aim |
-| Left click | One shot with the selected weapon; holding does not autofire |
-| Q, after Mortar acquisition | Switch Cannon / Mortar |
+| Left click | One Cannon/Mortar shot; hold to fire Laser |
+| Q, after weapon acquisition | Cycle through owned Cannon / Mortar / Laser |
 | Right mouse, after magnetic acquisition | Hold to pull the aimed rail or light enemy |
 | F, after acquisition | Deploy / retract Flotation on supported ground; cross water while deployed |
-| Shift, after acquisition | Hold Overdrive while moving |
+| Shift, after acquisition | Hold Overdrive / Phoenix while moving |
 | E, near a Hive, module, or lever | Repair and save, acquire a tool, or operate the mechanism |
 | Tab | Toggle the progressively revealed region map |
 | Space | Skip the death sequence |
@@ -49,11 +49,13 @@ The Overdrive Prototype telegraphs a straight charge, collides with cover, and v
 
 The Furnace Overseer combines slow heavy shells, fans, conveyors, and molten channels. Its outward-facing cooling assemblies open alternately for a timed window with no hit quota. Destroying each assembly stops its conveyor. The exposed central core ends the encounter; the third Repair Hive opens the exterior door and continues into the Empty Transit Hub without pausing the game.
 
-The Foundry contains six ordinary enemies, one Elite, one Boss, and three Repair Hives. The connected Empty Transit Hub adds 31 floor sections, 24 enemies in 11 local encounters, five Hives, Magnetic Traction, and an optional early Mortar acquisition. The Furnace Guard distinguishes reduced frontal damage with a brief armour flash, outward white sparks, and a metallic ricochet; side/rear hits keep the normal orange damage burst and impact sound. Ordinary enemies respawn on resting or death; destroyed relays and defeated special encounters persist. There are no field healing items, collectible currencies, or objective arrows. Q switches the two owned weapons; right mouse holds Magnetic Traction.
+The Foundry contains six ordinary enemies, one Elite, one Boss, and three Repair Hives. The connected Empty Transit Hub adds 31 floor sections, 24 enemies in 11 local encounters, five Hives, Magnetic Traction, and an optional early Mortar acquisition. The Furnace Guard distinguishes reduced frontal damage with a brief armour flash, outward white sparks, and a metallic ricochet; side/rear hits keep the normal orange damage burst and impact sound. Ordinary enemies respawn on resting or death; destroyed relays and defeated special encounters persist. There are no field healing items, collectible currencies, or objective arrows. Q cycles through owned weapons; right mouse holds Magnetic Traction.
 
-The Sunken Gardens continue west from the Garden Shore. Pull the service panel, recover Flotation at the ferry, cross to the growing frames, and restore the reservoir pump to raise a return bridge. The southern water canal reaches the existing Mortar loading rig; the northern Testworks hatch previews the next region. Four Hives, 14 enemies across eight encounters, a reversible current, and an optional repairable tender support this third region. F deploys the pontoons; retraction requires dry support. Water travel retains shooting and shared Heat, uses 75 percent movement speed, and disables Overdrive while deployed. Settings include a separate `?chapter=3` preview save starting with Magnetic Traction.
+The Sunken Gardens continue west from the Garden Shore. Pull the service panel, recover Flotation at the ferry, cross to the growing frames, and restore the reservoir pump to raise a return bridge. The southern water canal reaches the existing Mortar loading rig; the northern water channel reaches the Testworks rear dock. Four Hives, 14 enemies across eight encounters, a reversible current, and an optional repairable tender support this third region. F deploys the pontoons; retraction requires dry support. Water travel retains shooting and shared Heat, uses 75 percent movement speed, and disables Overdrive while deployed. Settings include a separate `?chapter=3` preview save starting with Magnetic Traction.
 
 Three optional environmental puzzles use ordinary driving and the Standard Cannon: drive over rail treadles and shoot the carrier brake to open a freight crossing; hold a pump plate with the hull, shoot the exposed bridge pin, and drive away to drain the cistern; push two gutter cranks with the chassis and shoot a rust plug to revive a mechanical plant. E only recalls a moving carrier. Incorrect actions are recoverable, and completed states survive repair and reload. The garden puzzles sit beyond the existing Flotation gate and do not replace it.
+
+The middle regions now connect the Testworks, Silent Observatory, and Circulation Works. Water and freight approaches converge on one Phoenix rig; Phoenix then opens independent Laser and Water Circulation branches. Permanent gangways, bridges, the gallery crosswalk, and a pressure bypass reconnect earlier geography. A tracking guardian uses reflected rear attacks or red-hot contact, followed by an optional outward signal. The middle-game preview in settings (`?chapter=4`) has its own save and begins with Mortar at the observatory exterior. Detailed rules and numerical balance live in `Gamespec.md`.
 
 ## Art and sound
 
@@ -87,7 +89,7 @@ npm test
 npm run build
 ```
 
-Forty-one Node tests cover shot cadence, the fifth-shot overheat threshold, cooling delay and lockout, Overdrive acceleration/deceleration, stationary input, normalized screen movement, conveyor equilibrium, damage protection, swept projectile collisions, wheel-axis stability and rolling direction through hull turns, charge telegraph coverage of the full swept body, and construction/animation of the factory enemy forms, Mortar targeting and cooldown, regional area, both initial acquisition routes, gated boundaries, counterweight persistence, and the independent optical route.
+Fifty-four Node tests cover shot cadence, the fifth-shot overheat threshold, cooling delay and lockout, Overdrive acceleration/deceleration, stationary input, normalized screen movement, conveyor equilibrium, damage protection, swept projectile collisions, wheel-axis stability and rolling direction through hull turns, charge telegraph coverage of the full swept body, and construction/animation of the factory enemy forms, Mortar targeting and cooldown, regional area, both initial acquisition routes, gated boundaries, counterweight persistence, and the independent optical route.
 
 The Playwright CLI scenario scripts run against `http://127.0.0.1:5174/?test`, in this order:
 
@@ -104,6 +106,10 @@ playwright-cli -s=furnace-v2 run-code "$(cat scripts/encounter-check.js)"
 playwright-cli -s=furnace-v2 run-code "$(cat scripts/garden-walk-check.js)"
 playwright-cli -s=furnace-v2 run-code "$(cat scripts/garden-check.js)"
 playwright-cli -s=furnace-v2 run-code "$(cat scripts/puzzle-check.js)"
+playwright-cli -s=furnace-v2 run-code "$(cat scripts/midgame-check.js)"
+playwright-cli -s=furnace-v2 run-code "$(cat scripts/midgame-walk-check.js)"
+playwright-cli -s=furnace-v2 run-code "$(cat scripts/midgame-ui-check.js)"
+playwright-cli -s=furnace-v2 close
 ```
 
 The 33 Foundry browser scenario checks exercise both conveyor gates, ordinary combat, both relays, barrier collision, repair and enemy reset, physical furnace damage, the underpass, death/respawn, Elite vulnerability and acquisition, Boss assembly/core damage without window quotas, charge-warning boundary fairness, guard armour, the exit gate, and completion. Scenarios place the tank and configure encounter windows for deterministic checks, then exercise the actual simulation and projectiles. They clear the test browser's game save; use a dedicated browser session. The inspection surface is gated by both development mode and `?test`, and is absent from production builds.
@@ -122,4 +128,6 @@ The garden traversal check drives 23 consecutive legs with real collision and mo
 
 The puzzle suite adds 20 browser checks and 23 local movement legs. It covers Cannon release of the carrier, pressure-operated track selection, immediate docking reward, weight-held water, shooting the exposed retaining pin, automatic drainage, hull-driven gutter cranks, the shootable pipe plug, wall interception, close-range real mouse fire, repair, and reload. It uses one starting fixture per region and disables enemies to isolate navigation. Fourteen Node tests cover the mechanism state rules, contact debounce, physical collision, access, and old-save migration.
 
-This is a three-region playable balance pass. A clean, uninterrupted human playthrough near the design's ten-minute target has not been measured. Automated checks establish mechanics and progression, not first-time discovery quality or subjective audio balance.
+This is a six-region playable prototype, with R7 reserved for the final furnace. A clean, uninterrupted human playthrough near the design's ten-minute target has not been measured. Automated checks establish mechanics and progression, not first-time discovery quality or subjective audio balance.
+
+The middle-game scripts verify ability acquisition, held beam reflection, armour, maximum-speed collision, the sustained return lane, persistent shortcuts, and reload. Navigation checks run both branch orders with different incoming equipment, using real movement throughout each route. These tests use the same dedicated browser; close it and the temporary Vite service after verification to release GPU and server resources.

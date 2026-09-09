@@ -1,3 +1,4 @@
+import { makeMidgame } from './midgame.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
@@ -11,7 +12,7 @@ import { inside, newPlayer } from './mechanics.js';
 import { supportedHull, toggleFlotation } from './abilities.js';
 
 const scene=new T.Scene(),world=makeWorld(scene),transit=makeTransit(scene,world,{opened:['garden','crane-return']});
-makeCombatProps(scene,world);const gardens=makeGardens(scene,world,transit);makeSmallPuzzles(scene,world);
+makeCombatProps(scene,world);const gardens=makeGardens(scene,world,transit);makeSmallPuzzles(scene,world);makeMidgame(scene,world);
 const blocked=(x,z,water=false,r=.88)=>!supportedHull((x,z)=>world.available(x,z)||(water&&world.waterAvailable(x,z)),x,z,r)||world.obstacles.some(o=>o.active!==false&&inside(x,z,o,r));
 function reach(start,water=false){
   const key=(x,z)=>`${x},${z}`,seen=new Set([key(...start)]),queue=[start];
@@ -33,7 +34,7 @@ test('garden entrance requires the magnetic panel, then flotation is reachable e
 test('flotation opens both the reservoir loop and the original loading rig without Mortar or Laser',()=>{
   const wet=reach([-154,-208],true);
   for(const [x,z] of [[-159,-249],[-175,-296],[-119,-318],[-113,-273],[-163,-335],[54,-78],[-158,-135],[-54,-280]])assert.ok(near(wet,x,z),`missing water route to ${x},${z}`);
-  assert.equal(near(wet,-163,-347),false,'future testworks interior stays closed');
+  assert.ok(near(wet,-163,-347),'flotation reaches the open testworks water approach');
 });
 test('the optional tender can be restored before the pump and retains its state',()=>{
   assert.ok(gardens.repairTender());assert.equal(gardens.restored,false);assert.equal(gardens.repairTender(),false);assert.equal(gardens.serialize().tender,true);

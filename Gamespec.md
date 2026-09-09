@@ -6,7 +6,7 @@ This is the single source of truth for game design: the existing playable level,
 
 ### Decision status
 
-The confirmed direction is a lonely, mysterious journey through a lost mechanical civilization, ending in passing on the flame (传火). The eight-ability roster and the complete story linking seven regions, ability acquisition, persistent map changes, and voluntary furnace docking are accepted design directions. On 2026-09-09 the user accepted the Super Metroid-inspired exploration structure: layered regional access, direct inter-region loops, Mortar acquisition in familiar loading works, independently sufficient Flotation or Laser approaches to Phoenix, and a full exploration act after Water Circulation. The acquisition and story sections below incorporate that revision. Explicitly labelled proposals and unspecified room layouts, encounter values, timing, production scope, and implementation details remain open.
+The confirmed direction is a lonely, mysterious journey through a lost mechanical civilization, ending in passing on the flame (传火). The eight-ability roster and the complete story linking seven regions, ability acquisition, persistent map changes, and voluntary furnace docking are accepted design directions. On 2026-09-09 the user accepted layered regional access, direct inter-region loops, Mortar acquisition in familiar loading works, and a full exploration act after Water Circulation. The subsequent revision places Phoenix before Laser, increases middle-game branching, and prioritises permanent shortcuts over repeated approach routes. The current route allocation uses independently sufficient Flotation or Mortar approaches to Phoenix, followed by independently accessible Laser and Water Circulation branches. The acquisition and story sections below incorporate this revision. Explicitly labelled proposals and unspecified room layouts, encounter values, timing, production scope, and implementation details remain open.
 
 The playable build now includes the Recycling Foundry, Empty Transit Hub, and Sunken Gardens, including Magnetic Traction, Flotation, and both approaches to the original Mortar rig. The implementation records below define their exact scope. Laser, Phoenix, Water Circulation, the interiors of R4–R7, and the final story acts remain future work. All future game-design decisions belong in this document; implementation and execution instructions belong in the version README.
 
@@ -54,7 +54,7 @@ The roster is now **eight abilities including the starting Standard Cannon**: St
 
 The user specified the Mortar's arcing, delayed impact; the Phoenix Engine's 3.2x maximum speed, unchanged acceleration, lethal full-speed ordinary-enemy ramming, obstacle breaking, and inter-region express routes; and the Laser's very long reach, mirror reflections, puzzle applications, and indirect weak-point attacks. Water Circulation adds the required ability to accelerate while Overheated, a red-hot hull, and double contact/ram damage against any enemy. The Water Circulation agreement also confirms passive installation without a new key or water-refill system, retained weapon lock during Overheat, stacking with Phoenix, sustained reverse-transport lanes as the primary ability gate, and a small number of thermally released impact seals that may allow physically consistent alternate solutions. Red-hot contact remains a close-range alternative against the rear-only ranged-weapon Boss. These are confirmed design decisions. The route dependencies in the accepted acquisition structure are confirmed design requirements. Exact gate geometry, unconfirmed controls, resource costs, and numerical balance below remain proposals for implementation planning.
 
-Standard Cannon and Overdrive are implemented in the first playable level; Magnetic Traction and Mortar are implemented in the second playable region. The other acquisitions below remain planned. Phoenix Engine is a direct Overdrive upgrade using the same action, counted as one of the eight progression acquisitions while sharing the original engine controls. Water Circulation is a separate passive upgrade that changes Overheat behaviour for either engine.
+Standard Cannon and Overdrive are implemented in the first playable level; Magnetic Traction and Mortar are implemented in the second playable region. Flotation is implemented in the third region; Phoenix, Laser, and Water Circulation remain planned. Phoenix Engine is a direct Overdrive upgrade using the same action, counted as one of the eight progression acquisitions while sharing the original engine controls. Water Circulation is a separate passive upgrade that changes Overheat behaviour for either engine.
 
 Every ability needs exploration access and useful combat behaviour. Phoenix Engine's combat role is overwhelming ordinary enemies while traversing; it explicitly does not need a Boss application.
 
@@ -174,21 +174,21 @@ This is a separate tier from ordinary Phoenix express tracks. Phoenix routes wit
 
 ### Accepted acquisition structure
 
-This structure was accepted on 2026-09-09. It specifies supported routes and acquisition conditions, not final room geometry. The starting Cannon and all seven later acquisitions remain in scope.
+This revised baseline implements the user's request for Phoenix before Laser, a less linear middle game, and more shortcuts. It replaces the earlier Laser entrance to the Phoenix acquisition route. The eight abilities and their physical behaviours remain unchanged; regional numbering denotes geography, not required visit order. Exact room geometry and traversal balance still require implementation and validation.
 
 | Acquisition | Required equipment and physical route | Exit and new connections |
 | --- | --- | --- |
 | Overdrive | Cannon; existing R1 Prototype encounter | Reverse the familiar conveyors and leave R1 |
-| Magnetic Traction | Cannon and Overdrive; R2 freight approach | Pull the walkway into place; reach the garden service loop |
-| Flotation | Magnetic Traction; move the reservoir service panel, then follow the supported shore to the ferry cradle | Cross to the old loading works; reach the R5 rear water approach |
-| Mortar | Either the normal Flotation route from the gardens or the earlier, demanding Cannon/Overdrive approach from R2; both reach the same old loading rig | Open an exposed overhead latch; reconnect the familiar loading yard and observatory service passage |
-| Laser | Mortar; open the observatory service approach and reach the emitter before the mirror guardian | Operate the R5 front optical entrance and open the observatory/garden connection |
-| Phoenix | **Flotation OR Laser**, through separate rear-water and front-optical approaches to R5 | Traverse the common test loop at ordinary Overdrive speed, recover the engine, then break through to the foundry/transit express network |
-| Water Circulation | Phoenix; break through the R6 service spur and reach the rig using Cannon, grounded movement, and physical controls | Cross the sustained return lane into the old garden service network, explore reopened connections, then approach R7 |
+| Magnetic Traction | Cannon and Overdrive; R2 freight approach | Reach the garden service loop |
+| Flotation | Magnetic Traction; reservoir service panel and supported route to the ferry cradle | Garden water network, normal old-loading approach, and independent R5 rear entrance |
+| Mortar | Normal Flotation route from the gardens OR demanding earlier Cannon/Overdrive approach from R2; the same existing rig | R4 outer service ring and its dry freight spur into R5; existing loading shortcut |
+| Phoenix | **Flotation OR Mortar**; rear water entrance from R3 or dry freight approach through the R4 outer ring | Shared test loop uses Cannon and ordinary Overdrive; the acquired engine opens the express junction, R4 calibration depth, and R6 service entrance |
+| Laser | **Phoenix**; open the full-speed service shutter to the R4 calibration bay from its outer ring or the direct testworks express connection | Mirror galleries, garden-upper-works link, and direct R4/R6 service bridge; acquired before the authored mirror-guardian route |
+| Water Circulation | **Phoenix**; R6 service entrance from the express junction or the familiar R2 spur; initial rig loop uses Cannon and grounded movement | Sustained return to old garden infrastructure, new bypass into the transit inner ring, and the R7 approach |
 
-Dependency summary: Cannon → Overdrive → Magnetic Traction → Flotation; Overdrive → Mortar via the demanding early approach, or Flotation → Mortar via the normal garden return; Mortar → Laser; **(Flotation OR Laser) → Phoenix → Water Circulation**. These are route conditions, not a requirement to visit every branch in that written order. No R5 cradle mechanism may quietly require the other entrance's ability; R6's acquisition loop must not introduce an additional unlisted module prerequisite.
+Dependency summary: Cannon → Overdrive → Magnetic Traction → Flotation; Overdrive → Mortar through the earlier freight approach, with Flotation providing the normal alternate route; **(Flotation OR Mortar) → Phoenix → {Laser, Water Circulation}**. Laser and Water Circulation can be acquired in either order. Both depend on Phoenix; neither is an acquisition prerequisite for the other. Mortar can expose R4 early but cannot reach its Laser emitter before Phoenix. A Flotation-first Phoenix owner can reach that emitter directly from R5 without first collecting Mortar.
 
-The supported first-play, Mortar-first, and early-Phoenix orders are listed in the exploration structure below. They retain all eight abilities; which modules may be omitted from a complete run remains a room-graph validation question, not an eight-module check at the final door.
+R5's shared cradle loop needs neither Laser nor the unused entrance's ability. The R4 calibration and mirror route must work without Mortar, Magnetic Traction, Flotation, or Water Circulation after a valid Phoenix acquisition. The R6 rig loop has no hidden Laser requirement. The three supported full-roster orders below are route authoring requirements; which abilities may be omitted from a completed run remains a separate room-graph and encounter validation question, not an eight-module check at the final door.
 
 - Show memorable blocked routes before acquisition and provide an immediate safe application after it.
 - Give each new ability a reason to revisit an earlier space and later exploration/combat uses; Phoenix's combat application remains ordinary-enemy breakthrough rather than Boss damage.
@@ -250,7 +250,7 @@ The supported first-play, Mortar-first, and early-Phoenix orders are listed in t
 
 ### Status and reference
 
-The user accepted this structure on 2026-09-09. Its topology, acquisition relocation, supported alternate orders, and post-Water Circulation exploration are the current whole-game design baseline. They supersede the previous repeated hub excursions and combined Flotation-plus-Laser entrance to R5. They are design requirements, not implemented gameplay changes; exact rooms and balance still require prototypes. Preserve the eight abilities, fixed-camera grounded Tank controls, intuitive physical interactions, shared Heat, and voluntary passing-on-the-flame ending.
+The user accepted this exploration direction on 2026-09-09 and subsequently requested Phoenix before Laser, more middle-game branching, and more shortcuts. The revised acquisition table and topology below are the current design baseline. Two pre-Phoenix branches now use Flotation or Mortar; two post-Phoenix branches lead independently to Laser or Water Circulation. These replace the previous Laser route into R5. They are design requirements, not implemented gameplay changes; exact rooms and balance still require prototypes. Preserve the eight abilities, fixed-camera grounded Tank controls, intuitive physical interactions, shared Heat, and voluntary passing-on-the-flame ending.
 
 Nintendo's development team explicitly describes Super Metroid's flexibility of exploration and discusses obtaining equipment earlier through alternate routes in its [series retrospective](https://www.nintendo.com/en-gb/News/2021/August/Metroid-Dread-Report-Vol-4-Unravelling-a-saga-35-years-in-the-making-2018281.html). Its later [exploration guidance](https://www.nintendo.com/en-gb/News/2022/January/Metroid-Dread-Report-Vol-11-Power-through-with-these-pointers-for-exploration-and-combat-2102114.html) also describes environmental hints, mechanisms that change routes, and revisiting earlier areas with new abilities. That second source describes Metroid Dread, not a room-by-room account of Super Metroid. The design below adapts those exploration goals to Furnace Born; it does not claim that the reference uses every rule described here.
 
@@ -264,20 +264,41 @@ The emotional rhythm is: notice something unreachable; follow the locally promis
 
 1. **Regions contain several depths of access.** Reach garden shores before being able to cross water, observatory exterior machinery before controlling optics, and the testworks perimeter before entering its main rigs. Region entry does not mean region completion. The seven regions remain geographical places, not seven sequential chapters.
 2. **Replace repeated hub returns with inter-region loops.** Add garden-to-old-loading-station, observatory-to-garden-upper-works, and testworks-to-foundry/transit links. R2 remains a memorable crossing but is no longer the mandatory stop after every acquisition.
-3. **Provide two independently sufficient R5 approaches.** The ordinary front entrance uses Laser on a clearly visible optical mechanism; a less obvious rear maintenance entrance uses Flotation through connected water. These are genuinely separate routes, not an AND gate drawn as two arrows. Both must reach the Phoenix cradle with their own pre-acquisition equipment, and both must support a safe exit. The entrance requirement is Flotation OR Laser.
+3. **Branch before and after Phoenix.** Flotation opens R5 from the garden water network; Mortar opens the independent dry freight approach through R4's outer ring. Both reach the Phoenix cradle with their own equipment, using Cannon and ordinary Overdrive in the shared test loop. Phoenix then opens R4 calibration and R6 circulation as parallel choices; Laser is always after Phoenix, while Laser and Water Circulation can be acquired in either order. R4's earlier exterior visit does not grant access to its emitter.
 4. **Recover one major ability inside familiar geography.** Place the Mortar rig in the old loading works near the R1/R2 boundary, seen but unreachable on the first pass. The natural later entrance comes from a garden water outlet. Keep an earlier, more demanding R2 approach using existing Cannon/Overdrive rules so Mortar-first remains a possible discovery. This is the Mortar acquisition location; it is explored from several sides rather than completed as a self-contained hub wing.
-5. **Give Water Circulation a final exploration act.** Acquisition should precede a meaningful period of opening old transport infrastructure, red-hot combat, and optional restoration. The central furnace must not be its only substantial payoff. R6 reconnects through a formerly inaccessible garden service channel before the sustained inner route reaches R7. This is a supported industrial transport route; it does not secretly require Flotation after a Laser-only approach to R5.
-6. **Keep completed changes useful.** A lowered bridge, released service door, or restored lift remains usable without repeating its puzzle. Phoenix links should materially shorten earlier travel. They need safe braking areas and camera-readable bends under the already agreed acceleration and control rules.
+5. **Give Water Circulation a final exploration act.** Acquisition should precede a meaningful period of opening old transport infrastructure, red-hot combat, and optional restoration. The central furnace must not be its only substantial payoff. R6 reconnects through a formerly inaccessible garden service channel before the sustained inner route reaches R7. This is a supported industrial transport route; it does not secretly require Flotation after a Mortar-first approach to R5.
+6. **Make shortcuts part of acquisition loops.** Each major reward should have a nearby onward exit into another known space or a new junction, avoiding reversal of its entire approach. Open principal shortcuts before regional Boss completion where possible. A lowered bridge, released service door, or restored lift remains usable after rest and death without repeating a puzzle. Phoenix connectors need safe braking areas, visible junctions, and camera-readable bends; route recognition and actual travel-time reduction matter more than shortcut count.
 
 ### Supported acquisition routes
 
-All three acquisition orders must be supported by the room graph. They define equipment order and regional traversal; exact room arrangements remain open. Cannon is present from the start.
+All three orders must be supported by the room graph. Cannon is present from the start. They are examples of meaningful choices rather than a menu or three prescribed campaigns.
 
-- **Likely first-play route:** R1 Overdrive → R2 Magnetic Traction → R3 Flotation → garden outlet into the old loading works for Mortar → R4 Laser → R5 Phoenix → revisit old express connections → R6 Water Circulation → revisit sustained return routes → R7.
-- **Mortar-first route:** Overdrive → earlier R2 loading approach for Mortar → Laser → Magnetic Traction → Flotation → Phoenix → Water Circulation.
-- **Early-Phoenix route:** Overdrive → Magnetic Traction → Flotation → rear water entrance to R5 for Phoenix → express return to the loading works for Mortar → Laser → Water Circulation.
+- **Garden / optics-first branch:** Overdrive → Magnetic Traction → Flotation → garden outlet for Mortar → either R5 approach for Phoenix → direct express connection for Laser → R4/R6 bridge or express branch for Water Circulation → new return-network exploration → R7.
+- **Freight-first branch:** Overdrive → earlier Mortar → R4 outer ring and dry R5 freight spur → Phoenix → R4 calibration for Laser → reopened loading/transit connection for Magnetic Traction and Flotation → Water Circulation → final exploration. Neither pre-Phoenix traversal nor the Laser acquisition secretly requires flotation or magnetism.
+- **Circulation-first branch:** Overdrive → Magnetic Traction → Flotation → R5 rear entrance for Phoenix → direct R6 service branch for Water Circulation → supported garden/transit bypass and old-loading Mortar acquisition → R4 calibration for Laser → remaining local exploration and R7. Laser is not a prerequisite for the R6 rig, and the observatory guardian must support the previously confirmed red-contact alternative in this order.
 
-These three supported orders include all eight abilities while changing the player's experience of the middle game. They do not by themselves establish which abilities may be omitted from a completed run. Equipment omissions can be accepted later when the complete physical route and ending are proven; do not add an eight-module checklist merely to prevent them. Do not promise unrestricted acquisition order or rely on collision exploits.
+Every order puts Phoenix before Laser. Delaying Mortar on the water route or delaying Magnetic Traction/Flotation on the freight route creates actual changes in entry direction, equipment, and travel. The Laser and Water Circulation branches should each contain a useful acquisition loop; they must not merely expose two doors before forcing the same next ability. Examples retain all eight abilities without imposing a collection checklist at the finale. Arbitrary equipment omissions remain unproven until full routes and encounters are built.
+
+### Permanent shortcut network
+
+The following connectors are the revised authoring targets. They extend the existing loading-yard and pump returns; none of the new R4–R6 connections below is implemented yet. Opening conditions describe the first traversal. Unless a continuing hazard is explicitly identified, an opened connector is bidirectional, remains open after rest/death/reload, and needs no repeated input sequence. Its far-side release must be inaccessible from the earlier side until the relevant initial route has been earned.
+
+| Connection | First opening and direction | Later purpose |
+| --- | --- | --- |
+| R5 rear dock ↔ R3 first far-bank landing | Release a dry maintenance gangway from inside R5 on the common acquisition loop | Avoid repeating the long water approach on later garden/testworks visits; leave the rest of the water network intact |
+| R5 Phoenix cradle exit → R1/R2 express junction | Demonstrate full-speed breakthrough immediately after acquisition, then open the junction's ordinary service bypass from inside | Reach the loading works, transit crossings, and foundry directly; the opened route does not rebuild its barricade |
+| Express junction ↔ R4 calibration approach | Phoenix opens a momentum-operated service shutter; both the early outer-ring route and this express route meet behind the same pre-Laser access boundary | Reach the emitter without retracing R4's entire outer approach; provide a supported escape to the junction before the guardian |
+| Express junction ↔ R6 service yard | Phoenix releases the existing heavy service-spur obstruction from the new transport connection as well as the familiar hub approach | Make circulation a direct parallel choice after Phoenix, without requiring an intermediate hub visit |
+| R4 calibration loop ↔ old loading rig's safe apron | Open an ordinary maintenance lift from its upper landing near the emitter, independently of defeating the guardian | Revisit the same Mortar rig or leave R4 quickly; land on the supported safe side of the existing conveyor |
+| R4 mirror gallery ↔ R3 upper pump works | Laser reaches the visible recessed bridge receiver during the gallery loop, before the guardian | Reinterpret a familiar garden landmark from above and leave the unfinished observatory for another branch |
+| R4 mirror gallery ↔ R6 upper service yard | Laser releases the long-sightline service bridge from R4; it lands on R6's ordinary pre-Water-Circulation restoration layer | Move directly between the two post-Phoenix branches; the independent Phoenix entrance keeps Laser optional for R6 acquisition |
+| R6 sustained return → R3 industrial service layer ↔ R2 inner ring | Water Circulation crosses the sustained lane, then the far-side mechanism opens a short supported pressure bypass | Explore the newly accessible garden layer and return without repeating the whole high-pressure lane; the separate inner transport approach still gates R7 |
+
+Preserve the existing planned R7-to-transit bypass before the final commitment. The express junction is a connected piece of transport infrastructure, with exits toward R4, R6, and familiar places; it must not become a new mandatory hub that all later travel repeatedly crosses. The R4/R3 and R4/R6 bridges and the R6 garden return supply alternative cycles.
+
+Shortcuts should reconnect geographically adjacent edges separated by a wall, height difference, or dormant machine. A path that repeats the same rooms faster is not sufficient on its own. Put latches, lifts, and bridge machinery where their endpoints can be recognised from the original approach. Do not add generic teleport points, new abilities, mandatory collection rewards, or automatic cutscene travel.
+
+For ordinary revisits, prototype a target of at most half the original approach travel time between the same two landmarks, excluding combat and menu time. This is a tuning goal, not a measured result or a reason to inflate the first trip. Repeat trips must not require another room-sized puzzle, full encounter gauntlet, or a chain of compulsory cooling stops. Benchmark with the owned equipment, actual Heat budget, fixed camera, and braking behaviour before approving connector lengths.
 
 ### Ability-to-world relationships
 
@@ -289,9 +310,9 @@ Each acquisition should change how several familiar spaces can be used. The foll
 | Overdrive | Overcome short opposing conveyors | Cross the conveyor that first rejected the Tank; turn an old exit into an entrance | Plan short boosts around firing Heat and use ordinary-enemy rams while travelling |
 | Magnetic Traction | Reposition a mounted bridge or counterweight | Pull a familiar carrier into place, revealing an alternative passage | Change which side an object is pulled from; move shields, cover, and mirror carriages |
 | Flotation | Enter an interconnected water route network | The water under earlier platforms becomes traversable space connecting regions | Reach different banks and firing positions; use a rear route into the testworks |
-| Mortar | Strike visible targets behind low walls or inside open-topped structures | An old sealed loading yard becomes accessible through its exposed mechanism | Predict an enemy's committed movement; bypass some frontal combat or approach puzzles |
-| Laser | Reach distant and reflected targets | Old mirror surfaces, sightlines, and observation apertures acquire a new purpose | Align a reflected attack or choose a long-range angle; combine with a movable mirror |
-| Phoenix | Break full-speed barriers and join express tracks | Distant tracks seen on earlier visits become fast inter-region routes | Preserve its ordinary-enemy breakthrough payoff; it has no mandatory Boss application |
+| Mortar | Enter the R4 outer ring and independent R5 freight route through exposed overhead mechanisms | An old sealed loading yard becomes accessible through its exposed mechanism | Predict an enemy's committed movement; bypass some frontal combat or approach puzzles |
+| Laser | Open mirror-gallery depths and direct R4/R3/R6 service connections after Phoenix | Old mirror surfaces, sightlines, and observation apertures acquire a new purpose | Align a reflected attack or choose a long-range angle; combine with a movable mirror |
+| Phoenix | Open the express network and independent Laser / Water Circulation acquisition routes | Distant tracks seen on earlier visits become fast inter-region routes | Preserve its ordinary-enemy breakthrough payoff; it has no mandatory Boss application |
 | Water Circulation | Sustain acceleration through Overheat on long opposing transport lanes | Return channels that repeatedly defeated the earlier engine become routes | Plan red-hot combat and cool-down stops across several old areas before the final commitment |
 
 For each new acquisition, author one forgiving immediate application, one memorable earlier obstruction worth returning to, and one later use in a changed context. A lock's shape must advertise its physical problem; do not cover the map with eight families of colour-coded doors.
@@ -321,9 +342,9 @@ The main story must tolerate the supported alternate acquisition orders. Put ess
 
 ### Next design artifact and acceptance checks
 
-Before building R2, draft a room-connection graph for this accepted middle-game structure, not another list of region summaries. For every connection record its physical opening condition, travel direction, persistent mechanism state, required knowledge, possible alternate solution, recognizable landmark, and retry/return path.
+The R4–R6 implementation below realizes this revised middle-game structure. Maintain its room-connection graph, including both depths of R4 and the permanent shortcut network. For every connection record its physical opening condition, travel direction, persistent mechanism state, required knowledge, possible alternate solution, recognizable landmark, and retry/return path.
 
-Validate that graph against all three supported acquisition orders. Every acquisition must be reachable without itself; every temporary commitment must have an exit for all legal incoming states; every persistent object puzzle must remain recoverable after death or rest. Explicitly document any allowed module omission instead of assuming either mandatory collection or universal sequence breaking.
+Validate that graph against all three supported acquisition orders. Removing Phoenix from the attainable equipment set must prevent Laser acquisition; removing Laser must still leave the Phoenix and Water Circulation routes available. Every acquisition must be reachable without itself; every temporary commitment must have an exit for all legal incoming states; every persistent object puzzle must remain recoverable after death or rest. Explicitly document any allowed module omission instead of assuming either mandatory collection or universal sequence breaking.
 
 A new player's test should establish whether they remember a relevant earlier obstacle after obtaining an ability, recognize an old room reached from a new entrance, and can find a likely continuation without an objective marker. A second playthrough should establish whether a different order creates a meaningfully different journey. These are playtest goals, not results established by the existing first-level automated checks.
 
@@ -331,7 +352,7 @@ A new player's test should establish whether they remember a relevant earlier ob
 
 ### Status and scope
 
-This story direction was accepted on 2026-09-08 and its exploration topology was revised with user approval on 2026-09-09. It connects escape from recycling, discovery of a city consuming itself, recovery of modules from failed prototypes, restoration of regional infrastructure, recognition of previous furnace bearers, and voluntary passing on the flame. The seven-region structure, acquisition placement, wordless recurring scenes, and map-changing return routes form the accepted narrative and progression baseline. Detailed encounter choreography, exact room geometry, optional scene variants, and final interaction/save implementation remain open wherever identified below. Design names and region identifiers are authoring vocabulary and must not appear as gameplay text.
+This story direction was accepted on 2026-09-08. Its revised exploration baseline now places Phoenix before Laser, permits either order for Laser and Water Circulation, and includes the permanent shortcut network described above. It connects escape from recycling, discovery of a city consuming itself, recovery of modules from failed prototypes, restoration of regional infrastructure, recognition of previous furnace bearers, and voluntary passing on the flame. The seven-region structure, acquisition placement, wordless recurring scenes, and map-changing return routes form the accepted narrative and progression baseline. Detailed encounter choreography, exact room geometry, optional scene variants, and final interaction/save implementation remain open wherever identified below. Design names and region identifiers are authoring vocabulary and must not appear as gameplay text.
 
 Preserve the first level's existing local progression and mechanics. The current three-region build continues through its exit into transit and the gardens; the local repair and saved completion remain, while the former completion menu is removed. Total playtime, room count, optional-content volume, and numerical encounter balance remain unspecified.
 
@@ -353,7 +374,7 @@ The player Tank was a rejected experimental chassis able to accept incompatible 
 | --- | --- | --- | --- |
 | Escape | Avoid being melted | The factory rejects this Tank, while Repair Hives preserve it | Defeat the local Overseer and leave |
 | Find a way onward | Explore beyond an empty transit yard toward a distant active furnace tower | This was a connected city, not an isolated weapons factory | Explore the freight approach and preview the shores, old loading works, and upper service routes |
-| Restore passage | Reach the far banks and upper maintenance routes | Water, cargo, and power once formed a shared circulation system; small repairs still have effects | Re-enter familiar loading works from the gardens; use water or optical access to reach the testworks |
+| Restore passage | Reach the far banks and upper maintenance routes | Water, cargo, and power once formed a shared circulation system; small repairs still have effects | Re-enter familiar loading works from the gardens; use water or the Mortar-opened freight spur to reach the testworks |
 | Recognize the cycle | Reach the central complex and understand its vehicle-shaped installations | The city is dismantling itself; other machines reached the furnace before | Recover the fast test engine and reach its cooling installation |
 | Become capable of entering | Reconnect the return system that ordinary thermal limits make impassable | Remaining hot while moving is a useful state, and earlier designs failed under this load | Integrate Water Circulation, explore reopened old transport routes, and then enter the inner complex |
 | Choose to continue the flame | Reach the dying furnace after defeating its keeper | The familiar repair-shaped interface now needs a machine to sustain the system | Deliberately dock and become the next bearer |
@@ -367,9 +388,9 @@ There is no written mission list. Each local objective must be understandable fr
 | R1 — Recycling Foundry | Reclaim material and assemble prototypes; now processes almost everything as scrap | Existing A/B/C branches, Elite loop, return conveyor, Furnace Overseer | Start with Cannon; acquire Overdrive | The Tank escapes, but the repair/recycling contradiction remains |
 | R2 — Empty Transit Hub | Exchange cargo and distribute heat; trains still circulate with empty carriers | Central turntable, magnetic freight approach, previews of the old loading works, garden shores, and service routes | Magnetic Traction; Mortar in the old loading works at the R1/R2 boundary, normally reached from R3 or earlier through R2 | Mechanical life once depended on a network; isolated useful actions still matter |
 | R3 — Sunken Gardens | Coolant reservoirs and controlled growing/maintenance spaces; pumps stopped and water occupies former roads | Early shore preview, magnetic service loop, ferry cradle, water links to the old loading works and R5, later sustained industrial return routes | Flotation Chassis | Shutdown was progressive; outer facilities were deliberately disconnected to preserve the centre |
-| R4 — Silent Observatory | Observe the outside and align optical communications; signals continue without response | Exterior preview, enclosed service approach, emitter, mirror galleries, guardian, direct garden connection and R5 front access | Laser before the mirror guardian | The city waited for a reply; its outward signals coexist with inward recycling traffic |
-| R5 — Prototype Testworks | Test mobile replacement drives; runways end at discarded cradles and stalled rigs | Independent Flotation rear entrance or Laser front entrance, shared test loop, module recovery, express breakthrough exit | Phoenix Engine | Mobile prototypes were built to carry machinery onward; familiar chassis features recur in failed candidates |
-| R6 — Circulation Works | Protect drives and return coolant through the central complex; still enforces a dangerous one-way material return | Phoenix service entrance, restoration loop, circulation rig, sustained return to old garden infrastructure and a full exploration act before R7 | Water Circulation | The new drive can stay mobile through Overheat, making the central return passage viable |
+| R4 — Silent Observatory | Observe the outside and align optical communications; signals continue without response | Mortar-accessible outer ring; Phoenix-gated calibration depth; emitter, mirror galleries, early exits to loading works/gardens/R6, guardian and signal array | Laser after Phoenix and before the authored mirror-guardian route | The city waited for a reply; its outward signals coexist with inward recycling traffic |
+| R5 — Prototype Testworks | Test mobile replacement drives; runways end at discarded cradles and stalled rigs | Independent Flotation rear entrance or Mortar freight entrance, shared test loop, module recovery, dry garden return and branching express exit | Phoenix Engine | Mobile prototypes were built to carry machinery onward; familiar chassis features recur in failed candidates |
+| R6 — Circulation Works | Protect drives and return coolant through the central complex; still enforces a dangerous one-way material return | Phoenix service entrance independent of Laser, optional R4 bridge, restoration loop, circulation rig, sustained garden return and a permanent pressure bypass before R7 | Water Circulation | The new drive can stay mobile through Overheat, making the central return passage viable |
 | R7 — Predecessor Chambers and Central Furnace | House successive regulating assemblies and maintain the remaining flame | Quiet predecessor approach, final Repair Hive, furnace keeper encounter, controllable final approach and docking | No ninth ability | The Tank understands the interface and chooses to pass on the flame |
 
 R2 links a freight approach and the old loading works; the latter straddle the R1/R2 boundary and are revisited from R3. These are parts of the connected city rather than additional standalone regions or two mandatory hub tasks. R7 combines the earlier predecessor-chamber and central-furnace concepts. R5 and R6 are dedicated places for the two engine upgrades, not rewards crowded into the final room. Bosses are not compulsory region punctuation: R1 has its existing encounters, R4 has the mirror guardian, and R7 has the final keeper; other regions may end in a machinery sequence, an ordinary encounter, or a quiet acquisition.
@@ -378,31 +399,39 @@ R2 links a freight approach and the old loading works; the latter straddle the R
 
 ```mermaid
 flowchart TD
-    R1["R1 Foundry: Cannon and Overdrive"] --> R2["R2 Transit junction"]
-    R2 --> M["R2 Freight approach: Magnetic Traction"]
-    M -->|Magnetic service panel| R3["R3 Gardens: Flotation"]
-    R3 -->|Normal water outlet| L["Old loading works at R1/R2: Mortar"]
-    R2 -->|Demanding Cannon and Overdrive approach| L
-    L -->|Mortar overhead latch| R4["R4 Observatory: Laser, then guardian"]
-    R3 -->|Flotation rear entrance| R5["R5 Testworks: Phoenix"]
-    R4 -->|Laser front entrance| R5
-    R3 -.->|Drained underpass| R2
-    R4 -.->|Upper works connection| R3
-    L -.->|Loading-yard door opened inside| R2
-    R5 -.->|Phoenix express track| R1
-    R5 -.->|Phoenix express junction| R2
-    R2 -->|Phoenix service-spur breakthrough| R6["R6 Circulation Works: Water Circulation"]
-    R6 -->|Water Circulation sustained lane| K["Old garden service network: final exploration act"]
-    K -.->|Opened dry return connection| R2
-    K -->|Water Circulation inner transport| R7["R7 Predecessors, keeper, furnace docking"]
-    R7 -.->|Bypass opened inside| R2
+    R1["R1 Foundry: Cannon and Overdrive"] --> R2["R2 Transit"]
+    R2 --> M["Magnetic Traction"]
+    M --> F["R3 Gardens: Flotation"]
+    R2 -->|Demanding earlier approach| L["Old loading works: Mortar"]
+    F -->|Normal water outlet| L
+    L -->|Mortar overhead latch| O["R4 outer service ring"]
+    O -->|Dry freight spur| P["R5 Testworks: Phoenix"]
+    F -->|Independent water entrance| P
+    P -->|Breakthrough exit| J["Branching express junction"]
+    J -->|Phoenix service shutter| A["R4 calibration: Laser"]
+    O -->|Phoenix service shutter| A
+    J -->|Phoenix service entrance| W["R6 Circulation Works: Water Circulation"]
+    R2 -->|Same Phoenix service spur| W
+    P -.->|Inside-opened dry gangway| F
+    J -.->|Permanent express returns| R1
+    J -.->|Permanent express returns| R2
+    A -.->|Maintenance lift before guardian| L
+    A -.->|Laser bridge before guardian| F
+    A -.->|Laser service bridge| W
+    A --> G["Mirror guardian and outward signal"]
+    W -->|Sustained return lane| K["Old garden industrial service layer"]
+    K -.->|Permanent pressure bypass| R2
+    K -->|Separate sustained inner approach| R7["Predecessors, keeper, furnace"]
+    R7 -.->|Inside-opened return bypass| R2
 ```
 
-Solid arrows describe acquisition and onward access; dotted arrows describe persistent returns. This is a regional connection graph, not a room-coordinate layout. Incoming routes to the Mortar rig and R5 are **OR conditions**: either route independently reaches the reward. Early exterior previews do not grant access to every room within a region.
+Solid arrows describe first access and acquisition routes; dotted arrows describe connector openings whose subsequent travel is specified by the shortcut table. This is a regional topology, not a final room layout. The two arrivals at R5 are an **OR** condition. Phoenix is required before Laser; R4's outer ring and calibration depth are separate nodes precisely because early regional entry does not award the region's ability. The R4 guardian does not block the principal inter-region shortcuts or either engine acquisition.
 
-The R5 water entrance contains no required optical latch. The front entrance contains no mandatory unsupported water crossing. The common test loop and Phoenix release mechanism work with Cannon and ordinary Overdrive, without demanding Magnetic Traction, Mortar, or the other entrance's reward. Its full-speed exit opens the old foundry/transit express network and provides safe stopping space. These constraints preserve both Laser-first and early-Phoenix routes.
+R5's water entrance has no required Mortar or optical latch. Its dry freight entrance has no mandatory water crossing or magnetic panel. The common test loop and Phoenix release use Cannon and ordinary Overdrive, without requiring either entrance's alternative equipment or Phoenix itself. The rear gangway opens from inside on this loop. A freight-first player may consequently reach the supported garden far bank before owning Flotation; this is an intended new access layer, not a grant of the module or access across every water surface. Keep the ferry acquisition approach and all unrelated first-access boundaries physically valid. After acquisition, a full-speed exit opens the branching express network with safe stopping space. Standard express segments must fit the pre-Water-Circulation Heat budget.
 
-The R6 service spur is visible near the hub from the first visit, with a long approach and a heavy obstruction. Phoenix opens it. The circulation rig is reachable before Water Circulation using the listed equipment. Its sustained exit returns to a supported industrial lane through the old garden service layer; this route is separate from unsupported deep water and does not require Flotation. From there the player can explore newly usable return infrastructure and reconnect with earlier areas before choosing the sustained inner approach to R7. Route discovery and red-hot combat supply the final exploration act; no restoration checklist forces a full-world cleanup.
+Both R4 calibration entrances cross the Phoenix access boundary; neither lets Mortar-only exploration reach the emitter. The emitter and an ordinary return lift are reached before any Laser-required puzzle or guardian. The post-emitter garden and circulation bridges are permanent shortcuts, not prerequisites for obtaining Phoenix or Water Circulation. Main R4 encounters must support players with Phoenix and Cannon who arrived via Flotation without Mortar, as well as the freight-first equipment set; Mortar and magnetic combinations are advantageous optional approaches.
+
+R6's service spur is visible from earlier transit visits and becomes directly reachable from the testworks express junction. Its initial rig loop uses Cannon and supported movement after Phoenix, so a player may choose it before the observatory. Its sustained exit reaches the supported old-garden industrial layer, then opens a short ordinary pressure bypass to the transit inner ring. Unsupported water is not required on this route. The separate sustained inner approach leads to R7 after time to explore the newly connected infrastructure; there is no required full-world restoration checklist.
 
 Persistent connections to include:
 
@@ -412,7 +441,7 @@ Persistent connections to include:
 | Cross the garden outlet | Reach the old loading works from its water-facing side | The inaccessible rig near the first region becomes recognizable and reachable |
 | Recover Mortar and hit the exposed loading latch | Open observatory service access and an inside-operated loading-yard return door | Cargo is revealed to travel inward toward reclamation; either acquisition approach has a way out |
 | Restore the garden pump mechanically | Drain a transit underpass while retaining connected deep-water routes | The submerged rest platform becomes a useful return landmark |
-| Open the observatory lift and align its optics | Connect the upper garden works and operate R5's front entrance | The outward signal resumes without an answer; the player can continue directly into another region |
+| Release the calibration lift and gallery receivers | Connect the loading works, upper gardens, and R6 service yard before the guardian | Optical exploration supplies alternate exits; the later outward signal completes the local story without gating either engine |
 | Break through the testworks exit with Phoenix | Join old foundry and transit tracks into an express network | Long previous routes become fast travel through actual playable space |
 | Use Water Circulation on the sustained R6 return | Open the old garden service network and its dry return connection | Several previously defeating transport routes become useful before the final approach |
 | Open the inner maintenance bypass from the furnace side | Link the final rest area back to the known network | The player may finish optional restoration before docking |
@@ -449,35 +478,59 @@ The observatory later reconnects to the upper pump works, and Water Circulation 
 
 ### R4 — a signal without an answer
 
-The Mortar opens an exposed mechanism inside an enclosed approach, giving access to the observatory service ring. The player climbs through ramps and lifts consistent with the fixed-camera ground-plane design; there is no new jumping ability.
+The Mortar opens an exposed mechanism into the observatory outer service ring. This early layer previews the emitter works and provides a dry freight spur to R5, but a full-speed service shutter still blocks the calibration depth. Phoenix later opens that shutter from the familiar ring or from the direct R5 express connection. The player uses ramps and lifts consistent with the fixed-camera ground-plane design; there is no new jumping ability.
 
-Recover Laser from a disused calibration emitter midway through the region. A single mirror and receiver teach reflection before moving objects or enemies complicate it. A later gallery combines a pullable mirror carriage with a Laser route as an optional combination space; the mandatory route must remain completable without Magnetic Traction or Flotation.
+Recover Laser from a disused calibration emitter after the Phoenix gate, with an ordinary maintenance lift nearby that opens back to the existing loading rig's safe apron. A single mirror and receiver teach reflection before moving objects or enemies complicate it. A later gallery combines a pullable mirror carriage with a Laser route as an optional combination space; the mandatory route after Phoenix must remain completable without Mortar, Magnetic Traction, Flotation, or Water Circulation.
 
-The regional guardian tracks the Tank with its armoured face. Mirrors in the arena provide visible routes into its rear weak point. Laser is already owned; acquiring it is not the reward for a fight that requires it. Red-hot Water Circulation would remain a valid close-range alternative on a later encounter or permitted sequence break, not an immunity exception.
+The regional guardian tracks the Tank with its armoured face. Mirrors in the arena provide visible routes into its rear weak point. Laser is already owned; acquiring it is not the reward for a fight that requires it. A player who chose Water Circulation before Laser has the confirmed red-hot close-range alternative during this first guardian visit; it is a supported route order, not an armour-rule exception.
 
-After the encounter, the return lift opens a direct connection to the garden upper works, and the observatory's mechanical alignment can complete. The array sends a visible pulse outward. A receiver turns, waits, and resets; nothing responds. No cutscene claims the builders are dead or names an external enemy. An inward-facing maintenance aperture also becomes usable, providing the optical access for the independently sufficient R5 front entrance. If Phoenix was recovered earlier through the water entrance, this alignment opens another useful connection rather than pretending the reward is still undiscovered.
+During the post-emitter gallery loop, Laser opens a direct bridge to the garden upper works and another to R6's ordinary service yard. Both are available before the guardian, allowing the player to leave this branch unfinished and pursue the other. After the encounter, the observatory's mechanical alignment can complete: the array sends a visible pulse outward, a receiver turns, waits, and resets, and nothing responds. No cutscene claims the builders are dead or names an external enemy. Completing the signal array is a regional restoration, not a gate to Phoenix or Water Circulation; its story works whether the circulation installation has already been visited.
 
 The emotional contrast is that the city's machines still look outward while their material is steadily carried inward.
 
+#### Proposed playable treatment — sightlines, shutters, and a waiting machine
+
+Status: new proposals for discussion, not approved implementation requirements. Preserve the revised early Mortar outer ring, Phoenix-before-Laser order, Laser-before-authored-guardian route, and pre-guardian loading/garden/circulation shortcuts. The encounter and art details here remain proposals; they do not reinstate the obsolete Laser prerequisite for R5. Do not enlarge the region simply to exceed R3's area. Its distinct experience should come from sightlines, changing firing positions, and machinery that serves exploration, combat, and the outward-signal story together.
+
+**A recognisable place.** A stationary broken observation dish dominates the silhouette. Narrow exterior service walks alternate with enclosed lens galleries, shuttered apertures, and a quiet receiver hall. Pale mineral surfaces, dark optical glass, sparse brass mechanisms, wind, and intermittent motor sounds distinguish it from freight yards and flooded growing beds. The dish and recurring sweep of a low-power calibration light orient the player without labels or objective arrows. Sightline-critical geometry must fit the existing fixed camera; scenery depth does not imply jumping or a new free camera.
+
+**A compact loop with an early remembered obstruction.** Before reaching the emitter, pass a shuttered gallery whose recessed receiver and fixed mirror can both be seen. Cannon cannot route around the solid corner, and the enclosure roof prevents an overhead Mortar shortcut. Later, acquire Laser and use one unobstructed mirror in a safe calibration bay. Re-enter the familiar gallery from its maintenance side, recognise the same receiver, and open an immediate local return. The early outer service route lets Mortar-first players remember this obstruction, while a Flotation-first Phoenix owner can see it from the express entrance's supported approach before reaching the emitter. Both routes cross the Phoenix boundary. Laser itself is not needed to reach the emitter or its ordinary return lift. This local mirror return is distinct from the inter-region bridges, which now also open before the guardian.
+
+From that return, two compact galleries could approach the guardian court from different sides. One makes distant firing positions useful; the other uses offset lines around screens. They can converge without requiring completion of both as a two-relay checklist. Optional magnetic mirror carriages or water-accessible firing positions provide alternate approaches, while mandatory progress after the emitter works with Cannon, Phoenix, and Laser, even if Mortar, Magnetic Traction, Flotation, or Water Circulation is absent.
+
+**Movement changes the beam solution.** Mandatory reflection problems should primarily use fixed, visibly framed mirrors. The player changes the incoming angle by driving to another firing position and aiming, rather than rotating every mirror with a control. Use one or two readable reflections for the initial authored routes. A shutter opening can expose a firing lane as well as a passage; the changed room should have a physical purpose beyond lighting a completion lamp. Receivers permanently latch useful passages so the single player never has to hold a beam and drive through an impossible self-closing door. Optional mirror repositioning may reuse the existing magnetic mounting rules without introducing an invisible rotation effect.
+
+**Encounters built around the same surfaces.** Prototype three small situations before duplicating them across the map:
+
+- A mirror-faced inspection machine screens a second enemy behind a partition. The mirrored face redirects Laser according to its actual orientation; the player can move to use that reflection against the screened enemy or take an ordinary Cannon flank. Mortar remains useful against an exposed roof. The mirror machine is not a universal reflector on every face, and destroying it must not remove a required route. Scenery supplies all mandatory puzzle mirrors; retaining a fallen enemy's reflector would be an optional additional interaction, not assumed infrastructure.
+- A stationary scanning sentry sweeps a visible warning line across a gallery, then commits a clearly telegraphed attack. A supported side lane lets the tank change position, exploit a fixed mirror, or close behind solid cover. A destructible shutter support could let a Cannon shot drop a screen into that lane and block the sentry's line of fire. Establish where the screen falls before the shot, keep an escape route, and ensure an optional movable screen cannot permanently block progression. New enemy attacks must respect the existing on-screen awareness rule; Laser's long range does not authorise unseen enemy fire.
+- A close clamp advances while a distant gun covers the comfortable reflected firing position. The player chooses between sustained beam damage and breaking aim to move or use the Cannon. This tests the Laser's commitment without requiring every enemy to carry optical armour or retiring earlier weapons.
+
+**Guardian: an evolving firing position.** Keep the accepted armoured front, sides, and roof, rear-only conventional weak point, and continuous player-facing tracking. A few large fixed mirrors should provide readable routes into its back. A slow projectile aimed through a currently useful player position forces relocation; relocation changes the guardian's facing and therefore which reflected route reaches its rear. The attack must announce its committed line so relocation is a deliberate choice, not unavoidable damage. Damage remains continuous whenever the actual final beam segment reaches the exposed rear, with no per-window quota or mandatory three-cycle sequence. Before committing room geometry, prove there are generous usable firing positions and recovery time under the actual tracking, camera, collision, and Heat rules. Do not claim that this geometry is solved merely from the encounter description.
+
+**A restoration that ends in silence.** The observation dish remains visible at several points during the loop, first motionless, later with a released shutter or a resumed calibration assembly. Preserve the accepted final alignment after the guardian: a pulse travels outward, the receiver turns toward the sky, waits, and settles back without a response. Leave the player in control while this happens. A smaller nearby maintenance machine can resume a modest useful motion, contrasting local restoration with the unanswered distant signal. This adds no explanation of the builders' disappearance or new external antagonist. The gallery's garden and circulation bridges make optical restoration useful while the unanswered final transmission closes the local story. Phoenix has already been obtained on every supported route, and the principal shortcuts do not wait for this final scene.
+
+The first prototype should contain one reflected local shortcut, one mixed combat room, and a guardian geometry study. Judge it by whether movement changes a meaningful decision, whether an earlier weapon remains useful, and whether a player can understand the reflected route from the normal camera. Room count, exact Laser controls and Heat rate, sentry timings, enemy durability, and the final scene choreography remain open.
+
 ### R5 — machines that tried before you
 
-R5 has two independently sufficient entrances: the front optical mechanism requires Laser, while the rear maintenance route crosses connected water using Flotation. Neither contains a hidden requirement for the other ability. Both reach a shared supported test loop that can be explored with Cannon and ordinary Overdrive before obtaining Phoenix.
+R5 has two independently sufficient entrances: Mortar opens the dry freight approach through R4's outer service ring, while Flotation reaches the rear maintenance dock through connected garden water. Neither contains a hidden requirement for the other ability or for Laser. An inside-operated gangway connects the shared test loop back to the garden landing for shorter later visits. Both reach a shared supported test loop that can be explored with Cannon and ordinary Overdrive before obtaining Phoenix.
 
 Test cradles contain vehicles with different failed assemblies: an engine that tore its mounting apart, a stopped chassis below scorched coolant pipes, a narrow carrier that reached the end of its rail but could go no farther. These are visible mechanical failures, not readable logs. Their connectors resemble parts already integrated into the Tank.
 
-Recover Phoenix Engine from a stationary accessible rig after releasing its clamps through a physical control or an exposed Cannon latch reachable from either approach. The acquisition need not be a Boss fight. A long exit approach makes the unchanged acceleration legible, then full speed breaks an ordinary barricade and clears a few ordinary blockers. The route joins the elevated foundry/transit freight network seen earlier from below, with direct express returns to both familiar regions.
+Recover Phoenix Engine from a stationary accessible rig after releasing its clamps through a physical control or an exposed Cannon latch reachable from either approach. The acquisition need not be a Boss fight. A long exit approach makes the unchanged acceleration legible, then full speed breaks an ordinary barricade and clears a few ordinary blockers. The route joins the elevated freight network seen earlier from below, with a visible junction offering direct Phoenix access to R4 calibration or R6 service works as well as express returns to the foundry and transit. Open an ordinary service bypass at the junction so repeat travel does not require repeating the breakthrough sequence.
 
-This is a major movement payoff and a period of agency. Its story must work before or after the observatory visit; an early-Phoenix player can use the express network to continue toward the loading works and optical equipment. Give the player meaningful time to reopen routes and revisit earlier places before asking for the final engine upgrade. The discovery is not yet 'I must die'; it is 'these machines were attempts to go where I am going.'
+This is a major movement payoff and a period of agency before Laser. Its story can follow either an early observatory-exterior visit or the garden water route. At the exit junction the player can choose optical exploration, circulation machinery, or a useful connection into familiar geography without retracing the test loop. Give the player meaningful time to reopen routes and revisit earlier places before asking for the final engine upgrade. The discovery is not yet 'I must die'; it is 'these machines were attempts to go where I am going.'
 
 ### R6 — learning to remain alight
 
-Phoenix opens the heavy service-spur obstruction near the hub. The long run-up and the route itself are familiar from earlier visits. Inside the Circulation Works, the player sees old drive bodies beside worn coolant jackets and successive connections that lead toward the furnace.
+Phoenix opens the heavy service-spur obstruction seen near the hub. The R5 express junction reaches the same service yard directly, and a Laser-opened bridge can later connect R4's mirror gallery to this ordinary restoration layer. None of these choices makes Laser necessary for the rig; the whole R6 acquisition loop remains available immediately after Phoenix. Inside the Circulation Works, the player sees old drive bodies beside worn coolant jackets and successive connections that lead toward the furnace.
 
 The initial restoration loop uses Cannon, grounded movement, and physical controls. It does not require Water Circulation, Flotation, Laser, Mortar, or Magnetic Traction as an additional acquisition gate. Recover Water Circulation from a functioning service rig reached without needing continued acceleration through Overheat. Its passive integration completes the first clear connection between the player's modular body and the abandoned systems around it.
 
 The immediate test is a sustained return lane with a cold-start approach and a safe retreat. Without the module, the machine would overheat and be pushed back. With it, the hull glows red and the drive continues. Tune it against Phoenix bursts, coasting, and cooling cycles so the gate truly requires the new property; exact transport speed and length remain prototype values.
 
-The sustained exit reaches the old garden service network, where supported transport lanes, cooling platforms, and a newly opened dry connection lead back into familiar geography. Red-hot contact has ordinary-enemy applications and a small thermal-release obstacle. Weapon lock makes remaining red a choice. Build a complete exploration segment here and offer reopened routes in earlier areas before the R7 approach; do not confine the ability to a tutorial lane immediately followed by the final Boss. Optional restoration enriches this segment without becoming a mandatory checklist. A loaded-carriage variation remains optional after validating alternative physical solutions.
+The sustained exit reaches the old garden service network, where supported transport lanes and cooling platforms lead to a far-side mechanism that opens a shorter pressure bypass to the transit inner ring. Later returns use this connection without repeating the whole sustained approach. Red-hot contact has ordinary-enemy applications and a small thermal-release obstacle. Weapon lock makes remaining red a choice. Build a complete exploration segment here and offer reopened routes in earlier areas before the R7 approach; do not confine the ability to a tutorial lane immediately followed by the final Boss. Optional restoration enriches this segment without becoming a mandatory checklist. A loaded-carriage variation remains optional after validating alternative physical solutions.
 
 The story consequence is experiential: the Tank can continue moving while carrying heat its earlier body could not tolerate. After using this freedom across recognizable old infrastructure, the player chooses the sustained inner approach to R7. The later quiet docking sequence gains meaning from time spent inhabiting this completed machine.
 
@@ -529,8 +582,8 @@ Use repeated shapes, spatial placement, motion, and sound together. Essential co
 ### Narrative and progression checks
 
 - The player has an immediate physical reason to enter each new route before understanding the larger history.
-- The first-play, Mortar-first, and early-Phoenix orders all remain completable. The garden outlet and early R2 approach independently reach the same Mortar rig; Flotation and Laser independently reach the Phoenix rig. Mandatory observatory progress does not require Magnetic Traction or Flotation.
-- Every reward is reachable without itself. Laser precedes the authored mirror-guardian route; Phoenix precedes its breakthrough exit; Water Circulation precedes its sustained lane. Shared R5/R6 interiors and mandatory return paths do not introduce unlisted ability requirements.
+- The garden/optics-first, freight-first, and circulation-first orders all remain completable. The garden outlet and early R2 approach independently reach the same Mortar rig; Flotation and Mortar independently reach the Phoenix rig. Phoenix always precedes Laser, and Laser and Water Circulation can be acquired in either order. Mandatory observatory progress after Phoenix does not require Mortar, Magnetic Traction, Flotation, or Water Circulation.
+- Every reward is reachable without itself. Phoenix precedes Laser; Laser precedes the authored mirror-guardian route; Phoenix precedes its breakthrough exit; Water Circulation precedes its sustained lane. Shared R5/R6 interiors and mandatory return paths do not introduce unlisted ability requirements.
 - Water restoration, optical alignment, and track opening alter the connected map, rather than merely setting invisible 'region complete' flags. Direct cross-region returns and multiple depths of access must remain legible without a compulsory hub visit.
 - The first-level Hive, enemy, and local ending rules remain correctly scoped to the playable slice.
 - Water Circulation has a full exploration segment and old-route applications before the final quiet approach; optional restoration is not a completion checklist.
@@ -576,7 +629,7 @@ flowchart LR
 - The Mortar cradle is reachable through the east yard without Magnetic Traction. Cover, guards, and an enemy lob launcher make this an optional combat route. The short Foundry return opens from the loading-works side only after a shell lands inside its enclosure.
 - The north optical approach requires a second recessed Mortar latch. The connecting archive bridge is initially shut and opens with a lever on the observatory side, so the magnetic path cannot silently bypass the optical requirement.
 - Six persistent gates form these routes. A seventh persistent action restores the small carrier at its dock. Four counterweights have visible rails, end stops, coils, and physical cable runs; the two recessed latches have open tops and solid sides.
-- Shore water has no supporting floor and cannot be crossed by ordinary tracks. The distant mechanical garden, observatory apparatus, and reinforced express wreck preview later abilities. The shore now continues into the R3 implementation described below. R4 remains a threshold preview. The second-region preview does not grant Flotation, Laser, or Phoenix.
+- Shore water has no supporting floor and cannot be crossed by ordinary tracks. The distant mechanical garden, observatory apparatus, and reinforced express wreck preview later abilities. The shore now continues into the R3 implementation described below. The outer court now connects to R4 and the dry R5 freight approach described in the middle-game implementation below. The second-region preview does not grant Flotation, Laser, or Phoenix.
 
 ## Magnetic Traction implementation
 
@@ -669,11 +722,11 @@ flowchart LR
   F -->|Southern water channel| D[Lower pump and canal dock]
   D -->|Cargo canal and safe landing jetty| M[Existing old-loading Mortar rig]
   M -->|Mortar latch| O[Foundry return and observatory route]
-  C --> T[Testworks rear threshold: future R5]
+  C -->|Flotation| T[Testworks rear dock: R5]
   P -.-> I[Optional maintenance tender islet]
 ```
 
-The first crossing is approximately 30 units long, calm, and free of enemy fire. Matching mooring posts and a low landing deck show where it ends. Beyond it, the supported outer shore and flooded centre form alternate approaches to the pump. The northern spur reaches the visible rear Testworks threshold; its closed hatch explicitly marks the end of the currently built region. Phoenix and the R5 interior are not implemented or silently awarded. The future observatory and Water Circulation connections retain their whole-game design roles and are not presented as completed routes.
+The first crossing is approximately 30 units long, calm, and free of enemy fire. Matching mooring posts and a low landing deck show where it ends. Beyond it, the supported outer shore and flooded centre form alternate approaches to the pump. The northern spur now continues through a flooded maintenance channel into the R5 rear dock. Flotation crosses this water; an inside-operated dry gangway later reconnects the dock and garden shore. Phoenix is acquired at the shared Testworks cradle, independently of the Mortar freight entrance. The upper pump works also connect to the optical bridge and circulation return described below.
 
 The pool visible from the original R2 Garden Shore is now traversable with Flotation and connects to the pump return; its submerged growing frames retain the earlier landmark. The southern channel is an independently useful continuation. A lower pump bank, a Repair Hive dock, cargo remains, and an armed canal island break up the return. The landing jetty reaches the safe east side of the old loading belt, so the normal garden approach does not strand the player against a lateral conveyor. It reaches the same Mortar rig used by the demanding earlier R2 route. An already acquired Mortar stays acquired; this branch creates no duplicate module or mandatory revisit checklist.
 
@@ -1288,3 +1341,67 @@ The following subjects are not established by the first level. Whole-game propos
 - Controller and mobile interaction.
 - Accessibility options beyond key remapping.
 - Exact final balance after hands-on playtesting.
+
+# R4–R6 playable middle-game implementation
+
+Status: implemented on 2026-09-09. These concrete rules supersede the earlier threshold-only implementation notes. The final furnace region R7 remains an unopened boundary; it is not part of this playable slice. The optional movable mirror-carriage study and other unimplemented encounter proposals above remain proposals.
+
+## Acquisition and route graph
+
+```mermaid
+flowchart LR
+  G[Garden far shore] -->|Flotation channel| D[R5 rear dock]
+  O[R4 Mortar-accessible outer ring] -->|Dry freight approach| T[R5 shared test bays]
+  D --> T
+  T --> P[Phoenix cradle]
+  P -->|Full-speed launch| J[Express junction]
+  J -->|Phoenix calibration shutter| L[Laser emitter]
+  O -->|Phoenix calibration shutter| L
+  J -->|Phoenix service shutter| W[R6 restoration yard]
+  W -->|Cannon pressure feed| C[Water Circulation rig]
+  L -->|Reflected beam| M[Mirror gallery and return crosswalk]
+  M --> B[Tracking guardian and outward signal]
+  L -.->|Inside loading lift| R2[Old loading works]
+  L -.->|Optical bridge| G
+  L -.->|Optical service bridge| W
+  D -.->|Inside gangway| G
+  C -->|Sustained opposing conveyor| E[Pressure landing]
+  E -.->|Permanent dry bypass| C
+  E -.->|Industrial return| G
+  E -.->|Express connection| J
+```
+
+- The rear channel requires Flotation; the existing Mortar latch reaches the dry freight approach. Both entrances reach one Phoenix cradle using only Cannon and ordinary Overdrive inside the Testworks.
+- Both calibration entrances have momentum barriers. Neither the outer ring nor the early garden entrances bypass Phoenix to obtain Laser. The loading lift is operated from the emitter side.
+- After Phoenix, Laser and Water Circulation are independent choices. The circulation restoration uses a shootable pressure receiver, visible connecting pipes, and a service shutter. No Laser, Mortar, Magnetic Traction, or Flotation is required inside it.
+- Reflection opens both the gallery entrance and its crosswalk back to the calibration spine. This creates a circuit through the mirror encounter. The loading, garden, and circulation exits are available before the guardian is defeated.
+- All opened shutters, bridges, gangways, and the pressure bypass persist across rest, death, and reload. They reconnect physical floors; there are no teleport points, chapter-selection gates, or repeated opening tasks. Checkpoints preserve the existing repair/reset rules.
+
+## Ability controls and balance
+
+| Ability | Implemented rule | Readable feedback |
+| --- | --- | --- |
+| Phoenix Engine | Upgrades the same held Overdrive input to 3.2× speed. Acceleration remains 1.2 speed multipliers per second, reaching maximum from rest in approximately 1.83 seconds. Engine Heat remains 15 points per second. | Twin rear jets, warm engine parts, a speed gauge scaled to the new cap, louder and higher engine sound |
+| Phoenix collision | Maximum speed deals 12 damage to an ordinary enemy, ignoring its frontal plate, and breaks marked momentum shutters. Ordinary crates retain their existing breakable behaviour. Cold Phoenix does not bypass special-enemy armour. | Shutter ribs match the track's warm run-up markings; impact breaks the barrier and carries the tank onward |
+| Laser | Hold the existing fire input. Q cycles through owned Cannon, Mortar, and Laser. A beam has a 90-unit total path, at most five reflections, 24 Heat per second, and 2.5 damage per second. Walls and nearer bodies stop it. | Warm beam segments, bright finite mirror faces, receiver illumination, metallic armour impact versus orange damaging impact |
+| Water Circulation | Passive integration permits acceleration through Overheat. Overheat still locks all weapons until fully cold. Hot contact deals twice the current contact tier: 2 at low speed, 4 while accelerating, or 24 at maximum Phoenix speed. Every enemy type can receive red contact damage; repeated contact has a 0.6-second debounce. | Coolant jackets on the hull, red body and hot exhaust, the existing warm reticle Heat ring |
+
+Overdrive deceleration retains its existing slope of approximately 1.71 speed multipliers per second. Coasting continues to generate Heat. Flotation deployment disables both engine boost variants. A released hot engine can stop and cool normally; Water Circulation does not make firing available during Overheat.
+
+## Encounters, small machinery, and environmental story
+
+R5 contains discarded drive bodies and test carriages around a shared supported route. Freight cover, pressure vessels, clamp charges, guards, and lobbed attacks provide ordinary combat choices before the upgrade. The long exit track immediately demonstrates the acquired engine by breaking a shutter and ordinary defenders, then reaches the express junction. The player can revisit familiar regions or choose either later branch.
+
+R4 uses pale inspection decks, optical screens, raised dishes, finite mirror panels, and a disused emitter. The first mirror can route a beam around a solid screen into a receiver. A mirrored inspector has 3 HP and a reflective front plate that turns with its chassis; its flank, rear, overhead attacks, maximum Phoenix collision, and red contact remain useful alternatives. Nearby guns and clamps make the player's firing position matter. The gallery crosswalk returns to the calibration spine before the guardian, so the player can leave via any opened bridge.
+
+The guardian has 18 HP. Its hull tracks the tank while its heavy shot commits to a warning direction for 1.4 seconds, followed by a 2.2-second recovery and a short idle pause. Its roof and frontal/side armour reject ordinary attacks. The final incoming ray direction determines rear vulnerability after reflection; a rear Cannon shot follows the same directional rule. There is no damage-per-window cap. Red contact is a supported alternate damage route, including a circulation-first visit. Armour produces the same immediate metal flash and ricochet language as other protected enemies. Defeat persists and enables the optional array control: the array pulses outward while its receiver turns, waits, and resets without a reply. The player retains control.
+
+R6 connects worn coolant jackets, a shootable feed receiver, visibly accelerating pump fans, the circulation rig, and the material-return lane. The lane is 64 units long and opposes movement at 2.6 times base speed. Full Phoenix advances against it at only 4.2 units per second, exceeding the cold engine's available duration; its successor continues through Overheat. Guards and clamps on the lane can be destroyed by red contact. At the far landing, an ordinary pressure control opens the parallel dry bypass and the industrial return into familiar garden and express geography. No red-only artificial wall is needed for this ability lock.
+
+## Verification and remaining tuning
+
+Node checks cover both independent Phoenix entrances, Phoenix-before-Laser gating, the independent Cannon restoration route to Water Circulation, the inaccessible cold return landing, supported encounter/checkpoint clearance, permanent mechanism serialization, full-speed shutter impact, finite reflection, range/occlusion, final-ray rear hits, Heat, and sustained conveyor movement. The loading lift is required to remove at least half the former supported walking distance between the emitter and old loading apron. This is a measured geometric comparison, not a claim that every connector meets the travel-time target.
+
+Browser scenarios exercise real projectiles, held Laser input, reflected receiver activation, both momentum entrances, maximum-speed guard destruction, armour rejection, rear reflection damage, red contact, the long opposing lane, optional signal, rest, and reload. Continuous navigation scripts drive both a freight/optics-first order without Magnetic Traction or Flotation and a flotation/circulation-first order without Mortar. They disable enemies to isolate route geometry; combat is checked separately. The existing R1–R3 checks remain part of regression verification. First-time discovery, sustained combat pacing, and the complete world's ending still require further playtesting and implementation.
+
+The settings menu includes an independent middle-game preview at `?chapter=4`, starting in the outer observatory with Cannon, ordinary Overdrive, and Mortar. It grants none of the three later modules and does not replace the full-journey save. Existing saves default missing module and mechanism fields to unacquired/closed.

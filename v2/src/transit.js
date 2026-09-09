@@ -107,11 +107,9 @@ export function makeTransit(scene, world, saved = {}) {
   const belt={x:43,z:-99,w:27,d:5,dx:-1,dz:0,parts:[],offset:0,active:true};
   box(fixed,belt.w,.16,belt.d,belt.x+belt.w/2,.1,belt.z+belt.d/2,C.dark);
   for(let i=0;i<60;i++)belt.parts.push(box(scene,.23,.08,4.7,belt.x+i*.45,.23,belt.z+2.5,0x999375));world.belts.push(belt);
-  // A future high-speed freight spine is physically obstructed by a reinforced wreck.
-  obstacle(20,-268,16,5,4.4,0x615c50);
-  for(const x of [14,18,22,26])box(fixed,.3,4.7,5.1,x,2.35,-268,C.dark);
+  // The old freight-spine obstacle is now the persistent Phoenix gate in midgame.js.
   for(const x of [15,25])box(fixed,.15,.06,15,x,.2,-258,C.yellow);
-  // The observatory is a quiet outer court; a mirror points into the unbuilt interior.
+  // The observatory is a quiet outer court; a mirror previews the later calibration interior.
   obstacle(108,-249,4,4,6,0x6d8491);
   const dish=new T.Group();scene.add(dish);dish.position.set(107,6,-249);dish.rotation.z=.65;
   cylinder(dish,4,.35,0,0,0,0xb2b9ac,32);ring(dish,3.8,.2,0,.25,0,C.metal);box(dish,.12,3,.12,0,1.5,0,C.dark);
@@ -128,7 +126,7 @@ export function makeTransit(scene, world, saved = {}) {
     box(fixed,.16,4,.16,x,2,z,C.dark);box(fixed,1.4,.3,.65,x,4,z,C.metal);box(fixed,1.1,.1,.5,x,3.8,z,mat(0xffdf9d,true));
     const pool=new T.Mesh(new T.CircleGeometry(3.5,20),new T.MeshBasicMaterial({color:0xffdb9a,transparent:true,opacity:.06,depthWrite:false}));pool.rotation.x=-Math.PI/2;pool.position.set(x,.14,z);fixed.add(pool);
   }
-  for(const x of [-215,130]){box(fixed,8,35,10,x,12,-202,0x30464a);box(fixed,3,47,4,x,19,-202,0x30464a);}
+  for(const x of [-215,280]){box(fixed,8,35,10,x,12,-202,0x30464a);box(fixed,3,47,4,x,19,-202,0x30464a);}
   batchStatic(fixed);
   function update(dt,time,player,restored=false){
     signal.rotation.y=restored?time*.18:Math.PI/4;signalLamp.material.color.setHex(restored?C.mint:0xa48552);

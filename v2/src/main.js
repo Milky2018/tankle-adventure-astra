@@ -1,7 +1,7 @@
 import * as T from 'three';
 import './style.css';
 import { makeWorld, tankModel, chargeWarning, floorColors, box, sphere, ring, mat, C, rooms, hazardDefinitions, elevation } from './world.js';
-import { MAX_HP, BASE_SPEED, OVERDRIVE_MAX_SPEED, PLAYER_HURT_RADIUS, ENEMY_HURT_SCALE, CHARGE, DEFAULT_BINDINGS, newPlayer, shootHeat, updateHeat, screenMovement, damagePlayer, inside, clamp, angleDelta, segmentCircle } from './mechanics.js';
+import { MAX_HP, BASE_SPEED, OVERDRIVE_MAX_SPEED, PHOENIX_MAX_SPEED, phoenixReady, redContact, contactDamage, PLAYER_HURT_RADIUS, ENEMY_HURT_SCALE, CHARGE, DEFAULT_BINDINGS, newPlayer, shootHeat, updateHeat, screenMovement, damagePlayer, inside, clamp, angleDelta, segmentCircle } from './mechanics.js';
 import { FactoryAudio } from './audio.js';
 import { makeTransit } from './transit.js';
 import { makeCombatProps, VOLATILE } from './combat-props.js';
@@ -11,13 +11,17 @@ import { makeGardens, flotationAssembly } from './gardens.js';
 import { gardenEnemies, gardenCurrents } from './garden-layout.js';
 import { MORTAR, mortarTarget, mortarPosition, FLOTATION, supportedHull, toggleFlotation } from './abilities.js';
 
+import { makeMidgame } from './midgame.js';
+import { midgameEnemies } from './midgame-layout.js';
+import { LASER, traceLaser, rearHit, laserHeat } from './laser.js';
+
 const $=id=>document.getElementById(id);
 const chapter=new URLSearchParams(location.search).get('chapter');
-const chapterPreview=chapter==='2'||chapter==='3';
-const SAVE_KEY=chapter==='3'?'furnace-born-v2-garden-preview':chapterPreview?'furnace-born-v2-transit-preview':'furnace-born-v2-save', SETTINGS_KEY='furnace-born-v2-settings';
+const chapterPreview=chapter==='2'||chapter==='3'||chapter==='4';
+const SAVE_KEY=chapter==='4'?'furnace-born-v2-midgame-preview':chapter==='3'?'furnace-born-v2-garden-preview':chapterPreview?'furnace-born-v2-transit-preview':'furnace-born-v2-save', SETTINGS_KEY='furnace-born-v2-settings';
 function readStored(key){try{return JSON.parse(localStorage.getItem(key)||'null');}catch{return null;}}
 function writeStored(key,value){try{localStorage.setItem(key,JSON.stringify(value));}catch{/* Play remains available when storage is disabled. */}}
-const saved=readStored(SAVE_KEY)||(chapterPreview?{anchor:chapter==='3'?6:3,eliteDead:true,bossDead:true,finished:true,hives:[0,1,2,3,...(chapter==='3'?[6]:[])],relays:[0,1],modules:{magnet:chapter==='3'},transit:chapter==='3'?{opened:['garden','crane-return']}:undefined}:null),prefs=readStored(SETTINGS_KEY)||{};
+const saved=readStored(SAVE_KEY)||(chapterPreview?{anchor:chapter==='4'?15:chapter==='3'?6:3,eliteDead:true,bossDead:true,finished:true,hives:[0,1,2,3,...(chapter==='3'?[6]:[])],relays:[0,1],modules:{magnet:chapter==='3',mortar:chapter==='4'},transit:chapter==='4'?{opened:['optical','observatory-return']}:chapter==='3'?{opened:['garden','crane-return']}:undefined}:null),prefs=readStored(SETTINGS_KEY)||{};
 let bindings={...DEFAULT_BINDINGS,...prefs.bindings};
 // New tool bindings must not take over controls assigned in an older save.
 for(const action of ['magnet','weapon','flotation'])if(!prefs.bindings?.[action]){
@@ -36,6 +40,7 @@ const transit=makeTransit(scene,world,saved?.transit);
 const combat=makeCombatProps(scene,world);
 const gardens=makeGardens(scene,world,transit,saved?.gardens);
 const puzzles=makeSmallPuzzles(scene,world,saved?.puzzles);
+const midgame=makeMidgame(scene,world,saved?.midgame);
 const foundryDoorBounds={x:-5,z:-76.4,w:10,d:.8,h:5.7,active:!saved?.finished};world.obstacles.push(foundryDoorBounds);
 const player=newPlayer(),model=tankModel();
 player.underpass=false;
@@ -43,11 +48,16 @@ const playerHeight=()=>player.afloat?-.12:player.underpass?0:elevation(player.x,
 const floats=flotationAssembly(model.body);
 let wasUnderpass=false;
 model.root.traverse(m=>{if(m.isMesh)m.material=m.material.clone();});scene.add(model.root);
+const hullMaterials=[];model.body.traverse(m=>{if(m.isMesh&&m.material.emissive)hullMaterials.push({material:m.material,color:m.material.color.clone(),emissive:m.material.emissive.clone()});});
+const engineJets=[-1,1].map(side=>box(model.body,.4,.35,.8,side*.7,1.2,-1.8,mat(C.orange,true)));
+const coolantJackets=[-1,1].map(side=>box(model.body,.25,.6,1.7,side*.95,1.6,-.25,C.metal));
+const laserLens=ring(model.barrel,.3,.06,0,2,2.5,mat(C.lightYellow,true));laserLens.rotation.x=Math.PI/2;
 const knownEncounters=new Set(saved?.encounters||[]);
 const discovered=new Set(saved?.discovered||['a']),visitedHives=new Set(saved?.hives||[0]);
 let anchor=Number.isInteger(saved?.anchor)&&saved.anchor>=0&&saved.anchor<world.hives.length?saved.anchor:0;
 let eliteDead=!!saved?.eliteDead,bossDead=!!saved?.bossDead,finished=!!saved?.finished;
 player.overdrive=eliteDead;player.magnet=!!saved?.modules?.magnet;player.mortar=!!saved?.modules?.mortar;player.flotation=!!saved?.modules?.flotation;
+for(const id of ['phoenix','laser','circulation'])player[id]=!!saved?.modules?.[id];
 let transitRestored=!!saved?.transitRestored;
 for(const r of world.relays)if(saved?.relays?.includes(r.id)){r.hp=0;r.core.visible=false;r.root.rotation.z=.15;r.cable.material.color.setHex(C.dark);}
 for(const h of world.hives)h.active=visitedHives.has(h.id);
@@ -64,12 +74,14 @@ const tether=new T.Line(tetherGeometry,new T.LineBasicMaterial({color:C.mint,tra
 const hpEl=$('hp');for(let i=0;i<10;i++)hpEl.append(document.createElement('i'));
 const projectileGeometry=new T.SphereGeometry(.23,10,6),particleGeometry=new T.IcosahedronGeometry(1,1);
 const bulletMaterials={player:mat(0xfff1b0,true),enemy:mat(0xff783e,true)};
-const enemyDefs=[['scout',27,0],['scout',17,40],['scout',26,45],['turret',15,46],['guard',79,41],['turret',83,25],['elite',52,65],['boss',0,-51],...transitEnemies,...gardenEnemies];
-const healths={scout:1,turret:2,mortar:2,guard:3,elite:9,boss:14};
+const enemyDefs=[['scout',27,0],['scout',17,40],['scout',26,45],['turret',15,46],['guard',79,41],['turret',83,25],['elite',52,65],['boss',0,-51],...transitEnemies,...gardenEnemies,...midgameEnemies];
+const healths={scout:1,turret:2,mortar:2,guard:3,mirror:3,guardian:18,elite:9,boss:14};
 function makeEnemy(type,x,z,encounter=null){
-  const m=tankModel(type==='mortar'?'turret':type);scene.add(m.root);
+  const m=tankModel(type==='mortar'?'turret':['mirror','guardian'].includes(type)?'guard':type);scene.add(m.root);
+  if(type==='mirror'){box(m.body,3.2,1.5,.18,0,1.5,2,new T.MeshStandardMaterial({color:0xd6eeed,metalness:.9,roughness:.15,emissive:0x667775,emissiveIntensity:.35}));}
+  if(type==='guardian'){box(m.body,2.8,.35,2.8,0,2.5,0,C.metal);box(m.body,1.8,1.1,.2,0,1.3,-1.8,mat(C.orange,true));}
   if(type==='mortar'){m.barrel.rotation.x=-.8;box(m.body,1.8,.3,1.8,0,.2,0,C.metal);}
-  const e={type,x,z,sx:x,sz:z,hp:healths[type],max:healths[type],heading:type==='boss'?0:Math.PI,aim:Math.PI,model:m,r:CHARGE[type]?.radius??(type==='boss'?4.8:['turret','mortar'].includes(type)?1:1.5),state:'idle',timer:1.5,cooldown:0,active:false,flash:0,armorFlash:0,chargeX:0,chargeZ:0,ramAt:-10,cycle:0,assemblies:[4,4],core:6,openSide:-1};
+  const e={type,x,z,sx:x,sz:z,hp:healths[type],max:healths[type],heading:type==='boss'?0:Math.PI,aim:Math.PI,model:m,r:CHARGE[type]?.radius??(type==='guardian'?3:type==='boss'?4.8:['turret','mortar'].includes(type)?1:1.5),state:'idle',timer:1.5,cooldown:0,active:false,flash:0,armorFlash:0,chargeX:0,chargeZ:0,ramAt:-10,cycle:0,assemblies:[4,4],core:6,openSide:-1};
   e.encounter=encounter;e.alertUntil=0;e.initialDelay=encounter?.45+(Math.abs(x+z)%7)/9:1.5;e.timer=e.initialDelay;
   if(encounter&&type==='scout'){e.hp=e.max=2;e.armorPlate=box(m.body,1.3,.22,1.4,0,1.86,-.4,C.metal,.06);}
   e.hurtRadius=e.r*ENEMY_HURT_SCALE;
@@ -80,7 +92,7 @@ function makeEnemy(type,x,z,encounter=null){
   }else{
     e.warning=new T.Group();
     const wm=new T.MeshBasicMaterial({color:C.orange,transparent:true,opacity:.25,depthWrite:false});
-    e.warningShape=box(e.warning,type==='boss'?1.1:.28,.025,22,0,.1,12,wm,0);
+    e.warningShape=box(e.warning,['boss','guardian'].includes(type)?1.1:.28,.025,22,0,.1,12,wm,0);
     e.warningShape.castShadow=false;
   }
   scene.add(e.warning);e.warning.visible=false;
@@ -91,9 +103,9 @@ function makeEnemy(type,x,z,encounter=null){
   }
   return e;
 }
-for(const def of enemyDefs){const e=makeEnemy(...def);if(e.type==='elite'&&eliteDead||e.type==='boss'&&bossDead){e.hp=0;e.model.root.visible=false;}enemies.push(e);}
+for(const def of enemyDefs){const e=makeEnemy(...def);if(e.type==='elite'&&eliteDead||e.type==='boss'&&bossDead||e.type==='guardian'&&midgame.state.guardianDead){e.hp=0;e.model.root.visible=false;}enemies.push(e);}
 const elite=enemies.find(e=>e.type==='elite'),boss=enemies.find(e=>e.type==='boss');
-function save(){writeStored(SAVE_KEY,{anchor,eliteDead,bossDead,finished,transitRestored,modules:{magnet:player.magnet,mortar:player.mortar,flotation:player.flotation},gardens:gardens.serialize(),puzzles:puzzles.serialize(),transit:transit.serialize(),relays:world.relays.filter(r=>r.hp===0).map(r=>r.id),discovered:[...discovered],hives:[...visitedHives],encounters:[...knownEncounters]});}
+function save(){writeStored(SAVE_KEY,{anchor,eliteDead,bossDead,finished,transitRestored,modules:{magnet:player.magnet,mortar:player.mortar,flotation:player.flotation,phoenix:player.phoenix,laser:player.laser,circulation:player.circulation},midgame:midgame.serialize(),gardens:gardens.serialize(),puzzles:puzzles.serialize(),transit:transit.serialize(),relays:world.relays.filter(r=>r.hp===0).map(r=>r.id),discovered:[...discovered],hives:[...visitedHives],encounters:[...knownEncounters]});}
 function pan(x,z){return clamp(((x-player.x)-(z-player.z))/25,-1,1);}
 function burst(x,z,color=C.orange,count=15,y=1,power=1){
   for(let i=0;i<count;i++){
@@ -116,6 +128,7 @@ function moveEntity(entity,dx,dz,r){
   const count=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.3));let hit=false;
   for(let i=0;i<count;i++){
     const oldX=entity.x;
+    if(entity===player)for(const g of midgame.ram(entity.x+dx/count,entity.z+dz/count,player)){explosion(g.x,g.z,.8);save();}
     const tunnelBlocked=(x,z)=>{
       if(entity!==player)return false;
       if(player.underpass)return x>=70&&x<=86&&(z<30.5+r||z>37.5-r);
@@ -151,7 +164,7 @@ function strikePuzzle(x,z,y){
 }
 function fire(){
   if(paused||mapOpen||opening>0||deathTime>=0||endingTime>=0)return;
-  if(magneticTarget)return;
+  if(magneticTarget||player.weapon==='laser')return;
   if(player.weapon==='mortar'&&player.mortar){
     if(shootHeat(player,time,MORTAR.heat,MORTAR.cooldown)){
       const target=mortarTarget(player.x,player.z,aim.x,aim.z),mesh=new T.Mesh(projectileGeometry,bulletMaterials.player);mesh.scale.setScalar(2);scene.add(mesh);
@@ -163,7 +176,7 @@ function fire(){
   if(shootHeat(player,time)){
     const d=2.6,mx=player.x+Math.sin(player.aim)*d,mz=player.z+Math.cos(player.aim)*d;
     if(lineClear(player.x,player.z,mx,mz))emitBullet(mx,mz,player.aim,'player',1,38,playerHeight()+1.25);
-    else for(let i=1;i<=12;i++){const x=player.x+(mx-player.x)*i/12,z=player.z+(mz-player.z)*i/12,p=combat.props.find(p=>p.bounds.active&&inside(x,z,p.bounds));if(p){strikeProp(p,1);break;}if(strikePuzzle(x,z,playerHeight()+1.25))break;if(collides(x,z,.05,null,true))break;}
+    else for(let i=1;i<=12;i++){const x=player.x+(mx-player.x)*i/12,z=player.z+(mz-player.z)*i/12,p=combat.props.find(p=>p.bounds.active&&inside(x,z,p.bounds));if(p){strikeProp(p,1);break;}if(strikeReceiver(x,z,'cannon')||strikePuzzle(x,z,playerHeight()+1.25))break;if(collides(x,z,.05,null,true))break;}
     recoil=.38;usedFire=true;audio.event('shot');burst(player.x+Math.sin(player.aim)*2.7,player.z+Math.cos(player.aim)*2.7,C.lightYellow,5,playerHeight()+1.7,.4);
     if(player.overheated)audio.event('heat');
   }
@@ -189,10 +202,13 @@ function armorImpact(e,sx,sz,impact){
 }
 function damageEnemy(e,amount,sx,sz,impact){
   if(e.hp<=0)return false;
+  if(e.type==='guardian'&&!impact?.red&&!(!impact?.overhead&&(impact?.laser?rearHit(e.heading,impact.dx,impact.dz):Math.cos(Math.atan2(sx-e.x,sz-e.z)-e.heading)<-.55))){armorImpact(e,sx,sz,impact);return 'armor';}
+  if(e.type==='mirror'&&!impact?.phoenix&&!impact?.red&&!impact?.overhead&&Math.cos(Math.atan2(sx-e.x,sz-e.z)-e.heading)>.25){armorImpact(e,sx,sz,impact);return 'armor';}
+  if(e.type==='boss'&&impact?.red){let remaining=amount;for(let i=0;i<2;i++){const loss=Math.min(e.assemblies[i],remaining);e.assemblies[i]-=loss;remaining-=loss;}e.core=Math.max(0,e.core-remaining);e.hp=e.assemblies[0]+e.assemblies[1]+e.core;burst(e.x,e.z,C.orange,12,2);if(!e.hp)killEnemy(e);return 'hit';}
   if(e.encounter){e.alertUntil=time+6;if(e.state==='idle')e.timer=Math.min(e.timer,.3);if(e.type==='turret'&&e.state==='vent')amount*=2;}
-  const armored=e.type==='guard'&&!(e.disarmed>0)&&!impact?.overhead&&Math.cos(Math.atan2(sx-e.x,sz-e.z)-e.heading)>.25;
+  const armored=e.type==='guard'&&!impact?.red&&!impact?.phoenix&&!(e.disarmed>0)&&!impact?.overhead&&Math.cos(Math.atan2(sx-e.x,sz-e.z)-e.heading)>.25;
   if(armored)amount*=.4;
-  if(e.type==='elite'){
+  if(e.type==='elite'&&!impact?.red){
     const a=Math.atan2(sx-e.x,sz-e.z);
     if(e.state!=='vent'||Math.cos(a-e.heading)>.2){burst(e.x,e.z,C.metal,5,2,.3);return false;}
   }
@@ -211,6 +227,7 @@ function killEnemy(e){
     save();
   }
   if(e.type==='boss'){bossDead=true;audio.event('unlock');save();}
+  if(e.type==='guardian'){midgame.state.guardianDead=true;audio.event('unlock');pulse(e.x,e.z,C.lightYellow,18);save();}
 }
 function hitBoss(b){
   if(boss.hp<=0)return false;
@@ -234,9 +251,9 @@ function hitBoss(b){
 function resetOrdinary(){
   combat.reset();
   for(const e of enemies){
-    if((e.type==='elite'&&eliteDead)||(e.type==='boss'&&bossDead))continue;
+    if((e.type==='elite'&&eliteDead)||(e.type==='boss'&&bossDead)||(e.type==='guardian'&&midgame.state.guardianDead))continue;
     e.x=e.sx;e.z=e.sz;e.hp=e.max;e.heading=e.type==='boss'?0:Math.PI;e.state='idle';e.timer=e.encounter?e.initialDelay:2;e.alertUntil=0;e.lastSeen=null;e.active=false;e.cooldown=0;e.armorFlash=0;e.disarmed=0;if(e.model.frontArmor)e.model.frontArmor.material.emissiveIntensity=0;e.cycle=0;e.assemblies=[4,4];e.core=6;e.openSide=-1;e.warning.visible=false;e.model.root.visible=true;
-    e.model.root.scale.setScalar(e.type==='boss'?2.8:e.type==='elite'?1.35:1);
+    e.model.root.scale.setScalar(e.type==='boss'?2.8:e.type==='guardian'?1.8:e.type==='elite'?1.35:1);
   }
   for(const b of [...bullets,...lobShots]){scene.remove(b.mesh);if(b.mark){scene.remove(b.mark);b.mark.geometry.dispose();b.mark.material.dispose();}}bullets.length=0;lobShots.length=0;magneticTarget=null;tether.visible=false;
 }
@@ -250,7 +267,7 @@ function repair(){
   save();
 }
 function interactionTarget(){
-  return puzzles.target(player)||
+  return midgame.target(player)||puzzles.target(player)||
     (!gardens.tenderRepaired&&Math.hypot(gardens.tender.x-player.x,gardens.tender.z-player.z)<3?gardens.tender:null)||
     (!gardens.restored&&transit.opened.has('garden-feed')&&Math.hypot(gardens.lever.x-player.x,gardens.lever.z-player.z)<3?gardens.lever:null)||
     transit.modules.find(m=>!player[m.id]&&Math.hypot(m.x-player.x,m.z-player.z)<3.5)||
@@ -260,8 +277,9 @@ function interactionTarget(){
 function interact(){
   if(player.hp<=0||opening>0||endingTime>=0)return;
   const target=interactionTarget();
-  if(target?.puzzle){if(puzzles.act(target,player,enemies)){audio.event('lever',pan(target.x,target.z));save();}else audio.event('blocked',pan(target.x,target.z));}
-  else if(target?.module){player[target.id]=true;if(target.id==='mortar')player.weapon='mortar';if(target.id==='flotation'){acquiredKind='flotation';acquiredUntil=time+5;}audio.event('unlock');pulse(target.x,target.z,C.mint,12);burst(target.x,target.z,C.mint,20,2);save();}
+  if(target?.control){if(midgame.act(target)){audio.event(target.signal?'unlock':'lever');pulse(target.x,target.z,C.lightYellow,12);save();}}
+  else if(target?.puzzle){if(puzzles.act(target,player,enemies)){audio.event('lever',pan(target.x,target.z));save();}else audio.event('blocked',pan(target.x,target.z));}
+  else if(target?.module){player[target.id]=true;if(target.id==='mortar'||target.id==='laser')player.weapon=target.id;if(['phoenix','circulation'].includes(target.id)){acquiredKind=target.id;acquiredUntil=time+5;}if(target.id==='flotation'){acquiredKind='flotation';acquiredUntil=time+5;}audio.event('unlock');pulse(target.x,target.z,C.mint,12);burst(target.x,target.z,C.mint,20,2);save();}
   else if(target===gardens.tender){gardens.repairTender();audio.event('repair');pulse(target.x,target.z,C.mint,10);save();}
   else if(target===gardens.lever){if(gardens.restore()){audio.event('repair');pulse(target.x,target.z,C.mint,45);save();}}
   else if(target===transit.lever){transit.open(target.opens);audio.event('repair');pulse(target.x,target.z,C.mint,8);save();}
@@ -271,7 +289,7 @@ function respawn(){
   const h=world.hives[anchor];player.x=h.x;player.z=h.z+2;player.underpass=false;player.deployed=false;player.afloat=false;player.hp=MAX_HP;player.heat=0;player.overheated=false;player.speed=1;player.invincible=time+1;player.lastHeat=-10;player.lastShot=-10;deathTime=-1;lastHazard=time;resetOrdinary();cameraFocus.set(player.x,0,player.z);pulse(player.x,player.z,C.mint,8);opening=.6;
 }
 function enemyShoot(e,offset=0,heavy=false){
-  const a=(e.encounter&&e.type==='turret'?e.aim:Math.atan2(player.x-e.x,player.z-e.z))+offset,r=e.type==='boss'?5:e.type==='turret'?2:2.3;
+  const a=(e.encounter&&['turret','guardian','mirror'].includes(e.type)?e.aim:Math.atan2(player.x-e.x,player.z-e.z))+offset,r=e.type==='guardian'?3.8:e.type==='boss'?5:e.type==='turret'?2:2.3;
   const shot=emitBullet(e.x+Math.sin(a)*r,e.z+Math.cos(a)*r,a,'enemy',heavy?15:e.encounter?5:e.type==='guard'?10:8,heavy?13:e.type==='boss'?12:18,elevation(e.x,e.z)+1.1,heavy);shot.source=e;
   audio.event(e.type==='boss'?'foundry-shot':e.type==='turret'?'welder-shot':'guard-shot',pan(e.x,e.z));e.model.barrel.position.z=-.3;
 }
@@ -302,8 +320,8 @@ function updateEnemies(dt){
   for(const e of enemies){
     if(e.hp<=0)continue;
     const previousPosition={x:e.x,z:e.z};
-    const dx=player.x-e.x,dz=player.z-e.z,dist=Math.hypot(dx,dz),a=Math.atan2(dx,dz),ordinary=!['elite','boss'].includes(e.type);
-    const sight=lineClear(e.x,e.z,player.x,player.z),screenPosition=new T.Vector3(e.x,1,e.z).project(camera);
+    const dx=player.x-e.x,dz=player.z-e.z,dist=Math.hypot(dx,dz),a=Math.atan2(dx,dz),ordinary=!['elite','boss','guardian'].includes(e.type);
+    const sight=dist<45&&lineClear(e.x,e.z,player.x,player.z),screenPosition=new T.Vector3(e.x,1,e.z).project(camera);
     const inView=Math.abs(screenPosition.x)<.96&&Math.abs(screenPosition.y)<.96;
     if(e.encounter&&sight&&dist<30&&inView)for(const ally of enemies)if(ally.hp>0&&ally.encounter===e.encounter){ally.alertUntil=time+4;ally.lastSeen={x:player.x,z:player.z};}
     const engaged=e.encounter?dist<30&&inView&&(sight||e.alertUntil>time):dist<22&&sight;
@@ -319,7 +337,7 @@ function updateEnemies(dt){
     e.flash=Math.max(0,e.flash-dt);e.model.barrel.position.z*=Math.exp(-12*dt);e.warning.visible=false;
     if(e.active&&player.hp>0&&magneticTarget!==e){
       e.timer-=dt;e.cooldown-=dt;
-      if(!(e.encounter&&e.type==='turret'&&['warn','burst','vent'].includes(e.state)))e.aim=a;
+      if(!(e.type==='guardian'&&e.state==='warn')&&!(e.encounter&&e.type==='turret'&&['warn','burst','vent'].includes(e.state)))e.aim=a;
       if(e.type==='scout'){
         if(e.state==='idle'){
           e.heading+=angleDelta(e.heading,a)*Math.min(1,dt*5);
@@ -355,6 +373,11 @@ function updateEnemies(dt){
           if(e.shotsLeft<=0){e.state='vent';e.timer=2.5;audio.event('vent',pan(e.x,e.z));burst(e.x,e.z,0xd5e5cf,5,2,.3);}
         }else if(e.state==='vent'&&e.timer<=0){e.state='idle';e.timer=.4;}
         e.model.radiator.material.color.setHex(e.state==='vent'?C.orange:C.dark);
+      }else if(e.type==='guardian'||e.type==='mirror'){
+        e.heading+=clamp(angleDelta(e.heading,a),-dt*(e.type==='guardian'?3:.65),dt*(e.type==='guardian'?3:.65));
+        if(e.state==='idle'&&e.timer<=0&&canAttack){e.state='warn';e.timer=1.4;e.aim=a;audio.event('warn',pan(e.x,e.z));}
+        else if(e.state==='warn'){e.warning.visible=true;if(e.timer<=0){enemyShoot(e,0,e.type==='guardian');e.state='vent';e.timer=2.2;}}
+        else if(e.state==='vent'&&e.timer<=0){e.state='idle';e.timer=.8;}
       }else if(e.type==='turret'||e.type==='guard'){
         if(e.type==='guard'){e.heading+=clamp(angleDelta(e.heading,a),-dt*.65,dt*.65);if(dist>7){if(e.encounter)steerEnemy(e,dx,dz,1.8,dt,1.4);else if(dist>9)moveEntity(e,Math.sin(e.heading)*1.1*dt,Math.cos(e.heading)*1.1*dt,1.4);}}
         if(e.state==='idle'&&e.timer<=0&&canAttack){e.state='warn';e.timer=e.type==='guard'?1.5:1.15;audio.event('warn',pan(e.x,e.z));}
@@ -419,11 +442,12 @@ function updateEnemies(dt){
     if(e.encounter&&e.type==='scout')e.model.body.rotation.z=T.MathUtils.damp(e.model.body.rotation.z,e.state==='stunned'?Math.sin(time*14)*.12:0,10,dt);
     e.model.root.position.set(e.x,elevation(e.x,e.z)+Math.sin(time*3+e.sx)*.025,e.z);e.model.body.rotation.y=e.heading;e.model.turret.rotation.y=e.type==='elite'?e.heading:e.aim;
     e.model.rollWheels(((e.x-previousPosition.x)*Math.sin(e.heading)+(e.z-previousPosition.z)*Math.cos(e.heading))/.26);e.model.animate(e.state,e.timer,time,dt,e.active);e.model.root.visible=true;
-    if(e.flash>0)e.model.root.scale.setScalar((e.type==='boss'?2.8:e.type==='elite'?1.35:1)*(1+e.flash*.2));else e.model.root.scale.setScalar(e.type==='boss'?2.8:e.type==='elite'?1.35:1);
+    if(e.flash>0)e.model.root.scale.setScalar((e.type==='boss'?2.8:e.type==='guardian'?1.8:e.type==='elite'?1.35:1)*(1+e.flash*.2));else e.model.root.scale.setScalar(e.type==='boss'?2.8:e.type==='guardian'?1.8:e.type==='elite'?1.35:1);
     // Shared solid-body response: rams deal their type-specific effect but never pass through a body.
     const nd=Math.hypot(player.x-e.x,player.z-e.z),min=e.r+.9;
     if(player.hp>0&&nd<min){
-      if(player.speed>=1.3&&time-e.ramAt>.6){e.ramAt=time;audio.event('ram');
+      if(contactDamage(player)>0&&time-e.ramAt>.6&&(redContact(player)||!['elite','boss','guardian'].includes(e.type))){e.ramAt=time;audio.event('ram');damageEnemy(e,contactDamage(player),player.x,player.z,{red:redContact(player),phoenix:phoenixReady(player)});}
+      else if(player.speed>=1.3&&time-e.ramAt>.6){e.ramAt=time;audio.event('ram');
         if(e.type==='scout')damageEnemy(e,10,player.x,player.z);
         if(e.type==='turret'||e.type==='mortar'){damageEnemy(e,1,player.x,player.z);player.speed=1;}
         if(e.type==='guard'){if(!(e.disarmed>0)&&Math.cos(Math.atan2(player.x-e.x,player.z-e.z)-e.heading)>.25){armorImpact(e,player.x,player.z);hitPlayer(5,e.x,e.z);}else damageEnemy(e,1,player.x,player.z);player.speed=1;}
@@ -440,7 +464,7 @@ function updateBullets(dt){
       b.px=b.x;b.pz=b.z;b.x+=b.dx*dt/substeps;b.z+=b.dz*dt/substeps;
       const prop=combat.props.find(p=>p.bounds.active&&inside(b.x,b.z,p.bounds,.08));
       if(prop){strikeProp(prop,b.damage);hit=true;break;}
-      if(b.owner==='player'&&strikePuzzle(b.x,b.z,b.y)){hit=true;break;}
+      if(b.owner==='player'&&(strikeReceiver(b.x,b.z,'cannon')||strikePuzzle(b.x,b.z,b.y))){hit=true;break;}
       if(collides(b.x,b.z,.08,null,true)||b.y<(b.x>=70&&b.x<=86&&b.z>=30.5&&b.z<=37.5&&b.y<2.1?0:elevation(b.x,b.z))+.1){hit=true;break;}
       if(b.owner==='player'){
         for(const scrap of world.scraps)if(scrap.hp>0&&Math.hypot(b.x-scrap.x,b.z-scrap.z)<scrap.r){scrap.hp=0;scrap.mesh.visible=false;burst(scrap.x,scrap.z,0xb3a16c,15);hit=true;break;}
@@ -495,6 +519,36 @@ function updateMortars(dt){
     }
   }
 }
+const laserGeometry=new T.CylinderGeometry(1,1,1,8),laserAxis=new T.Vector3(0,1,0);
+const laserCore=new T.MeshBasicMaterial({color:0xfff1bb}),laserGlow=new T.MeshBasicMaterial({color:0xffbb49,transparent:true,opacity:.2,depthWrite:false,blending:T.AdditiveBlending});
+const laserLines=Array.from({length:LASER.bounces+1},()=>{
+  const root=new T.Group();for(const [radius,material]of [[.055,laserCore],[.16,laserGlow]]){const beam=new T.Mesh(laserGeometry,material);beam.scale.set(radius,1,radius);root.add(beam);}scene.add(root);root.visible=false;return root;
+});
+let laserSegments=[],laserElapsed=0;
+function strikeReceiver(x,z,kind){
+  const r=midgame.receivers.find(r=>Math.hypot(r.x-x,r.z-z)<r.radius);if(!r)return false;
+  if(midgame.hitReceiver(r.id,kind)){audio.event('lever',pan(x,z));pulse(x,z,C.lightYellow,8);save();}return true;
+}
+function updateLaser(dt){
+  laserLines.forEach(l=>l.visible=false);laserSegments=[];
+  if(player.weapon!=='laser'||!player.laser||!keys.has(bindings.fire)||opening>0||endingTime>=0||magneticTarget||!laserHeat(player,dt,time)){laserElapsed=0;return;}
+  usedFire=true;
+  const mirrors=[...midgame.mirrors,...enemies.filter(e=>e.type==='mirror'&&e.hp>0).map(e=>({x:e.x+Math.sin(e.heading)*2,z:e.z+Math.cos(e.heading)*2,angle:-e.heading,length:3.2}))];
+  const targets=[...midgame.receivers.map(r=>({...r,receiver:true})),...enemies.filter(e=>e.hp>0).map(e=>({x:e.x,z:e.z,radius:e.hurtRadius,enemy:e})),...combat.props.filter(p=>p.bounds.active).map(p=>({x:p.x,z:p.z,bounds:p.bounds,prop:p}))];
+  if(boss.hp>0)for(const [i,w]of boss.weakpoints.entries())if(boss.assemblies[i]>0)targets.push({x:w.group.position.x,z:w.group.position.z,radius:1.35*ENEMY_HURT_SCALE,enemy:boss});
+  const walls=[...world.obstacles.filter(o=>!o.mirror&&!combat.props.some(p=>p.bounds===o)),...world.gates.filter(g=>!g.open).map(g=>({x:g.x-g.w/2,z:g.z-.2,w:g.w,d:.4}))];
+  laserSegments=traceLaser(player.x,player.z,Math.sin(player.aim),Math.cos(player.aim),{mirrors,walls,targets});
+  laserSegments.forEach((s,i)=>{const l=laserLines[i],length=Math.hypot(s.endX-s.x,s.endZ-s.z);l.visible=length>.001;l.position.set((s.x+s.endX)/2,playerHeight()+2,(s.z+s.endZ)/2);l.quaternion.setFromUnitVectors(laserAxis,new T.Vector3(s.dx,0,s.dz));l.scale.y=length;});
+  laserElapsed+=dt;if(laserElapsed+1e-8<.1)return;const laserDamage=LASER.damage*laserElapsed;laserElapsed=0;audio.event('laser');
+  const last=laserSegments.at(-1);if(!last)return;
+  const impact={x:last.endX,z:last.endZ,laser:true,dx:last.dx,dz:last.dz};
+  if(last.hit?.enemy){const e=last.hit.enemy;if(e.type==='boss')hitBoss({px:last.x,pz:last.z,x:last.endX+last.dx*.03,z:last.endZ+last.dz*.03,dx:last.dx,dz:last.dz,damage:laserDamage});else damageEnemy(e,laserDamage,last.x,last.z,impact);}
+  else if(last.hit?.receiver){if(midgame.hitReceiver(last.hit.id,'laser')){audio.event('lever');pulse(last.endX,last.endZ,C.lightYellow,8);save();}}
+  else if(last.hit?.prop)strikeProp(last.hit.prop,laserDamage);
+  if(last.kind)burst(last.endX,last.endZ,C.lightYellow,2,1.3,.2);
+  if(player.overheated)audio.event('heat');
+}
+
 function updateMagnet(dt){
   const held=player.magnet&&keys.has(bindings.magnet)&&!player.overheated&&player.hp>0&&opening===0&&endingTime<0;
   if(!held){magneticTarget=null;tether.visible=false;if(wasPulling)save();wasPulling=false;return;}
@@ -527,12 +581,12 @@ function updateWorld(dt){
   for(const c of puzzleChanges.touches)audio.event('lever',pan(c.x,c.z));
   if(puzzleChanges.docked){pulse(-24,-94,C.mint,5);audio.event('lever',pan(-24,-94));}
   if(puzzleChanges.save)save();
-  transit.update(dt,time,player,transitRestored);gardens.update(dt,time,player,moving);foundryDoorBounds.active=!finished&&endingTime<0;
+  midgame.update(dt,time,player);transit.update(dt,time,player,transitRestored);gardens.update(dt,time,player,moving);foundryDoorBounds.active=!finished&&endingTime<0;
   for(const g of world.gates){g.open=g.id==='elite'?world.relays.every(r=>r.hp===0):bossDead;g.root.position.y=T.MathUtils.damp(g.root.position.y,g.open?-4:0,5,dt);}
   for(const b of world.belts){
     b.active=b.boss===undefined||boss.hp>0&&boss.active&&boss.assemblies[b.boss]>0&&boss.state!=='idle';
     const alongZ=!!b.dz,span=alongZ?b.d:b.w;
-    if(b.active)b.offset=(b.offset+dt*BASE_SPEED*1.15)%span;
+    if(b.active)b.offset=(b.offset+dt*BASE_SPEED*(b.speed??1.15))%span;
     b.parts.forEach((p,i)=>{const v=(i*.45+b.offset)%span;if(alongZ)p.position.z=b.z+v;else p.position.x=b.x+v;});
   }
   for(const h of world.hives){
@@ -574,7 +628,7 @@ function updatePlayer(dt){
   if(time-player.lastShot>=.5&&!readySound){audio.event('ready');readySound=true;}if(time-player.lastShot<.5)readySound=false;
   const traction=(magneticTarget?.55:1)*(player.deployed?FLOTATION.speed:1);
   let dx=move.x*BASE_SPEED*player.speed*dt*traction,dz=move.z*BASE_SPEED*player.speed*dt*traction;
-  for(const b of world.belts)if(b.active&&inside(player.x,player.z,b)){dx+=b.dx*BASE_SPEED*1.15*dt;dz+=b.dz*BASE_SPEED*1.15*dt;}
+  for(const b of world.belts)if(b.active&&inside(player.x,player.z,b)){dx+=b.dx*BASE_SPEED*(b.speed??1.15)*dt;dz+=b.dz*BASE_SPEED*(b.speed??1.15)*dt;}
   if(player.afloat)for(const c of gardenCurrents)if(inside(player.x,player.z,c)){dx+=c.dx*dt;dz+=c.dz*dt;}
   moveEntity(player,dx,dz,.88);
   player.afloat=player.deployed&&!supportedHull(world.available,player.x,player.z);
@@ -597,7 +651,10 @@ function updatePlayer(dt){
   model.body.position.y=-recoil*.23;model.turret.position.y=recoil*.15;model.barrel.position.z=-recoil;recoil=Math.max(0,recoil-dt*2);
   const forwardMotion = move.x * Math.sin(player.heading) + move.z * Math.cos(player.heading);
   model.rollWheels(player.afloat?0:dt * 10 * player.speed * forwardMotion);
-  model.tracks.forEach(t=>{if(player.overdrive)t.material.color.setHex(C.mint);});
+  for(const h of hullMaterials){h.material.color.copy(h.color);h.material.emissive.copy(h.emissive);if(redContact(player)){h.material.color.lerp(new T.Color(0xe82c16),.78);h.material.emissive.setHex(0x7d1204);}}
+  coolantJackets.forEach(j=>j.visible=player.circulation);
+  engineJets.forEach(j=>{j.visible=player.phoenix;j.material.color.setHex(redContact(player)?0xff3218:phoenixReady(player)?C.lightYellow:C.orange);});laserLens.visible=player.weapon==='laser';
+  model.tracks.forEach(t=>{if(player.overdrive)t.material.color.setHex(redContact(player)?C.orange:player.phoenix?C.yellow:C.mint);});
   model.root.scale.set(1+(player.speed-1)*.04,1-(player.speed-1)*.06,1+(player.speed-1)*.06);
   if(player.heat>65&&Math.random()<dt*player.heat*.14)burst(player.x-Math.sin(player.heading),player.z-Math.cos(player.heading),player.overheated?0xd8e2cf:0x6f9383,1,2,.28);
   if(player.speed>1.1&&Math.random()<dt*18)burst(player.x-Math.sin(player.heading)*1.5,player.z-Math.cos(player.heading)*1.5,C.mint,1,.5,.2);
@@ -648,19 +705,19 @@ function updateHUD(){
   $('reticle').style.setProperty('--heat-color',`hsl(${48-40*heatColorRatio} 100% ${82-15*heatColorRatio}%)`);
   $('reticle').classList.toggle('hot',player.overheated);
   $('reticle').classList.toggle('mortar',player.weapon==='mortar');
-  $('tools').hidden=!player.magnet&&!player.mortar&&!player.flotation;
+  $('tools').hidden=!player.magnet&&!player.mortar&&!player.flotation&&!player.laser;
   $('flotation-tool').hidden=!player.flotation;$('flotation-tool').classList.toggle('active',player.deployed);
   $('magnet-tool').hidden=!player.magnet;$('magnet-tool').classList.toggle('active',!!magneticTarget);
-  $('weapon-tool').hidden=!player.mortar;$('weapon-tool').classList.toggle('active',player.weapon==='mortar');
-  $('weapon-tool').querySelector('span').textContent=player.weapon==='mortar'?'⌒':'━';
-  $('overdrive').style.opacity=player.overdrive?'1':'.15';$('overdrive').lastElementChild.firstElementChild.style.width=`${clamp((player.speed-1)/(OVERDRIVE_MAX_SPEED-1),0,1)*100}%`;
-  const active=[elite,boss].find(e=>e.active&&e.hp>0);
+  $('weapon-tool').hidden=!player.mortar&&!player.laser;$('weapon-tool').classList.toggle('active',player.weapon!=='cannon');
+  $('weapon-tool').querySelector('span').textContent=player.weapon==='mortar'?'⌒':player.weapon==='laser'?'═':'━';
+  $('overdrive').style.opacity=player.overdrive?'1':'.15';$('overdrive').lastElementChild.firstElementChild.style.width=`${clamp((player.speed-1)/((player.phoenix?PHOENIX_MAX_SPEED:OVERDRIVE_MAX_SPEED)-1),0,1)*100}%`;
+  const active=enemies.filter(e=>['elite','boss','guardian'].includes(e.type)).find(e=>e.active&&e.hp>0);
   $('boss-health').style.display=active?'flex':'none';if(active)$('boss-health').querySelector('span').style.width=`${active.hp/active.max*100}%`;
   $('glyphs').style.opacity=usedMove&&usedFire&&usedMap?'0':'.7';
   $('glyphs').children[0].style.visibility=usedMove?'hidden':'visible';$('glyphs').children[1].style.visibility=usedMove?'hidden':'visible';$('glyphs').children[2].style.visibility=usedFire?'hidden':'visible';$('glyphs').children[3].style.visibility=usedMap?'hidden':'visible';
   $('acquired').style.display=time<acquiredUntil?'flex':'none';
   $('acquired').querySelector('path').setAttribute('d',acquiredKind==='flotation'?'M8 12h8v22H8zM32 12h8v22h-8zM16 20h16M4 40q5-5 10 0t10 0t10 0t10 0':'m27 2-19 26h15l-3 18 22-27H27z');
-  $('acquired').querySelector('kbd').textContent=keyLabel(bindings[acquiredKind]);
+  $('acquired').querySelector('kbd').textContent=keyLabel(bindings[acquiredKind==='phoenix'||acquiredKind==='circulation'?'overdrive':acquiredKind]);
   const near=interactionTarget();
   $('interaction').style.display=near&&player.hp>0&&!mapOpen&&!paused&&endingTime<0?'block':'none';
   if(near){const v=new T.Vector3(near.x,3,near.z).project(camera);$('interaction').style.left=`${(v.x*.5+.5)*innerWidth}px`;$('interaction').style.top=`${(-v.y*.5+.5)*innerHeight}px`;}
@@ -683,7 +740,7 @@ function advance(dt){
     const current=rooms.find(r=>inside(player.x,player.z,r));area=current?.id||lastArea;
     if(!discovered.has(area)){discovered.add(area);lastArea=area;save();}
     if(endingTime<0)updateEnemies(dt);
-    updateMagnet(dt);updateBullets(dt);updateMortars(dt);updateCombatProps(dt);
+    updateMagnet(dt);updateLaser(dt);updateBullets(dt);updateMortars(dt);updateCombatProps(dt);
     if(endingTime>=0){
       model.turret.rotation.y=T.MathUtils.damp(model.turret.rotation.y,Math.PI,3,dt);model.antenna.rotation.x=-.2;
       if(time-endingTime>3){finished=true;save();endingTime=-1;pulse(0,-76,C.mint,18);}
@@ -707,7 +764,7 @@ function frame(now){
 requestAnimationFrame(frame);
 
 function keyLabel(code){return code==='Mouse0'?'鼠标左键':code==='Mouse1'?'鼠标中键':code==='Mouse2'?'鼠标右键':code==='Space'?'Space':code.startsWith('Key')?code.slice(3):code.startsWith('Digit')?code.slice(5):code==='ShiftLeft'?'Shift':code;}
-const labels={up:'向上移动',left:'向左移动',down:'向下移动',right:'向右移动',fire:'发射当前武器',magnet:'磁力牵引（按住）',weapon:'切换火炮 / 迫击炮',flotation:'展开 / 收起浮航底盘',overdrive:'超载引擎',map:'区域地图',repair:'交互 / 激活维修巢',skip:'跳过死亡动画',pause:'暂停 / 设置'};
+const labels={up:'向上移动',left:'向左移动',down:'向下移动',right:'向右移动',fire:'发射当前武器',magnet:'磁力牵引（按住）',weapon:'切换已获得的武器',flotation:'展开 / 收起浮航底盘',overdrive:'超载引擎',map:'区域地图',repair:'交互 / 激活维修巢',skip:'跳过死亡动画',pause:'暂停 / 设置'};
 function renderBindings(){
   $('bindings').replaceChildren();for(const action of Object.keys(DEFAULT_BINDINGS)){
     const label=document.createElement('span');label.textContent=labels[action];const b=document.createElement('button');b.textContent=rebind===action?'按下新按键…':keyLabel(bindings[action]);b.addEventListener('click',()=>{rebind=action;renderBindings();});$('bindings').append(label,b);
@@ -726,7 +783,7 @@ function handleInput(code,repeat=false){
   if(code===bindings.skip&&deathTime>=0){respawn();model.turret.rotation.x=0;return;}
   keys.add(code);if(repeat)return;
   if(code===bindings.flotation&&opening===0&&endingTime<0){if(toggleFlotation(player,world.available))audio.event('flotation');else if(player.flotation){audio.event('armor');pulse(player.x,player.z,C.yellow,3);}}
-  if(code===bindings.fire)fire();if(code===bindings.repair)interact();if(code===bindings.weapon&&player.mortar){player.weapon=player.weapon==='cannon'?'mortar':'cannon';audio.event('ready');}
+  if(code===bindings.fire)fire();if(code===bindings.repair)interact();if(code===bindings.weapon&&(player.mortar||player.laser)){const weapons=['cannon',...(player.mortar?['mortar']:[]),...(player.laser?['laser']:[])];player.weapon=weapons[(weapons.indexOf(player.weapon)+1)%weapons.length];audio.event('ready');}
 }
 window.addEventListener('keydown',e=>{
   if(Object.values(bindings).includes(e.code)||rebind){e.preventDefault();audio.start();handleInput(e.code,e.repeat);}
@@ -756,11 +813,12 @@ function restart(){try{localStorage.removeItem(SAVE_KEY);}catch{}location.reload
 $('new-game').addEventListener('click',()=>{if(resetArmed)restart();else{resetArmed=true;$('reset-confirm').hidden=false;}});
 $('chapter-two').addEventListener('click',()=>{location.href=chapter==='2'?'/':'/?chapter=2';});$('chapter-two').textContent=chapter==='2'?'返回完整旅程':'试玩第二关 · 独立存档';
 $('chapter-three').addEventListener('click',()=>{location.href=chapter==='3'?'/':'/?chapter=3';});$('chapter-three').textContent=chapter==='3'?'返回完整旅程':'试玩第三关 · 独立存档';
+$('chapter-four').addEventListener('click',()=>{location.href=chapter==='4'?'/':'/?chapter=4';});$('chapter-four').textContent=chapter==='4'?'返回完整旅程':'试玩中段 · 独立存档';
 renderBindings();
 // A development-only observation surface supports reproducible browser verification.
 if(import.meta.env.DEV&&new URLSearchParams(location.search).has('test')){
   window.__game={
-    snapshot:()=>({player:{...player},time,area,anchor,eliteDead,bossDead,finished,transitRestored,transit:transit.serialize(),gardens:gardens.serialize(),puzzles:puzzles.snapshot(),props:combat.props.map(p=>({id:p.id,kind:p.kind,x:p.x,z:p.z,hp:p.hp,active:p.bounds.active,fuse:p.fuse})),lobShots:lobShots.length,magneticTarget:magneticTarget?.id||magneticTarget?.type||null,paused,mapOpen,deathTime,discovered:[...discovered],relays:world.relays.map(r=>({id:r.id,hp:r.hp,x:r.x,z:r.z})),enemies:enemies.map(e=>({type:e.type,encounter:e.encounter,x:e.x,z:e.z,hp:e.hp,aim:e.aim,landing:e.landing?{...e.landing}:null,state:e.state,active:e.active,heading:e.heading,openSide:e.openSide,assemblies:[...e.assemblies],core:e.core})),drawCalls:renderer.info.render.calls,frames:frameCount,bindings:{...bindings}}),
+    snapshot:()=>({player:{...player},time,area,anchor,eliteDead,bossDead,finished,transitRestored,transit:transit.serialize(),gardens:gardens.serialize(),puzzles:puzzles.snapshot(),midgame:midgame.serialize(),laser:laserSegments.map(s=>({x:s.x,z:s.z,endX:s.endX,endZ:s.endZ,kind:s.kind,hit:s.hit?.id||s.hit?.enemy?.type})),props:combat.props.map(p=>({id:p.id,kind:p.kind,x:p.x,z:p.z,hp:p.hp,active:p.bounds.active,fuse:p.fuse})),lobShots:lobShots.length,magneticTarget:magneticTarget?.id||magneticTarget?.type||null,paused,mapOpen,deathTime,discovered:[...discovered],relays:world.relays.map(r=>({id:r.id,hp:r.hp,x:r.x,z:r.z})),enemies:enemies.map(e=>({type:e.type,encounter:e.encounter,x:e.x,z:e.z,hp:e.hp,aim:e.aim,landing:e.landing?{...e.landing}:null,state:e.state,active:e.active,heading:e.heading,openSide:e.openSide,assemblies:[...e.assemblies],core:e.core})),drawCalls:renderer.info.render.calls,frames:frameCount,bindings:{...bindings}}),
     project:(x,z,y=0)=>{const p=new T.Vector3(x,y,z).project(camera);return {x:(p.x*.5+.5)*innerWidth,y:(.5-p.y*.5)*innerHeight};},
     scenario:(data)=>{if(data.player)Object.assign(player,data.player);if(data.enemies)for(const [type,values]of Object.entries(data.enemies))Object.assign(enemies.find(e=>e.type===type),values);if(data.enemiesByIndex)for(const [id,values]of Object.entries(data.enemiesByIndex))Object.assign(enemies[Number(id)],values);for(const e of enemies){e.model.root.visible=e.hp>0;if(e.hp<=0)e.warning.visible=false;}if(data.relays)world.relays.forEach((r,i)=>r.hp=data.relays[i]);if(data.time!==undefined)time=data.time;opening=0;deathTime=-1;cameraFocus.set(player.x,0,player.z);updateCamera(1);},
     step:(seconds)=>{for(let i=0;i<seconds*60;i++)advance(1/60);renderer.render(scene,camera);},

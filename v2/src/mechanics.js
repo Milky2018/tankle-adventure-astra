@@ -1,6 +1,10 @@
 export const MAX_HP = 50;
 export const BASE_SPEED = 7;
 export const OVERDRIVE_MAX_SPEED = 1.6;
+export const PHOENIX_MAX_SPEED = 3.2;
+export const phoenixReady = p => p.phoenix && !p.deployed && p.speed >= PHOENIX_MAX_SPEED - .01;
+export const redContact = p => p.circulation && p.overheated;
+export const contactDamage = p => redContact(p) ? 2 * (phoenixReady(p) ? 12 : p.speed >= 1.3 ? 2 : 1) : phoenixReady(p) ? 12 : 0;
 export const PLAYER_HURT_RADIUS = 0.8;
 export const ENEMY_HURT_SCALE = 1.15;
 // Telegraphs and movement share the same physical charge envelope.
@@ -13,7 +17,7 @@ export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const approach = (a, b, amount) => a < b ? Math.min(a + amount, b) : Math.max(a - amount, b);
 export const angleDelta = (a, b) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
 export function newPlayer() {
-  return { x: 0, z: 6, hp: MAX_HP, heat: 0, overheated: false, speed: 1, lastHeat: -10, lastShot: -10, invincible: 0, heading: Math.PI, aim: Math.PI, overdrive: false, magnet: false, mortar: false, weapon: 'cannon', flotation: false, deployed: false, afloat: false };
+  return { x: 0, z: 6, hp: MAX_HP, heat: 0, overheated: false, speed: 1, lastHeat: -10, lastShot: -10, invincible: 0, heading: Math.PI, aim: Math.PI, overdrive: false, magnet: false, mortar: false, weapon: 'cannon', flotation: false, phoenix: false, laser: false, circulation: false, deployed: false, afloat: false };
 }
 export function shootHeat(p, time, cost = 20, cooldown = 0.5) {
   if (p.overheated || p.hp <= 0 || time - p.lastShot < Math.max(cooldown, p.shotCooldown || 0.5)) return false;
@@ -24,9 +28,9 @@ export function shootHeat(p, time, cost = 20, cooldown = 0.5) {
   return true;
 }
 export function updateHeat(p, dt, time, boost, moving) {
-  const active = boost && moving && p.overdrive && !p.overheated;
+  const active = boost && moving && p.overdrive && (!p.overheated || p.circulation) && !p.deployed;
   const speedRange = OVERDRIVE_MAX_SPEED - 1;
-  p.speed = approach(p.speed, active ? OVERDRIVE_MAX_SPEED : 1, dt * speedRange / (active ? 0.5 : 0.35));
+  p.speed = approach(p.speed, active ? (p.phoenix ? PHOENIX_MAX_SPEED : OVERDRIVE_MAX_SPEED) : 1, dt * speedRange / (active ? 0.5 : 0.35));
   if (p.speed > 1.00001) {
     // The shared engine budget continues during deceleration, including an overheat coast.
     p.heat = Math.min(100, p.heat + 15 * dt);

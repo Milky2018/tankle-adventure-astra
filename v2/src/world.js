@@ -3,6 +3,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { transitRooms, transitPalettes, transitHives } from './transit-layout.js';
 import { gardenRooms, gardenPalettes, gardenHives } from './garden-layout.js';
+import { midgameRooms, midgameHives } from './midgame-layout.js';
 import { puzzleRooms } from './puzzle-layout.js';
 import { inside, clamp, CHARGE } from './mechanics.js';
 
@@ -200,7 +201,7 @@ export function tankModel(type = 'player') {
   };
 }
 
-export const floorColors = {...Object.fromEntries(puzzleRooms.map(r=>[r.id,r.color])),...Object.fromEntries(gardenRooms.map(r=>[r.id,gardenPalettes[r.palette]])),...Object.fromEntries(transitRooms.map(r=>[r.id,transitPalettes[r.palette]])),a:0x7b8276,ab:0x777767,b:0x64776b,bc:0x64776b,c:0x5e7a70,west:0x82715b,east:0x577984,'elite-path':0x727565,elite:0x767360,gate:0x707265,boss:0x665f53,exit:0x869283,pocket1:0x82715b,pocket2:0x577984,pocket3:0x64776b};
+export const floorColors = {...Object.fromEntries(midgameRooms.map(r=>[r.id,r.color])),...Object.fromEntries(puzzleRooms.map(r=>[r.id,r.color])),...Object.fromEntries(gardenRooms.map(r=>[r.id,gardenPalettes[r.palette]])),...Object.fromEntries(transitRooms.map(r=>[r.id,transitPalettes[r.palette]])),a:0x7b8276,ab:0x777767,b:0x64776b,bc:0x64776b,c:0x5e7a70,west:0x82715b,east:0x577984,'elite-path':0x727565,elite:0x767360,gate:0x707265,boss:0x665f53,exit:0x869283,pocket1:0x82715b,pocket2:0x577984,pocket3:0x64776b};
 export const rooms = [
   {id:'a',x:-12,z:-12,w:24,d:24},
   {id:'ab',x:12,z:-4,w:26,d:8},
@@ -217,7 +218,7 @@ export const rooms = [
   {id:'pocket1',x:6,z:38,w:6,d:8},
   {id:'pocket2',x:78,z:48,w:8,d:6},
   {id:'pocket3',x:52,z:-6,w:6,d:8},
-  ...transitRooms, ...gardenRooms, ...puzzleRooms
+  ...transitRooms, ...gardenRooms, ...puzzleRooms, ...midgameRooms
 ];
 export const beltDefinitions = [
   {id:'a-gate',x:-3,z:-19.5,w:6,d:3,dx:0,dz:1,gate:true},
@@ -236,7 +237,7 @@ export function makeWorld(scene) {
   const obstacles=[], belts=[], hives=[], relays=[], animated=[], scraps=[], gates=[];
   const state={drained:false};
   const available=(x,z)=>rooms.some(r=>r.kind!=='water'&&(r.kind!=='drain'||state.drained)&&inside(x,z,r));
-  const waterAvailable=(x,z)=>gardenRooms.some(r=>['water','drain'].includes(r.kind)&&inside(x,z,r));
+  const waterAvailable=(x,z)=>rooms.some(r=>['water','drain'].includes(r.kind)&&inside(x,z,r));
   function obstacle(x,z,w,d,h=2,color=C.green){
     const r={x:x-w/2,z:z-d/2,w,d,h};obstacles.push(r);contactShadow(fixed,Math.max(w,d)*1.8,x,z);
     box(fixed,w,h,d,x,h/2,z,color,.16);box(fixed,w+.15,.16,d+.15,x,h+.07,z,C.teal);
@@ -268,7 +269,7 @@ export function makeWorld(scene) {
     }
   }
   // Derive all perimeter collision from the same navigable union as rendering.
-  for(let x=-206;x<118;x+=2)for(let z=-352;z<80;z+=2){
+  for(let x=-206;x<272;x+=2)for(let z=-472;z<80;z+=2){
     if(!available(x+1,z+1))continue;
     for(const [dx,dz] of [[-1,0],[1,0],[0,-1],[0,1]]){
       if(available(x+1+dx*2,z+1+dz*2)||waterAvailable(x+1+dx*2,z+1+dz*2))continue;
@@ -345,7 +346,7 @@ export function makeWorld(scene) {
     hives.push({id,x,z,root,petals,beacon,tools,active:id===0});
   }
   hive(-6,6,0);hive(53,38,1);hive(0,-70,2);
-  for(const def of [...transitHives,...gardenHives])hive(...def);
+  for(const def of [...transitHives,...gardenHives,...midgameHives])hive(...def);
   for(const [id,x,z] of [[0,16,29],[1,82,33]]){
     const root=new T.Group();root.position.set(x,elevation(x,z),z);scene.add(root);
     cylinder(root,1.3,.4,0,.25,0,C.dark,6);box(root,1.7,1.7,1.3,0,1.2,0,C.teal,.2);const core=box(root,1.1,1.05,.18,0,1.35,.74,mat(C.orange,true));ring(root,.75,.12,0,2.25,0,C.yellow);
