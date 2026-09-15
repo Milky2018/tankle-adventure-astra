@@ -8,8 +8,6 @@ This is the single source of truth for game design: the existing playable level,
 
 The confirmed direction is a lonely, mysterious journey through a lost mechanical civilization, ending in passing on the flame (传火). The eight-ability roster and the complete story linking seven regions, ability acquisition, persistent map changes, and voluntary furnace docking are accepted design directions. On 2026-09-09 the user accepted layered regional access, direct inter-region loops, Mortar acquisition in familiar loading works, and a full exploration act after Water Circulation. The subsequent revision places Phoenix before Laser, increases middle-game branching, and prioritises permanent shortcuts over repeated approach routes. The current route allocation uses independently sufficient Flotation or Mortar approaches to Phoenix, followed by independently accessible Laser and Water Circulation branches. The acquisition and story sections below incorporate this revision. Explicitly labelled proposals and unspecified room layouts, encounter values, timing, production scope, and implementation details remain open.
 
-The playable build now includes the Recycling Foundry, Empty Transit Hub, and Sunken Gardens, including Magnetic Traction, Flotation, and both approaches to the original Mortar rig. The implementation records below define their exact scope. Laser, Phoenix, Water Circulation, the interiors of R4–R7, and the final story acts remain future work. All future game-design decisions belong in this document; implementation and execution instructions belong in the version README.
-
 ### Emotional identity
 
 - Loneliness and mystery lead the experience. Occasional tenderness comes from mechanical behaviour and small responses, rather than a talkative cast or a busy social hub.
@@ -54,7 +52,7 @@ The roster is now **eight abilities including the starting Standard Cannon**: St
 
 The user specified the Mortar's arcing, delayed impact; the Phoenix Engine's 3.2x maximum speed, unchanged acceleration, lethal full-speed ordinary-enemy ramming, obstacle breaking, and inter-region express routes; and the Laser's very long reach, mirror reflections, puzzle applications, and indirect weak-point attacks. Water Circulation adds the required ability to accelerate while Overheated, a red-hot hull, and double contact/ram damage against any enemy. The Water Circulation agreement also confirms passive installation without a new key or water-refill system, retained weapon lock during Overheat, stacking with Phoenix, sustained reverse-transport lanes as the primary ability gate, and a small number of thermally released impact seals that may allow physically consistent alternate solutions. Red-hot contact remains a close-range alternative against the rear-only ranged-weapon Boss. These are confirmed design decisions. The route dependencies in the accepted acquisition structure are confirmed design requirements. Exact gate geometry, unconfirmed controls, resource costs, and numerical balance below remain proposals for implementation planning.
 
-Standard Cannon and Overdrive are implemented in the first playable level; Magnetic Traction and Mortar are implemented in the second playable region. Flotation is implemented in the third region; Phoenix, Laser, and Water Circulation remain planned. Phoenix Engine is a direct Overdrive upgrade using the same action, counted as one of the eight progression acquisitions while sharing the original engine controls. Water Circulation is a separate passive upgrade that changes Overheat behaviour for either engine.
+Standard Cannon and Overdrive belong to the Foundry; Magnetic Traction and Mortar belong to the Transit Hub. Flotation belongs to the Gardens. Phoenix Engine is a direct Overdrive upgrade using the same action, counted as one of the eight progression acquisitions while sharing the original engine controls. Water Circulation is a separate passive upgrade that changes Overheat behaviour for either engine.
 
 Every ability needs exploration access and useful combat behaviour. Phoenix Engine's combat role is overwhelming ordinary enemies while traversing; it explicitly does not need a Boss application.
 
@@ -90,7 +88,7 @@ Passing on the flame remains the ending direction. Its proposed input is a conte
 
 - **Exploration:** reverse conveyors and push a suitable wheeled carrier past a demonstrated mechanical detent with a running impact. A momentum gate must visibly respond to force, rather than detect a key press.
 - **Combat:** spend Heat on flanking, escape, or ordinary-enemy ramming. Retain immediate screen-relative directional input and independent turret aim.
-- **Baseline:** maximum 1.6x speed, reached from 1.0x in 0.5 seconds; 15 Heat per second while accelerated; current release behaviour remains the first-level implementation.
+- **Baseline:** maximum 1.6x speed, reached from 1.0x in 0.5 seconds; 15 Heat per second while accelerated; release deceleration takes 0.35 seconds from 1.6x to normal speed.
 - **Limits:** no invulnerability, passage through solid bodies, water traversal, or unsupported-gap crossing. The existing ordinary ram damage rules apply before the Phoenix upgrade reaches its own full-speed state, except when Water Circulation activates red-hot contact.
 - **Upgrade relationship:** Phoenix Engine extends this same system rather than requiring the player to select between two accelerator items.
 
@@ -127,7 +125,7 @@ Passing on the flame remains the ending direction. Its proposed input is a conte
 - **Required upgrade:** extend grounded Overdrive's maximum speed from 1.6x to **3.2x**, keeping the **same acceleration**, not the same time to maximum speed. Continue to use the Overdrive action; no separate accelerator-selection button is needed.
 - **Acceleration calculation:** the current multiplier acceleration is `(1.6 - 1.0) / 0.5 = 1.2` per second. From normal moving speed, reaching 3.2x therefore takes `(3.2 - 1.0) / 1.2 = 1.833...` seconds; from 1.6x it takes another `1.333...` seconds. Acceleration still requires movement input. With current BASE_SPEED = 7, maximum world speed is 22.4 units/second and an uninterrupted straight run-up from 1.0x covers about 26.95 units. These are consequences of the requested acceleration, not new balance targets.
 - **Required full-speed impact:** at maximum acceleration, a collision deals overwhelming impact damage and immediately destroys ordinary enemies, including an ordinarily front-armoured Furnace Guard. It also destroys the breakable obstacles designed for this ability. Show a distinct full-speed hull/exhaust state and sound so the player can tell when breakthrough is available.
-- **Before maximum:** ordinary Overdrive ram behaviour remains the proposed default until the full-speed state is reached, except for Water Circulation red-hot contact. Near-maximum tolerance for discrete simulation is an implementation detail, not a second undisclosed damage threshold.
+- **Before maximum:** ordinary Overdrive ram behaviour remains the proposed default until the full-speed state is reached, except for Water Circulation red-hot contact. The maximum-speed feedback must match the actual breakthrough threshold.
 - **Exploration gates:** heavy breakable barricades and momentum-dependent route hardware distinguish this tier from ordinary conveyors. Give the barrier enough visible run-up and a clear full-speed impact response. Not every route restriction should simply be a faster conveyor.
 - **Express routes:** design dedicated tracks connecting old areas, return paths, and regional junctions. Use long readable approaches, generous turns, physical guide rails, separated entrances, and safe braking/exit areas. Keep direct movement control rather than replacing the route with a cutscene or teleport.
 - **Flow proposal:** destroying an ordinary enemy or eligible obstacle at full speed should preserve momentum; otherwise the first obstacle would defeat the express-travel purpose. Major intact structures remain solid. This does not grant immunity to incoming fire, environmental hazards, or all collisions.
@@ -342,7 +340,7 @@ The main story must tolerate the supported alternate acquisition orders. Put ess
 
 ### Next design artifact and acceptance checks
 
-The R4–R6 implementation below realizes this revised middle-game structure. Maintain its room-connection graph, including both depths of R4 and the permanent shortcut network. For every connection record its physical opening condition, travel direction, persistent mechanism state, required knowledge, possible alternate solution, recognizable landmark, and retry/return path.
+The R4–R6 regional design below specifies this revised middle-game structure. Maintain its room-connection graph, including both depths of R4 and the permanent shortcut network. For every connection record its physical opening condition, travel direction, persistent mechanism state, required knowledge, possible alternate solution, recognizable landmark, and retry/return path.
 
 Validate that graph against all three supported acquisition orders. Removing Phoenix from the attainable equipment set must prevent Laser acquisition; removing Laser must still leave the Phoenix and Water Circulation routes available. Every acquisition must be reachable without itself; every temporary commitment must have an exit for all legal incoming states; every persistent object puzzle must remain recoverable after death or rest. Explicitly document any allowed module omission instead of assuming either mandatory collection or universal sequence breaking.
 
@@ -354,7 +352,7 @@ A new player's test should establish whether they remember a relevant earlier ob
 
 This story direction was accepted on 2026-09-08. Its revised exploration baseline now places Phoenix before Laser, permits either order for Laser and Water Circulation, and includes the permanent shortcut network described above. It connects escape from recycling, discovery of a city consuming itself, recovery of modules from failed prototypes, restoration of regional infrastructure, recognition of previous furnace bearers, and voluntary passing on the flame. The seven-region structure, acquisition placement, wordless recurring scenes, and map-changing return routes form the accepted narrative and progression baseline. Detailed encounter choreography, exact room geometry, optional scene variants, and final interaction/save implementation remain open wherever identified below. Design names and region identifiers are authoring vocabulary and must not appear as gameplay text.
 
-Preserve the first level's existing local progression and mechanics. The current three-region build continues through its exit into transit and the gardens; the local repair and saved completion remain, while the former completion menu is removed. Total playtime, room count, optional-content volume, and numerical encounter balance remain unspecified.
+Preserve the first level's existing local progression and mechanics. Its exit continues into transit and the gardens; the local repair saves progress without interrupting exploration with a completion menu. Total playtime, room count, optional-content volume, and numerical encounter balance remain unspecified.
 
 ### Underlying history — what happened before play
 
@@ -597,11 +595,11 @@ Use repeated shapes, spatial placement, motion, and sound together. Essential co
 
 # Second Playable Region — Empty Transit Hub
 
-## Implemented scope
+## Regional scope
 
-R2 continues directly north through the Foundry exterior door. Completing the third Foundry Hive saves the local ending and raises the door, then returns control without a completion modal. Existing first-level saves remain valid. The journey is continuous; a separate second-region preview is available in system settings and uses its own save slot.
+R2 continues directly north through the Foundry exterior door. Completing the third Foundry Hive saves the local ending and raises the door, then returns control without a completion modal. The journey remains continuous.
 
-The region now contains 31 connected floor sections, five additional Repair Hives, and 24 enemies arranged into 11 local encounters. Its supported floor union, including the shunting pocket, is 20,720 square world units, compared with 5,468 in R1: approximately 3.8 times the first region's area before props and blocked mechanisms are subtracted. The current footprint remains 24 percent smaller than the earlier 27,284-unit floor footprint, divides yards into smaller bays and service lanes, and concentrates decisions around cover and machinery. The turntable and garden shore remain quiet orientation and recovery spaces.
+The region now contains 31 connected floor sections, five additional Repair Hives, and 24 enemies arranged into 11 local encounters. Its area is roughly four times the first region. Yards divide into smaller bays and service lanes, concentrating decisions around cover and machinery. The turntable and garden shore remain quiet orientation and recovery spaces.
 
 The playable milestone is restoring the Garden Shore Hive. Its pulse and the reactivated central signal express a local repair; the game remains open for exploration. Mortar, the observatory approach, and the optional carrier repair are independent discoveries, not a checklist required to reach that milestone. No additional Boss closes R2.
 
@@ -629,9 +627,9 @@ flowchart LR
 - The Mortar cradle is reachable through the east yard without Magnetic Traction. Cover, guards, and an enemy lob launcher make this an optional combat route. The short Foundry return opens from the loading-works side only after a shell lands inside its enclosure.
 - The north optical approach requires a second recessed Mortar latch. The connecting archive bridge is initially shut and opens with a lever on the observatory side, so the magnetic path cannot silently bypass the optical requirement.
 - Six persistent gates form these routes. A seventh persistent action restores the small carrier at its dock. Four counterweights have visible rails, end stops, coils, and physical cable runs; the two recessed latches have open tops and solid sides.
-- Shore water has no supporting floor and cannot be crossed by ordinary tracks. The distant mechanical garden, observatory apparatus, and reinforced express wreck preview later abilities. The shore now continues into the R3 implementation described below. The outer court now connects to R4 and the dry R5 freight approach described in the middle-game implementation below. The second-region preview does not grant Flotation, Laser, or Phoenix.
+- Shore water has no supporting floor and cannot be crossed by ordinary tracks. The distant mechanical garden, observatory apparatus, and reinforced express wreck preview later abilities. The shore continues into R3. The outer court connects to R4 and the dry R5 freight approach described below.
 
-## Magnetic Traction implementation
+## Magnetic Traction rules
 
 Hold the right mouse button while aiming at a rail coil or a light enemy. The default binding is remappable. The tether has a 13-unit range and requires an unobstructed line; solid walls and other cargo interrupt it. Targets do not jump into the player's inventory.
 
@@ -641,11 +639,11 @@ A counterweight moves along its visible rail toward the player's position at 3 u
 
 Traction generates 10 Heat/second, reduces driving speed to 55 percent while connected, occupies the weapon, and stops on Overheat. The existing cooling delay and full-cool lockout apply. Pulling a reclaiming clamp interrupts its charge. Pulling a guard opens its shield visibly and leaves it vulnerable to full frontal fire for 2.5 seconds after release. Bolted turrets and heavier special enemies are not valid pull targets.
 
-## Mortar implementation
+## Mortar rules
 
 Picking up Mortar equips it. Q switches between Cannon and Mortar; left click fires the selected weapon. Switching does not reset Heat or bypass the preceding weapon's cooldown. No ammunition pickups or inventory screen are added.
 
-| Rule | Implemented value |
+| Rule | Value |
 | --- | --- |
 | Maximum landing distance | 24 world units |
 | Flight duration | 1.15 seconds |
@@ -655,7 +653,7 @@ Picking up Mortar equips it. Q switches between Cannon and Mortar; left click fi
 | Ground blast radius | 3 units, tested against enemy hurtboxes |
 | Ordinary-enemy damage | 3 |
 
-The landing point is fixed at firing time. The visible projectile follows a sampled arc; low cover can be cleared, while taller solid geometry intercepts it. Ground blasts respect intervening walls. Overhead hits bypass an ordinary guard's front shield but do not turn an Elite or Boss's protected roof into a rear weak point.
+The landing point is fixed at firing time. The visible projectile follows an arc; low cover can be cleared, while taller solid geometry intercepts it. Ground blasts respect intervening walls. Overhead hits bypass an ordinary guard's front shield but do not turn an Elite or Boss's protected roof into a rear weak point.
 
 There is still exactly one reticle. In Mortar mode its ring is dashed and it stops at the actual maximum-range landing point instead of leaving an unreachable cursor target. The Heat ring retains the pale-yellow-to-red progression. A lob impact inside either recessed latch releases that physical gate; ordinary cannon shots collide with the enclosure walls.
 
@@ -698,8 +696,6 @@ Repair or death rebuilds combat crates and pressure vessels, clears lit fuses an
 The turntable and amber signal establish an orienting landmark. Rust freight cargo and a suspended crane identify the west route; empty mechanical cradles and shelves suggest the former passengers. Slate loading bays, the upward-firing launcher, and recessed receivers identify the east route. Quiet dock water and distant metal growth frame the next region; a tilted dish and mirror hint at the observatory's later optical vocabulary. Exploration music leaves longer gaps in this region.
 
 Repair Hives restore HP and Heat and reset ordinary encounters. Acquired tools, activated Hives, discovered rooms, gate releases, counterweight positions, carrier restoration, and the shore milestone persist. Projectiles and temporary shield displacement reset. The large map fits discovered rooms as the journey expands; it does not reveal the entire new region or add destination arrows.
-
-These numerical values are the implemented second-region balance pass. Automated route and combat checks establish reachability and consistent mechanics; first-time discovery pace and an uninterrupted human completion time remain playtest questions.
 
 ---
 
@@ -763,7 +759,7 @@ Pulling the pump-feed counterweight reconnects the intake. The physical control 
 
 The upright stems of the metal growth frames have narrow solid collision for both vehicles and direct fire. Different submerged terrace levels, stopped growth frames, the stranded ferry, and dismantled canal carriers describe a gradual shutdown. Capped outer supply pipes contrast with the restored return pipe toward the centre. Sparse music and broad water reflections leave space between machinery and fights.
 
-A small maintenance tender survives on a reservoir islet. The ordinary interaction repairs it: its head lifts, its eye warms, and its articulated tending arms resume motion. It grants no item, healing, or mandatory gate and is independent of pump restoration. Its repair state is saved for the later world's continuity; no final-ending scene is implemented here.
+A small maintenance tender survives on a reservoir islet. The ordinary interaction repairs it: its head lifts, its eye warms, and its articulated tending arms resume motion. It grants no item, healing, or mandatory gate and is independent of pump restoration. Its repair state is saved for the later world's continuity.
 
 Repair Hives, ability ownership, counterweight travel, service-panel opening, pump restoration, tender restoration, and discovered spaces persist. Ordinary enemies, temporary damage, pressure-vessel fuses, and projectiles reset as elsewhere. The map draws discovered water beneath dry islands, keeping banks and supported returns readable. Existing normal and second-preview saves remain compatible; the new control avoids taking over a previously assigned binding.
 
@@ -771,7 +767,7 @@ Repair Hives, ability ownership, counterweight travel, service-panel opening, pu
 
 # Small Environmental Puzzles in R2 and R3
 
-Status: implemented with attack and movement interactions. Two optional route puzzles and one optional restoration scene use the tank's ordinary hull movement and Standard Cannon. Reaching the garden locations still follows the established Flotation gate. Solving these mechanisms needs no acquired ability, special ammunition, extra input binding, numerical code, or separate puzzle screen.
+Two optional route puzzles and one optional restoration scene use the tank's ordinary hull movement and Standard Cannon. Reaching the garden locations still follows the established Flotation gate. Solving these mechanisms needs no acquired ability, special ammunition, extra input binding, numerical code, or separate puzzle screen.
 
 Physical partitions screen the mechanisms from nearby firing lanes; combat is not globally suspended. Every incomplete state is recoverable locally, and completed shortcuts and restoration persist through repair, death, and reload. The intended route-puzzle discovery time is roughly one to two minutes; first-time human discovery time has not been measured. Input-driven browser traversal verifies functionality rather than subjective discovery quality.
 
@@ -803,11 +799,9 @@ The first gutter must feed the second, which must feed the planter below. A rust
 
 Two seconds of connected full flow fills the planter, raises a metal stem, unfolds five leaves, and lights a small blossom. Interrupting the flow before completion drains the planter and permits another attempt. The restored plant remains alive and its completed gutter alignment stays fixed. This optional act of care opens no gate and grants no collectible, healing, or ability; it remains separate from the maintenance tender repair. A low bed partition screens the cranks from the far-bank gun and also blocks player shots at the pipe.
 
-## Projectile handling, verification, and save compatibility
+## Projectile interaction rules
 
 Puzzle impacts use the existing player Cannon projectiles and shared Heat rules, including shots whose muzzle would otherwise extend into nearby solid machinery. Earlier walls and cover still intercept those shots. Impacts consume the projectile and provide sparks and a mechanical impact or rejection sound. Enemy fire does not silently operate puzzle mechanisms. The moving carrier remains a solid obstacle; broken pipe casing removes only its own extra collision.
-
-Normal play and both regional previews retain their separate save slots. Older unsolved saves initialize the new pressure/contact inputs unheld. Existing completed plants also restore an open pipe, preserving their completed appearance. Tests cover incorrect routing, obstruction and recall, docking migration, weight release, premature shots, occupancy rejection, gutter detents, continuous contact, interrupted rotation and flow, and saved completion. Full-world and browser checks retain the original regional ability gates and verify actual Cannon impacts, local driving, close-range mouse fire, wall interception, repair, and reload.
 
 ---
 
@@ -1190,13 +1184,13 @@ The Furnace Overseer is a super-heavy mobile crucible in the foundry assembly ha
 
 - The Overseer fires slow heavy cannon shots and readable fan-shaped projectile patterns.
 - It periodically activates floor conveyors that push the Tank toward furnace channels.
-- Its left and right cooling assemblies open after attack sequences. In the current playable implementation, each assembly has 4 HP and remains vulnerable throughout its 3.6-second opening, with no hit quota.
+- Its left and right cooling assemblies open after attack sequences. Each assembly has 4 HP and remains vulnerable throughout its 3.6-second opening, with no hit quota.
 - The player preserves Heat for Overdrive, crosses opposing conveyor movement, and shoots an exposed assembly.
 - Destroying either assembly permanently stops the associated conveyor and expands safe ground.
 
 ### Phase 2 — central power core
 
-- Destroying both cooling assemblies exposes the central core. In the current playable implementation, the core has 6 HP and remains vulnerable throughout its 3.2-second vent, for 14 total Boss HP across both phases. Neither phase caps damage per window; shot cadence, Heat, and positioning govern the opportunity.
+- Destroying both cooling assemblies exposes the central core. The core has 6 HP and remains vulnerable throughout its 3.2-second vent, for 14 total Boss HP across both phases. Neither phase caps damage per window; shot cadence, Heat, and positioning govern the opportunity.
 - Cannon tempo increases and the Overseer slowly rotates its hull to track the Tank.
 - The player chooses between spending Heat on core damage and preserving it for escape.
 - The fight should last approximately two minutes and must not use excessive HP to extend duration.
@@ -1284,19 +1278,9 @@ The slice succeeds when playtesting demonstrates all of the following:
 - The exaggerated industrial style supports oversized animation and effects without resembling realistic military art.
 - Death, Repair Hive activation, and level completion are readable without words.
 
-## Playtest Observations — 2026-09-08
+## First-Level Presentation and Combat Direction
 
-Historical baseline: these findings motivated the authorized polish pass recorded below. The check used real browser keyboard movement from the start through the entrance conveyor and first enemy, screenshot inspection, source inspection, and separately configured deterministic combat scenarios. It was not a complete blind or uninterrupted human playthrough; first-time navigation and full retry pacing remain unmeasured.
-
-1. **Confirmed: Scout charge warning understates its damage width.** The warning strip is 1.2 units wide (0.6 half-width), while charge damage sweeps the Scout's 1.5-unit radius against the player's 0.8-unit hurt radius. A targeted scenario placed the player centre 1.6 units from the charge line, putting its entire hurt radius outside the warning strip, and still reduced HP from 50 to 45. Make the warning describe the swept attacking body so visibly clearing it with the player's hurtbox actually avoids the charge. Reassess Elite charge telegraphs against the same rule.
-2. **Confirmed behaviour; pacing concern: Boss windows still cap damage at two hits.** In one configured core vent window, three successive shots produced core HP 5, 4, 4 while player Heat rose to 20, 40, 60. The third shot costs Heat but cannot damage the still-venting Boss. The shields/core visuals do change after the cap, so this is not a claim of entirely missing state feedback. Consider removing the hit quota and balancing the physical opening, enemy attacks, and player positioning instead, consistent with the earlier Elite change. The subsequent polish request authorized removing this quota.
-3. **Visual/narrative concern: spatial roles and recycling purpose need stronger environmental distinction.** The entrance and maintenance route share broad green slabs, railings, and similar machinery. The opening communicates awakening more directly than rejection/recycling. Candidate improvements are locally distinct machinery silhouettes, visible scrap moving toward a furnace, and clear repair-versus-recycling actions. Preserve wordless discovery and avoid objective arrows. Whether the current similarities actually make new players lose the return route needs a first-time player test.
-
-Proposed priority: correct charge-warning fairness first, then revisit Boss attack-window pacing, then improve environmental distinctions and opening story readability. Retry-route duration and higher-gallery aiming need separate hands-on checks before being reported as established problems.
-
-## First-Level Polish — 2026-09-09
-
-The player approved addressing all three preceding observations and redesigning enemy presentation. This pass implements the following direction while retaining the established first-level topology, HP values, shared Heat budget, and eight-ability world plan.
+The first level combines legible factory enemies, fair attack warnings, and wordless recycling imagery with the established topology, shared Heat budget, and eight-ability world plan.
 
 ### Combat Legibility and Fairness
 
@@ -1324,10 +1308,8 @@ Moving enemies roll their wheels along their actual hull-relative travel. The fa
 - Beyond the entrance railing, discarded tracked hulls move toward a glowing reclamation press. The press repeatedly descends, making recycling visible without a cutscene or written explanation.
 - Repair Hives retain their welcoming petal motion and add paired articulated tools that reach inward and work during repair. This action contrasts with the reclamation press.
 - Warm grey maintenance floors, oxidized brown sorting floors, blue-grey coolant galleries, and subdued furnace floors distinguish spatial roles. Machinery panels, pipe collars, work lamps, worn floor plates, and equipment footprints supply local detail without route arrows.
-- Warm overhead light and cooler fill separate the yellow Tank from muted industrial enamel. Soft contact shadows anchor vehicles and machinery. Static environment geometry remains batched by material.
+- Warm overhead light and cooler fill separate the yellow Tank from muted industrial enamel. Soft contact shadows anchor vehicles and machinery.
 - Exploration music uses sparse, unresolved sustained notes and long gaps; combat introduces restrained mechanical pulses. Clamp, press, welding, shield-carrier, and crucible attacks have distinct synthesized sounds. The established speed-sensitive player engine remains.
-
-These changes address the confirmed warning and quota issues and implement the proposed environmental distinction. Browser scenario checks establish mechanics and progression. Screenshot review establishes visible composition in the inspected scenes; it does not establish first-time navigation success, a ten-minute blind playthrough, or final subjective audio balance.
 
 ## Deferred Design
 
@@ -1342,9 +1324,9 @@ The following subjects are not established by the first level. Whole-game propos
 - Accessibility options beyond key remapping.
 - Exact final balance after hands-on playtesting.
 
-# R4–R6 playable middle-game implementation
+# R4–R6 — Regional Design
 
-Status: implemented on 2026-09-09. These concrete rules supersede the earlier threshold-only implementation notes. The final furnace region R7 remains an unopened boundary; it is not part of this playable slice. The optional movable mirror-carriage study and other unimplemented encounter proposals above remain proposals.
+The Testworks, Silent Observatory, and Circulation Works form the branching middle of the journey. Phoenix precedes the independent Laser and Water Circulation branches. R7 follows the final exploration act. The optional movable mirror-carriage study remains a proposal.
 
 ## Acquisition and route graph
 
@@ -1375,11 +1357,11 @@ flowchart LR
 - Both calibration entrances have momentum barriers. Neither the outer ring nor the early garden entrances bypass Phoenix to obtain Laser. The loading lift is operated from the emitter side.
 - After Phoenix, Laser and Water Circulation are independent choices. The circulation restoration uses a shootable pressure receiver, visible connecting pipes, and a service shutter. No Laser, Mortar, Magnetic Traction, or Flotation is required inside it.
 - Reflection opens both the gallery entrance and its crosswalk back to the calibration spine. This creates a circuit through the mirror encounter. The loading, garden, and circulation exits are available before the guardian is defeated.
-- All opened shutters, bridges, gangways, and the pressure bypass persist across rest, death, and reload. They reconnect physical floors; there are no teleport points, chapter-selection gates, or repeated opening tasks. Checkpoints preserve the existing repair/reset rules.
+- All opened shutters, bridges, gangways, and the pressure bypass persist across rest, death, and reload. They reconnect physical floors; there are no teleport points, chapter-selection gates, or repeated opening tasks. Checkpoints preserve the existing repair/reset rules. Repair bays use physical screens and quiet-facing entrances to shelter the resting hull from nearby encounters.
 
 ## Ability controls and balance
 
-| Ability | Implemented rule | Readable feedback |
+| Ability | Rule | Readable feedback |
 | --- | --- | --- |
 | Phoenix Engine | Upgrades the same held Overdrive input to 3.2× speed. Acceleration remains 1.2 speed multipliers per second, reaching maximum from rest in approximately 1.83 seconds. Engine Heat remains 15 points per second. | Twin rear jets, warm engine parts, a speed gauge scaled to the new cap, louder and higher engine sound |
 | Phoenix collision | Maximum speed deals 12 damage to an ordinary enemy, ignoring its frontal plate, and breaks marked momentum shutters. Ordinary crates retain their existing breakable behaviour. Cold Phoenix does not bypass special-enemy armour. | Shutter ribs match the track's warm run-up markings; impact breaks the barrier and carries the tank onward |
@@ -1390,18 +1372,10 @@ Overdrive deceleration retains its existing slope of approximately 1.71 speed mu
 
 ## Encounters, small machinery, and environmental story
 
-R5 contains discarded drive bodies and test carriages around a shared supported route. Freight cover, pressure vessels, clamp charges, guards, and lobbed attacks provide ordinary combat choices before the upgrade. The long exit track immediately demonstrates the acquired engine by breaking a shutter and ordinary defenders, then reaches the express junction. The player can revisit familiar regions or choose either later branch.
+R5 contains discarded drive bodies and test carriages around a shared supported route. Freight cover, pressure vessels, clamp charges, guards, and lobbed attacks provide ordinary combat choices before the upgrade. The exit track provides an unobstructed run-up before its shutter and ordinary defenders, immediately demonstrating the acquired engine before reaching the express junction. A blocked hull loses its built-up speed; holding boost against a wall cannot replace a run-up. The player can revisit familiar regions or choose either later branch. The optical branch repeats the observatory dish silhouette, while the circulation branch repeats paired coolant jackets. Junction floor plates form one continuous surface with readable seams.
 
-R4 uses pale inspection decks, optical screens, raised dishes, finite mirror panels, and a disused emitter. The first mirror can route a beam around a solid screen into a receiver. A mirrored inspector has 3 HP and a reflective front plate that turns with its chassis; its flank, rear, overhead attacks, maximum Phoenix collision, and red contact remain useful alternatives. Nearby guns and clamps make the player's firing position matter. The gallery crosswalk returns to the calibration spine before the guardian, so the player can leave via any opened bridge.
+R4 uses pale inspection decks, optical screens, raised dishes, finite mirror panels, and a disused emitter. The first mirror routes a beam into a narrow, screened receiver well. The hull cannot enter the well and no accessible firing position reaches the receiver directly; the visible reflection teaches the rule before the guardian. A raised receiver lamp stays visible above the screen, and pale mirror frames distinguish optical surfaces even when viewed edge-on. A mirrored inspector has 3 HP and a reflective front plate that turns with its chassis; its flank, rear, overhead attacks, maximum Phoenix collision, and red contact remain useful alternatives. Nearby guns and clamps make the player's firing position matter. The gallery crosswalk returns to the calibration spine before the guardian, so the player can leave via any opened bridge.
 
-The guardian has 18 HP. Its hull tracks the tank while its heavy shot commits to a warning direction for 1.4 seconds, followed by a 2.2-second recovery and a short idle pause. Its roof and frontal/side armour reject ordinary attacks. The final incoming ray direction determines rear vulnerability after reflection; a rear Cannon shot follows the same directional rule. There is no damage-per-window cap. Red contact is a supported alternate damage route, including a circulation-first visit. Armour produces the same immediate metal flash and ricochet language as other protected enemies. Defeat persists and enables the optional array control: the array pulses outward while its receiver turns, waits, and resets without a reply. The player retains control.
+The guardian responds defensively to incoming fire even beyond its ordinary sighting distance. Attacks still require a visible, readable warning. The guardian has 36 HP. Two maximum-speed red impacts can defeat it; a single impact cannot. Standing still and trading reflected fire should lose to its heavy shots, while moving during committed warnings preserves a firing opportunity. Its hull tracks the tank while its heavy shot commits to a warning direction for 1.4 seconds, followed by a 2.2-second recovery and a short idle pause. Its roof and frontal/side armour reject ordinary attacks. The final incoming ray direction determines rear vulnerability after reflection; a rear Cannon shot follows the same directional rule. There is no damage-per-window cap. Red contact is a supported alternate damage route, including a circulation-first visit. Armour produces the same immediate metal flash and ricochet language as other protected enemies. Defeat persists and enables the optional array control: the array pulses outward while its receiver turns, waits, and resets without a reply. The player retains control.
 
 R6 connects worn coolant jackets, a shootable feed receiver, visibly accelerating pump fans, the circulation rig, and the material-return lane. The lane is 64 units long and opposes movement at 2.6 times base speed. Full Phoenix advances against it at only 4.2 units per second, exceeding the cold engine's available duration; its successor continues through Overheat. Guards and clamps on the lane can be destroyed by red contact. At the far landing, an ordinary pressure control opens the parallel dry bypass and the industrial return into familiar garden and express geography. No red-only artificial wall is needed for this ability lock.
-
-## Verification and remaining tuning
-
-Node checks cover both independent Phoenix entrances, Phoenix-before-Laser gating, the independent Cannon restoration route to Water Circulation, the inaccessible cold return landing, supported encounter/checkpoint clearance, permanent mechanism serialization, full-speed shutter impact, finite reflection, range/occlusion, final-ray rear hits, Heat, and sustained conveyor movement. The loading lift is required to remove at least half the former supported walking distance between the emitter and old loading apron. This is a measured geometric comparison, not a claim that every connector meets the travel-time target.
-
-Browser scenarios exercise real projectiles, held Laser input, reflected receiver activation, both momentum entrances, maximum-speed guard destruction, armour rejection, rear reflection damage, red contact, the long opposing lane, optional signal, rest, and reload. Continuous navigation scripts drive both a freight/optics-first order without Magnetic Traction or Flotation and a flotation/circulation-first order without Mortar. They disable enemies to isolate route geometry; combat is checked separately. The existing R1–R3 checks remain part of regression verification. First-time discovery, sustained combat pacing, and the complete world's ending still require further playtesting and implementation.
-
-The settings menu includes an independent middle-game preview at `?chapter=4`, starting in the outer observatory with Cannon, ordinary Overdrive, and Mortar. It grants none of the three later modules and does not replace the full-journey save. Existing saves default missing module and mechanism fields to unacquired/closed.

@@ -84,12 +84,14 @@ A single mouse-following reticle carries a clockwise Heat ring; there is no sepa
 
 ## Verification
 
+Dated investigations and their evidence belong in [IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md); `Gamespec.md` contains game design only.
+
 ```sh
 npm test
 npm run build
 ```
 
-Fifty-four Node tests cover shot cadence, the fifth-shot overheat threshold, cooling delay and lockout, Overdrive acceleration/deceleration, stationary input, normalized screen movement, conveyor equilibrium, damage protection, swept projectile collisions, wheel-axis stability and rolling direction through hull turns, charge telegraph coverage of the full swept body, and construction/animation of the factory enemy forms, Mortar targeting and cooldown, regional area, both initial acquisition routes, gated boundaries, counterweight persistence, and the independent optical route.
+Node tests cover shot cadence, the fifth-shot overheat threshold, cooling delay and lockout, Overdrive acceleration/deceleration, stationary input, normalized screen movement, conveyor equilibrium, damage protection, swept projectile collisions, wheel-axis stability and rolling direction through hull turns, charge telegraph coverage of the full swept body, and construction/animation of the factory enemy forms, Mortar targeting and cooldown, regional area, both initial acquisition routes, gated boundaries, counterweight persistence, and the independent optical route.
 
 The Playwright CLI scenario scripts run against `http://127.0.0.1:5174/?test`, in this order:
 
@@ -109,6 +111,9 @@ playwright-cli -s=furnace-v2 run-code "$(cat scripts/puzzle-check.js)"
 playwright-cli -s=furnace-v2 run-code "$(cat scripts/midgame-check.js)"
 playwright-cli -s=furnace-v2 run-code "$(cat scripts/midgame-walk-check.js)"
 playwright-cli -s=furnace-v2 run-code "$(cat scripts/midgame-ui-check.js)"
+playwright-cli -s=furnace-v2 run-code "$(cat scripts/midgame-regression-check.js)"
+playwright-cli -s=furnace-v2 run-code "$(cat scripts/midgame-combat-walk-check.js)"
+playwright-cli -s=furnace-v2 run-code "$(cat scripts/guardian-battle-check.js)"
 playwright-cli -s=furnace-v2 close
 ```
 
@@ -131,3 +136,5 @@ The puzzle suite adds 20 browser checks and 23 local movement legs. It covers Ca
 This is a six-region playable prototype, with R7 reserved for the final furnace. A clean, uninterrupted human playthrough near the design's ten-minute target has not been measured. Automated checks establish mechanics and progression, not first-time discovery quality or subjective audio balance.
 
 The middle-game scripts verify ability acquisition, held beam reflection, armour, maximum-speed collision, the sustained return lane, persistent shortcuts, and reload. Navigation checks run both branch orders with different incoming equipment, using real movement throughout each route. These tests use the same dedicated browser; close it and the temporary Vite service after verification to release GPU and server resources.
+
+The middle-game regression script retains natural enemy spawns and checks blocked acceleration, the first launch encounter, all nine new rest pockets, ranged guardian response, and stationary damage trading. The combat traversal script keeps enemies and damage enabled for both acquisition orders, uses ordinary repairs along each route, and verifies save/reload. It uses map-aware navigation and aiming, so it does not measure blind discovery. The guardian battle script separately checks moving reflected fire and repeated red impacts without modifying enemy health or AI.

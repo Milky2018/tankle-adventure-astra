@@ -1,0 +1,82 @@
+# Implementation and Verification Notes
+
+Technical history moved out of `Gamespec.md`; these dated observations describe the revisions they inspected, not the current build. Game-design rules remain in `Gamespec.md`.
+
+## Corrections and validation — 2026-09-15
+
+The following corrections supersede the defects in the historical audit below:
+
+- The optical service bridge now has a linked shutter south of the industrial crossing. The physical ability graph prevents pre-Phoenix access to the circulation feed and rig. Existing saves with the optical bridge already open also open this shutter. The negative reachability check repeatedly operates reachable Cannon receivers and inside controls, with destructible combat props removed, for both incoming routes.
+- A collision with intact terrain or a surviving enemy resets player speed. Gate and crate impacts use the approach speed during driven collision steps, before stopping at remaining solids. Enemy separation cannot operate a momentum gate. The first launch defenders stand beyond the acceleration stretch; the west calibration run-up is marked from a physically sufficient starting position.
+- Hits alert regional enemies before armour rejection. Alerted enemies can orient defensively beyond their ordinary activation distance, while starting aimed attacks still requires visibility and sight. Indirect launchers retain last-seen targeting, but cannot start their warning offscreen; leaving the view cancels a pending regional attack. The guardian has 36 HP, retains rear-only ranged damage, and remains vulnerable to all red contact tiers without a damage quota.
+- The first optical receiver sits in a narrow physical well. Reachable straight firing positions cannot operate it; the calibration reflection remains valid. Its raised lamp and framed mirror keep the mechanism visible above its screens.
+- Five repair bays have permanent physical screens and quiet-facing entrances. All nine new Hives retain 50 HP during the original 12-second idle-after-repair check.
+- The optical-to-circulation shortcut reduces the measured supported walking path from 401 to 315 units (about 21 percent, formerly 4 percent). This compares fixed endpoints and excludes combat and cooling. The loading lift remains subject to its 50-percent reduction check. Dish and coolant landmarks distinguish the express branches. Middle-region floor intersections are partitioned for rendering to remove overlapping surface flicker; collision still uses the same floor union.
+
+Validation: all 58 Node tests and the production build passed. The strengthened topology suite passed again with breakable props removed in the negative progression checks. Browser suites passed 132 scenario assertions across Foundry movement/combat/presentation, transit progression, regional combat, middle-game mechanisms/UI, and the new regressions. The navigation-only middle-game checks also passed. Normal-combat traversal completed both acquisition orders over 52 continuous route legs with no deaths, using regular Hive repairs and verifying reload. Each route recorded 25 damage before repairs. Separate natural-enemy guardian scenarios verified moving reflected fire and two full-speed red approaches; neither changes enemy health or AI. These are scripted known-map checks, not a blind human playthrough or a final subjective balance judgment.
+
+Screenshots of the crossing, repair cradle, optical well, and both branch landmarks were inspected. Local evidence remains under the ignored `output/playwright/` directory.
+
+## R4–R6 gameplay audit — 2026-09-15
+
+Inspected revision: `32857e9`. Status: confirmed findings and proposed corrections; no gameplay fixes are included in this audit. The findings below qualify the implementation and verification claims above.
+
+### Method and limits
+
+Both optics-first and circulation-first routes were traversed in a browser with normal enemies, damage, death rules, and Heat. Navigation and aiming were scripted with knowledge of the map; these runs establish executable routes, not blind discovery or human difficulty. Independent starting saves separated route orders. Focused scenarios repositioned the player to isolate impacts, receivers, checkpoints, and the guardian; enemy behaviour remained enabled. Both normal route orders completed without a recorded death. Screenshots were inspected for junction and crossing readability. Evidence is retained locally under `v2/output/playwright/audit-2026-09-15/` (ignored artifacts).
+
+### Confirmed progression and combat defects
+
+1. **Water Circulation is reachable before Phoenix.** From the normal middle-game preview with Mortar and ordinary Overdrive, a continuous route through the dry freight approach, express crosswalk, industrial return, and service bridge reaches the restoration feed. Cannon opens that feed and the player can acquire Water Circulation while every Phoenix shutter remains closed. The observed run finished at 50 HP with Phoenix and Laser both unowned. Same-level floor intersections connect the routes beyond their intended gates. Correct the physical connections or barrier placement while preserving the intended later shortcuts. Future reachability checks must repeatedly open every reachable mechanism usable with the current abilities; checking a closed feed alone does not establish a Phoenix dependency.
+
+2. **The tracking guardian can die without activating.** On the optics-first route, the player stood near `(230, -198)` and fired Laser directly at its exposed rear. The guardian went from 18 HP to zero while remaining idle and inactive; the player took no damage during this attack. Its engagement distance is 30 units, shorter than this firing position and much shorter than Laser range. A long-range hit must provoke an appropriate defensive orientation or encounter response. Preserve readable attack warnings; do not solve this by making all distant enemies arbitrarily invulnerable.
+
+3. **A blocked tank can charge a maximum-speed shutter impact.** Starting at `(50, -406)` with Phoenix, speed 1, and a cold engine, holding movement and boost against the closed launch shutter opened it after approximately 1.83 seconds. The tank moved only about 0.62 units before being blocked, while its speed multiplier continued rising to 3.2. Movement input currently supplies the qualifying speed even without displacement. Gate-breaking momentum should come from actual travel immediately before impact.
+
+4. **The first reflection receiver accepts a direct shot from an accessible position.** A player at `(202, -126)` can fire directly into the gallery receiver at `(202, -122)`, opening both gallery mechanisms without a reflection. Laser ownership is still required, but the intended reflection lesson is skipped. Recess the receiver or extend its physical screen so the first bounce is necessary and the beam path remains visible.
+
+### Encounter and checkpoint tuning
+
+- **The first Phoenix launch obstructs its own lesson.** The approaching shield guard can meet the accelerating tank before maximum speed, stopping the run and resetting speed. One normal route failed to open the launch shutter; another succeeded after shooting the guard first and returning to the run-up. Give the first demonstration enough unobstructed acceleration distance before the first impact target, or delay the guard's approach. Later encounters can deliberately challenge the run-up.
+- **Five of nine new Repair Hives are unsafe immediately after repair.** With ordinary enemies reset by repair and the player then idle, first damage occurred after 2.8 seconds at the rear dock, 2.9 at freight, 2.6 at the Phoenix cradle, 6.4 at the restoration yard, and 3.1 at the circulation rig. All five lost health within the 12-second observation window. Rework nearby cover, sightlines, and enemy placement to provide a dependable rest pocket without disabling the surrounding combat.
+- **The guardian offers too little resistance even when active.** A circulation-first run killed the 18-HP guardian with one maximum-speed red impact, which correctly deals 24 damage. A separate active reflected-Laser scenario won while standing still, ending at 5 HP. Red contact must remain a valid alternative that damages every enemy, with the agreed doubled damage and no per-window quota. Tune durability, approach commitment, and encounter positioning together so both routes involve meaningful action.
+
+### Shortcut value and spatial readability
+
+These are shortest supported ground-path distances between fixed endpoints, comparing each shortcut closed versus open with the same other mechanisms available. They exclude enemy movement, combat, acceleration, and cooling; they are not measured travel times.
+
+| Connection and endpoints | Before | After | Distance saved |
+| --- | ---: | ---: | ---: |
+| Loading lift: emitter `(190, -124)` to old loading apron `(108, -84)` | 418 | 122 | 71% |
+| Garden bridge: gallery `(234, -164)` to garden `(-119, -318)` | 717 | 507 | 29% |
+| Optical service bridge: gallery `(234, -164)` to restoration yard `(146, -389)` | 325 | 313 | 4% |
+
+The loading lift provides a substantial return benefit. The optical service bridge barely improves the existing route, partly because unintended crossings already connect the regions. Fix topology before remeasuring shortcut value. Several long connectors and the express junction also lack strong destination-specific silhouettes; screenshots show same-level overlapping road surfaces at the bypass crossing. Shorten unnecessary connector travel and give branch destinations visible mechanical landmarks, preserving quiet spaces with a clear compositional purpose.
+
+### Recommended implementation order
+
+First restore the physical ability graph and correct blocked acceleration and dormant enemy response. Then repair the first Phoenix and reflection lessons and the unsafe rest pockets. Finally rebalance the guardian, remeasure shortcuts, and improve branch composition. Repeat both normal-combat route orders afterward, then conduct a first-time navigation playtest before expanding R7. These corrections remain proposals until implemented and revalidated.
+
+## Verification and remaining tuning
+
+Node checks cover both independent Phoenix entrances, Phoenix-before-Laser gating, the independent Cannon restoration route to Water Circulation, the inaccessible cold return landing, supported encounter/checkpoint clearance, permanent mechanism serialization, full-speed shutter impact, finite reflection, range/occlusion, final-ray rear hits, Heat, and sustained conveyor movement. The loading lift is required to remove at least half the former supported walking distance between the emitter and old loading apron. This is a measured geometric comparison, not a claim that every connector meets the travel-time target.
+
+Browser scenarios exercise real projectiles, held Laser input, reflected receiver activation, both momentum entrances, maximum-speed guard destruction, armour rejection, rear reflection damage, red contact, the long opposing lane, optional signal, rest, and reload. Continuous navigation scripts drive both a freight/optics-first order without Magnetic Traction or Flotation and a flotation/circulation-first order without Mortar. They disable enemies to isolate route geometry; combat is checked separately. The existing R1–R3 checks remain part of regression verification. First-time discovery, sustained combat pacing, and the complete world's ending still require further playtesting and implementation.
+
+The settings menu includes an independent middle-game preview at `?chapter=4`, starting in the outer observatory with Cannon, ordinary Overdrive, and Mortar. It grants none of the three later modules and does not replace the full-journey save. Existing saves default missing module and mechanism fields to unacquired/closed.
+
+## Playtest Observations — 2026-09-08
+
+Historical baseline: these findings motivated the authorized polish pass recorded below. The check used real browser keyboard movement from the start through the entrance conveyor and first enemy, screenshot inspection, source inspection, and separately configured deterministic combat scenarios. It was not a complete blind or uninterrupted human playthrough; first-time navigation and full retry pacing remain unmeasured.
+
+1. **Confirmed: Scout charge warning understates its damage width.** The warning strip is 1.2 units wide (0.6 half-width), while charge damage sweeps the Scout's 1.5-unit radius against the player's 0.8-unit hurt radius. A targeted scenario placed the player centre 1.6 units from the charge line, putting its entire hurt radius outside the warning strip, and still reduced HP from 50 to 45. Make the warning describe the swept attacking body so visibly clearing it with the player's hurtbox actually avoids the charge. Reassess Elite charge telegraphs against the same rule.
+2. **Confirmed behaviour; pacing concern: Boss windows still cap damage at two hits.** In one configured core vent window, three successive shots produced core HP 5, 4, 4 while player Heat rose to 20, 40, 60. The third shot costs Heat but cannot damage the still-venting Boss. The shields/core visuals do change after the cap, so this is not a claim of entirely missing state feedback. Consider removing the hit quota and balancing the physical opening, enemy attacks, and player positioning instead, consistent with the earlier Elite change. The subsequent polish request authorized removing this quota.
+3. **Visual/narrative concern: spatial roles and recycling purpose need stronger environmental distinction.** The entrance and maintenance route share broad green slabs, railings, and similar machinery. The opening communicates awakening more directly than rejection/recycling. Candidate improvements are locally distinct machinery silhouettes, visible scrap moving toward a furnace, and clear repair-versus-recycling actions. Preserve wordless discovery and avoid objective arrows. Whether the current similarities actually make new players lose the return route needs a first-time player test.
+
+Proposed priority: correct charge-warning fairness first, then revisit Boss attack-window pacing, then improve environmental distinctions and opening story readability. Retry-route duration and higher-gallery aiming need separate hands-on checks before being reported as established problems.
+
+The playable build now includes the Recycling Foundry, Empty Transit Hub, and Sunken Gardens, including Magnetic Traction, Flotation, and both approaches to the original Mortar rig. The implementation records below define their exact scope. Laser, Phoenix, Water Circulation, the interiors of R4–R7, and the final story acts remain future work. All future game-design decisions belong in this document; implementation and execution instructions belong in the version README.
+
+Normal play and both regional previews retain their separate save slots. Older unsolved saves initialize the new pressure/contact inputs unheld. Existing completed plants also restore an open pipe, preserving their completed appearance. Tests cover incorrect routing, obstruction and recall, docking migration, weight release, premature shots, occupancy rejection, gutter detents, continuous contact, interrupted rotation and flow, and saved completion. Full-world and browser checks retain the original regional ability gates and verify actual Cannon impacts, local driving, close-range mouse fire, wall interception, repair, and reload.
+
+These changes address the confirmed warning and quota issues and implement the proposed environmental distinction. Browser scenario checks establish mechanics and progression. Screenshot review establishes visible composition in the inspected scenes; it does not establish first-time navigation success, a ten-minute blind playthrough, or final subjective audio balance.

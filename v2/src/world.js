@@ -251,13 +251,27 @@ export function makeWorld(scene) {
   for(let x=-132;x<132;x+=12)box(fixed,.18,.03,414,x,-3.02,-105,0x2d5047,.01);
   for(let z=-306;z<92;z+=12)box(fixed,280,.03,.18,0,-3.01,z,0x2d5047,.01);
   // Broad slabs, recessed seams and low rounded perimeter armour keep the world legible.
-  for(const r of rooms){
+  const floorRooms=[];
+  for(const room of rooms){
+    if(room.kind==='water'||room.kind==='drain')continue;
+    let parts=[room];
+    if(midgameRooms.includes(room))for(const previous of floorRooms){
+      parts=parts.flatMap(r=>{
+        const left=Math.max(r.x,previous.x),right=Math.min(r.x+r.w,previous.x+previous.w),top=Math.max(r.z,previous.z),bottom=Math.min(r.z+r.d,previous.z+previous.d);
+        if(left>=right||top>=bottom)return [r];
+        return [{...r,w:left-r.x},{...r,x:right,w:r.x+r.w-right},{...r,x:left,w:right-left,d:top-r.z},{...r,x:left,w:right-left,z:bottom,d:r.z+r.d-bottom}].filter(p=>p.w>0&&p.d>0);
+      });
+    }
+    floorRooms.push(...parts);
+  }
+  for(const r of floorRooms){
     if(r.kind==='water'||r.kind==='drain')continue;
     box(fixed,r.w,.8,r.d,r.x+r.w/2,-.46,r.z+r.d/2,0x294f49,.12);
     box(fixed,r.w-.12,.12,r.d-.12,r.x+r.w/2,-.02,r.z+r.d/2,floorColors[r.id],.025);
-    for(let x=r.x+2;x<r.x+r.w;x+=4)for(let z=r.z+2;z<r.z+r.d;z+=4){
-      box(fixed,3.94,.022,3.94,x,.06,z,new T.Color(floorColors[r.id]).offsetHSL(0,0,Math.floor(x+z)%3===0?.018:-.012).getHex(),.03);
-      if(Math.sin(x*7+z*3)>.15)for(const s of [-1,1])cylinder(fixed,.07,.028,x+s*1.55,.086,z-1.55,0x769182,6);
+    for(let left=r.x;left<r.x+r.w;left+=4)for(let top=r.z;top<r.z+r.d;top+=4){
+      const w=Math.min(4,r.x+r.w-left),d=Math.min(4,r.z+r.d-top),x=left+w/2,z=top+d/2;
+      box(fixed,w-.06,.022,d-.06,x,.06,z,new T.Color(floorColors[r.id]).offsetHSL(0,0,Math.floor(x+z)%3===0?.018:-.012).getHex(),.03);
+      if(w>3&&d>3&&Math.sin(x*7+z*3)>.15)for(const s of [-1,1])cylinder(fixed,.07,.028,x+s*1.55,.086,z-1.55,0x769182,6);
     }
   }
   for(const r of rooms){

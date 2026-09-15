@@ -1,11 +1,12 @@
 import * as T from 'three';
 import { box, cylinder, ring, mat, C, batchStatic } from './world.js';
 import { inside, phoenixReady } from './mechanics.js';
-import { midgameRooms, midgameGates, midgameModules, midgameControls, midgameReceivers, midgameMirrors, returnLane } from './midgame-layout.js';
+import { midgameRooms, midgameGates, midgameModules, midgameControls, midgameReceivers, midgameMirrors, midgameHives, returnLane } from './midgame-layout.js';
 
 export function makeMidgame(scene,world,saved={}){
   const fixed=new T.Group();scene.add(fixed);
   const opened=new Set((saved?.opened||[]).filter(id=>midgameGates.some(g=>g.id===id&&g.kind!=='future')));
+  if(opened.has('circulation-bridge'))opened.add('circulation-bridge-south');
   const state={guardianDead:!!saved?.guardianDead,signal:!!saved?.signal};
   const gates=midgameGates.map(def=>{
     const root=new T.Group();scene.add(root);root.position.set(def.x,opened.has(def.id)?-4:0,def.z);
@@ -43,7 +44,8 @@ export function makeMidgame(scene,world,saved={}){
   });
   const receivers=midgameReceivers.map(def=>{
     cylinder(fixed,.8,.25,def.x,.14,def.z,C.dark,12);
-    const lamp=box(scene,1.2,1.2,.65,def.x,1.2,def.z,mat(def.kind==='laser'?C.lightYellow:C.orange,true));
+    const recessed=def.id==='gallery-receiver';
+    const lamp=box(scene,1.2,recessed?2.8:1.2,.65,def.x,recessed?2:1.2,def.z,mat(def.kind==='laser'?C.lightYellow:C.orange,true));
     ring(fixed,1.25,.08,def.x,.2,def.z,def.kind==='laser'?C.lightYellow:C.orange);
     for(const id of def.opens){const g=gates.find(g=>g.id===id);box(fixed,Math.abs(g.x-def.x)||.08,.04,.08,(g.x+def.x)/2,.15,def.z,C.metal);box(fixed,.08,.04,Math.abs(g.z-def.z)||.08,g.x,.15,(g.z+def.z)/2,C.metal);}
     return {...def,radius:.9,lamp};
@@ -53,11 +55,20 @@ export function makeMidgame(scene,world,saved={}){
     const root=new T.Group();scene.add(root);root.position.set(def.x,0,def.z);root.rotation.y=-def.angle;
     cylinder(root,.6,.4,0,.2,0,C.dark);box(root,def.length+.4,2.4,.35,0,1.3,0,C.dark);
     box(root,def.length,1.8,.4,0,1.4,0,new T.MeshStandardMaterial({color:0xd8eceb,metalness:.92,roughness:.13,emissive:0x71837d,emissiveIntensity:.3}));
+    box(root,def.length+.4,.15,.5,0,2.5,0,C.lightYellow);
+    for(const side of [-1,1])box(root,.15,2,.5,side*def.length/2,1.4,0,C.metal);
     const w=Math.abs(Math.cos(def.angle))*def.length+.4,d=Math.abs(Math.sin(def.angle))*def.length+.4;
     world.obstacles.push({x:def.x-w/2,z:def.z-d/2,w,d,h:2.5,active:true,mirror:true});
     return {...def,root};
   });
   const obstacle=(x,z,w,d,h,color=C.dark)=>{box(fixed,w,h,d,x,h/2,z,color);world.obstacles.push({x:x-w/2,z:z-d/2,w,d,h,active:true});};
+  // Recessed repair bays screen the resting hull from the surrounding encounter.
+  for(const [x,z,id] of midgameHives.filter(h=>[12,13,14,18,19].includes(h[2]))){
+    const entry=id===14||id===19?-1:1;
+    for(const side of [-1,1])obstacle(x+side*4.8,z+entry*.5,.8,10.8,3.2,0x607269);
+    obstacle(x,z-entry*4.5,10.4,.8,3.2,0x607269);
+    for(const side of [-1,1])box(fixed,.35,.12,3,x+side*3.7,.15,z+entry*4,C.lightYellow);
+  }
   // Broken test carriages leave a broad, shared Cannon/Overdrive route to the cradle.
   for(const [x,z,w,d] of [[-86,-366,4,8],[-59,-340,9,3],[-7,-400,10,3],[17,-389,6,3],[70,-370,12,3]]){
     obstacle(x,z,w,d,2.3,0x655f51);for(const side of [-1,1])box(fixed,w+.5,.4,.45,x,.5,z+side*d/2,C.metal);
@@ -72,8 +83,24 @@ export function makeMidgame(scene,world,saved={}){
     const alongZ=r.d>r.w;for(const side of [-1,1])box(fixed,alongZ?.16:r.w,.07,alongZ?r.d:.16,r.x+r.w/2+(alongZ?side*2:0),.13,r.z+r.d/2+(alongZ?0:side*2),C.metal);
     for(let a=4;a<(alongZ?r.d:r.w);a+=8)box(fixed,alongZ?3:.25,.06,alongZ?.25:3,alongZ?r.x+r.w/2:r.x+a,.15,alongZ?r.z+a:r.z+r.d/2,C.yellow);
   }
+  // Branch landmarks repeat the destination machinery without adding route arrows.
+  const junctionDish=new T.Group();fixed.add(junctionDish);junctionDish.position.set(93,4,-324);junctionDish.rotation.x=-.6;
+  box(fixed,5,.6,3,94,-.55,-324,C.dark);
+  cylinder(fixed,.4,4,93,2,-324,C.dark);
+  for(const radius of [1,2,3])ring(junctionDish,radius,.12,0,radius*.15,0,C.metal);
+  box(junctionDish,.12,.12,6,0,.4,0,C.lightYellow);box(junctionDish,6,.12,.12,0,.4,0,C.lightYellow);
+  box(fixed,8,.6,4,115,-.55,-404,C.dark);
+  for(const x of [114,117]){
+    cylinder(fixed,1,4,x,2,-404,0x677b72);
+    for(const y of [.5,1.5,2.5,3.5])ring(fixed,1.05,.12,x,y,-404,C.metal);
+  }
+  box(fixed,5,.35,.35,115.5,3.7,-404,C.yellow);
+  for(let x=132;x<=164;x+=4)box(fixed,.25,.06,3,x,.15,-256,C.yellow);
   // Offset optical screens make cover and firing angles readable from above.
   for(const [x,z,w,d] of [[140,-209,8,2],[180,-236,3,10],[165,-195,3,12],[199,-158,10,2],[196,-123,1,8]])obstacle(x,z,w,d,2.5,0x687e83);
+  // A narrow optical well admits the reflected ray but not the tank hull.
+  for(const x of [200.8,203.2])obstacle(x,-124.5,1,17,2.5,0x687e83);
+  obstacle(202,-116,3.4,1,2.5,0x687e83);
   for(const [x,z,r] of [[148,-252,4],[205,-201,5],[247,-258,5]]){
     cylinder(fixed,.5,5,x,2.5,z,C.dark);const dish=new T.Group();fixed.add(dish);dish.position.set(x,6,z);dish.rotation.x=-.6;
     for(let i=1;i<=4;i++)ring(dish,r*i/4,.1,0,i*i*.08,0,C.metal);

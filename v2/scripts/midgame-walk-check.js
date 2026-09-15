@@ -23,7 +23,7 @@ async(page)=>{
         g.setInput([]);legs.push({to:[tx,tz],distance:path.length-1});
       }
       const boost=(codes,t)=>{g.setInput([...codes,'ShiftLeft']);g.step(t);g.setInput([]);g.step(5);};
-      const beam=(x,z)=>{g.aimAt(x,z);g.setInput(['Mouse0']);g.step(.3);g.setInput([]);g.step(3);};
+      const beam=(x,z)=>{for(let i=0;i<3;i++){g.aimAt(x,z);g.setInput(['Mouse0']);g.step(.1);}g.setInput([]);g.step(3);};
       if(water){pathTo(-163,-335);g.toggleFlotation();pathTo(-90,-362);g.toggleFlotation();check(!g.snapshot().player.mortar,'Water route must have no Mortar');}
       pathTo(-15,-412);g.interact();check(g.snapshot().player.phoenix&&!g.snapshot().player.laser,'Phoenix acquisition order');
       pathTo(-86,-374);g.interact();check(g.snapshot().midgame.opened.includes('rear-gangway'),'Inside gangway control');

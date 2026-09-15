@@ -9,7 +9,7 @@ async(page)=>{
     setup(-15,-412);g.interact();check('Phoenix is recovered from the shared rig',g.snapshot().player.phoenix);
     setup(12,-406,{phoenix:true});g.setInput(['KeyS','KeyD','ShiftLeft']);g.step(.5);check('Phoenix keeps ordinary acceleration',Math.abs(g.snapshot().player.speed-1.6)<.03,g.snapshot().player.speed);g.step(2.2);g.setInput([]);
     check('Full momentum breaks launch gate and continues forward',g.snapshot().midgame.opened.includes('launch')&&g.snapshot().player.x>53,g.snapshot().player.x);
-    setup(140,-256,{phoenix:true});g.setInput(['KeyS','KeyD','ShiftLeft']);g.step(2.3);g.setInput([]);check('Phoenix opens the west calibration entrance',g.snapshot().midgame.opened.includes('calibration-west'));
+    setup(132,-256,{phoenix:true});g.setInput(['KeyS','KeyD','ShiftLeft']);g.step(2.3);g.setInput([]);check('Phoenix opens the west calibration entrance',g.snapshot().midgame.opened.includes('calibration-west'));
     setup(190,-124,{phoenix:true});g.interact();check('Laser is acquired before the guardian',g.snapshot().player.laser&&g.snapshot().player.weapon==='laser'&&!g.snapshot().midgame.guardianDead);
     setup(190,-134,{phoenix:true,laser:true,weapon:'laser'});g.aimAt(202,-134);g.setInput(['Mouse0']);g.step(.2);g.setInput([]);
     check('Calibration mirror reflects into the receiver',g.snapshot().midgame.opened.includes('mirror-gallery'),g.snapshot().laser);

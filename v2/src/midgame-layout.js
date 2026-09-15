@@ -69,6 +69,7 @@ export const midgameGates=[
   {id:'mirror-gallery',x:212,z:-134,span:8,axis:'x',kind:'laser'},
   {id:'gallery-return',x:212,z:-216,span:8,axis:'x',kind:'laser'},
   {id:'circulation-bridge',x:196,z:-254,span:8,axis:'z',kind:'laser'},
+  {id:'circulation-bridge-south',x:196,z:-342,span:8,axis:'z',kind:'laser'},
   {id:'garden-east',x:176,z:-312,span:8,axis:'x',kind:'laser'},
   {id:'garden-middle',x:112,z:-312,span:8,axis:'x',kind:'laser'},
   {id:'garden-west',x:-104,z:-312,span:8,axis:'x',kind:'laser'},
@@ -89,7 +90,7 @@ export const midgameControls=[
 ];
 export const midgameReceivers=[
   {id:'gallery-receiver',x:202,z:-122,kind:'laser',opens:['mirror-gallery','gallery-return']},
-  {id:'bridge-receiver',x:202,z:-230,kind:'laser',opens:['circulation-bridge']},
+  {id:'bridge-receiver',x:202,z:-230,kind:'laser',opens:['circulation-bridge','circulation-bridge-south']},
   {id:'garden-receiver',x:182,z:-278,kind:'laser',opens:['garden-east','garden-middle','garden-west']},
   {id:'feed-receiver',x:158,z:-442,kind:'cannon',opens:['rig-feed']}
 ];
@@ -105,7 +106,7 @@ export const midgameEnemies=[
   ['scout',-79,-364,'r5-dock'],['turret',-63,-345,'r5-bay'],['guard',-44,-347,'r5-bay'],
   ['scout',-28,-383,'r5-spine'],['turret',-25,-399,'r5-cradle'],['mortar',-3,-417,'r5-cradle'],
   ['guard',23,-381,'r5-east'],['scout',34,-373,'r5-east'],['turret',63,-363,'r5-freight'],
-  ['scout',26,-406,'r5-launch'],['guard',42,-406,'r5-launch'],
+  ['scout',65,-406,'r5-launch'],['guard',85,-406,'r5-launch'],
   ['guard',143,-242,'r4-outer'],['turret',139,-215,'r4-outer'],
   ['turret',194,-237,'r4-calibration'],['scout',183,-210,'r4-screen'],['mortar',170,-196,'r4-screen'],
   ['guard',199,-164,'r4-lens'],['scout',188,-176,'r4-lens'],

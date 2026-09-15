@@ -75,7 +75,7 @@ const hpEl=$('hp');for(let i=0;i<10;i++)hpEl.append(document.createElement('i'))
 const projectileGeometry=new T.SphereGeometry(.23,10,6),particleGeometry=new T.IcosahedronGeometry(1,1);
 const bulletMaterials={player:mat(0xfff1b0,true),enemy:mat(0xff783e,true)};
 const enemyDefs=[['scout',27,0],['scout',17,40],['scout',26,45],['turret',15,46],['guard',79,41],['turret',83,25],['elite',52,65],['boss',0,-51],...transitEnemies,...gardenEnemies,...midgameEnemies];
-const healths={scout:1,turret:2,mortar:2,guard:3,mirror:3,guardian:18,elite:9,boss:14};
+const healths={scout:1,turret:2,mortar:2,guard:3,mirror:3,guardian:36,elite:9,boss:14};
 function makeEnemy(type,x,z,encounter=null){
   const m=tankModel(type==='mortar'?'turret':['mirror','guardian'].includes(type)?'guard':type);scene.add(m.root);
   if(type==='mirror'){box(m.body,3.2,1.5,.18,0,1.5,2,new T.MeshStandardMaterial({color:0xd6eeed,metalness:.9,roughness:.15,emissive:0x667775,emissiveIntensity:.35}));}
@@ -124,11 +124,15 @@ function collides(x,z,r=.88,ignore=null,water=false){
   if(ignore==='player')return false;
   return false;
 }
-function moveEntity(entity,dx,dz,r){
+function moveEntity(entity,dx,dz,r,driving=false){
   const count=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.3));let hit=false;
   for(let i=0;i<count;i++){
     const oldX=entity.x;
-    if(entity===player)for(const g of midgame.ram(entity.x+dx/count,entity.z+dz/count,player)){explosion(g.x,g.z,.8);save();}
+    if(driving){
+      const x=entity.x+dx/count,z=entity.z+dz/count;
+      for(const g of midgame.ram(x,z,player)){explosion(g.x,g.z,.8);save();}
+      if(player.speed>=1.3)for(const p of combat.props)if(p.bounds.active&&p.fuse<0&&inside(x,z,p.bounds,r)){strikeProp(p,10);audio.event('ram');}
+    }
     const tunnelBlocked=(x,z)=>{
       if(entity!==player)return false;
       if(player.underpass)return x>=70&&x<=86&&(z<30.5+r||z>37.5-r);
@@ -141,6 +145,7 @@ function moveEntity(entity,dx,dz,r){
       if(entity.x<69||entity.x>87||entity.z<24||entity.z>44)player.underpass=false;
     }
   }
+  if(entity===player&&hit)player.speed=1;
   return hit;
 }
 function lineClear(ax,az,bx,bz,ignore=null){
@@ -202,10 +207,11 @@ function armorImpact(e,sx,sz,impact){
 }
 function damageEnemy(e,amount,sx,sz,impact){
   if(e.hp<=0)return false;
+  if(e.encounter){e.alertUntil=time+6;e.lastSeen={x:player.x,z:player.z};if(e.state==='idle')e.timer=Math.min(e.timer,.3);}
   if(e.type==='guardian'&&!impact?.red&&!(!impact?.overhead&&(impact?.laser?rearHit(e.heading,impact.dx,impact.dz):Math.cos(Math.atan2(sx-e.x,sz-e.z)-e.heading)<-.55))){armorImpact(e,sx,sz,impact);return 'armor';}
   if(e.type==='mirror'&&!impact?.phoenix&&!impact?.red&&!impact?.overhead&&Math.cos(Math.atan2(sx-e.x,sz-e.z)-e.heading)>.25){armorImpact(e,sx,sz,impact);return 'armor';}
   if(e.type==='boss'&&impact?.red){let remaining=amount;for(let i=0;i<2;i++){const loss=Math.min(e.assemblies[i],remaining);e.assemblies[i]-=loss;remaining-=loss;}e.core=Math.max(0,e.core-remaining);e.hp=e.assemblies[0]+e.assemblies[1]+e.core;burst(e.x,e.z,C.orange,12,2);if(!e.hp)killEnemy(e);return 'hit';}
-  if(e.encounter){e.alertUntil=time+6;if(e.state==='idle')e.timer=Math.min(e.timer,.3);if(e.type==='turret'&&e.state==='vent')amount*=2;}
+  if(e.encounter&&e.type==='turret'&&e.state==='vent')amount*=2;
   const armored=e.type==='guard'&&!impact?.red&&!impact?.phoenix&&!(e.disarmed>0)&&!impact?.overhead&&Math.cos(Math.atan2(sx-e.x,sz-e.z)-e.heading)>.25;
   if(armored)amount*=.4;
   if(e.type==='elite'&&!impact?.red){
@@ -314,7 +320,6 @@ function updateCombatProps(dt){
     explosion(p.x,p.z,1.3);for(const o of visibleProps)strikeProp(o,3);for(const e of visibleEnemies)damageEnemy(e,VOLATILE.enemyDamage,p.x,p.z,{overhead:true});
     if(hitsPlayer)hitPlayer(VOLATILE.playerDamage,p.x,p.z);
   }
-  if(player.speed>=1.3)for(const p of combat.props)if(p.bounds.active&&p.fuse<0&&inside(player.x+Math.sin(player.heading)*.6,player.z+Math.cos(player.heading)*.6,p.bounds,1)){strikeProp(p,10);audio.event('ram');}
 }
 function updateEnemies(dt){
   for(const e of enemies){
@@ -324,12 +329,13 @@ function updateEnemies(dt){
     const sight=dist<45&&lineClear(e.x,e.z,player.x,player.z),screenPosition=new T.Vector3(e.x,1,e.z).project(camera);
     const inView=Math.abs(screenPosition.x)<.96&&Math.abs(screenPosition.y)<.96;
     if(e.encounter&&sight&&dist<30&&inView)for(const ally of enemies)if(ally.hp>0&&ally.encounter===e.encounter){ally.alertUntil=time+4;ally.lastSeen={x:player.x,z:player.z};}
-    const engaged=e.encounter?dist<30&&inView&&(sight||e.alertUntil>time):dist<22&&sight;
-    const canAttack=!e.encounter||sight;
+    const engaged=e.encounter?(dist<30&&inView&&sight)||e.alertUntil>time:dist<22&&sight;
+    const canAttack=!e.encounter||(inView&&sight);
     // Arena membership starts special encounters; distance and sight start ordinary encounters.
     if(e.type==='elite')e.active=area==='elite'&&world.relays.every(r=>r.hp===0);
     else if(e.type==='boss')e.active=area==='boss';
     else e.active=engaged;
+    if(e.encounter&&!inView&&['warn','burst','charge'].includes(e.state)){e.state='idle';e.timer=.8;}
     if(!ordinary&&e.active&&!knownEncounters.has(e.type)){knownEncounters.add(e.type);save();}
     e.disarmed=Math.max(0,(e.disarmed||0)-dt);
     if(e.type==='guard')e.model.frontArmor.rotation.y=T.MathUtils.damp(e.model.frontArmor.rotation.y,e.disarmed>0?1.1:0,8,dt);
@@ -383,7 +389,7 @@ function updateEnemies(dt){
         if(e.state==='idle'&&e.timer<=0&&canAttack){e.state='warn';e.timer=e.type==='guard'?1.5:1.15;audio.event('warn',pan(e.x,e.z));}
         if(e.state==='warn'){e.warning.visible=true;if(e.timer<=0){enemyShoot(e);e.state='idle';e.timer=e.type==='guard'?3.5:2.8;}}
       }else if(e.type==='mortar'){
-        if(e.state==='idle'&&e.timer<=0){e.state='warn';e.timer=1.1;e.landing=e.encounter&&e.lastSeen?{...e.lastSeen}:{x:player.x,z:player.z};audio.event('warn',pan(e.x,e.z));}
+        if(e.state==='idle'&&e.timer<=0&&(!e.encounter||inView)){e.state='warn';e.timer=1.1;e.landing=e.encounter&&e.lastSeen?{...e.lastSeen}:{x:player.x,z:player.z};audio.event('warn',pan(e.x,e.z));}
         if(e.state==='warn'){
           e.warning.visible=true;
           if(e.timer<=0){
@@ -434,7 +440,7 @@ function updateEnemies(dt){
         e.model.radiator.material.color.setHex(phase2&&e.state==='vent'?C.orange:C.dark);e.coreMesh.material.color.setHex(phase2&&e.state==='vent'?C.orange:C.dark);
       }
     }
-    if(!e.active){e.warning.visible=false;if(e.encounter&&!inView&&['warn','burst','charge'].includes(e.state)){e.state='idle';e.timer=.8;}if(!ordinary&&e.state!=='idle'){e.state='idle';e.timer=2;e.openSide=-1;}}
+    if(!e.active){e.warning.visible=false;if(!ordinary&&e.state!=='idle'){e.state='idle';e.timer=2;e.openSide=-1;}}
     e.warning.position.set(e.x,elevation(e.x,e.z),e.z);e.warning.rotation.y=e.type==='elite'||e.type==='scout'?e.heading:e.aim;
     if(e.type==='mortar'&&e.landing)e.warning.position.set(e.landing.x,0,e.landing.z);
     e.warningShape.material.opacity=.12+Math.sin(time*14)*.07+(e.state==='warn'?.13:0);
@@ -452,7 +458,7 @@ function updateEnemies(dt){
         if(e.type==='turret'||e.type==='mortar'){damageEnemy(e,1,player.x,player.z);player.speed=1;}
         if(e.type==='guard'){if(!(e.disarmed>0)&&Math.cos(Math.atan2(player.x-e.x,player.z-e.z)-e.heading)>.25){armorImpact(e,player.x,player.z);hitPlayer(5,e.x,e.z);}else damageEnemy(e,1,player.x,player.z);player.speed=1;}
       }
-      if(e.hp>0){const nx=(player.x-e.x)/(nd||1),nz=(player.z-e.z)/(nd||1);moveEntity(player,nx*(min-nd),nz*(min-nd),.88);if(!ordinary)player.speed=1;}
+      if(e.hp>0){const nx=(player.x-e.x)/(nd||1),nz=(player.z-e.z)/(nd||1);moveEntity(player,nx*(min-nd),nz*(min-nd),.88);player.speed=1;}
     }
   }
 }
@@ -630,7 +636,7 @@ function updatePlayer(dt){
   let dx=move.x*BASE_SPEED*player.speed*dt*traction,dz=move.z*BASE_SPEED*player.speed*dt*traction;
   for(const b of world.belts)if(b.active&&inside(player.x,player.z,b)){dx+=b.dx*BASE_SPEED*(b.speed??1.15)*dt;dz+=b.dz*BASE_SPEED*(b.speed??1.15)*dt;}
   if(player.afloat)for(const c of gardenCurrents)if(inside(player.x,player.z,c)){dx+=c.dx*dt;dz+=c.dz*dt;}
-  moveEntity(player,dx,dz,.88);
+  moveEntity(player,dx,dz,.88,true);
   player.afloat=player.deployed&&!supportedHull(world.available,player.x,player.z);
   floats.update(player.deployed,time,moving);
   if(acquiredKind==='overdrive'&&time>acquiredUntil-5&&time<acquiredUntil-4.65&&!moving)moveEntity(player,Math.sin(player.heading)*BASE_SPEED*1.4*dt,Math.cos(player.heading)*BASE_SPEED*1.4*dt,.88);

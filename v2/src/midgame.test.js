@@ -10,8 +10,9 @@ import { makeMidgame } from './midgame.js';
 import { midgameHives, midgameEnemies, returnLane } from './midgame-layout.js';
 import { inside, newPlayer, updateHeat } from './mechanics.js';
 import { supportedHull } from './abilities.js';
+import { traceLaser } from './laser.js';
 const scene=new T.Scene(),world=makeWorld(scene),transit=makeTransit(scene,world);
-makeCombatProps(scene,world);makeGardens(scene,world,transit);makeSmallPuzzles(scene,world);const mid=makeMidgame(scene,world);
+const combat=makeCombatProps(scene,world);makeGardens(scene,world,transit);makeSmallPuzzles(scene,world);const mid=makeMidgame(scene,world);
 const terrain=new Map();
 function blocked(x,z,water=false,hot=false){
   const k=`${x},${z},${water}`;if(!terrain.has(k))terrain.set(k,!supportedHull((x,z)=>world.available(x,z)||(water&&world.waterAvailable(x,z)),x,z,.9));
@@ -20,7 +21,7 @@ function blocked(x,z,water=false,hot=false){
 function reach(start,water=false,hot=false){
   const seen=new Set(),queue=[start],key=(x,z)=>`${x},${z}`,steps=new Map([[key(...start),0]]);seen.add(key(...start));
   for(let i=0;i<queue.length;i++){const [x,z]=queue[i];for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,nz=z+dz,k=key(nx,nz);if(nx<-206||nx>272||nz<-472||nz>-65||seen.has(k)||blocked(nx,nz,water,hot))continue;seen.add(k);steps.set(k,steps.get(key(x,z))+1);queue.push([nx,nz]);}}
-  const near=(x,z)=>{for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++)if(a*a+b*b<=4&&seen.has(key(x+a,z+b)))return true;return false;};near.distance=(x,z)=>steps.get(key(x,z));return near;
+  const near=(x,z)=>{for(let a=-2;a<=2;a++)for(let b=-2;b<=2;b++)if(a*a+b*b<=4&&seen.has(key(x+a,z+b)))return true;return false;};near.distance=(x,z)=>steps.get(key(x,z));near.points=queue;return near;
 }
 function close(){mid.opened.clear();for(const g of mid.gates)g.bounds.active=true;}
 test('all middle checkpoints and enemy spawns have supported hull clearance',()=>{
@@ -60,4 +61,47 @@ test('loading lift removes at least half the old supported return distance',()=>
   close();transit.open('optical');mid.open(mid.gates.filter(g=>g.kind==='phoenix').map(g=>g.id));
   const before=reach([190,-124]).distance(108,-84);mid.act(mid.controls.find(c=>c.id==='loading-control'));
   const after=reach([190,-124]).distance(108,-84);assert.ok(Number.isFinite(before));assert.ok(after<before*.5,`${before} -> ${after}`);
+});
+
+test('reachable Cannon mechanisms and inside controls cannot bypass Phoenix',()=>{
+  for(const [start,water] of [[[140,-202],false],[[-163,-335],true]]){
+    close();for(const p of combat.props)p.bounds.active=false;let path,changed;
+    do{
+      path=reach(start,water);changed=false;
+      for(const c of mid.controls.filter(c=>!c.signal))if(path(c.x,c.z))changed=mid.act(c)||changed;
+      for(const r of mid.receivers.filter(r=>r.kind==='cannon')){
+        const canShoot=path.points.some(([x,z])=>Math.hypot(r.x-x,r.z-z)<=21.4&&traceLaser(x,z,r.x-x,r.z-z,{walls:world.obstacles,targets:[r],range:21.4,bounces:0}).at(-1)?.hit===r);
+        if(canShoot)changed=mid.hitReceiver(r.id,'cannon')||changed;
+      }
+    }while(changed);
+    assert.ok(path(-15,-412),'Phoenix remains reachable');
+    assert.equal(path(190,-124),false,'Laser stays behind Phoenix');
+    assert.equal(path(228,-438),false,`Circulation stays behind Phoenix after opening ${[...mid.opened]}`);
+    combat.reset();
+  }
+});
+
+test('gallery receiver requires a physical reflection from reachable firing positions',()=>{
+  close();mid.open(mid.gates.filter(g=>g.kind==='phoenix').map(g=>g.id));
+  const r=mid.receivers.find(r=>r.id==='gallery-receiver'),walls=world.obstacles.filter(o=>!o.mirror);
+  const direct=reach([190,-124]).points.filter(([x,z])=>Math.hypot(x-r.x,z-r.z)<90).find(([x,z])=>{
+    const segments=traceLaser(x,z,r.x-x,r.z-z,{walls,targets:[r],mirrors:mid.mirrors});
+    return segments.length===1&&segments[0].hit===r;
+  });
+  assert.equal(direct,undefined,`Direct firing position: ${direct}`);
+  const reflected=traceLaser(190,-134,1,0,{walls,targets:[r],mirrors:mid.mirrors});
+  assert.equal(reflected[0].kind,'mirror');assert.equal(reflected.at(-1).hit,r);
+});
+
+test('optical service bridge saves a fifth and at least 80 units of the route to the restoration yard',()=>{
+  close();mid.open(mid.gates.filter(g=>g.kind==='phoenix').map(g=>g.id).concat(['mirror-gallery','gallery-return','rig-feed']));
+  const before=reach([234,-164]).distance(146,-389);
+  mid.hitReceiver('bridge-receiver','laser');
+  const after=reach([234,-164]).distance(146,-389);
+  assert.ok(Number.isFinite(before)&&after<before*.8&&before-after>=80,`${before} -> ${after}`);
+});
+
+test('an existing open optical bridge also opens its added crossing shutter on reload',()=>{
+  const restored=makeMidgame(new T.Scene(),{obstacles:[],belts:[]},{opened:['circulation-bridge']});
+  assert.equal(restored.gates.find(g=>g.id==='circulation-bridge-south').bounds.active,false);
 });
