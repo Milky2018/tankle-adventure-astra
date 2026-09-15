@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { batchStatic } from './static-batching.js';
+export { batchStatic } from './static-batching.js';
 import { transitRooms, transitPalettes, transitHives } from './transit-layout.js';
 import { gardenRooms, gardenPalettes, gardenHives } from './garden-layout.js';
 import { midgameRooms, midgameHives } from './midgame-layout.js';
@@ -14,17 +15,24 @@ export const mat = (color, glow = false) => glow ? new T.MeshBasicMaterial({ col
 const cache = new Map();
 function material(color) { if (!cache.has(color)) cache.set(color, mat(color)); return cache.get(color); }
 const roundCache = new Map();
+const primitiveCache = new Map();
+function primitive(key,create) {
+  if(!primitiveCache.has(key))primitiveCache.set(key,create());
+  return primitiveCache.get(key);
+}
 function geometry(w, h, d, radius) {
   const key = [w,h,d,radius].join(',');
   if (!roundCache.has(key)) roundCache.set(key, radius ? new RoundedBoxGeometry(w,h,d,2,radius) : new T.BoxGeometry(w,h,d));
   return roundCache.get(key);
 }
 export function box(parent, w, h, d, x, y, z, color, radius = 0.08) {
+  // Sub-pixel bevels on thin floor plates and markings do not need rounded geometry.
+  if(Math.min(w,h,d)<=.08&&radius<=.05)radius=0;
   const mesh = new T.Mesh(geometry(w,h,d,Math.min(radius, w/3,h/3,d/3)), typeof color === 'number' ? material(color) : color);
   mesh.position.set(x,y,z); mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh); return mesh;
 }
 export function cylinder(parent, r, h, x, y, z, color, segments = 24) {
-  const mesh = new T.Mesh(new T.CylinderGeometry(r,r,h,segments), typeof color === 'number' ? material(color) : color);
+  const mesh = new T.Mesh(primitive(`cylinder/${r}/${h}/${segments}`,()=>new T.CylinderGeometry(r,r,h,segments)), typeof color === 'number' ? material(color) : color);
   mesh.position.set(x,y,z); mesh.castShadow=true; mesh.receiveShadow=true; parent.add(mesh); return mesh;
 }
 export function sphere(parent, r, x, y, z, color) {
@@ -457,12 +465,4 @@ export function makeWorld(scene) {
 
   batchStatic(fixed);
   return {rooms,obstacles,belts,hives,relays,animated,scraps,gates,exitDoor,exitLight,available,waterAvailable,state};
-}
-
-export function batchStatic(fixed) {
-  // Batch immutable geometry by material; animation remains independent.
-  fixed.updateMatrixWorld(true);
-  const batches=new Map();fixed.traverse(m=>{if(m.isMesh){const g=(m.geometry.index?m.geometry.toNonIndexed():m.geometry.clone()).applyMatrix4(m.matrixWorld);const list=batches.get(m.material)||[];list.push(g);batches.set(m.material,list);}});
-  fixed.clear();
-  for(const [m,gs] of batches){const merged=mergeGeometries(gs);const mesh=new T.Mesh(merged,m);mesh.castShadow=!m.transparent;mesh.receiveShadow=true;fixed.add(mesh);gs.forEach(g=>g.dispose());}
 }
