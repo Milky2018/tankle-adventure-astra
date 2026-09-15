@@ -771,19 +771,19 @@ Two optional route puzzles and one optional restoration scene use the tank's ord
 
 Physical partitions screen the mechanisms from nearby firing lanes; combat is not globally suspended. Every incomplete state is recoverable locally, and completed shortcuts and restoration persist through repair, death, and reload. The intended route-puzzle discovery time is roughly one to two minutes; first-time human discovery time has not been measured. Input-driven browser traversal verifies functionality rather than subjective discovery quality.
 
-## R2: drive the treadles and release the maintenance carrier
+## R2: switch the rails and release the maintenance carrier
 
-A compact shunting yard branches from the arrival area and connects west to the existing carrier bay through a barred crossing. Driving over either striped treadle flips its connected track blades once. Staying on a treadle does not repeatedly toggle it; leaving and crossing it again changes the setting back. The treadles visibly depress, their short rods lead to the rails, and switch lamps distinguish the selected branch.
+A compact shunting yard branches from the arrival area and connects west to the existing carrier bay through a barred crossing. Shooting either orange impact paddle or driving over its striped treadle flips the connected track blades once. The paddle recoils and the rails immediately show the new direction. Staying on a treadle does not repeatedly toggle it; leaving and crossing it again changes the setting back. The treadles visibly depress, their short rods lead to the rails, and switch lamps distinguish the selected branch.
 
 A Cannon impact releases the parked carrier's brake. The small powered vehicle follows the selected route at four world units per second. Setting both branches toward the service siding routes it onto a pressure catch, immediately retracting both crossing barriers. There is no extra switch-reset step after docking. The catch-to-barrier linkage and movement explain the reward directly.
 
-Any incorrect route returns the carrier to its accessible start, ready for another shot. The old signal lever remains an E-operated recall control only while the carrier is moving; E cannot launch it. Shooting a moving carrier does not reverse it or repeatedly retrigger the motor. Track changes are blocked during travel, and the carrier waits if the player or a living enemy occupies its path. No timed shot, towing ability, or rideable vehicle is required.
+Any incorrect route returns the carrier to its accessible start, ready for another shot. The signal paddle recalls the moving carrier when shot; its nearby interaction also remains available. Neither action launches a parked carrier. Shooting a moving carrier does not reverse it or repeatedly retrigger the motor. Track changes are blocked during travel, and the carrier waits if the player or a living enemy occupies its path. No timed shot, towing ability, or rideable vehicle is required.
 
 Reloading an unfinished journey returns the carrier to its start while retaining track settings. A docked carrier stays secured and keeps the crossing open; older saves with a docked but not yet fully released crossing migrate to the directly open state. This shortcut joins already accessible freight spaces and does not open the magnetic garden gate or the Mortar receiver route.
 
 ## R3: hold the pump with the hull and shoot the retaining pin
 
-A small cistern beside the post-Flotation canopy shore offers a dry connection around the far-bank guards. Its low pontoon deck initially blocks the passage. Parking the tank on a striped pump plate fills the basin in three seconds and raises the deck. The tank's weight holds the water level indefinitely, leaving time to aim. At full height, a protective sleeve rises to expose the nearby retaining pin. Shooting that pin drives the catches into the deck supports.
+A small cistern beside the post-Flotation canopy shore offers a dry connection around the far-bank guards. Its low pontoon deck initially blocks the passage. A shot at the orange pump paddle briefly depresses the piston, starts the inlet stream, and nudges the pontoon upward; pressure then escapes and the deck lowers again. This safe first experiment shows what the pump does. Parking the tank on its striped plate instead fills the basin in three seconds and raises the deck. The tank's weight holds the water level indefinitely, leaving time to aim. At full height, a protective sleeve rises to expose the nearby retaining pin. Shooting that pin drives the catches into the deck supports.
 
 Driving off the plate releases the pump and drains the basin automatically. With the catches engaged, the bridge stays raised and the dry passage beneath opens permanently. Leaving before shooting simply lowers the deck and permits another attempt. Shots into the lowered sleeve give a metallic rejection response; E operates neither the pump nor the pin. This is a position-and-aim problem using ordinary movement and the initial weapon, without a speed or heat threshold.
 
@@ -791,19 +791,94 @@ The pump plate and firing position remain on a supported dry strip. Rising water
 
 This changes only the small cistern. The reservoir, initial water crossing, return canal, and magnetic pump restoration retain their existing rules. Both shortcut endpoints lie beyond the first Flotation crossing. Deck catches, water level, and completion are saved. Reload never preserves absent tank weight on the pump: an unfinished basin drains unless occupied again, while a secured bridge remains raised.
 
-## Optional R3: push the gutter cranks and break the pipe's rust plug
+## Optional R3: turn the gutters and break the pipe's rust plug
 
-A leaking pipe beside the first garden landing feeds two hinged open gutters. Each has a low, yellow crank connected to its hinge. Driving the hull into a crank turns the gutter to its next detent; the player must withdraw before pushing again. Holding the tank against a crank does not cycle it repeatedly, and neither shots nor E turn these cranks. Their offset orange paddles and the gutter's gradual rotation show the changed direction.
+A leaking pipe beside the first garden landing feeds two hinged open gutters. Each has a low, yellow crank connected to its hinge. Shooting the orange paddle or driving the hull into a crank turns the gutter to its next detent. The paddle recoils, the crank turns, and the falling stream moves with the gutter. A hull must withdraw before pushing again; holding contact does not cycle it repeatedly. There is no separate interaction-button step. The player follows the visible water rather than memorizing a sequence of settings.
 
 The first gutter must feed the second, which must feed the planter below. A rust-coloured plug on the pipe's low service outlet initially restricts the supply to a trickle. One Cannon hit breaks it permanently and starts the full flow. The plug can be broken before or after arranging the gutters. A wrong alignment spills harmlessly onto the ground, and moving gutters visibly redirect their falling streams; the planter fills only after both gutters actually settle into alignment.
 
 Two seconds of connected full flow fills the planter, raises a metal stem, unfolds five leaves, and lights a small blossom. Interrupting the flow before completion drains the planter and permits another attempt. The restored plant remains alive and its completed gutter alignment stays fixed. This optional act of care opens no gate and grants no collectible, healing, or ability; it remains separate from the maintenance tender repair. A low bed partition screens the cranks from the far-bank gun and also blocks player shots at the pipe.
+
+## Wordless interaction and difficulty
+
+Gameplay contains no floating machinery names, region captions, explanatory notices, puzzle instructions, or written success and failure messages. Maps use geometry, floor bars, and lift symbols. Input bindings use compact key or mouse glyphs; readable settings remain outside play.
+
+Orange impact paddles share a recognizable shape across regions. A hit produces a brief recoil, sparks, and a mechanical sound; the linked rail, piston, load, or latch visibly moves. Inactive or blocked machinery still answers with a metal impact. A solved mechanism keeps its physical result, with a steady warm-green status lamp where needed. Optical receivers retain their distinct lens appearance instead of pretending to be ordinary impact switches.
+
+Introduce each physical rule in a safe, immediately reversible situation. Later combine familiar actions with occluded firing angles, moving platforms, exposed firing windows, and enemy pressure. Difficulty comes from executing a readable action in a demanding space, not decoding prose, remembering arbitrary combinations, or searching for an invisible trigger. Failed attempts should visibly explain what happened and permit a local retry. Optional water restoration remains a quiet contrast to those harder encounters.
 
 ## Projectile interaction rules
 
 Puzzle impacts use the existing player Cannon projectiles and shared Heat rules, including shots whose muzzle would otherwise extend into nearby solid machinery. Earlier walls and cover still intercept those shots. Impacts consume the projectile and provide sparks and a mechanical impact or rejection sound. Enemy fire does not silently operate puzzle mechanisms. The moving carrier remains a solid obstacle; broken pipe casing removes only its own extra collision.
 
 ---
+
+# Vertical Level — The Empty Hoist
+
+## Status and world placement
+
+The user accepted the overall direction on 2026-09-15, with thorough playability validation required. Acceptance establishes the design direction, not proof that its mechanics already work; exact layouts, timing, and encounters remain subject to playtesting. It expands R2's freight infrastructure into a substantial vertical subregion, preserving the accepted seven-region world and eight abilities. The initial visit is available after Magnetic Traction through a side loading door in R2. Its later upper connections reach already accessible outer/service areas of R4 and R6; they never bypass Phoenix acquisition gates or deliver Laser or Water Circulation from behind their locks. Neither this level nor its optional branches becomes an additional prerequisite for the existing main route.
+
+The defining experience is recognizing the same place from below, within, and above. A single immense freight shaft remains the regional landmark. Suggested first-visit duration is 25–35 minutes, with a shorter later return; dimensions and timing remain open.
+
+## Spatial composition and discovery
+
+- **Sump:** the lowest level contains abandoned cargo, shallow maintenance ground, and an optional deep-water channel. Safe ramps connect the first landing to dry ground; Flotation opens a separate salvage loop and a view beneath the main lift.
+- **Loading floor:** the R2 entrance and first Repair Hive face the shaft. Through the open center, the player sees cargo below, a stalled carrier halfway up, and daylight through the unreachable crown. An empty lift performs a partial, failed cycle.
+- **Counterweight gallery:** staggered balconies, short supported slopes, and two local freight lifts lead around the same void. Open-sided bridges cross above earlier paths. The route alternates between enclosed maintenance pockets and views across the shaft, rather than requiring a long spiral drive.
+- **Crown:** the upper transfer floor exposes the great hoist's drive, an optional encounter, and later express exits. The player can look down at the entrance and the maintenance light that guided the first ascent.
+
+The initial route reaches the crown using Cannon, Overdrive, and Magnetic Traction. At the first gallery landing, an inside release permanently opens a local lift back to the entrance. At the crown, restoring the main hoist creates a direct route among the loading floor, gallery, and crown. Landings have callable lifts and persistent route releases; a lift can never be stranded beyond the player's reach. A separated, guarded descent chute offers an optional visible one-way return onto a broad lower landing. Neither gaps nor precision jumps are required.
+
+## Machinery puzzles
+
+**Become the counterweight.** A demonstration carrier raises an empty neighboring platform as it descends. A shot releases the ballast carriage's orange brake paddle; the carriage travels along its short rail into the visible end seat. Magnetic Traction can still pull the same carriage. The player then drives onto the paired deck to change the balance. At the next landing, shooting the orange ratchet holds the platform while the Tank leaves it. Mechanical landing calls and the crown drive use the same impact-paddle language; nearby interaction remains an alternative. Cables, platform motion, and ballast movement explain the relationship. Both landings provide a reset/call control; no puzzle depends on leaving the Tank on a pressure plate while also driving elsewhere.
+
+**Release the hanging load.** A suspended cargo pallet blocks a cross-shaft bridge. From below, its protected latch is visible but cannot be shot through the pallet. Reaching a side balcony reveals the exposed latch. A Cannon hit releases the pallet into an empty catch cradle and clears the bridge. The landing zone is visible, closed to the Tank during release, and remains changed afterward. Mortar offers an optional earlier solution only from a clearly visible landing target with an unobstructed arc; an overhead roof still blocks shells.
+
+**Bring the carrier to the right height.** A small freight deck moves between two visible stops. Driving over its treadle starts the cycle; shooting a large exposed brake paddle holds it at the aligned landing. Alignment has a generous stationary dwell, a clear rail connection, and a brake lamp that brightens while the deck is aligned. A missed shot simply repeats the cycle. Nearby return controls allow recall and release from either side. The challenge combines movement, shooting, and understanding two elevations, without timed platform jumping.
+
+## Combat shaped by height
+
+- A **balcony gunner** fires a visibly aimed descending shot, then exposes its breech during recovery. A lower passage blocks the shot physically; a side lift reaches its flank. Cannon can punish the exposed breech with clear sight, while Mortar provides a roof-dependent alternative. An enemy above the camera's readable view cannot start an attack.
+- A **cargo shield carrier** protects its front and upper casing with a suspended plate. From the lower floor the plate blocks direct fire; from the next balcony the open rear becomes visible. Magnetic Traction can also pull the visibly rail-mounted plate aside from an accessible lateral anchor. Height and machinery provide alternative solutions to the same physical protection.
+- One short **cross-shaft encounter** puts the player and defenders on staggered balconies, with solid floor slabs interrupting fire between them. Lift travel changes available angles. Safe, screened landings allow the player to stop and aim; enemies do not camp an unavoidable arrival point or fire through floors.
+
+An optional crown encounter uses an old cargo-sorting machine whose crane moves cover and whose committed arm sweep leaves a visible opening in its drive housing. Multiple connected heights offer cover and firing angles. Cannon and movement suffice; other abilities improve options. Restoring the main hoist and opening the regional shortcuts do not require this fight, and there is no mandatory Phoenix Boss impact.
+
+## Ability branches and lasting rewards
+
+The first ascent teaches its local machinery through Cannon impacts and hull weight; Magnetic Traction offers an additional way to move ballast and expose armored defenders. The established magnetic entrance gate still determines when this branch becomes available. Flotation opens the sump loop; Mortar permits visible overhead shots into open cargo enclosures. Phoenix later breaks the crown's express shutters on straight, supported approaches with safe braking zones, adding direct regional connections. These exits retain the independent Laser and Water Circulation acquisition routes.
+
+Laser later opens an optional optical inspection room with mirrors on readable tilted mounts that redirect the beam between two elevations. Mirrors obey their visible surface orientation; the puzzle does not add a separate mirror-angle control. Water Circulation opens a sustained opposing freight lane in the hot return duct; its far-side release creates a permanent dry bypass. Neither branch is needed to restore the hoist. Side loops should each reveal machinery or a small environmental story and return locally, without sending the player through the complete ascent again. Numerical upgrade rewards remain undecided.
+
+## Presentation, aiming, and fairness
+
+Preserve the fixed camera orientation and screen-relative movement. Follow the Tank's supporting elevation smoothly; avoid camera rotations or a sudden view change during a lift ride. The shaft uses open sides and staggered decks rather than fully overlapping opaque floors. Foreground decks and walls fade when they obscure the Tank or its immediate route. Distant visible architecture, the moving counterweight, cast shadows, and sound from other levels establish depth.
+
+The mouse expresses aiming intent; the single reticle shows the actual aiming point allowed by the turret's elevation range. Cannon and Laser stay level when aiming across an empty floor at the same height and can elevate or depress by up to 40 degrees for targets at other heights. Beyond that range, the reticle stays at the reachable angular boundary and resumes following the target when it returns within range. The barrel and firing direction follow that same constrained aim. Do not add an angle-limit message or a second pointer marker; steep targets require a different firing position. Solid floors, ceilings, and cover interrupt actual projectile and beam paths. Mortar uses its one existing landing reticle, shows inaccessible trajectories clearly, and cannot pass through a ceiling. Never select a hidden lower-floor target through an opaque upper floor, or add a second persistent aim marker.
+
+The map presents the current floor prominently with adjacent floors subdued, graphical floor bars, and lift symbols connecting the landings. It contains no place-name labels or written route instructions. Main routes and express tracks have guardrails. Deliberate descents use clearly marked catch chutes with visible supported exits; accidental falls and abyss deaths are not the central challenge. No airborne steering, jumping ability, or high-speed gap crossing is introduced.
+
+## Wordless story and design acceptance
+
+The upper landings once sent supplies outward; the lower carriers now bear familiar dismantled machine parts toward the recycling system. On the first ascent, a small maintenance arm repeatedly straightens an empty cargo seat before the failed lift cycle repeats. Restoring the hoist lets one stranded maintenance cart complete its delivery to a dark upper repair bay, where a single service light returns. The rest of the shaft remains mostly empty. Later, the restored freight connection can participate visibly in the final rekindling.
+
+The proposal succeeds only if the player recognizes earlier paths from another elevation, uses height to change at least one combat decision, solves machinery through movement and attacks, and gains a materially shorter route after the first ascent. A stack of isolated rooms linked only by lift cutscenes does not meet this aim. Before expanding its scope, the loading floor, one crossing above it, and a moving lift must demonstrate readable depth, aiming, occlusion, and safe return during ordinary play.
+
+## Required playability acceptance
+
+Validate a small playable space containing two connected elevations, an overlapping bridge and underpass, a callable lift, one machinery puzzle, and a balcony enemy before expanding the whole level. If the fixed view or single-reticle targeting makes this space confusing, revise the geometry and interaction before adding more floors or visual detail.
+
+- **Orientation and visibility:** from the entrance, lift, underpass, and upper landing, the player can identify the supporting floor, next reachable exit, and relevant threat. Foreground fading must reveal the route without making solid floors look traversable or making the reticle select a different floor unexpectedly. A player unfamiliar with the layout should be able to find the first ascent and return without a spoken solution; repeated confusion calls for a layout or feedback change.
+- **Aiming and protection:** deliberately fire upward, downward, beneath the bridge, and toward overlapping targets. The visible target and impact agree; intervening decks and ceilings provide dependable cover. Unreachable turret angles and blocked Mortar arcs are readable before committing a shot. Cross-floor aim must work during ordinary movement and lift travel, not just from a carefully selected stationary viewpoint.
+- **Lift control and recovery:** board and leave from both stops, miss a departure, recall the lift, interrupt a cycle, and revisit after rest, death, or reload. The hull remains supported throughout travel; no pinning, accidental floor changes, unreachable call controls, or stranded platforms are acceptable. Repeating a journey must not require repeating solved puzzles.
+- **Puzzle agency:** complete each initial puzzle with only Cannon, Overdrive, and Magnetic Traction. Ratchets and brake paddles remain visible and reachable from the position where they must be used. Try a misplaced ballast, a missed brake shot, and leaving a puzzle halfway through; each has a local, legible recovery. No solution requires simultaneous actions from two distant positions, unexplained height selection, or narrow timing disguised as spatial reasoning.
+- **Combat decisions:** play the initial encounters with the minimum available loadout and ordinary movement, including a retreat and a return from each relevant landing. Height must create an observable choice between cover, a flank, and an exposed firing position. No unavoidable arrival damage, attacks from unreadable floors, or safe-position stalemates that require a later optional weapon are acceptable. Later Mortar, Laser, and red-contact visits must obey the same physical cover and armour rules.
+- **Exploration and return:** complete the first ascent, unlock each local return, and traverse the restored main hoist in both directions. Compare the same entrance-to-crown journey before and after restoration, including lift waits; the shortcut target is at least a 50 percent reduction in travel time without repeated machinery tasks. Revisit ability branches in different acquisition orders and confirm that a player missing an optional ability can always leave, while regional exits preserve the accepted acquisition dependencies.
+- **Pacing:** observe time spent actively navigating, fighting, and reasoning separately from waiting for machinery or repeating an approach. The proposed 25–35 minutes must come from meaningful exploration rather than long lift cycles or a padded spiral. Shorten waits and repeated routes when they dominate the experience.
+
+Completion requires full ordinary-control playthroughs of the initial route and later ability returns, alongside recovery checks. Verification that a destination is reachable alone does not establish understandable, enjoyable play. Any unplayed route or unresolved readability problem remains explicitly unvalidated. Detailed playtest procedures, measurements, and implementation evidence belong in technical records outside this game-design specification.
 
 # First Playable Level — Established Design
 

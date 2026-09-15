@@ -1,3 +1,4 @@
+import { hoistDecks, inRect } from './hoist-layout.js';
 import * as T from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { batchStatic } from './static-batching.js';
@@ -294,7 +295,7 @@ export function makeWorld(scene) {
   for(let x=-206;x<272;x+=2)for(let z=-472;z<80;z+=2){
     if(!available(x+1,z+1))continue;
     for(const [dx,dz] of [[-1,0],[1,0],[0,-1],[0,1]]){
-      if(available(x+1+dx*2,z+1+dz*2)||waterAvailable(x+1+dx*2,z+1+dz*2))continue;
+      if(available(x+1+dx*2,z+1+dz*2)||waterAvailable(x+1+dx*2,z+1+dz*2)||hoistDecks.some(d=>d.y===0&&!d.rise&&inRect(x+1+dx*2,z+1+dz*2,d)))continue;
       const px=x+1+dx,pz=z+1+dz;
       box(fixed,dx?.4:2.2,.72,dz?.4:2.2,px,.4,pz,C.dark,.1);
       box(fixed,dx?.48:2.2,.15,dz?.48:2.2,px,.85,pz,C.teal,.05);

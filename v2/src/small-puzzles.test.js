@@ -41,3 +41,36 @@ test('a crank needs a moving hull and rearms only after withdrawing',()=>{
   place(-183,-248);place(-182,-248);place(-181.7,-248);assert.equal(puzzles.snapshot().gutter.angles[0],2);
   assert.equal(puzzles.act(puzzles.controls.find(c=>c.id==='gutter-a')),false);
 });
+
+test('Cannon impacts turn connected rail blades and gutter cranks, with repeatable local recovery',()=>{
+  const p=makeSmallPuzzles(new T.Scene(),{obstacles:[]}),hull={x:0,z:0};
+  assert.equal(p.hit(-28,-108,1.25,hull).changed,true);
+  assert.deepEqual(p.snapshot().rail.switches,[true,false]);
+  p.hit(-28,-108,1.25,hull);assert.deepEqual(p.snapshot().rail.switches,[false,false]);
+  p.hit(-180,-248,1.25,hull);assert.deepEqual(p.snapshot().gutter.angles,[1,0]);
+  p.hit(-165,-251,1.25,hull);p.hit(-165,-251,1.25,hull);
+  assert.deepEqual(p.snapshot().gutter.angles,[1,2]);
+  p.hit(-181,-251,1.25,hull);
+  for(let i=0;i<360;i++)p.update(1/60,i/60,hull);
+  assert.equal(p.snapshot().gutter.grown,true);
+});
+
+test('shooting the pump demonstrates a brief fill and automatic drain, without trapping an occupant',()=>{
+  const p=makeSmallPuzzles(new T.Scene(),{obstacles:[]}),hull={x:-190,z:-299};
+  assert.equal(p.hit(-190,-295,1.25,hull).changed,true);
+  for(let i=0;i<20;i++)p.update(1/60,i/60,hull);
+  assert.ok(p.snapshot().basin.level>.08&&p.snapshot().basin.level<.2);
+  for(let i=0;i<100;i++)p.update(1/60,i/60,hull);
+  assert.equal(p.snapshot().basin.level,0);assert.equal(p.snapshot().basin.solved,false);
+  assert.equal(p.hit(-190,-295,1.25,{x:-199,z:-290}).changed,false);
+});
+
+test('pointer selection follows the visible raised paddle and feedback materials remain local',()=>{
+  const scene=new T.Scene(),p=makeSmallPuzzles(scene,{obstacles:[]});
+  const target=new T.Vector3(-28,1.25,-108),origin=target.clone().add(new T.Vector3(28,39.6,28));
+  assert.deepEqual(p.aimAt(new T.Ray(origin,target.clone().sub(origin).normalize())).toArray(),target.toArray());
+  const a=p.controls.find(c=>c.id==='rail-a'),b=p.controls.find(c=>c.id==='rail-b');
+  p.hit(a.x,a.z,1.25,{x:0,z:0});p.update(1/60,0,{x:0,z:0});
+  assert.notEqual(a.paddle.material,b.paddle.material);
+  assert.notEqual(a.paddle.material.color.getHex(),b.paddle.material.color.getHex());
+});

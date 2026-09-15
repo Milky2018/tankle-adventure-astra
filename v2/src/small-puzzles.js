@@ -28,7 +28,12 @@ export function makeSmallPuzzles(scene,world,saved={}){
       }else{box(handle,.12,1,.12,0,1.4,0,C.metal);box(handle,.6,.15,.25,0,1.9,0,C.yellow);}
     }
     const lamp=box(root,.28,.14,.08,0,plate?.4:.9,plate?1.2:.4,mat(C.orange,true));
-    return {...def,puzzle:true,root,handle,lamp,pressed:false,contact:false};
+    const paddle=def.kind==='lock'?null:box(root,1.1,.65,.22,0,1.25,0,mat(C.orange));
+    if(paddle){
+      ring(paddle,.32,.05,0,0,.14,C.yellow).rotation.x=Math.PI/2;
+      if(plate)cylinder(root,.08,1,0,.7,0,C.metal,8);
+    }
+    return {...def,puzzle:true,root,handle,lamp,paddle,flash:0,pressed:false,contact:false};
   });
   solid(-29,-115.7,26,.5,3,0x6a7567);
   solid(-168,-262,18,1,2.6,0x738777);
@@ -102,7 +107,7 @@ export function makeSmallPuzzles(scene,world,saved={}){
   const bloom=ring(plant,.65,.08,0,2.65,0,mat(C.lightYellow,true));
   batchStatic(fixed);
   const cutaways=[...basinWalls];deck.traverse(m=>{if(m.isMesh){m.material=m.material.clone();cutaways.push(m);}});for(const m of cutaways){m.material.transparent=true;m.material.depthWrite=false;}
-  let previousPlayer=null;
+  let previousPlayer=null,pumpImpulse=0;
   const done=()=>[rail.state.solved,basin.state.solved,gutter.state.grown];let completed=done(),lastLevel=basin.state.level;
   function refreshBounds(){
     crossingGates.forEach(gate=>gate.bounds.active=!rail.state.solved);
@@ -110,6 +115,21 @@ export function makeSmallPuzzles(scene,world,saved={}){
     plugBounds.active=!gutter.state.unplugged;
     deckBounds.active=!basin.state.locked&&basin.state.level<.75;
     const p=rail.position();carBounds.x=p.x-1.1;carBounds.z=p.z-1.1;
+  }
+  const pointerRay=new T.Raycaster();
+  const pickTargets=controls.map(c=>({mesh:c.paddle||c.handle,x:c.x,z:c.z}));
+  pickTargets.push({mesh:plug,x:-181,z:-251},{mesh:lockCover,x:-190,z:-286},{mesh:brake});
+  function aimAt(ray){
+    pointerRay.ray.copy(ray);let closest=null;
+    for(const target of pickTargets){
+      if(!target.mesh.visible)continue;
+      target.mesh.updateWorldMatrix(true,true);
+      const hit=pointerRay.intersectObject(target.mesh,true)[0];
+      if(hit&&(!closest||hit.distance<closest.distance))closest={...hit,target};
+    }
+    if(!closest)return null;
+    const position=closest.target.x===undefined?rail.position():closest.target;
+    return new T.Vector3(position.x,1.25,position.z);
   }
   function usable(c){return c.id==='rail-signal'&&rail.state.moving&&!rail.state.secured;}
   function target(player){return controls.find(c=>usable(c)&&Math.hypot(c.x-player.x,c.z-player.z)<2.7);}
@@ -121,6 +141,15 @@ export function makeSmallPuzzles(scene,world,saved={}){
     if(inside(x,z,carBounds,.08)){id='rail-carrier';changed=rail.act(id);}
     else if(inside(x,z,lockBounds,.08)){id='basin-lock';changed=basin.act(id,occupied(player,enemies));}
     else if(inside(x,z,plugBounds,.08)&&!gutter.state.unplugged){id='gutter-plug';changed=gutter.unplug();}
+    else {
+      const c=controls.find(c=>c.paddle&&Math.abs(x-c.x)<.65&&Math.abs(z-c.z)<.65&&y>=.9&&y<=1.65);
+      if(c){
+        id=c.id;c.flash=.2;
+        if(c.kind==='treadle'||c.kind==='signal')changed=rail.act(id);
+        else if(c.kind==='crank')changed=gutter.act(id);
+        else if(c.kind==='pump'&&!basin.state.solved&&!occupied(player,enemies)){pumpImpulse=.4;changed=true;}
+      }
+    }
     if(!id)return null;refreshBounds();return {id,x,z,changed};
   }
   function update(dt,time,player,enemies=[]){
@@ -130,7 +159,7 @@ export function makeSmallPuzzles(scene,world,saved={}){
       if(c.kind==='treadle'||c.kind==='pump'){
         const pressed=player.hp!==0&&Math.abs(player.x-c.x)<1.25&&Math.abs(player.z-c.z)<1.25;
         if(c.kind==='treadle'&&pressed&&!c.pressed&&rail.act(c.id))touches.push(c);
-        if(c.kind==='pump')basin.press(pressed,occupied(player,enemies));
+        if(c.kind==='pump')basin.press(pressed||pumpImpulse>0,occupied(player,enemies));
         c.pressed=pressed;
       }else if(c.kind==='crank'){
         const distance=Math.hypot(player.x-c.x,player.z-c.z);
@@ -141,7 +170,7 @@ export function makeSmallPuzzles(scene,world,saved={}){
       }
     }
     const settled=rail.update(dt,p=>[player,...enemies.filter(e=>e.hp>0)].some(e=>Math.hypot(e.x-p.x,e.z-p.z)<(e.r??.9)+1.25));
-    basin.update(dt);refreshBounds();
+    basin.update(dt);pumpImpulse=Math.max(0,pumpImpulse-dt);refreshBounds();
     const p=rail.position(),old=carrier.position.clone();carrier.position.set(p.x,0,p.z);if(dt>0&&old.distanceToSquared(carrier.position)>.00001)carrier.rotation.y=Math.atan2(p.x-old.x,p.z-old.z);
     brake.visible=!rail.state.moving&&!rail.state.secured;carLamp.visible=!rail.state.secured;pad.position.y=rail.state.secured?.12:.35;
     blades[0].rotation.y=rail.state.switches[0]?Math.PI/2:Math.PI;blades[1].rotation.y=rail.state.switches[1]?0:Math.PI;
@@ -153,8 +182,9 @@ export function makeSmallPuzzles(scene,world,saved={}){
     for(const g of floodGates)g.root.position.y=T.MathUtils.damp(g.root.position.y,g.bounds.active?0:-3.6,10,dt);
     intakeStream.visible=basin.state.filling&&basin.state.level<1;drainStream.visible=!basin.state.filling&&basin.state.level>0;
     for(const c of controls){
+      c.flash=Math.max(0,c.flash-dt);if(c.paddle){c.paddle.position.z=-c.flash;c.paddle.material.color.setHex(c.flash?C.lightYellow:C.orange);}
       const on=c.id==='rail-a'?rail.state.switches[0]:c.id==='rail-b'?rail.state.switches[1]:c.id==='rail-signal'?rail.state.moving:c.id==='basin-valve'?c.pressed:c.id==='basin-lock'?basin.state.locked:gutter.state.angles[c.id==='gutter-a'?0:1]!==0;
-      if(c.kind==='treadle'||c.kind==='pump')c.handle.position.y=T.MathUtils.damp(c.handle.position.y,c.pressed?-.18:0,12,dt);
+      if(c.kind==='treadle'||c.kind==='pump')c.handle.position.y=T.MathUtils.damp(c.handle.position.y,c.pressed||c.kind==='pump'&&pumpImpulse>0?-.18:0,12,dt);
       else if(c.kind==='crank'){const angle=gutter.state.angles[c.id==='gutter-a'?0:1]*Math.PI/2;c.handle.rotation.y+=clamp(angleDelta(c.handle.rotation.y,angle),-dt*5,dt*5);}
       else if(c.kind==='lock')c.handle.position.z=on?-.3:0;
       else c.handle.rotation.z=on?.6:-.35;
@@ -179,5 +209,5 @@ export function makeSmallPuzzles(scene,world,saved={}){
     return {events,touches,docked:settled&&rail.state.secured,save:events.length>0||touches.length>0||settled||waterSettled};
   }
   refreshBounds();update(0,0,{x:1e6,z:1e6});
-  return {controls,target,act,hit,update,serialize:()=>({rail:rail.serialize(),basin:basin.serialize(),gutter:gutter.serialize()}),snapshot:()=>({rail:{...rail.serialize(),moving:rail.state.moving,position:rail.position()},basin:basin.serialize(),gutter:gutter.serialize()})};
+  return {controls,target,act,hit,aimAt,update,serialize:()=>({rail:rail.serialize(),basin:basin.serialize(),gutter:gutter.serialize()}),snapshot:()=>({rail:{...rail.serialize(),moving:rail.state.moving,position:rail.position()},basin:basin.serialize(),gutter:gutter.serialize()})};
 }

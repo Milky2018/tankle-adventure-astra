@@ -95,3 +95,96 @@ Validation uses `npm test`, `npm run build`, and the existing browser scenarios.
 The comparison used headless Chrome 152 with ANGLE Metal on an Apple M3 Max, high quality, and the same five region positions. At the observatory, scene geometry arrays fell from 577.4 MiB to 37.2 MiB, and triangles across the main and shadow passes fell from 11,084,890 to 564,738. At 1280×720, mean GPU timer duration fell from 3.97 ms to 1.23 ms. At 1920×1080 with a 1.75 rendering ratio (3360×1890 backing buffer), it fell from 6.74 ms to 2.85 ms. Short samples maintained approximately 60 rendered frames per second. These geometry sizes exclude additional GPU copies, instance matrices, and textures; timer duration is not GPU utilization.
 
 There is a measured CPU tradeoff: observatory render submission increased from 2.82 ms to 4.45 ms, while simulation/HUD work decreased. The final implementation favors substantially less geometry storage and GPU work without a frame-rate regression on the tested machine. Comparisons included 16-, 32-, and 64-unit cells, multiple instancing thresholds, and opaque `BatchedMesh` versus merging. These short measurements do not establish low-end device performance or a long-session thermal result.
+
+## Empty Hoist — 2026-09-15
+
+The vertical subregion connects the R2 loading balcony to a shaft with supporting heights of -8, 0, 8, 16, and 24. Its ground checkpoint is appended as hive 21, preserving existing save indices. `?chapter=hoist` starts a separate preview with Cannon, Overdrive, and Magnetic Traction; the settings menu exposes this preview. The full journey reaches the same entrance physically from R2.
+
+`hoist-layout.js` describes supported decks, inclined ramps, water, and lift stops. `hoist.js` owns the local machinery, vertical support, spatial ray intersections, encounters, presentation, and persistent state. The existing flat-world movement remains in use outside the region. Ground endpoint seams accept support from both regions; elevated transport does not activate ground-level interactions, contact attacks, or conveyor forces. Ordinary enemies and obstacle bounds remain available to outgoing shots at those endpoints.
+
+The initial ascent includes a ballast carriage, a tank-weight-operated platform and ratchet, a hanging-load latch, and a cycling carrier with a shootable brake and safety rail. The main hoist unlocks 0/8/24 travel; the 16-unit transfer floor connects to the crown by a supported ramp. Landings have recall controls. A hull straddling a platform edge pauses motion, and a descending platform waits above an occupant below it. Solved mechanisms survive rest, death, and reload; ordinary defenders reset while the optional sorter stays defeated.
+
+Cross-floor Cannon and Laser fire use spatial rays; floors and ceilings intercept shots from either side. Mortar keeps its finite range and one landing reticle, with a blocked-trajectory cue under a ceiling. Foreground decks fade as complete structures without becoming permeable. The local map emphasizes the current height, names lifts, and marks the two regional exits. The sump service cart travels in an overhead cargo cradle and parks away from the player route. The sorter controls a suspended cover crate, and the sustained lane has visible moving slats and opposing arrows.
+
+### Verification and fixes found during play
+
+- `npm --prefix v2 test`: **79/79 passed**, including 15 new vertical-region tests covering support layers, water, ramp/render agreement, lift occupancy and recall, regional seams, reflected height changes, roof interception, single Mortar damage, isolated fading materials, and descending shots versus cover.
+- `npm --prefix v2 run build` and `git diff --check`: passed. Vite retains its advisory about the main bundle exceeding 500 kB.
+- Existing browser checks: **140 assertions passed** across Foundry (14), Transit (23), Gardens (16), small puzzles (20), middle-region acquisition/combat (36), middle-region regression (13), and rendering/pause checks (18).
+- `hoist-walk-check.js`: **21 continuous route legs**, using the initial three abilities, shooting mechanisms and defenders, without position changes, invulnerability, or added abilities during the ascent. The route reaches the crown and restores the main hoist without death.
+- `hoist-return-check.js`: **49 continuous route legs and 11 assertions**, including both directions on the main and optical lifts, the sump descent and Flotation loop, a failed cold-Phoenix sustained crossing, the successful Circulation crossing, its dry bypass, and arrival in the R4 outer ring and R6 service yard. Later abilities are explicitly supplied for the revisit test; travel itself uses the normal movement/heat rules. Repairing at the checkpoint is part of the route.
+- `hoist-scenarios-check.js`: **8 assertions** for single-reticle optical reflection, a blocked Mortar launch, a red-hot run-up against the sorter, death recovery, ordinary-enemy reset, and persistent state after reload. These focused scenarios place the player at their starting locations; they complement rather than replace the continuous route checks.
+- `hoist-input-check.js`: real browser keyboard and mouse events, without simulation stepping or position changes, verified walking, sustained right-button traction, boarding and leaving the weight lift, locking the ratchet, shooting the hanging-load latch, map access, and idle rendering while paused. The player retained full HP.
+- Development and production screenshots were inspected. The production preview accepted keyboard movement and mouse fire, exposed no `window.__game`, and reported no runtime errors.
+
+Play exposed and corrected lost magnetic attachment after the carriage moved, overhead floors stealing the latch aim, overlapping ride/ratchet interactions, ordinary call switches intercepting brake shots, a visually reversed slope, hull rejection at a ground-region seam, an optical lift originally placed over existing cover, and a fading canopy sharing its material with distant structure. The optical landing was moved to clear ground. The sustained lane has a real cold-start run-up, covers its complete supported width, and cannot be bypassed through the neighboring express spine. The carrier safety rail prevents simply walking off during its unbraked upper dwell.
+
+### Scope of the evidence
+
+The scripted known-route ascent takes about **53 seconds after the opening**, while the restored route takes **14.9 seconds including lift waits**, exceeding the 50 percent shortcut target. These are execution timings for a route whose solution is already known, not estimates of a first-time player's exploration duration. The original 25–35 minute first-visit suggestion has **not** been established by blind playtesting; this layout concentrates on the complete vertical loop and ability returns rather than padding waiting time. No independent first-time human playtest or low-end hardware certification is claimed.
+
+Short local Chrome samples with shadows enabled, at five shaft locations and with Mortar trajectory checking active, remained around **59–60 FPS**. Geometry backing arrays were approximately **37.44 MiB** for the complete world; the sampled main-plus-shadow passes remained below **160,000 triangles** in the shaft. These counters exclude texture allocations and do not measure GPU utilization or long-session thermal behavior. The existing two-million-triangle/64-MiB geometry checks also passed in the old regions.
+
+Reproducible browser scenarios live in `v2/scripts/hoist-*.js` and use the existing Playwright CLI workflow against port 5174. Ignored outputs, screenshots, and detailed results are under `v2/output/playwright/hoist/`. Design decisions and acceptance criteria remain in `Gamespec.md`; this section contains implementation and verification evidence only.
+
+### Visual defect correction after player feedback — 2026-09-15
+
+The initial route checks did not establish acceptable presentation. Browser reproduction showed large changing triangles at overlapping floor faces and at the docked main lift. Disabling shadows did not remove the depth conflict. The original cutaway also faded floors to 12 percent while leaving their opaque rails, cover, and gantries across the playable view.
+
+Flat deck rendering now subtracts previously covered rectangles, retains the authored collision union, and recesses the ground slab beneath the main lift by 0.12 units. Panel seams share world coordinates. The first correction used opaque cutaways for a whole deck, its rails, supported props, and enemies, plus overhead lift platforms and their cables. Player review rejected the abrupt disappearance; the smooth transparency revision below supersedes that presentation. The camera-facing projection has separate hide/restore margins to prevent boundary chatter. Hidden geometry remains physically solid and is excluded from pointer aiming. Hidden defenders cannot start unseen attacks. Foreground decorative crossbeams, interior corner posts, and dense floor scratches were removed.
+
+The visual regression harness (`scripts/hoist-visual-check.js`) freezes simulation and perturbs the actual camera by 0.0001–0.0003 world units while reading the WebGL framebuffer. A negative control restoring overlapping authored decks failed with 46,009 pixels changing by more than 25 channel levels in a 1280×720 frame. The corrected five-location run peaked at 245 changed pixels, below the 0.1 percent threshold; remaining changes were confined to small rasterized edges. This test detects depth instability; it does not judge composition by itself. Screenshots and the real-input trace were also inspected, including ascent and the sump where an overhead platform previously covered the hull.
+
+Unit checks now total 83 and cover generated floor overlap, the recessed platform base, complete cutaway/restore behavior, opacity isolation, and physical ray interception through visually hidden floors. Verification artifacts for this correction are retained under `output/playwright/visual-fix/`. The earlier 79-test and rendering measurements above describe the initial implementation, not proof that its presentation was acceptable.
+
+The corrected build also passed the 21-leg ascent, 49-leg ability/shortcut return, eight focused combat/persistence checks, and actual keyboard/mouse traction and latch interactions. A 906-frame input trace was captured and sampled for visual review. The production build accepted mouse fire with visible heat feedback and exposed neither the test API nor the injected visual probe. Five short high-quality rendering samples remained near 59–60 FPS with 37.41 MiB of geometry arrays. These are local checks, not a new claim of blind-player or low-end-device acceptance.
+
+### Smooth occlusion transparency
+
+Foreground structures now remain visible at 8 percent opacity and transition to or from full opacity over approximately 0.23 seconds. Decks, rails, supported props, defenders, platforms, and cables share the transition. Hysteresis and the geometry-overlap fixes remain in place. Transparent rail batches retain per-instance sorting, faded surfaces do not write depth or cast opaque shadows, and material clones isolate the effect from the rest of the world. Each mesh retains its original opacity and depth-writing policy, including soft contact-shadow planes. Faded geometry still blocks physical shots, while pointer selection ignores the foreground obstruction and faded defenders remain inactive.
+
+The updated unit suite has 84 tests, including synchronized deck/trim fades, nonzero silhouette opacity, intermediate transition values, full restoration on ascent, and preservation of contact-shadow depth behavior. Artifacts for this revision are in `output/playwright/hoist-fade/`.
+
+The transparency revision passed the real keyboard/mouse input check, 21 ascent legs, 49 return legs, eight focused combat/persistence scenarios, and the five-location framebuffer stability check (maximum 244 changed pixels). The captured 884-frame input trace was sampled through the lift ride and gallery traversal. Short high-quality samples remained near 59–60 FPS, with 37.43 MiB of geometry arrays. Build and whitespace checks passed.
+
+### Direct-fire aiming height
+
+The vertical-region pointer picker previously returned the floor surface for ordinary fire. Subtracting the barrel's 1.5-unit firing height from that point made every empty-floor aim slope downward; the browser reproduction measured approximately 12 degrees on the loading floor and 27 degrees at close range in the gallery. Upper targets already pitched upward correctly, ruling out a reversed rotation sign.
+
+For Cannon and Laser, an exposed floor or lift now selects a firing plane 1.5 units above its supporting surface, intersected with the same pointer ray. Empty space uses the player's firing plane. Actual enemies, machinery, walls, and mirrors retain their hit heights, and Mortar retains its ground landing. The change affects both the visible barrel and the actual firing direction through their existing shared aim point.
+
+The 86-test unit suite and build pass. `scripts/hoist-aim-check.js` verifies actual barrel pitch and firing direction for ground Cannon, the gallery beneath transparent decks, ground Laser, an upper latch, a lower ballast target, and a Mortar landing. The two ordinary-floor reproductions now have zero pitch; upper and lower targets retain opposite pitches. Artifacts are under `output/playwright/hoist-aim/`.
+
+Real keyboard/mouse traction and latch shooting also pass, and the 21-leg combat ascent still reaches and restores the main hoist without death or browser errors.
+
+### Reticle follows the elevation boundary
+
+Direct fire now exposes one constrained aim point, retaining the selected horizontal position and clamping its height to the exact +/-40-degree firing cone. Both the projectile direction and the displayed reticle derive from that point. Pointer picking remains independent, so a reticle at the boundary cannot feed its corrected position back into mouse intent. Reachable aim points pass through unchanged. Mortar retains its ground-landing projection, and flat-region aiming is unchanged. No angle-limit text or additional aim marker is introduced. The interaction rule is recorded in `Gamespec.md`.
+
+The 87-test suite covers upper/lower limits, further motion beyond the boundary, returning to reachable targets, and shared reticle/fire direction. `hoist-reticle-check.js` uses real mouse movement and checks the DOM reticle against the projected constrained point, the barrel angle against the firing direction, and the presence of exactly one reticle. It covers Cannon and Laser limits, moving the pointer back into range without changing the firing position, level fire, and Mortar. Artifacts are in `output/playwright/hoist-reticle/`.
+
+All six reticle scenarios and six existing aim-height scenarios passed without runtime errors, followed by real keyboard/mouse machinery interaction and the 21-leg combat ascent. Build and whitespace checks passed. The test browser was closed after verification.
+
+### Wordless machinery and shot discovery
+
+Removed the hoist's scene-text sprites, notice state and status element, and map captions. In-play mouse bindings now use button silhouettes, while settings keep readable binding names. The map uses floor bars and lift arrows. The gameplay rules are recorded in `Gamespec.md`.
+
+Orange paddles now operate the ballast release, gallery ratchet, landing calls, and crown drive through ordinary projectiles. The ballast continues traveling after an interrupted save, and Magnetic Traction remains an alternative. Impact feedback includes local recoil, sparks, and mechanical or rejected-metal audio. The counterweight has a visible pulley connection; the released pallet descends and the carrier rail retracts. The brake lamp brightens during the existing alignment dwell. Upper call paddles are offset from the ratchet and brake firing lines. Express lift access follows its broken shutter state, preserving the physical Phoenix gate when a projectile operates a call.
+
+R2 track controls and R3 gutter cranks accept Cannon impacts as well as their existing hull interactions. A pump impact produces a short pressure impulse; continuous tank weight remains the way to hold the deck up for its retaining-pin shot. Occupied-basin rejection is retained. Each impact paddle owns its animated material, preventing a hit from recoloring other orange objects.
+
+A real-mouse reproduction found that clicking a raised R2 paddle still aimed at the ground behind it. Small-puzzle pointer selection now intersects the visible paddle, pin housing, pipe plug, or carrier brake before choosing its horizontal firing target. Actual projectiles continue to respect intervening geometry. Mortar and unrelated floor aiming are unchanged.
+
+Validation artifacts are under `output/playwright/hoist-wordless/`:
+
+- 93 Node tests and the production build pass.
+- `hoist-wordless-check.js`: 21 movement legs reach the crown and restore the main hoist using only movement and Cannon; defenders and normal heat remain active. The legacy traction/interaction ascent also passes.
+- `hoist-wordless-input-check.js`: actual keyboard movement and mouse clicks release ballast, ride the lift, engage the ratchet, and shoot the latch; opening the floor map and pausing also pass.
+- `puzzle-shot-check.js`: seven actual mouse-shot checks cover both rail paddles, both cranks and a repeated turn, the pipe, and the pump impulse. Water reaches the planter and the unweighted pump drains afterward.
+- The existing 20-check small-puzzle traversal still passes, including failed attempts, hull controls, wall interception, physical shortcuts, repair, and reload.
+- The 49-leg hoist return route passes all 11 checks, including the restored lift, sump, hot lane, and both regional exits. The restored entrance-to-crown trip takes 14.9 simulated seconds including waits.
+- All six reticle cases pass. Five framebuffer stability locations remain below the existing threshold, with at most 250 changed pixels out of 921,600 under subpixel camera changes. Five short high-quality samples measured 59.4–60.4 FPS and 37.69 MiB of geometry arrays on this machine.
+
+Screenshots of the gallery, floor map, and restored gutters were inspected. These checks establish input behavior, traversal, recovery, and rendering; they do not establish first-time human discovery time or subjective challenge. Those remain playtest judgments, without adding explanatory prose back into gameplay.
+
+The built production preview also loaded without runtime errors, displayed no gameplay prose, omitted the development API, and opened settings successfully. The test browser and temporary production preview were stopped; the user's development server remains available.
