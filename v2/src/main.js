@@ -1,5 +1,6 @@
 import * as T from 'three';
 import './style.css';
+import {createJourneyMenu} from './journey-menu.js';
 import { makeWorld, tankModel, chargeWarning, floorColors, box, sphere, ring, mat, C, rooms, hazardDefinitions, elevation } from './world.js';
 import { MAX_HP, BASE_SPEED, OVERDRIVE_MAX_SPEED, PHOENIX_MAX_SPEED, phoenixReady, redContact, contactDamage, PLAYER_HURT_RADIUS, ENEMY_HURT_SCALE, CHARGE, DEFAULT_BINDINGS, newPlayer, shootHeat, updateHeat, screenMovement, damagePlayer, inside, clamp, angleDelta, segmentCircle } from './mechanics.js';
 import { FactoryAudio } from './audio.js';
@@ -887,10 +888,9 @@ $('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenEle
 $('reset-bindings').addEventListener('click',()=>{bindings={...DEFAULT_BINDINGS};rebind=null;renderBindings();savePrefs();});
 function restart(){try{localStorage.removeItem(SAVE_KEY);}catch{}location.reload();}
 $('new-game').addEventListener('click',()=>{if(resetArmed)restart();else{resetArmed=true;$('reset-confirm').hidden=false;}});
-$('chapter-two').addEventListener('click',()=>{location.href=chapter==='2'?'/':'/?chapter=2';});$('chapter-two').textContent=chapter==='2'?'返回完整旅程':'试玩第二关 · 独立存档';
-$('chapter-three').addEventListener('click',()=>{location.href=chapter==='3'?'/':'/?chapter=3';});$('chapter-three').textContent=chapter==='3'?'返回完整旅程':'试玩第三关 · 独立存档';
-$('chapter-four').addEventListener('click',()=>{location.href=chapter==='4'?'/':'/?chapter=4';});$('chapter-four').textContent=chapter==='4'?'返回完整旅程':'试玩中段 · 独立存档';
-$('chapter-hoist').addEventListener('click',()=>{location.href=chapter==='hoist'?'/':'/?chapter=hoist';});
+const journeyMenu=createJourneyMenu(()=>{});$('journey-button').onclick=()=>journeyMenu.show();
+document.querySelector('#settings .subtitle').textContent=`历史版本 · ${({'2':'第二关','3':'第三关','4':'中段',hoist:'升降井'})[chapter]||'第一关'}`;
+$('new-game').textContent='重新开始当前旧版存档';$('reset-confirm').textContent='再次点击将重置当前旧版存档，机械城旅程不受影响。';
 renderBindings();
 // A development-only observation surface supports reproducible browser verification.
 if(import.meta.env.DEV&&new URLSearchParams(location.search).has('test')){

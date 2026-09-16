@@ -406,6 +406,8 @@ The furnace exhaust spine is the long-range orientation landmark. Other anchors 
 
 ### Regional access layers and protected approaches
 
+The early dry route to the shared Mortar rig uses two opposing conveyor stretches with a safe cooling bay between them. Overdrive crosses each stretch; the bay gives room to stop, cool and deal with the gun covering the apron. The loading return lands on the transit side of the freight latch, so opening it does not bypass the Mortar approach to the outer ring.
+
 Every region distinguishes a preview, an initial playable layer, and deeper access. A far-side shortcut lands in a named layer below; proximity to another room does not give permission to enter it.
 
 | First route | Physical sequence | Equipment boundary and guaranteed way onward |
@@ -754,7 +756,7 @@ The story consequence is experiential: the Tank can continue moving while carryi
 
 Build the fight from available geometry and attack decisions rather than eight sequential ability checks. Low cover gives Mortar opportunities; mirrors offer indirect Laser angles; clear exposed components reward Cannon fire; magnetic cover can alter a firing lane. Water Circulation supports close-range red-hot damage against the keeper itself. Grounded acceleration supplies positioning. Flotation may support an optional safe-temperature coolant side route if the arena needs it, but not every ability must be forced into every phase. Phoenix does not acquire a mandatory Boss-ram requirement.
 
-A proposed two-part fight first removes the keeper's active feed/weapon machinery, then exposes its worn central drive. Distinct components change attacks and space; no arbitrary per-window hit quota extends the fight. The keeper has a meaningful positive red-contact damage path throughout damageable combat states, preserving the all-enemies rule. Exact attacks, component HP, body damage routing, and difficulty are separate encounter-design work.
+The keeper has 48 total HP: two exposed 12-HP feed assemblies and a 24-HP central drive. Destroying an assembly stops its corresponding conveyor; destroying both exposes the central drive. Cover and the committed heavy-shot warning allow the player to change firing position between attacks. There is no per-window damage quota. Red contact also damages the armoured phase: a maximum-speed impact carries its full 24 damage through feed assemblies into the drive, so destroying a nearly broken component does not discard the rest of the impact. Two successful maximum-speed red impacts can defeat the keeper. Ordinary Phoenix impacts do not damage this Boss.
 
 When defeated, the keeper stops adding material. Its light goes out, but the remaining furnace flame does not become healthy. Victory opens access; it does not automatically finish the story or grant another ability.
 
@@ -764,7 +766,7 @@ When defeated, the keeper stops adding material. Its light goes out, but the rem
 
 Offer one authored ending for the initial complete story: the Tank chooses to dock and sustain the furnace. Optional restoration changes small visible consequences, not an undisclosed ending score or a requirement to find a 'true ending.' Additional endings remain outside this proposal until discussed.
 
-Approaching the socket must not commit automatically. The interface opens, alignment marks and clamps become visible, and the player can still reverse away. A deliberate contextual action, using the Repair Hive interaction vocabulary, begins docking. Exact hold duration and cancellation timing require interaction testing; the player should understand the cost from predecessors and machinery rather than receive a written sacrifice menu.
+Approaching the socket must not commit automatically. The interface opens, alignment marks and clamps become visible, and the player can still reverse away. A deliberate contextual action, using the Repair Hive interaction vocabulary, begins docking. Hold the contextual repair input for two seconds to couple the drive. Releasing it or moving before coupling cancels the action and opens the clamps. The clamps close and the chassis aligns during the hold. The player should understand the cost from predecessors and machinery rather than receive a written sacrifice menu.
 
 In the ending, the drive couples into the shaft, the circulation pipes connect, and the red hull settles into a steady light as the furnace catches a sustained cycle. The Tank's tracks stop being locomotion and its body becomes part of the regulating assembly. The last movement of its turret or antenna is small. Whether its awareness remains is left open; the scene does not establish that it is painlessly immortal or explicitly dead.
 
@@ -774,7 +776,7 @@ The repaired rail now carries something useful. Water reaches a dry section of t
 
 The outcome is real renewal of operation, not proof of permanent salvation. The city has more time and functioning connections. No final text explains whether it will avoid repeating the cycle.
 
-**Save/continuation proposal:** retain a pre-docking return state with the keeper defeated and world restoration preserved. A system-menu Continue can return there for exploration; it does not place the Tank after sacrifice or silently undo restored routes. Do not overwrite the player's only exploration state with an irreversible non-playable endpoint. The completed-ending flag and replay behaviour need implementation design later.
+**Continuation:** the system-menu Continue returns to the final Repair Hive with the keeper defeated, acquired abilities retained and restored routes preserved. The voluntary docking can be revisited. It does not place the Tank after sacrifice or replace the player's exploration state with a permanently non-playable endpoint.
 
 ### Wordless storytelling vocabulary
 
@@ -867,7 +869,7 @@ Picking up Mortar equips it. Q switches between Cannon and Mortar; left click fi
 
 The landing point is fixed at firing time. The visible projectile follows an arc; low cover can be cleared, while taller solid geometry intercepts it. Ground blasts respect intervening walls. Overhead hits bypass an ordinary guard's front shield but do not turn an Elite or Boss's protected roof into a rear weak point.
 
-There is still exactly one reticle. In Mortar mode its ring is dashed and it stops at the actual maximum-range landing point instead of leaving an unreachable cursor target. The Heat ring retains the pale-yellow-to-red progression. A lob impact inside either recessed latch releases that physical gate; ordinary cannon shots collide with the enclosure walls.
+There is still exactly one reticle. In Mortar mode its ring is dashed and follows the mouse, including beyond maximum range. The shell's landing point remains limited to the weapon's range; its visible flight and impact communicate where it actually lands without pulling the cursor toward the Tank. The Heat ring retains the pale-yellow-to-red progression. A lob impact inside either recessed latch releases that physical gate; ordinary cannon shots collide with the enclosure walls.
 
 Three bolted lob launchers teach the rule before and after acquisition. They have 2 HP, a raised barrel, a fixed circular ground warning for 1.1 seconds, a visible 1.15-second shell flight, and a 3.8-second recovery. Their blast deals 8 damage within 2.5 units plus the player's hurt radius. The warning encloses that complete damage area. Moving after the warning avoids the original landing point; the shell never tracks the tank.
 
@@ -1070,7 +1072,7 @@ Laser later opens an optional optical inspection room with mirrors on readable t
 
 Preserve the fixed camera orientation and screen-relative movement. Follow the Tank's supporting elevation smoothly; avoid camera rotations or a sudden view change during a lift ride. The shaft uses open sides and staggered decks rather than fully overlapping opaque floors. Foreground decks and walls fade when they obscure the Tank or its immediate route. Distant visible architecture, the moving counterweight, cast shadows, and sound from other levels establish depth.
 
-The mouse expresses aiming intent; the single reticle shows the actual aiming point allowed by the turret's elevation range. Cannon and Laser stay level when aiming across an empty floor at the same height and can elevate or depress by up to 40 degrees for targets at other heights. Beyond that range, the reticle stays at the reachable angular boundary and resumes following the target when it returns within range. The barrel and firing direction follow that same constrained aim. Do not add an angle-limit message or a second pointer marker; steep targets require a different firing position. Solid floors, ceilings, and cover interrupt actual projectile and beam paths. Mortar uses its one existing landing reticle, shows inaccessible trajectories clearly, and cannot pass through a ceiling. Never select a hidden lower-floor target through an opaque upper floor, or add a second persistent aim marker.
+The mouse expresses aiming intent; the single reticle always follows the mouse without snapping to enemies or shifting at platform edges, during movement, or at weapon limits. Cannon and Laser stay level when aiming across an empty floor at the same height and can elevate or depress by up to 40 degrees for targets at other heights. Beyond that range, only the barrel and firing direction stop at the reachable angular boundary. The visible barrel, projectile or beam, and impact communicate the actual firing path; steep targets require a different firing position. Do not add an angle-limit message or a second pointer marker. Solid floors, ceilings, and cover interrupt actual projectile and beam paths. Mortar retains a dashed mouse-following reticle and finite landing range; its visible arc and impact show the actual trajectory, and it cannot pass through a ceiling. Never select a hidden lower-floor target through an opaque upper floor.
 
 The map presents the current floor prominently with adjacent floors subdued, graphical floor bars, and lift symbols connecting the landings. It contains no place-name labels or written route instructions. Main routes and express tracks have guardrails. Deliberate descents use clearly marked catch chutes with visible supported exits; accidental falls and abyss deaths are not the central challenge. No airborne steering, jumping ability, or high-speed gap crossing is introduced.
 
@@ -1133,7 +1135,7 @@ The game does not rotate or pull the camera to reveal solutions, highlight paths
 
 ### The game tells its story without words
 
-Gameplay, story, environment, maps, and HUD contain no dialogue, prose, labels, or numeric values. Action, animation, staging, icons, unlabelled bars, music, and sound communicate meaning. Text is allowed only in system settings, input configuration, and future accessibility menus.
+Gameplay, story, environment, maps, and HUD contain no dialogue, prose, labels, or numeric values. Action, animation, staging, icons, unlabelled bars, music, and sound communicate meaning. Text is allowed only in journey selection, system settings, input configuration, and future accessibility menus.
 
 ### Hazards preserve consequences
 
@@ -1518,14 +1520,18 @@ Normal Boss attacks deal approximately 8–10 HP. The most strongly telegraphed 
 
 ### Combat HUD
 
+Before gameplay, a journey menu explicitly offers starting at the first region, the Recycling Foundry, and continuing an existing complete-journey save. Starting the journey begins at the awakening point with Cannon only. Replacing existing journey progress requires a separate confirmation. Independent previews are grouped separately and state their starting location and supplied abilities. A prominent first-region preview begins at awakening with Cannon only and does not replace journey progress. Every preview selection starts its own run from the advertised entrance. Historical map versions stay in a collapsed, clearly labelled group; their titles never change into current-region names or return commands. The same journey menu is reachable from settings in every version. Selecting a menu entry does not turn the connected campaign into a linear level-selection flow; normal region changes remain physical routes through the world.
+
 - Lower-left: unlabelled segmented HP bar with no number.
 - Cursor position: one cartoon industrial targeting reticle surrounded by an unlabelled circular Heat gauge. The native cursor is hidden over gameplay, and no projected ground marker is drawn.
 - Lower-left: an unlabelled Overdrive bar beside HP. Heat is displayed only at the reticle.
 - During Overdrive: a graphical acceleration gauge indicates progress from normal to maximum speed without numeric text.
+- Above HP: a persistent ability tray shows only acquired abilities, in a stable order grouped as weapons, tools, and engine upgrades. Cannon, Mortar, Laser, Magnetic Traction, Flotation, Overdrive, Phoenix, and Water Circulation each have a distinct pictogram. The selected weapon has a bright border and its fire binding; other weapons show the cycle binding. Tools retain their activation bindings, and the two engine upgrades carry a linked-upgrade mark beside their shared acceleration binding. Deployed pontoons, acceleration, maximum Phoenix speed, and overheated circulation visibly activate their corresponding icons. Saved abilities remain visible after death and reload.
+- Acquiring a module immediately adds and pulses its tray icon. An eight-second inset repeats the same pictogram, the current input glyphs, and a small moving illustration of its use: a lob clears a wall, a beam reflects, a crate is pulled, pontoons cross water, the drive accelerates, Phoenix breaks an obstruction, or a hot red hull rams. Weapon acquisition shows selection followed by firing. The player retains control; the inset disappears while the acquired icon remains. Do not add prose, a second aiming marker, a route instruction, or a forced tutorial pause. Input glyphs follow remapped controls.
 - Upper-right: Minimap.
 - Top-centre: unlabelled Elite or Boss health bar during those encounters only.
 - Directional red edge impacts briefly indicate incoming damage without realistic blood effects.
-- No ammunition, reload, weapon-slot, objective, or enemy-name display exists.
+- No ammunition, reload, objective, or enemy-name display exists.
 
 ## Player-Led Onboarding
 
@@ -1668,3 +1674,27 @@ R4 uses pale inspection decks, optical screens, raised dishes, finite mirror pan
 The guardian responds defensively to incoming fire even beyond its ordinary sighting distance. Attacks still require a visible, readable warning. The guardian has 36 HP. Two maximum-speed red impacts can defeat it; a single impact cannot. Standing still and trading reflected fire should lose to its heavy shots, while moving during committed warnings preserves a firing opportunity. Its hull tracks the tank while its heavy shot commits to a warning direction for 1.4 seconds, followed by a 2.2-second recovery and a short idle pause. Its roof and frontal/side armour reject ordinary attacks. The final incoming ray direction determines rear vulnerability after reflection; a rear Cannon shot follows the same directional rule. There is no damage-per-window cap. Red contact is a supported alternate damage route, including a circulation-first visit. Armour produces the same immediate metal flash and ricochet language as other protected enemies. Defeat persists and enables the optional array control: the array pulses outward while its receiver turns, waits, and resets without a reply. The player retains control.
 
 R6 connects worn coolant jackets, a shootable feed receiver, visibly accelerating pump fans, the circulation rig, and the material-return lane. The lane is 64 units long and opposes movement at 2.6 times base speed. Full Phoenix advances against it at only 4.2 units per second, exceeding the cold engine's available duration; its successor continues through Overheat. Guards and clamps on the lane can be destroyed by red contact. At the far landing, an ordinary pressure control opens the parallel dry bypass and the industrial return into familiar garden and express geography. No red-only artificial wall is needed for this ability lock.
+
+## Folded-city encounter and discovery revision
+
+The city remains wordless. Discoverability comes from visible actions, physical connections and consistent shapes. The first Foundry shot receiver opens a nearby service shutter in the same view; its lit conduit continues toward the shared reclamation lock. Shot receivers use a recessed bullseye rather than a medical-looking cross. Magnetic forks, optical apertures and lift handles keep distinct silhouettes. Closed shutters retain warm edge posts while their obstructing middle becomes translucent.
+
+Nearby paths enter the map before the tank steps onto them. Both maps face the same direction as screen-relative driving. Explored floors retain closed/open shutter lines, receiver marks, lift footprints, uncollected module squares and the Hive's mint ring. Other layers remain subdued. These marks record encountered geography; they do not prescribe a quest route or add objective arrows.
+
+Interactable machines, modules, Hives and enemies on a different floor appear subdued and translucent, so their presence does not imply same-floor access. Geometry that covers the tank fades as a complete object, including attached details. The current floor's threats remain prominent. The boss health bar belongs to a nearby boss on the tank's current level.
+
+Modules install on contact and immediately update the ability tray with the established short pictorial demonstration. Deliberate use from nearby remains possible. Independent middle-region previews demonstrate their starting route ability on arrival. Repair Hives open articulated tools as the tank approaches, sweep a light ring through the hull while repairing, and perform a longer cycle after reconstruction. Their mint shape repeats in the map. Quiet Hive pockets stop fresh pursuit while the tank rests without firing; attacking resumes the encounter.
+
+Ordinary combat is organized around small groups of two or three machines near receivers, landings and route decisions. A closing scout pressures the player's firing position while a turret or frontal guard covers a different angle. Nearby members respond together when one is engaged. Mobile enemies first enter a useful attack distance, then commit to a visible warning; they do not begin unreachable charges from the edge of the screen. Covers allow a change of angle and a brief break in fire. No mandatory kill quotas or arena doors are added to ordinary groups.
+
+Conveyors are recognizable moving assemblies: dark beds, side frames, turning end rollers and transverse treads with regularly spaced warm markers. Treads follow the actual slope and travel direction. Destroyed drive assemblies stop their belts in place.
+
+Flotation cruises at 1.15 times ordinary driving speed on water; its deployed land speed remains 0.75 times ordinary driving speed. Boost remains unavailable while deployed. The abandoned press canal connects sideways back to the launch pool, creating a short local return. It does not open the Foundry maintenance exit prematurely. Long outer optical and industrial approaches show their Phoenix shutters near the entrance, before committing the player to an empty trip. Their opened state still belongs to the corresponding permanent route release. Ordinary driving speed, Heat rates and the established Overdrive/Phoenix acceleration remain unchanged.
+
+Each independent middle-region preview starts at its own entrance Hive, with its first ability interaction in view. The Garden entrance presents Magnetic Traction and its Flotation pedestal; the freight entrance presents the Mortar enclosure. The complete journey still reaches these places through the connected world. These Hives also shorten recovery during normal exploration. Phoenix shutters carry the same flame emblem as the engine's ability card. A Mortar impact produces an expanding blast and a distinct explosion sound, making its actual landing and affected area apparent without another aiming marker.
+
+Ramps use continuous side rails and transverse seams to distinguish a climb from a flat crossing. The Foundry's reclamation entrance has a wider supporting shoulder beside its overlapping return ramp, so turning into the visible corridor does not require alignment with a concealed narrow gap. This shoulder ends before the Prototype enclosure and does not bypass its relay lock.
+
+Water uses a blue reflective surface with broken ripples, distinct from structural floor strips. A moving floating tank leaves expanding pale wakes. Destroyed machines collapse into dark, flattened wrecks until the encounter resets, making a cleared firing lane recognizable on the return trip.
+
+The carrier brake exposes its orange target only while the platform is aligned with the upper landing; otherwise a mechanical cover closes over it. Before release, boarding starts the automatic demonstration and manual reversal is unavailable. Releasing the brake unlocks manual travel and landing calls. Locked landing handles remain folded with unlit lamps. Independent middle-region previews include the completed Foundry releases that precede their entrance, so an already visited maintenance return is usable without replaying the omitted opening region.

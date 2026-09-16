@@ -50,7 +50,7 @@ function subtractDeck(r,cut){
     {...r,x,w:right-x,d:z-r.z},{...r,x,w:right-x,z:bottom,d:r.z+r.d-bottom}].filter(p=>p.w>0&&p.d>0),
     inside:[{...r,x,z,w:right-x,d:bottom-z}]};
 }
-export function renderDecks(decks=hoistDecks){
+export function renderDecks(decks=hoistDecks,lifts=hoistLiftDefs){
   const result=[];
   for(const deck of decks){
     let parts=[deck];
@@ -64,9 +64,9 @@ export function renderDecks(decks=hoistDecks){
   // underneath. Recess its visual surface so a docked lift never shares it.
   return result.flatMap(d=>{
     let parts=[d];
-    if(d.y===0&&!d.rise)for(const lift of hoistLiftDefs)parts=parts.flatMap(r=>{
+    if(!d.rise)for(const lift of lifts.filter(l=>l.stops[0]===d.y))parts=parts.flatMap(r=>{
       const {outside,inside}=subtractDeck(r,lift);
-      return [...outside,...inside.map(p=>({...p,recess:.12}))];
+      return [...outside,...inside.map(p=>({...p,recess:lift.recess??.12}))];
     });
     return parts;
   });

@@ -14,14 +14,23 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. Continue north after the Foundry to enter R2, or use **试玩第二关 · 独立存档** in settings (equivalent to `/?chapter=2`) to begin at the new arrival Hive with Overdrive. The preview has a separate local save and does not replace the full-journey save. Click the game or press a control to enable browser audio. The game starts with a short awakening sequence. Use the upper-left gear to pause and configure controls, sound, quality, or fullscreen. Losing window focus pauses the game.
-
+Open the local URL printed by Vite. The home page shows the journey menu, with explicit actions to start at the Recycling Foundry, continue saved progress, or launch an independent preview. Starting over confirms before replacing existing campaign progress; previews preserve it. Click the game or press a control to enable browser audio. Use the upper-left gear to pause, reopen journey selection, or configure controls, sound, quality, and fullscreen. Losing window focus pauses the game. The previous journey and its save remain available at `/?chapter=legacy`; earlier regional previews are grouped under historical versions in the same menu.
 ```sh
 npm run build
 npm run preview
 ```
 
 The production output is `dist/`; it can be served by any static web server. A web server is required; opening `index.html` directly with `file://` does not work.
+
+## Folded city
+
+The complete journey at `/?chapter=folded` uses `furnace-born-v2-city`, a separate save from the earlier journey. Seven regions now share one supporting-height world: the Foundry, transit hub, submerged gardens, observatory, Testworks, circulation works and the predecessor/furnace chambers. Acquire all eight abilities in the world. Flotation or Mortar independently leads to Phoenix, then Laser and Circulation can be acquired in either order. Twelve permanent returns reconnect familiar places through supported paths and callable lifts. Defeating the keeper opens voluntary docking; Continue restores the final refuge for exploration.
+
+Independent previews are available at `/?chapter=folded&route=foundry`, `/?chapter=folded&route=garden`, and `/?chapter=folded&route=freight`. First-region play begins at awakening with Cannon only. The Garden preview begins at its magnetic entrance Hive; the freight preview begins beside its first Mortar enclosure. They carry Overdrive plus Magnet or Mortar respectively. Each uses its own `furnace-born-v2-folded-<route>` save; choosing a preview in the menu resets only that preview to its entrance. Directly reloading its URL continues its saved checkpoint.
+
+The full map has graphical controls for discovered floors; selecting a layer does not move the tank or its aim. Ordinary shots, movement and the owned abilities operate machinery. Modules install on contact; E also acquires them from nearby and handles repairs, calls and optional restoration; holding E at the final socket commits to docking after its visible alignment sequence.
+
+The `scripts/folded-*-check.js` callbacks use the Playwright CLI with the development-only `?test` interface. They cover early acquisition, both late branch orders, continuous travel, physical returns, real keyboard/mouse interactions, combat, rendering and recovery. They clear only their named saves in the dedicated test browser. See [IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md) for the distinction between route fixtures, unchanged enemy encounters and rendering measurements.
 
 ## Controls
 
@@ -133,7 +142,7 @@ The garden traversal check drives 23 consecutive legs with real collision and mo
 
 The puzzle suite adds 20 browser checks and 23 local movement legs. It covers Cannon release of the carrier, pressure-operated track selection, immediate docking reward, weight-held water, shooting the exposed retaining pin, automatic drainage, hull-driven gutter cranks, the shootable pipe plug, wall interception, close-range real mouse fire, repair, and reload. It uses one starting fixture per region and disables enemies to isolate navigation. Fourteen Node tests cover the mechanism state rules, contact debounce, physical collision, access, and old-save migration.
 
-This is a six-region playable prototype, with R7 reserved for the final furnace. A clean, uninterrupted human playthrough near the design's ten-minute target has not been measured. Automated checks establish mechanics and progression, not first-time discovery quality or subjective audio balance.
+The legacy journey remains a six-region prototype; the folded city includes the seventh region and voluntary ending. A clean, uninterrupted human playthrough near the design's ten-minute target has not been measured. Automated checks establish mechanics and progression, not first-time discovery quality or subjective audio balance.
 
 The middle-game scripts verify ability acquisition, held beam reflection, armour, maximum-speed collision, the sustained return lane, persistent shortcuts, and reload. Navigation checks run both branch orders with different incoming equipment, using real movement throughout each route. These tests use the same dedicated browser; close it and the temporary Vite service after verification to release GPU and server resources.
 
