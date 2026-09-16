@@ -30,8 +30,8 @@ test('Flotation crosses below the real bridge and reaches the bank without selec
 });
 
 test('the dry freight approach reaches common benches without Magnet or Flotation',()=>{
-  const p=Object.assign(player(),{magnet:false,mortar:true}),s=initialFoldedState({freight:true});
-  for(const [x,z]of [[0,-34],[42,-34],[42,-70],[62,-70],[62,-34],[70,-34],[70,-19],[90,-19]])drive(p,x,z,s);
+  const p=Object.assign(player(),{magnet:false,mortar:true}),s=initialFoldedState({freight:true,'bridge-crane':true});
+  for(const [x,z]of [[0,-34],[59,-34],[59,-84],[67,-84],[67,-34],[70,-34],[70,-19],[90,-19]])drive(p,x,z,s);
   assert.equal(p.y,0);assert.equal(p.flotation,false);assert.equal(p.magnet,false);
   s.load=true;drive(p,90,-59,s);assert.equal(p.y,8);
 });
@@ -63,7 +63,7 @@ test('rendered flat surfaces never overlap at the same height and the shared cag
 });
 
 test('both onward Phoenix shutters have sufficient supported runup and remain open for ordinary return',()=>{
-  const state=initialFoldedState(),p=Object.assign(player(),{x:132,y:24,z:-30,phoenix:true});
+  const state=initialFoldedState(),p=Object.assign(player(),{x:136,y:24,z:-30,phoenix:true});
   drive(p,190,-30,state,true);assert.ok(state.optics);p.phoenix=false;drive(p,150,-30,state);
   Object.assign(p,{x:166,y:16,z:-64,phoenix:true,heat:0,overheated:false,speed:1});
   drive(p,166,-3,state,true);assert.ok(state.pressure);p.phoenix=false;drive(p,166,-40,state);
@@ -82,4 +82,15 @@ test('the actual aim point stops at forty degrees while reachable vertical targe
 test('defenders start on supported floor outside machinery and cover',()=>{
   const state=initialFoldedState();
   for(const e of foldedEnemies){assert.ok(foldedSupport(e.x,e.z,e.y));assert.equal(foldedBlocked(e.x,e.y,e.z,state,1),undefined,e.id);}
+});
+
+test('the shared carrier screen closes the whole ramp before either approach reaches Phoenix',()=>{
+  for(const x of [85.2,90,94.8]){
+    const p=Object.assign(player(),{x,y:0,z:-18}),s=initialFoldedState();
+    for(let i=0;i<300;i++)moveFolded(p,0,-.15,s);
+    assert.ok(p.z>-27,'the hull cannot walk around or under the screened load');
+    assert.ok(releaseFolded('load','mortar',p,s,[]));
+    drive(p,90,p.z,s);drive(p,90,-59,s);assert.equal(p.y,8);
+    assert.ok(initialFoldedState(s).load,'the release survives a reload');
+  }
 });

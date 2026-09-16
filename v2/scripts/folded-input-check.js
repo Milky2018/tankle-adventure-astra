@@ -17,7 +17,7 @@ async page=>{
   if((await page.evaluate(()=>window.__game.snapshot())).state.freight)throw Error('Cannon bypassed the freight screen');
   await step(3);await page.keyboard.press('q');await click(32,-34,1.3);
   let s=await page.evaluate(()=>window.__game.snapshot());if(!s.state.freight||s.player.magnet||s.player.flotation)throw Error('Independent Mortar entry failed '+JSON.stringify(s));
-  await page.keyboard.press('q');await walk(42,-34);await walk(42,-70);await walk(62,-70);await walk(62,-34);await walk(70,-34);await walk(70,-19);
+  await page.keyboard.press('q');await walk(59,-34);await walk(59,-84);await walk(67,-84);await walk(67,-34);await walk(70,-34);await walk(70,-19);
   // Defeat the guard with real clicks from its exposed side, then reach the refuge.
   for(let i=0;i<4;i++){await click(87,-23,1.5);await step(.7);}
   await walk(94,-18);await page.keyboard.press('e');

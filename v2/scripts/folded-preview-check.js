@@ -2,6 +2,10 @@ async page=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   async function enter(route){await page.goto(`http://127.0.0.1:5174/?chapter=folded&route=${route}&test`);await page.evaluate(route=>{localStorage.removeItem(`furnace-born-v2-folded-${route}`);localStorage.removeItem('furnace-born-v2-settings');},route);await page.reload();await page.waitForFunction(()=>!!window.__game);await page.evaluate(()=>__game.manual(true));return page.evaluate(()=>__game.snapshot());}
   const freight=await enter('freight');if(!freight.state.foundry||!freight.state.mortarModule)throw Error('Freight preview lacks its completed prerequisites');if(freight.player.x!==12||freight.player.y!==0||freight.player.z!==-34)throw Error('Freight preview misses its entrance');
+  if(!freight.state['bridge-crane']||freight.state.freight)throw Error('Freight preview does not distinguish its completed rear route from its forward obstacle');
+  await page.evaluate(()=>{__game.setInput(['KeyW','KeyA']);__game.step(1.7);__game.setInput(['KeyS','KeyA']);__game.step(3.5);__game.setInput([]);});
+  if((await page.evaluate(()=>__game.snapshot())).player.z<-10)throw Error('Freight preview rear route still requires another Mortar shot');
+  await page.evaluate(()=>{__game.setInput(['KeyW','KeyD']);__game.step(3.5);__game.setInput(['KeyS','KeyD']);__game.step(1.7);__game.setInput([]);});
   await page.keyboard.press('q');const shot=await page.evaluate(()=>__game.project(32,-34,1.3));await page.mouse.move(shot.x,shot.y);await page.mouse.down();await page.evaluate(()=>__game.step(1.25));await page.mouse.up();
   if(!(await page.evaluate(()=>__game.snapshot())).state.freight)throw Error('The first visible Mortar interaction cannot open');
   await page.screenshot({path:'v2/output/playwright/polish-preview-freight.png'});

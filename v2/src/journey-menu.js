@@ -25,6 +25,8 @@ export function createJourneyMenu(back=null){
   const hasSave=()=>{try{return !!localStorage.getItem(citySave);}catch{return false;}};
   function show(){
     returnFocus=document.activeElement;armed=false;confirmation.hidden=true;start.textContent='从第一关开始';resume.hidden=!hasSave();
+    let completed=false;try{completed=JSON.parse(localStorage.getItem(citySave))?.endingSeen===true;}catch{}
+    resume.textContent=completed?'继续探索 · 已传火':'继续旅程';
     start.classList.toggle('journey-primary',resume.hidden);menu.hidden=false;(resume.hidden?start:resume).focus();
   }
   function close(){menu.hidden=true;back();returnFocus?.focus();}

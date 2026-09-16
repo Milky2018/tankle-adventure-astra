@@ -45,6 +45,7 @@ export class FactoryAudio {
     if(name==='heat'){this.noise(.8,.3);this.tone(430,.6,'triangle',.24,-330);}
     if(name==='ready'){this.tone(580,.12,'sine',.16);this.tone(860,.2,'sine',.08);}
     if(name==='repair'||name==='unlock'){[0,4,7,12,16].forEach((n,i)=>setTimeout(()=>this.tone(220*2**(n/12),.6,'sine',.22),i*115));}
+    if(name==='ending'){[130.81,196,261.63,329.63].forEach(f=>this.tone(f,3.5,'sine',.13));}
     if(name==='death'){this.tone(160,1.3,'sawtooth',.3,-135);this.noise(.8,.4);}
     if(name==='ram'){this.tone(75,.22,'square',.3,-40,pan);this.noise(.18,.4,pan);}
   }

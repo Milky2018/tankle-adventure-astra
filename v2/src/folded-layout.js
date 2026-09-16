@@ -24,15 +24,15 @@ export const foldedDecks=[
   deck('phoenix-cradle',64,-94,28,16,16),
   deck('launch-track',92,-92,64,12,16),deck('launch-landing',156,-92,16,28,16),
   deck('roof-ascent',160,-64,12,24,16,{rise:8}),
-  deck('roof-junction',132,-40,40,18,24),deck('roof-return',26,-34,118,12,24),
-  deck('roof-walk',26,-22,12,36,24),deck('cage-landing',16,14,22,16,24),
+  deck('roof-junction',132,-40,40,18,24),deck('roof-return',26,-38,118,6,24),
+  deck('roof-walk',29,-32,6,30,24),deck('cage-landing',16,-2,22,16,24),
   deck('observatory-outlook',172,-36,24,12,24),
   deck('circulation-outlook',156,-22,12,22,24),
   ...cityDecks
 ];
 export const foldedLiftDefs=[
   {id:'carrier',x:72,z:-78,w:12,d:12,stops:[8,16]},
-  {id:'cage',x:4,z:10,w:12,d:12,stops:[0,24],recess:.6},
+  {id:'cage',x:4,z:10,w:12,d:12,stops:[0,24],recess:.6,calls:[[2,0,18],[22,24,12]]},
   ...cityLifts
 ];
 // Bounds describe solid material, including the moving shutters while closed.
@@ -40,30 +40,32 @@ export const foldedSolids=[
   {id:'magnet',x:-40.5,z:-14,w:1,d:12,y:-8,h:3},
   {id:'freight',x:25.5,z:-40,w:1,d:12,y:0,h:5},
   {id:'gangway',x:69.5,z:30,w:1,d:8,y:-8,h:3},
-  {id:'load',x:84,z:-42,w:12,d:1.4,y:3,h:3.2},
+  {id:'load',x:84,z:-29,w:12,d:1.4,y:0,h:5.5},
   {id:'brake',x:72,z:-78.5,w:12,d:1,y:16,h:2.5},
   {id:'launch',x:139.5,z:-92,w:1,d:12,y:16,h:3},
   {id:'optics',x:175.5,z:-36,w:1,d:12,y:24,h:3},
   {id:'pressure',x:156,z:-16.5,w:12,d:1,y:24,h:3},
   {id:'bank-cover',x:34,z:-5,w:3,d:3,y:-16,h:2,permanent:true},
-  {id:'bench-cover',x:77,z:-25,w:3,d:4,y:0,h:2,permanent:true},
+  {id:'bench-cover',x:77,z:-25,w:3,d:4,y:0,h:2,magnetic:true},
   {id:'upper-cover',x:94,z:-58,w:3,d:3,y:8,h:2,permanent:true},
   {id:'gangway-casing',x:84.4,z:28,w:.5,d:6,y:-8,h:3,permanent:true},
-  {id:'dock-cover',x:78,z:13,w:3,d:3,y:-8,h:2,permanent:true},
+  {id:'dock-cover',x:78,z:13,w:3,d:3,y:-8,h:2,magnetic:true},
   ...citySolids
 ];
 export const foldedControls=[
   {id:'magnet',x:-39.7,y:-6.6,z:-8,kind:'magnet'},
   {id:'freight',x:32,y:1.3,z:-34,kind:'shot'},
   {id:'gangway',x:86,y:-6.6,z:31,kind:'shot'},
-  {id:'load',x:90,y:6.8,z:-40.9,ground:4,kind:'shot'},
+  {id:'load',x:90,y:3.3,z:-34,ground:2,kind:'shot'},
   {id:'brake',x:78,y:18,z:-77.7,kind:'shot'},
-  {id:'cage',x:22,y:25.4,z:20,kind:'shot'},
+  {id:'cage',x:22,y:25.4,z:8,kind:'shot'},
+  {id:'dock-cover',x:79.5,y:-5.6,z:14.5,kind:'magnet',ground:-8},
+  {id:'bench-cover',x:78.5,y:2.4,z:-23,kind:'magnet',ground:0},
   ...cityControls
 ];
 export const foldedHives=[
   {id:'turntable',x:0,y:0,z:27},{id:'garden-entry',x:-27,y:-8,z:-7},{id:'loading-entry',x:12,y:0,z:-34},{id:'bank',x:56,y:-8,z:20},
-  {id:'benches',x:94,y:0,z:-18},{id:'roof',x:32,y:24,z:22},
+  {id:'benches',x:94,y:0,z:-18},{id:'roof',x:32,y:24,z:6},
   ...cityHives
 ];
 export const foldedPickups=[
@@ -71,14 +73,14 @@ export const foldedPickups=[
   ...cityPickups
 ];
 export const foldedEnemies=[
-  {id:'bank-gunner',x:37,y:-16,z:-10,hp:2,type:'turret',encounter:'garden-bank'},
-  {id:'bank-scout',x:46,y:-16,z:-18,hp:2,type:'scout',encounter:'garden-bank'},
-  {id:'dock-gunner',x:89,y:-8,z:17,hp:2,type:'turret',encounter:'rear-dock'},
-  {id:'dock-scout',x:87,y:-8,z:25,hp:2,type:'scout',encounter:'rear-dock'},
-  {id:'bench-guard',x:73,y:0,z:-24,hp:3,type:'guard',encounter:'test-benches'},
-  {id:'bench-scout',x:75,y:0,z:-18,hp:2,type:'scout',encounter:'test-benches'},
-  {id:'upper-gunner',x:96,y:8,z:-61,hp:2,type:'turret',encounter:'carrier-brake'},
-  {id:'upper-scout',x:88,y:8,z:-63,hp:2,type:'scout',encounter:'carrier-brake'},
+  {id:'bank-gunner',x:36,y:-16,z:-18,hp:2,type:'sniper',encounter:'garden-bank'},
+  {id:'bank-scout',x:44,y:-16,z:-19,hp:2,type:'scout',encounter:'garden-bank'},
+  {id:'dock-gunner',x:89,y:-8,z:17,hp:3,type:'artillery',encounter:'rear-dock'},
+  {id:'dock-scout',x:87,y:-8,z:25,hp:2,type:'skirmisher',encounter:'rear-dock'},
+  {id:'bench-guard',magneticShield:true,x:73,y:0,z:-24,hp:3,type:'guard',encounter:'test-benches'},
+  {id:'bench-scout',x:75,y:0,z:-18,hp:3,type:'welder',encounter:'test-benches'},
+  {id:'upper-gunner',x:96,y:8,z:-61,hp:2,type:'sniper',encounter:'carrier-brake'},
+  {id:'upper-scout',x:88,y:8,z:-63,hp:2,type:'miner',encounter:'carrier-brake'},
   {id:'track-scout',x:148,y:16,z:-86,hp:2,type:'scout'},
   ...cityEnemies
 ];
@@ -93,6 +95,8 @@ export function foldedSupport(x,z,y,deployed=false,lifts=[]){
   for(const d of [...foldedDecks,...lifts]){
     if(d.water&&!deployed||!inRect(x,z,d))continue;
     const height=deckHeight(d,z);
+    // A recessed shaft bottom is not a boarding surface while its platform is away.
+    if(!d.stops&&lifts.some(l=>inRect(x,z,l)&&Math.abs(height-l.stops[0])<.01))continue;
     // At a ramp seam, step onto the higher reachable surface instead of sticking
     // to a coplanar landing underneath it. Other floors remain out of reach.
     if(Math.abs(height-y)<=.45&&(!best||height>best.height))best={...d,height};
@@ -135,7 +139,7 @@ export function releaseFolded(id,kind,p,state,lifts){
   if(id==='pump'&&(p.pumpPressure||0)<.8)return false;
   const inside={'emitter-cage':24,'last-cage':-40,'loading-return':-8,'freight-return':0};
   if(id in inside&&Math.abs(p.y-inside[id])>.5)return false;
-  if(id==='magnet'&&(kind!=='magnet'||!p.magnet))return false;
+  if(c.kind==='magnet'&&(kind!=='magnet'||!p.magnet))return false;
   if(id==='brake'&&!lifts.some(l=>l.id==='carrier'&&Math.abs(l.y-16)<.15))return false;
   if(id==='cage'&&(!p.phoenix||Math.abs(p.y-24)>.5))return false;
   if(id==='gangway'&&(p.x<76||Math.abs(p.y+8)>.5))return false;

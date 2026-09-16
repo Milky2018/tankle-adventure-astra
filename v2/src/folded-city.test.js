@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
-import {initialFoldedState,moveFolded,foldedSupport,foldedBlocked,foldedDecks,foldedLiftDefs,releaseFolded,inRect,deckHeight} from './folded-layout.js';
+import {initialFoldedState,moveFolded,foldedSupport,foldedBlocked,foldedDecks,foldedEnemies,foldedPickups,foldedLiftDefs,releaseFolded,inRect,deckHeight} from './folded-layout.js';
 import {cityBelts} from './folded-city-layout.js';
 import {cityDamage,cityContact} from './folded-combat.js';
 
@@ -29,30 +29,32 @@ test('awakening branches, reclaim route, Overdrive return and foundry exit conne
   travel(p,s,[[0,52],[36,52],[36,49]]);releaseFolded('relay-east','cannon',p,s,[]);s.relays=true;
   travel(p,s,[[36,52],[-55,52],[-55,128],[-30,128]]);assert.equal(p.y,-16);
   s.prototype=s['overdrive-return']=true;p.overdrive=true;
-  travel(p,s,[[-20,128],[-20,86],[0,86]]);assert.equal(p.y,-8);
+  travel(p,s,[[-20,128],[-20,86],[0,86]],{boost:true});assert.equal(p.y,-8);
+  for(let i=0;i<240;i++){p.clock+=1/60;updateHeat(p,1/60,p.clock,false,false);}
   travel(p,s,[[0,49]],{boost:true});s.foundry=true;
   travel(p,s,[[24,49],[24,4],[10,4],[10,27]]);assert.equal(p.y,0);
 });
 
 test('Magnet training and the unassisted Mortar route preserve dry access',()=>{
-  const s=initialFoldedState(),p=player(0,0,27,{overdrive:true});
+  const s=initialFoldedState({'bridge-crane':true}),p=player(0,0,27,{overdrive:true});
   const lift={...foldedLiftDefs.find(l=>l.id==='training'),y:0};
   travel(p,s,[[-38,27]],{lifts:[lift]});p.y=lift.y=8;s.ratchet=true;
-  travel(p,s,[[-50,27],[-50,34],[-50,70],[-38,70],[-38,40],[-26,40],[-26,27],[0,27]],{lifts:[lift]});
+  travel(p,s,[[-50,27],[-50,33],[-50,27],[-38,27]],{lifts:[lift]});
+  p.y=lift.y=0;travel(p,s,[[-26,27],[0,27]],{lifts:[lift]});
   assert.equal(p.y,0);
   travel(p,s,[[0,-34],[-12,-34],[-12,-72],[-8,-72]],{boost:false});
   travel(p,s,[[34,-72]],{boost:true});assert.equal(p.y,-8);
 });
 
 test('Mortar opens the outer ring and its inside return without giving the emitter before Phoenix',()=>{
-  const s=initialFoldedState({freight:true}),p=player(0,0,-34,{overdrive:true,mortar:true});
-  travel(p,s,[[42,-34],[42,-70],[62,-70],[62,-34],[70,-34],[70,-18],[90,-18]]);
+  const s=initialFoldedState({freight:true,'bridge-crane':true}),p=player(0,0,-34,{overdrive:true,mortar:true});
+  travel(p,s,[[59,-34],[59,-84],[67,-84],[67,-34],[70,-34],[70,-18],[90,-18]]);
   assert.equal(p.y,0);assert.ok(releaseFolded('freight-return','cannon',p,s,[]));
-  travel(p,s,[[70,-18],[70,-34],[42,-34],[42,-106],[76,-106]]);
+  travel(p,s,[[70,-18],[70,-34],[59,-34],[59,-106],[76,-106]]);
   for(let i=0;i<300;i++){updateHeat(p,1/60,i/60,true,true);moveFolded(p,BASE_SPEED*p.speed/60,0,s);}
-  assert.ok(p.x<78,'the Phoenix lock is visible near the entrance, before the long span');
+  assert.ok(p.x<88,'the Phoenix lock is visible near the entrance, before the long span');
   assert.equal(s['optics-outer'],false);
-  travel(p,s,[[42,-106]]);p.phoenix=true;p.heat=0;p.overheated=false;
+  travel(p,s,[[59,-106]]);p.phoenix=true;p.heat=0;p.overheated=false;
   travel(p,s,[[206,-106]],{boost:true});
   assert.equal(s['optics-outer'],true);
   travel(p,s,[[206,-90],[218,-90],[218,-84],[218,-50]]);
@@ -60,11 +62,11 @@ test('Mortar opens the outer ring and its inside return without giving the emitt
 });
 
 test('Phoenix opens independent optical and circulation paths and all pre-guardian optical returns',()=>{
-  const s=initialFoldedState(),p=player(132,24,-30,{overdrive:true,phoenix:true});
+  const s=initialFoldedState(),p=player(136,24,-30,{overdrive:true,phoenix:true});
   travel(p,s,[[228,-30]],{boost:true});assert.ok(s.optics);
-  travel(p,s,[[228,-20],[228,-66],[64,-66],[64,-86]]);assert.equal(p.y,24);
+  travel(p,s,[[242,-20],[242,-30],[254,-30],[254,-98],[64,-98],[64,-86]]);assert.equal(p.y,24);
   assert.ok(releaseFolded('emitter-cage','cannon',p,s,[]));assert.equal(s.guardian,false);
-  travel(p,s,[[64,-66],[228,-66],[228,-20]]);s.gallery=true;assert.ok(releaseFolded('garden-optical','laser',p,s,[]));assert.ok(releaseFolded('yard-optical','laser',p,s,[]));
+  travel(p,s,[[64,-98],[254,-98],[254,-30],[242,-30],[242,-20],[228,-20]]);s.gallery=true;assert.ok(releaseFolded('garden-optical','laser',p,s,[]));assert.ok(releaseFolded('yard-optical','laser',p,s,[]));
   travel(p,s,[[242,-20],[242,6],[230,6],[230,38],[202,38],[202,6],[110,6]]);assert.equal(p.y,16);
   assert.ok(s['garden-optical']&&s['yard-optical']);assert.equal(s.guardian,false);
 });
@@ -77,11 +79,17 @@ test('Phoenix alone reaches the dry circulation rig from its roof branch',()=>{
   travel(p,s,[[242,120],[222,120]]);assert.equal(p.y,-24);assert.equal(p.mortar,false);assert.equal(p.flotation,false);assert.equal(p.laser,false);
 });
 
-test('Circulation opens its own industrial return before taking the separate inner lane',()=>{
+test('Circulation opens its own return but the inner lane also needs the optical release',()=>{
   const s=initialFoldedState(),p=player(214,-24,128,{overdrive:true,phoenix:true,circulation:true});
   travel(p,s,[[211,128],[211,25],[211,13],[218,13]],{boost:true});assert.equal(p.y,-16);
   assert.ok(releaseFolded('pressure-return','cannon',p,s,[]));
   travel(p,s,[[234,13],[254,13],[254,120],[266,120]]);
+  for(let i=0;i<240;i++)moveFolded(p,0,-.2,s);
+  assert.ok(p.z>112,'Circulation cannot bypass the optical shutter');
+  assert.equal(releaseFolded('inner-optics','cannon',p,s,[]),false);
+  assert.equal(releaseFolded('inner-optics','mortar',p,s,[]),false);
+  assert.ok(releaseFolded('inner-optics','laser',p,s,[]));
+  travel(p,s,[[266,120]]);
   travel(p,s,[[266,6]],{boost:true});assert.equal(p.y,-40);
   travel(p,s,[[44,6],[44,-10]]);assert.ok(releaseFolded('last-cage','cannon',p,s,[]));
   travel(p,s,[[34,-10],[34,6],[34,68],[0,68],[0,48]]);assert.equal(p.y,-56);
@@ -90,7 +98,7 @@ test('Circulation opens its own industrial return before taking the separate inn
 
 test('the ordinary Phoenix heat budget cannot cross either sustained belt even with repeated cooling',()=>{
   for(const [x,z,y,end]of [[211,128,-24,28],[266,128,-24,16]]){
-    const p=player(x,y,z,{overdrive:true,phoenix:true}),s=initialFoldedState();let farthest=z;
+    const p=player(x,y,z,{overdrive:true,phoenix:true}),s=initialFoldedState({'inner-optics':true});let farthest=z;
     for(let i=0;i<60*90;i++){
       updateHeat(p,1/60,i/60,!p.overheated,true);
       const b=cityBelts.find(b=>inRect(p.x,p.z,b)&&Math.abs(deckHeight(b,p.z)-p.y)<.5);
@@ -146,4 +154,32 @@ test('the early industrial spur exposes its Phoenix lock before the long approac
   assert.ok(p.x<62);assert.equal(s.pressure,false);
   travel(p,s,[[30,4]]);p.phoenix=true;p.heat=0;p.overheated=false;
   travel(p,s,[[76,4]],{boost:true});assert.equal(s.pressure,true);
+});
+
+
+test('combat spawns and ability cradles have a clear camera view without floor cutaways',()=>{
+  // Intersect the real orthographic camera direction with flat and sloped decks.
+  // Sample a four-unit cross around each machine, not just its center pixel.
+  const q=28/39.6;
+  for(const target of [...foldedEnemies,...foldedPickups])for(const [ox,oz]of [[0,0],[-2,0],[2,0],[0,-2],[0,2]]){
+    for(const d of foldedDecks){
+      if(d.water)continue;
+      const slope=(d.rise||0)/d.d;
+      const dy=(d.y+slope*(target.z+oz-d.z)-target.y-1.5)/(1-q*slope);
+      if(dy<=3)continue;
+      assert.equal(inRect(target.x+ox+dy*q,target.z+oz+dy*q,d),false,`${target.id} is screened by ${d.id}`);
+    }
+  }
+});
+
+test('the relocated freight ramps do not allow boarding the carrier behind the Mortar lock',()=>{
+  const s=initialFoldedState({freight:true,'bridge-crane':true}),p=player(67,8,-84);
+  const carrier={...foldedLiftDefs.find(l=>l.id==='carrier'),y:8};
+  for(let i=0;i<130;i++){
+    const z=-78+i*.2,spawn=foldedSupport(67,z,8-(z+78)*8/38);
+    if(!spawn)continue;
+    Object.assign(p,{x:67,y:spawn.height,z});
+    for(let step=0;step<120;step++)moveFolded(p,.15,0,s,[carrier]);
+    assert.ok(p.x<72,`ramp reached the carrier at ${p.x},${p.y},${p.z}`);
+  }
 });

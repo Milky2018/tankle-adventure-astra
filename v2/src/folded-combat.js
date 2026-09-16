@@ -12,7 +12,8 @@ export function cityDamage(e,amount,origin,kind='cannon',part=null){
     const dealt=Math.min(exposed.hp,amount);exposed.hp-=dealt;
     return dealt;
   }
-  if(!red&&kind!=='mortar'&&e.type==='guard'&&!e.guardian&&e.phase!=='vent'&&Math.cos(angleDelta(Math.atan2(origin.x-e.x,origin.z-e.z),e.aim))>.55)amount*=.4;
+  if(!red&&kind!=='mortar'&&e.type==='reflector'&&Math.cos(angleDelta(Math.atan2(origin.x-e.x,origin.z-e.z),e.aim))>.55)return 0;
+  if(!red&&kind!=='mortar'&&e.type==='guard'&&!e.guardian&&!e.shieldRemoved&&e.phase!=='vent'&&Math.cos(angleDelta(Math.atan2(origin.x-e.x,origin.z-e.z),e.aim))>.55)amount*=.4;
   return Math.min(e.hp,amount);
 }
 export function cityContact(p,e){

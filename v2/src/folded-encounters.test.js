@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {foldedEnemies,foldedHives,initialFoldedState,moveFolded,releaseFolded} from './folded-layout.js';
+import {ENEMY_KINDS} from './folded-enemies.js';
 
 function sail(p,state,points){
   for(const [x,z] of points){
@@ -28,8 +29,8 @@ test('ordinary encounters mix close pressure and ranged support outside Hive rec
   const groups=Map.groupBy(foldedEnemies.filter(e=>e.encounter),e=>e.encounter);
   for(const [id,enemies] of groups){
     assert.ok(enemies.length>=2&&enemies.length<=3,`${id} remains a small squad`);
-    assert.ok(enemies.some(e=>e.type==='scout'||e.type==='guard'),`${id} has close pressure`);
-    assert.ok(enemies.some(e=>e.type==='turret'||e.type==='guard'),`${id} has ranged support`);
+    assert.ok(enemies.some(e=>ENEMY_KINDS[e.type].role==='pressure'),`${id} has close pressure`);
+    assert.ok(enemies.some(e=>['shot','shield-shot','burst','rail','lob','reflect'].includes(ENEMY_KINDS[e.type].attack)),`${id} has ranged support`);
     for(const a of enemies)for(const b of enemies){
       assert.ok(Math.hypot(a.x-b.x,a.z-b.z)<=20,`${id} can support its own members`);
       assert.equal(a.y,b.y,`${id} starts on one readable floor`);

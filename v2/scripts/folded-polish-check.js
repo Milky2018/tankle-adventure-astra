@@ -28,16 +28,16 @@ window.__polish={
   }
   const before=await page.evaluate(()=>__polish.belt());await page.evaluate(()=>__game.step(.2));const after=await page.evaluate(()=>__polish.belt());
   result.slopedBelts=after.filter(b=>Math.abs(b.slope)>.01);if(!result.slopedBelts.some(b=>b.phase!==before.find(a=>a.id===b.id).phase))throw Error('Sloped belt animation missing');
-  await page.evaluate(()=>{__game.scenario({player:{x:-25,y:-8,z:85,weapon:'cannon',heat:0,overheated:false,lastHeat:-100,lastShot:-100},enemies:{'foundry-west-scout':1}});__game.aimAt(-35,85,-6.5);__game.fire();__game.step(.9);});
+  await page.evaluate(()=>{__game.scenario({player:{x:-13,y:-8,z:85,weapon:'cannon',heat:0,overheated:false,lastHeat:-100,lastShot:-100},enemies:{'foundry-west-scout':1}});__game.aimAt(-23,85,-6.5);__game.fire();__game.step(.9);});
   result.wreck=await page.evaluate(()=>__polish.enemy('foundry-west-scout'));if(result.wreck.hp!==0||!result.wreck.visible||result.wreck.height>.4)throw Error('Enemy defeat has no lasting wreck feedback');
-  await page.evaluate(()=>__polish.carrier(8));result.brakeClosed=await page.evaluate(()=>__polish.brake());await page.evaluate(()=>__polish.carrier(16));result.brakeReady=await page.evaluate(()=>__polish.brake());
+  await page.evaluate(()=>{__game.scenario({state:{brake:false}});__polish.carrier(8);});result.brakeClosed=await page.evaluate(()=>__polish.brake());await page.evaluate(()=>__polish.carrier(16));result.brakeReady=await page.evaluate(()=>__polish.brake());
   if(result.brakeClosed.cover>.01||result.brakeReady.cover<1.3||result.brakeClosed.color===result.brakeReady.color)throw Error('Carrier brake availability is not visible');
   await page.evaluate(()=>{__game.scenario({player:{x:78,y:8,z:-71,weapon:'cannon',heat:0,overheated:false,lastShot:-100},state:{brake:false}});__polish.carrier(8);__game.step(.01);});
   await page.keyboard.press('e');await page.evaluate(()=>__game.step(2.5));
   const automatic=await page.evaluate(()=>__game.snapshot());if(automatic.player.y!==16)throw Error('Manual input interrupted the automatic demonstration');
   await page.evaluate(()=>{__game.aimAt(78,-77.7,18);__game.fire();__game.step(.3);});
   if(!(await page.evaluate(()=>__game.snapshot())).state.brake)throw Error('Aligned carrier brake cannot be released');
-  await page.keyboard.press('e');await page.evaluate(()=>__game.step(2));
-  if((await page.evaluate(()=>__game.snapshot())).player.y!==8)throw Error('Released carrier did not enable manual return');result.carrierModes=true;
+  result.carrierModes=await page.evaluate(()=>{const levels=[];for(let i=0;i<80;i++){__game.step(.2,false);levels.push(__game.snapshot().player.y);}return {min:Math.min(...levels),max:Math.max(...levels)};});
+  if(result.carrierModes.min!==8||result.carrierModes.max!==16)throw Error('Released carrier did not keep cycling');
   if(errors.length)throw Error(JSON.stringify(errors));return {...result,errors};
 }

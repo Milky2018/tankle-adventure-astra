@@ -24,7 +24,7 @@ async page=>{
   await openMenu();await page.getByRole('button',{name:/货运路线入口/}).click();s=await game();
   if(!s.player.overdrive||!s.player.mortar||s.player.magnet||s.player.y!==0)throw Error('Freight preview loadout changed');
   await openMenu();await page.getByRole('button',{name:'继续旅程',exact:true}).click();s=await game();
-  if(s.player.x!==32||s.player.y!==24||s.player.z!==22||!s.player.circulation)throw Error('Continue did not restore the campaign checkpoint');
+  if(s.player.x!==32||s.player.y!==24||s.player.z!==6||!s.player.circulation)throw Error('Continue did not restore the campaign checkpoint');
   const protectedSaves=await page.evaluate(()=>Object.fromEntries(['foundry','garden','freight'].map(id=>{const key=`furnace-born-v2-folded-${id}`;return [key,localStorage.getItem(key)];})));
   await openMenu();const beforeReset=await page.evaluate(()=>localStorage.getItem('furnace-born-v2-city'));
   await page.getByRole('button',{name:'从第一关开始',exact:true}).click();

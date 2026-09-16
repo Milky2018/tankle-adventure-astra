@@ -4,7 +4,7 @@ async page=>{
   const runs=[];
   for(const first of ['laser','circulation']){
     await page.evaluate(()=>localStorage.removeItem('furnace-born-v2-folded-freight'));await page.reload();await page.waitForFunction(()=>!!window.__game);
-    await page.evaluate(()=>{const g=window.__game;g.manual(true);g.scenario({player:{x:132,y:24,z:-30,overdrive:true,phoenix:true,mortar:false,magnet:false,flotation:false},state:{phoenix:true,launch:true,brake:true,load:true,cage:true}});});
+    await page.evaluate(()=>{const g=window.__game;g.manual(true);g.scenario({player:{x:136,y:24,z:-30,overdrive:true,phoenix:true,mortar:false,magnet:false,flotation:false},state:{phoenix:true,launch:true,brake:true,load:true,cage:true}});});
     const legs=[];
     async function move(x,z,boost=false){
       const r=await page.evaluate(({x,z,boost})=>{
@@ -14,7 +14,7 @@ async page=>{
           const keys=Math.abs(dx)>Math.abs(dz)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD'];if(boost)keys.push('ShiftLeft');
           const e=s.enemies.find(e=>e.hp>0&&e.readable&&!['guardian','keeper'].includes(e.id)&&Math.abs(e.y-p.y)<3&&Math.hypot(e.x-p.x,e.z-p.z)<24);
           if(e&&!boost){g.aimAt(e.x,e.z,e.y+1.5);keys.push('Mouse0');}
-          g.setInput(keys);g.step(1/30,false);if(g.snapshot().player.hp<=0)return {error:'died',s:g.snapshot()};
+          g.setInput(keys);g.step(Math.hypot(dx,dz)<2?1/120:1/30,false);if(g.snapshot().player.hp<=0)return {error:'died',s:g.snapshot()};
         }return {error:'stuck',s:g.snapshot()};
       },{x,z,boost});if(r.error)throw Error(first+' to '+x+','+z+' '+JSON.stringify(r));legs.push(r);
     }
@@ -25,15 +25,16 @@ async page=>{
       if(!s.state[id])throw Error(first+' latch '+id+' '+JSON.stringify({p:s.player,aim:s.aim}));
     }
     async function getLaser(){
-      await move(132,-30);await settle();await move(228,-30,true);await move(228,-20);await use();
+      await move(136,-35);await move(136,-30);await settle();await move(228,-30,true);await move(228,-20);await use();
       if(!(await page.evaluate(()=>__game.snapshot())).player.laser)throw Error('Laser acquisition');
       await move(202,-24);await use();await move(216,-20);await shoot(216,-4,26,'gallery','laser');
-      await move(228,-20);await move(228,-66);await move(64,-66);await move(64,-86);await shoot(63,-86,25.4,'emitter-cage');
+      await move(242,-20);await move(242,-4);await shoot(238,-4,25.3,'mirror-index');await move(242,-20);await move(216,-20);await shoot(216,-4,26,'garden-optical','laser');
+      await move(242,-20);await move(242,-30);await move(254,-30);await move(254,-98);await move(64,-98,true);await move(64,-86);await shoot(63,-86,25.4,'emitter-cage');
       await settle(7);await move(52,-86);await use();await settle(7);await move(52,-72);await move(40,-72);
       if((await page.evaluate(()=>__game.snapshot())).player.y!==-8)throw Error('C08 did not return to loading apron');
-      await use();await settle(7);await move(52,-72);await move(52,-86);await use();await settle(7);await move(64,-86);await move(64,-66);await move(228,-66);await move(228,-20);
+      await use();await settle(7);await move(52,-72);await move(52,-86);await use();await settle(7);await move(64,-86);await move(64,-98);await move(254,-98,true);await move(254,-30);await move(242,-30);await move(242,-20);await move(228,-20);
       await move(242,-20);await move(242,6);await move(230,6);await move(230,38);
-      await shoot(206,32,17.5,'garden-optical','laser');await shoot(228,38,17.5,'yard-optical','laser');
+      await shoot(228,38,17.5,'yard-optical','laser');
       // Both returns open before the tracking guardian.
       if((await page.evaluate(()=>__game.snapshot())).state.guardian)throw Error('Guardian was unexpectedly required');
       await move(202,38);await move(202,6);await move(110,6);await move(110,18);await use();await settle(5);await move(98,18);
@@ -52,10 +53,10 @@ async page=>{
       await getLaser();await settle(5);await move(242,38);await move(242,30);await use();await settle(5);await move(242,42);await rigFromYard();await pressureReturn();
     }else{
       await move(166,-30);await move(166,-64);await settle();await move(166,30,true);await move(174,30);await move(174,-18);await move(190,-18);await move(190,30);await rigFromYard();await pressureReturn();
-      await move(211,8);await move(211,18);await move(134,18);await move(134,30);await move(122,30);await move(122,-30);await move(110,-30);await move(110,4);await move(10,4);await move(10,18);await use();await settle(5.5);await move(24,20);await move(32,20);await move(32,-28);await getLaser();
+      await move(211,8);await move(211,18);await move(134,18);await move(134,30);await move(122,30);await move(122,-30);await move(110,-30);await move(110,4);await move(10,4);await move(10,18);await use();await settle(5.5);await move(10,12);await move(24,12);await move(32,6);await move(32,-35);await getLaser();
       await settle(5);await move(242,38);await move(242,30);await use();await settle(5);await move(242,48);await move(242,120);await move(254,120);await move(254,13);
     }
-    await move(234,13);await move(234,18);await use();await move(234,13);await move(254,13);await move(254,120);await move(266,120);await move(266,6,true);await move(44,6,true);await move(44,-10);await use();
+    await move(234,13);await move(234,18);await use();await move(234,13);await move(254,13);await move(254,120);await move(254,132);await shoot(254,124,-22,'inner-optics','laser');await move(266,132);await move(266,120);await move(266,6,true);await move(44,6,true);await move(44,-10);await use();
     await shoot(40,-12,-38.6,'last-cage');await settle(9);await move(34,-18);await use();await settle(9);await move(22,-18);await use();await settle(9);await move(22,-4);
     if((await page.evaluate(()=>__game.snapshot())).player.y!==0)throw Error('Final return cage failed');
     await use();await settle(9);await move(22,-18);await use();await settle(9);await move(34,-18);await move(34,6);await move(34,68);await move(0,68);await move(0,52);

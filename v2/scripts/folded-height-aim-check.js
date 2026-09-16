@@ -23,8 +23,8 @@ window.__heightAimProbe={
     const s=await page.evaluate(()=>window.__heightAimProbe.sample());
     return {...s,error:Math.hypot(s.reticle.x-mouse.x,s.reticle.y-mouse.y)};
   }
-  await setup({x:0,y:0,z:27});
-  const point=await page.evaluate(()=>window.__game.project(22,20,24));
+  await setup({x:0,y:0,z:18});
+  const point=await page.evaluate(()=>window.__game.project(18,12,24));
   const samples=[];
   // Sweep across the raised landing and its silhouette, including unreachable angles.
   for(let dx=-200;dx<=200;dx+=10){
@@ -43,13 +43,13 @@ window.__heightAimProbe={
   if(moving.some(s=>s.error>1||s.drift>1e-5||Math.abs(s.pitch)>40.001*Math.PI/180))throw Error('Movement used a stale camera or player pose: '+JSON.stringify(moving));
   if(Math.hypot(moving.at(-1).player.x-moving[0].player.x,moving.at(-1).player.z-moving[0].player.z)<.5)throw Error('Movement fixture was blocked');
   // A held shot must follow the visible, constrained barrel, not the high cursor target.
-  await setup({x:0,y:0,z:27});await page.mouse.move(point.x,point.y);await page.evaluate(()=>window.__game.step(1/60));
+  await setup({x:0,y:0,z:18});await page.mouse.move(point.x,point.y);await page.evaluate(()=>window.__game.step(1/60));
   await page.mouse.down();
   const shots=await page.evaluate(()=>window.__heightAimProbe.shot());await page.mouse.up();
   const shot=shots.at(-1),barrel=await page.evaluate(()=>window.__heightAimProbe.barrel());
   if(!shot||shot.mortar||Math.abs(Math.asin(shot.dir.y)-40*Math.PI/180)>1e-4)throw Error('Shot ignored elevation limit: '+JSON.stringify(shot));
   if(Math.hypot(shot.dir.x-barrel.x,shot.dir.y-barrel.y,shot.dir.z-barrel.z)>1e-5)throw Error('Shot and barrel disagree');
-  await setup({x:0,y:0,z:27,weapon:'laser',laser:true});await page.mouse.move(point.x,point.y);
+  await setup({x:0,y:0,z:18,weapon:'laser',laser:true});await page.mouse.move(point.x,point.y);
   await page.mouse.down();await page.evaluate(()=>window.__game.step(1/60));
   const laser=await page.evaluate(()=>window.__game.snapshot().laserSegments);await page.mouse.up();
   const laserPitch=Math.atan2(laser[4]-laser[1],Math.hypot(laser[3]-laser[0],laser[5]-laser[2]));

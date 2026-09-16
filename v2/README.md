@@ -24,13 +24,15 @@ The production output is `dist/`; it can be served by any static web server. A w
 
 ## Folded city
 
-The complete journey at `/?chapter=folded` uses `furnace-born-v2-city`, a separate save from the earlier journey. Seven regions now share one supporting-height world: the Foundry, transit hub, submerged gardens, observatory, Testworks, circulation works and the predecessor/furnace chambers. Acquire all eight abilities in the world. Flotation or Mortar independently leads to Phoenix, then Laser and Circulation can be acquired in either order. Twelve permanent returns reconnect familiar places through supported paths and callable lifts. Defeating the keeper opens voluntary docking; Continue restores the final refuge for exploration.
+The complete journey at `/?chapter=folded` uses `furnace-born-v2-city`, a separate save from the earlier journey. Seven regions now share one supporting-height world: the Foundry, transit hub, submerged gardens, observatory, Testworks, circulation works and the predecessor/furnace chambers. Cannon is starting equipment; seven modules can be found in the world. Mortar sits at the turntable bridge mouth and opens the dry freight approach. The optional Magnet/Flotation route approaches the same benches from the water. Both approaches use Mortar at the screened carrier load before Phoenix. Laser and Circulation can then be acquired in either order; their optical shutter and sustained conveyor converge on the inner route. Twelve permanent returns reconnect familiar places through supported paths and callable lifts. Defeating the keeper opens voluntary docking; Continue restores the final refuge for exploration.
 
 Independent previews are available at `/?chapter=folded&route=foundry`, `/?chapter=folded&route=garden`, and `/?chapter=folded&route=freight`. First-region play begins at awakening with Cannon only. The Garden preview begins at its magnetic entrance Hive; the freight preview begins beside its first Mortar enclosure. They carry Overdrive plus Magnet or Mortar respectively. Each uses its own `furnace-born-v2-folded-<route>` save; choosing a preview in the menu resets only that preview to its entrance. Directly reloading its URL continues its saved checkpoint.
 
 The full map has graphical controls for discovered floors; selecting a layer does not move the tank or its aim. Ordinary shots, movement and the owned abilities operate machinery. Modules install on contact; E also acquires them from nearby and handles repairs, calls and optional restoration; holding E at the final socket commits to docking after its visible alignment sequence.
 
-The `scripts/folded-*-check.js` callbacks use the Playwright CLI with the development-only `?test` interface. They cover early acquisition, both late branch orders, continuous travel, physical returns, real keyboard/mouse interactions, combat, rendering and recovery. They clear only their named saves in the dedicated test browser. See [IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md) for the distinction between route fixtures, unchanged enemy encounters and rendering measurements.
+Released lifts cycle automatically with a three-second dwell at each landing. Saturated blue marks magnetic fittings, removable cover, shield plates, mines and interceptable artillery shells; ordinary mechanism lamps change from yellow to green. Magnetic scanning has visible and audible feedback even without a target. Ten ordinary enemy archetypes combine charges, firing lanes, bursts, rail shots, arcing blasts, mines, flame sweeps, repair and reflection. The optical route develops single reflection into an indexed two-mirror return and reflected rear attacks against the guardian.
+
+The `scripts/folded-*-check.js` callbacks use the Playwright CLI with the development-only `?test` interface. `folded-progression-check.js` runs three complete new-save journeys (dry/Laser-first, dry/Circulation-first and water/Circulation-first) without scenario-assigned abilities, positions, health or progression flags. `folded-progression-gates-check.js` separately probes rejected Cannon angles and accepted Mortar/reflected-Laser shots in isolated fixtures. The remaining checks cover early acquisition, both late branch orders, continuous travel, physical returns, real keyboard/mouse interactions, combat, rendering and recovery. They clear only their named saves in the dedicated test browser. See [IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md) for the distinction between route fixtures, unchanged enemy encounters and rendering measurements.
 
 ## Controls
 
@@ -40,7 +42,7 @@ The `scripts/folded-*-check.js` callbacks use the Playwright CLI with the develo
 | Mouse | Independent turret aim |
 | Left click | One Cannon/Mortar shot; hold to fire Laser |
 | Q, after weapon acquisition | Cycle through owned Cannon / Mortar / Laser |
-| Right mouse, after magnetic acquisition | Hold to pull the aimed rail or light enemy |
+| Right mouse, after magnetic acquisition | Scan and pull blue magnetic targets in the folded city; pull rails or light enemies in the earlier journey |
 | F, after acquisition | Deploy / retract Flotation on supported ground; cross water while deployed |
 | Shift, after acquisition | Hold Overdrive / Phoenix while moving |
 | E, near a Hive, module, or lever | Repair and save, acquire a tool, or operate the mechanism |

@@ -10,7 +10,7 @@ async page=>{
     demo:document.querySelector('#acquired>svg')?.innerHTML,keys:[...document.querySelectorAll('#acquired kbd')].map(k=>k.dataset.button)
   }));}
   let s=await hud();if(s.cards.length!==1||s.cards[0].id!=='cannon'||!s.cards[0].selected)throw Error('Fresh save exposed unowned abilities');
-  const pickups=[['overdrive',-30,-16,128],['magnet',-50,8,33],['mortar',34,-8,-72],['flotation',-46,-8,-7],['phoenix',77,16,-87],['laser',228,24,-20],['circulation',222,-24,117]];
+  const pickups=[['overdrive',-30,-16,128],['magnet',-50,8,33],['mortar',0,0,12],['flotation',-46,-8,-7],['phoenix',77,16,-87],['laser',228,24,-20],['circulation',222,-24,117]];
   const demonstrations=[];
   for(const [id,x,y,z]of pickups){
     await page.evaluate(({x,y,z})=>{window.__game.scenario({player:{x,y,z,hp:50},state:{prototype:true},enemies:{prototype:0}});window.__game.step(0);},{x,y,z});
