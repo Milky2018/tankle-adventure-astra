@@ -1,7 +1,7 @@
 async page=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));const runs=[];
  for(const [approach,first]of [['dry','laser'],['dry','circulation'],['water','circulation']]){
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&test');await page.waitForFunction(()=>window.__game);
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>window.__game);
   await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');localStorage.removeItem('furnace-born-v2-settings');});await page.reload();await page.waitForFunction(()=>window.__game);await page.evaluate(()=>__game.manual(true));
   const legs=[],milestones=[];
   async function choose(weapon){

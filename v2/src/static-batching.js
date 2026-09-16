@@ -4,7 +4,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 export const STATIC_CELL_SIZE = 32;
 const slabGeometry = new Map();
 
-export function batchStatic(fixed) {
+export function batchStatic(fixed,{preserveGeometry=false}={}) {
   fixed.updateWorldMatrix(true,true);
   const inverse=new T.Matrix4().copy(fixed.matrixWorld).invert(),center=new T.Vector3(),groups=new Map();
   const collect=(mesh,geometry,worldMatrix)=>{
@@ -19,7 +19,7 @@ export function batchStatic(fixed) {
   fixed.traverseVisible(mesh=>{
     if(!mesh.isMesh)return;
     const g=mesh.geometry,p=g.parameters;
-    if((g.type==='BoxGeometry'||g.type==='RoundedBoxGeometry')&&(p.width>STATIC_CELL_SIZE||p.depth>STATIC_CELL_SIZE)){
+    if(!preserveGeometry&&(g.type==='BoxGeometry'||g.type==='RoundedBoxGeometry')&&(p.width>STATIC_CELL_SIZE||p.depth>STATIC_CELL_SIZE)){
       // Flat segments meet without interior bevel seams; collider bounds stay independent.
       for(let x=0;x<p.width;x+=STATIC_CELL_SIZE)for(let z=0;z<p.depth;z+=STATIC_CELL_SIZE){
         const w=Math.min(STATIC_CELL_SIZE,p.width-x),d=Math.min(STATIC_CELL_SIZE,p.depth-z),key=[w,p.height,d].join('/');
@@ -45,20 +45,20 @@ export function batchStatic(fixed) {
     }
     const remaining=[];
     for(const [geometry,instances] of byGeometry){
-      if(instances.length>=4&&!source.material.transparent){
+      if(instances.length>=4&&!source.material.transparent&&!preserveGeometry){
         const mesh=new T.InstancedMesh(geometry,source.material,instances.length);
         instances.forEach((entry,i)=>mesh.setMatrixAt(i,entry.matrix));
         mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingBox();mesh.computeBoundingSphere();add(mesh,source,key);
       }else remaining.push(...instances);
     }
-    if(remaining.length&&!source.material.transparent){
+    if(remaining.length&&!source.material.transparent&&!preserveGeometry){
       const geometries=remaining.map(entry=>entry.geometry.clone().applyMatrix4(entry.matrix));
       const mesh=new T.Mesh(mergeGeometries(geometries),source.material);
       mesh.geometry.computeBoundingBox();mesh.geometry.computeBoundingSphere();add(mesh,source,key);
       for(const geometry of geometries)geometry.dispose();
       continue;
     }
-    // Transparent objects retain per-instance sorting and culling across cells.
+    // Preserve individual geometry/transforms for textured surfaces and transparent sorting.
     const batchKey=key.split('/').slice(2).join('/');
     if(!batches.has(batchKey))batches.set(batchKey,[]);
     batches.get(batchKey).push(...remaining);

@@ -398,3 +398,92 @@ Verification after relocation:
 - Nine isolated views cover both relays, the Mortar cradle, loading apron, garden bank, carrier fight, roof landing/junction and optical return. Screenshots are inspected separately from the geometric tests. A normal-menu freight preview also opens its visible receiver through Q selection and an ordinary mouse click, without the test API. This is a short direct check, not a complete unscripted or blind-player playthrough.
 
 Logs and layout screenshots are under `output/playwright/layout-pass/`; the three completion screenshots remain under `output/playwright/progression/`. Temporary browser sessions are closed after verification, and the existing development server on port 5174 is retained. This revision is not committed.
+
+
+## Third-person camera trial — 2026-09-16
+
+The folded city defaults to a perspective follow camera, with the previous orthographic view selectable in Settings. `folded-camera.js` owns mouse yaw/pitch, camera-relative movement and a retracting boom. Five collision probes use floor and scene geometry, excluding enemies, to protect the camera near plane. Retraction is immediate; extension is damped. Third-person floors use a single opaque depth-writing pass, avoiding the coplanar color/depth artifacts seen when reusing the overhead cutaway from below. Overhead mode retains its original aperture and depth prepass.
+
+The center camera ray supplies the aiming point without target attraction. Existing weapon limits, range and physical shot collision remain. The minimap follows camera heading. Enemy activation in third person uses physical proximity and line of sight rather than requiring the enemy to remain on screen. The view selector preserves the save and does not alter room heights, routes or movement speeds. Pointer capture is released for Settings and the map; browsers rejecting capture retain shooting and movement and offer middle-button drag to look.
+
+Verification:
+
+- All 133 Node tests and the production build pass. The existing shared-chunk size advisory remains. Four new camera tests cover movement bases, retraction/extension, near-plane probes and camera limits.
+- `folded-third-person-check.js` verifies actual mouse look and keyboard travel, a single centered reticle, map/pause capture transitions, view persistence, a shot against a live scout and continued activity behind the camera. It also forces capture denial and checks middle-button look, movement and firing.
+- Isolated fixtures cover opening, canal, furnace underpass, wall, freight ramp and roof views. Real keyboard movement traverses the freight descent and both directions of the Foundry ramp; boarding and riding the automatic carrier reaches its upper stop without another interaction. Screenshots include these views and the lift. No browser errors were reported.
+- The existing overhead height-aim, floor-depth counterfactual and Cannon/Mortar/reflected-Laser gate checks pass after the camera changes. Their URLs now explicitly select overhead, as do the other fixed-camera regression fixtures.
+- Normal-interface inspection in the embedded browser confirmed its capture restriction, the fallback instructions and ordinary movement. This is a camera trial with targeted traversal and combat checks, not a complete third-person campaign playthrough or a blind-player acceptance result.
+
+Artifacts are under `output/playwright/third-person/`. Temporary verification browsers are closed after testing; the existing development server on port 5174 is retained.
+
+
+## Save-point camera obstruction repair — 2026-09-16
+
+The save-point posts reproduced the reported dark screen. Walking across the awakening Hive at `z = 85.2` collapsed the boom from 11.67 to 0.3 units: the repair assembly was treated as a solid camera wall even though the Tank can overlap its posts. The shortened camera then looked directly through the opaque post. The new keyboard traversal regression failed with that exact distance before the fix.
+
+Repair assemblies, control props and pickup cradles now use per-mesh sightline fading instead of pushing the camera. Their materials are independent so one obstructing post does not fade the opposite post. A spatial transition begins before a part reaches the sightline; opacity recovers with damping. Floor pads remain visible. The same calculation covers a camera located inside a post. Floors, walls, lifts and structural scenery retain camera collision. Switching to overhead restores its existing occlusion materials. Both views remain supported, as recorded in Gamespec.md.
+
+Verification:
+
+- All 134 Node tests and the production build pass; the existing chunk-size advisory remains. The new opacity test covers camera containment, clear sightlines and a continuous spatial fade.
+- The repaired 75-frame keyboard crossing keeps an 11.67-unit boom, including the previously failing post positions. An inside-post camera fixture remains readable, with the obstructing post at 16 percent opacity and the opposite post fully opaque after recovery. The dedicated check also exercises a full orbit, wall/ceiling clearance and material restoration when switching to overhead. Screenshots were visually inspected. The overhead floor-depth counterfactual also passes, with no browser errors.
+- The broader third-person browser check passes for captured mouse look, camera-relative driving, shooting, map/pause capture, the capture-denied fallback, ramp travel and automatic lift boarding/riding. A headed verification browser initially rejected pointer capture; a fresh headless browser passed the captured-input check.
+
+Artifacts and the failing baseline are under `output/playwright/camera-clearance/`. These are targeted camera and traversal checks, not another full campaign playthrough. Temporary test browsers are closed after verification; the user's server on port 5174 remains running.
+
+
+## Adjustable camera settings — 2026-09-16
+
+Settings now opens a compact side panel with an unobscured, paused preview. Third-person controls expose pitch, boom length, height offset and shoulder offset; overhead controls expose elevation angle and orthographic view size. Each mode persists its own bounded numeric preferences and resets independently. Changing a slider redraws without advancing simulation. Resizing while paused also redraws the scene. Third-person pitch is the saved starting angle; ordinary mouse look remains independent during play.
+
+The overhead aperture now receives the actual viewing direction as a uniform. CPU aperture picking and scene-object occlusion use the same direction, keeping the cutaway aligned when the user adjusts the overhead angle. Third-person boom collision and per-part prop fading remain active at customized distances and offsets.
+
+Verification: all 134 Node tests and the production build pass, with the existing chunk-size advisory. `folded-camera-settings-check.js` exercises the actual slider keyboard controls, immediate preview, unchanged simulation time and position, reload persistence, independent resets, maximum-setting ceiling collision, a narrow viewport, and resume. The overhead floor-depth counterfactual and the save-post clearance/orbit/view-restoration check also pass. Screenshots were inspected at 1280×720 and 640×600; logs and images are under `output/playwright/camera-settings/`. No browser errors were reported. Temporary verification browsers are closed afterward; the user's development server remains on port 5174.
+
+
+## Mouse chords, sensitivity and shaded-route lighting — 2026-09-16
+
+The capture-denied fallback reproduced an order-dependent mouse bug: left-then-middle and right-then-middle produced zero yaw change, while the reverse orders rotated normally. Pointer down/up events describe transitions into/out of an active mouse pointer, not each changed button in a chord. Canvas press handling now uses mouse down, document movement handles both captured look and an active middle drag, and mouse up releases each action independently. Captured look remains available during fire or Magnetic Traction.
+
+The third-person camera panel adds a persistent 0.25×–3× mouse sensitivity multiplier, defaulting to 1×. It scales horizontal and vertical look while preserving pitch limits.
+
+Controlled lighting comparisons at the furnace underpass and canal showed that disabling shadows changed sampled image brightness by less than one channel value. Restoring indirect light improved the shaded surfaces substantially. The folded city now shares a neutral ambient fill and a brighter hemisphere ground contribution between both views, retaining directional illumination and shadow casting. This does not add per-frame lights or shadow maps.
+
+Verification:
+
+- `folded-mouse-chord-check.js` passes captured left/right look, both orders of middle+left and middle+right, a three-button chord, firing and visible magnetic scanning during the drag, and independent button release. The same 80-pixel movement produces 0.2 radians at 1× and 0.4 at 2×; preference persistence and reset pass.
+- `folded-lighting-check.js` compares final lighting with the previous lighting at identical paused fixtures in both views. Third-person underpass sample brightness rises from 53.3 to 62.9 and canal from 64.1 to 75.8. All six fixtures retain shadows, have no fully clipped white pixels in the sampled region, and produce no browser errors. These measurements apply to the sampled fixtures, not every room. Before/after images were inspected.
+- All 134 Node tests and the production build pass, with the existing chunk-size advisory. The camera settings check also passes with the added slider, including the narrow viewport and maximum-offset ceiling collision. The overhead floor-depth counterfactual also passes after the lighting change.
+
+Reproduction logs, screenshots and checks are under `output/playwright/camera-input-light/`. Temporary verification browsers are closed after testing; the existing development server on port 5174 remains running.
+
+
+## Folded-city draw submission batching — 2026-09-16
+
+The wide third-person view exposed thousands of individual floor, trim and enemy-part submissions. The renderer now shares floor/trim materials and batches the opaque third-person floor representation and its trim. Batches preserve each textured floor patch's geometry, UVs and transform, with per-object frustum culling. Both camera representations have frozen static transforms. Collision and aim queries retain the original floor meshes.
+
+The overhead view keeps local floor/trim batches and the original depth prepass: global transparent batches cannot interleave correctly with machinery and other floors. Only the active camera representation is drawn. Keeping both representations uses additional geometry storage in exchange for correct transparency in overhead and lower submission cost in third person.
+
+Rigid sibling parts of enemies are merged by material and shadow settings before per-enemy materials are cloned. Wheels, moving tools, removable shields, radiators and articulated groups retain their identities and transforms. Enemy triangles, collision definitions, behavior, weapons and animation are unchanged. Resolution, camera range and live shadow updates remain unchanged.
+
+Validation tooling:
+
+- `folded-render-perf.js` measures real animation-frame simulation and CPU render submission with asynchronous GPU timer queries, using 3 seconds of warm-up and 8 seconds per fixture at 1600 × 900, pixel ratio 1.75. CPU and GPU work overlap and must not be added. These development-build measurements are fixture-specific, not a whole-game frame-rate guarantee.
+- `folded-render-batching-check.js` compares six deterministic fixtures with these batches enabled and disabled. The maximum mean RGB difference is 0.185/255; the largest fraction of pixels differing by more than 30 in a channel is 0.283%. The opening and optics overhead samples are pixel-identical. Screenshots were inspected. Early attempts to combine the overhead depth/color passes or globally batch its transparent trims failed this comparison and are not used.
+- Node regression tests exercise all 12 enemy models, preserving triangles, bounds, moving parts, materials and shadows, plus geometry/UV preservation for textured slabs. All 137 Node tests and the production build pass; the existing bundle-size advisory remains.
+- Browser checks pass the floor-depth counterfactual, save-post fading and structural camera collision, camera settings/view switching, magnetic scanning and shield removal, laser/mirror puzzles, moving conveyors, automatic lifts, and the distinct attacks of all ten ordinary enemy kinds.
+
+Logs and screenshots are under `output/playwright/render-optimization/`.
+
+Remaining validation limits: the older full-scenario check reports turntable micro-camera flicker and an upper-refuge persistence assertion. Both also fail when the pre-optimization world module is restored through browser interception (turntable: 3,553 changed pixels before versus 3,545 after at the same viewport). They are not reported as passing or attributed to this batching change. The pointer-lock-dependent third-person input script was blocked by the browser denying pointer lock; camera clearance, settings, view switching and the other gameplay checks above ran independently.
+
+Final paired measurements (Apple M3 Max, settings above):
+
+| Fixture | Main draws | CPU render ms/frame | CPU reduction | GPU mean ms |
+| --- | ---: | ---: | ---: | ---: |
+| third / opening | 2348 → 1355 | 14.42 → 6.48 | 55.1% | 3.20 → 2.80 |
+| overhead / opening | 345 → 336 | 4.92 → 4.75 | 3.5% | 2.36 → 2.48 |
+| third / hub | 1117 → 670 | 11.06 → 4.73 | 57.2% | 2.62 → 2.38 |
+| third / carrier | 670 → 363 | 8.60 → 3.56 | 58.7% | 2.95 → 2.33 |
+
+The opening third-person main-pass triangle count remains 275,572 in both runs. The primary gain is CPU submission, not polygon reduction. Dedicated verification browsers were closed; the existing user server on port 5174 was retained.

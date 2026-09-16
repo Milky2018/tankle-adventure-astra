@@ -1,6 +1,6 @@
 async page=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&test');await page.waitForFunction(()=>!!window.__game);
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>!!window.__game);
   await page.evaluate(()=>{const g=__game;g.manual(true);g.scenario({player:{x:44,y:-40,z:-10,speed:1,circulation:false,overheated:false,endingTime:0},state:{keeper:true,'last-cage':true}});});
   await page.keyboard.press('e');
   let s=await page.evaluate(()=>__game.snapshot());if(s.state.anchor!=='last-refuge')throw Error('Final refuge not saved');

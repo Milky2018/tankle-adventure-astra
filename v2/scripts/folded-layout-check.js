@@ -1,7 +1,7 @@
 async page=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&test');
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');
   await page.waitForFunction(()=>window.__game);
   await page.evaluate(()=>localStorage.removeItem('furnace-born-v2-city'));
   await page.reload();await page.waitForFunction(()=>window.__game);

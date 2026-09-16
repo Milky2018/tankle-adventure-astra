@@ -13,7 +13,7 @@ window.__heightAimProbe={
   barrel:()=>new T.Vector3(0,0,1).transformDirection(model.barrel.matrixWorld)
 };`});
   });
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&test');
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');
   await page.waitForFunction(()=>!!window.__heightAimProbe);await page.unroute('**/src/folded.js*');
   await page.evaluate(()=>window.__game.manual(true));
   async function setup(player){

@@ -1,6 +1,6 @@
 async page=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&route=freight&test');
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&route=freight&view=overhead&test');
   await page.evaluate(()=>localStorage.removeItem('furnace-born-v2-folded-freight'));await page.reload();await page.waitForFunction(()=>!!window.__game);
   await page.evaluate(()=>window.__game.manual(true));
   async function step(seconds){await page.evaluate(s=>window.__game.step(s),seconds);}

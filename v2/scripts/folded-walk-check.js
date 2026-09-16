@@ -1,6 +1,6 @@
 async page=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&route=garden&test');
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&route=garden&view=overhead&test');
   await page.evaluate(()=>localStorage.removeItem('furnace-born-v2-folded-garden'));await page.reload();await page.waitForFunction(()=>!!window.__game);
   await page.evaluate(()=>window.__game.manual(true));
   const results=[];

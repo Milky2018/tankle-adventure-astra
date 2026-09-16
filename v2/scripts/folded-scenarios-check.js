@@ -18,7 +18,7 @@ window.__foldedProbe={
   worldBytes:()=>{const seen=new Set();let bytes=0;scene.traverse(o=>{if(o.geometry&&!seen.has(o.geometry)){seen.add(o.geometry);for(const a of Object.values(o.geometry.attributes))bytes+=a.array.byteLength;bytes+=o.geometry.index?.array.byteLength||0;}});return bytes;}
 };`});
   });
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&route=garden&test');await page.waitForFunction(()=>!!window.__foldedProbe);await page.unroute('**/src/folded.js*');
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&route=garden&view=overhead&test');await page.waitForFunction(()=>!!window.__foldedProbe);await page.unroute('**/src/folded.js*');
   await page.evaluate(()=>window.__game.manual(true));
   const samples=[];
   for(const [name,x,z,y]of [['turntable',0,27,0],['canal',0,-4,-16],['load',90,-34,2],['carrier',78,-71,16],['roof',24,8,24],['foundry',-30,128,-16],['emitter',216,-20,24],['rig',222,117,-24],['pressure',211,24,-16],['predecessors',44,-10,-40],['furnace',0,0,-56]]){

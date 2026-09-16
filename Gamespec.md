@@ -1774,3 +1774,22 @@ The Foundry's eastern relay stands beside the furnace court, with its guard and 
 The freight approach climbs and descends along the loading apron's eastern edge. Its outside branch still shows a Phoenix obstruction near the entrance, with enough supported run-up to use the acquired engine. The side ramps stay separate from the carrier, preserving the screened Mortar demonstration before Phoenix. The one-way freight return still opens a direct route through the lower bay.
 
 The roof expressway runs north of the shared Mortar cradle and its first screened target. Its refuge and cage coupling occupy the north landing. The optical-to-loading express return follows the observatory's east and north edges, with a straight Phoenix run to the loading cage. This avoids roofing the carrier battle and retains a guardian-independent return. These changes preserve both middle-region orders and the convergence of reflected Laser access with sustained hot traversal.
+
+
+### Third-person and overhead views
+
+The folded city offers a perspective camera behind and above the Tank. Mouse look controls its direction independently of the hull, and WASD moves relative to that direction. A single centered reticle retains the Heat ring. Weapons aim toward the viewed point while preserving their physical elevation limit, range and collision; looking at an enemy does not attract the reticle.
+
+Solid walls, ceilings and large structural obstacles shorten the camera's following distance. Repair posts, small controls and ability cradles do not push the camera: individual parts become translucent as they approach the sightline, then gradually return to full opacity. Unobstructing parts and floor pads remain visible. It returns smoothly when the obstruction clears, and the Tank fades only when the camera is too close to see past its body. In this view, floors remain opaque and retain their visible height relationships. The existing overhead view keeps its continuous cutaway and remains available in Settings for comparison. Switching views preserves room heights, routes, ability gates and progress.
+
+Clicking the playfield captures the mouse; pausing or opening the map releases it. Browsers without mouse capture support use middle-button dragging to turn the camera. Both views remain supported player choices. Camera readability and traversal must remain usable in each view.
+
+
+### Player camera adjustment
+
+Settings offers a paused, unobscured preview with numeric sliders. Third person exposes pitch, following distance, camera height offset, shoulder offset and mouse sensitivity; overhead exposes its downward angle and visible area. Each view remembers its own values and can be reset independently. Third-person pitch sets the starting view and remains freely adjustable through mouse look during play. Structural camera collision continues to constrain the actual following distance, and overhead cutaways follow the selected view angle. These settings change presentation only, preserving movement speed, weapon limits and progress.
+
+
+Mouse look remains available while firing or using Magnetic Traction. In browsers using middle-button dragging, these inputs work together regardless of which button is pressed first, and releasing one action does not interrupt another held action. Mouse sensitivity spans 0.25× to 3×, with 1× as the default.
+
+Both views share the same world lighting. Shaded paths, machine sides and platform undersides receive enough indirect light to remain readable; upper floors still cast shadows and preserve the depth of stacked spaces.

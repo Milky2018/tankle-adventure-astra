@@ -1,5 +1,5 @@
 async page=>{
- await page.goto('http://127.0.0.1:5174/?chapter=folded&test');await page.waitForFunction(()=>window.__game);await page.evaluate(()=>__game.manual(true));
+ await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>window.__game);await page.evaluate(()=>__game.manual(true));
  const result=[];
  for(const [id,position,target,weapon] of [
  ['bridge-crane',[0,0,-6],[0,-24,1.3],'cannon'],['bridge-crane',[0,0,-6],[0,-24,1.3],'mortar'],

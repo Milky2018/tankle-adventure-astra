@@ -1,6 +1,6 @@
 async page=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&route=freight&test');await page.waitForFunction(()=>!!window.__game);
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&route=freight&view=overhead&test');await page.waitForFunction(()=>!!window.__game);
   const runs=[];
   for(const first of ['laser','circulation']){
     await page.evaluate(()=>localStorage.removeItem('furnace-born-v2-folded-freight'));await page.reload();await page.waitForFunction(()=>!!window.__game);

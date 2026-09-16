@@ -93,3 +93,29 @@ test('long rotated slabs remain continuous while their render bounds stay local'
     assert(hits.some(hit=>Math.abs(hit.point.y+.5)<1e-5),`missing floor at ${z}`);
   }
 });
+
+test('geometry-preserving batches retain textured slabs in opaque and transparent modes',()=>{
+  const color=new T.Group(),depth=new T.Group();
+  const colorMaterial=new T.MeshBasicMaterial({transparent:true}),depthMaterial=new T.MeshBasicMaterial();
+  const originals=[];
+  for(let i=0;i<3;i++){
+    const geometry=new T.BoxGeometry(8,.65,70),uv=geometry.attributes.uv;
+    for(let n=0;n<uv.count;n++)uv.setXY(n,uv.getX(n)*5+i,uv.getY(n)*9);
+    originals.push(geometry);
+    for(const [root,material]of [[color,colorMaterial],[depth,depthMaterial]]){
+      const mesh=new T.Mesh(geometry,material);mesh.position.set(20*i,-8.325,60);mesh.rotation.x=.2;root.add(mesh);
+    }
+  }
+  batchStatic(color,{preserveGeometry:true});batchStatic(depth,{preserveGeometry:true});
+  assert.equal(color.children.length,1);assert.equal(depth.children.length,1);
+  const a=color.children[0],b=depth.children[0];assert(a.isBatchedMesh&&b.isBatchedMesh);
+  assert.equal(a.instanceCount,3);assert.equal(b.instanceCount,3);
+  const ma=new T.Matrix4(),mb=new T.Matrix4();
+  for(let i=0;i<3;i++){
+    a.getMatrixAt(i,ma);b.getMatrixAt(i,mb);assert.deepEqual(ma.elements,mb.elements);
+    const range=a.getGeometryRangeAt(a.getGeometryIdAt(i));
+    assert.equal(range.vertexCount,originals[i].attributes.position.count);
+    const actual=a.geometry.attributes.uv.array.slice(range.vertexStart*2,(range.vertexStart+range.vertexCount)*2);
+    assert.deepEqual(actual,originals[i].attributes.uv.array);
+  }
+});

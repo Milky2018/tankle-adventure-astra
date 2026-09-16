@@ -10,7 +10,7 @@ window.__polish={
   occlusion:()=>world.occluders.filter(o=>o.opacity<.4&&o.root.visible).map(o=>({name:o.root.name,opacity:o.opacity,meshes:o.meshes.length,valid:o.meshes.every(m=>m.materials.every(a=>a.material.transparent&&Math.abs(a.material.opacity-a.opacity*o.opacity)<.001&&!a.material.depthWrite))})),
   belt:()=>world.belts.map(b=>({id:b.id,phase:b.phase,slope:b.segments[0].root.rotation.x,slats:b.segments[0].mesh.count})),
 };`});});
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&test');await page.waitForFunction(()=>!!window.__polish);await page.unroute('**/src/folded.js*');
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>!!window.__polish);await page.unroute('**/src/folded.js*');
   await page.evaluate(()=>{__game.manual(true);__game.scenario({player:{x:0,y:-8,z:86,hp:25},state:{anchor:'awakening'}});__game.step(.3);});
   const result={};result.hiveBefore=await page.evaluate(()=>__polish.hive());
   await page.keyboard.press('e');await page.evaluate(()=>__game.step(.45));result.repair=await page.evaluate(()=>__polish.hive());

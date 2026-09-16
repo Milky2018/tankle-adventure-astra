@@ -1,6 +1,6 @@
 async page=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&test');await page.waitForFunction(()=>!!window.__game);
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>!!window.__game);
   // Clear only this isolated browser's city save and input preferences.
   await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');localStorage.removeItem('furnace-born-v2-settings');});
   await page.reload();await page.waitForFunction(()=>!!window.__game);await page.evaluate(()=>window.__game.manual(true));

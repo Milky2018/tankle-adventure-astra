@@ -1,0 +1,53 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {Box3,Vector3} from 'three';
+import {FollowCamera,cameraMovement,cameraPropOpacity} from './folded-camera.js';
+
+test('third-person movement follows yaw with equal cardinal and diagonal speed',()=>{
+  for(const yaw of [0,Math.PI/2,Math.PI,3*Math.PI/2]){
+    const forward=cameraMovement(0,-1,yaw),right=cameraMovement(1,0,yaw),diagonal=cameraMovement(1,-1,yaw);
+    assert.ok(Math.abs(forward.x-Math.sin(yaw))<1e-10);
+    assert.ok(Math.abs(forward.z-Math.cos(yaw))<1e-10);
+    assert.ok(Math.abs(forward.x*right.x+forward.z*right.z)<1e-10);
+    assert.ok(Math.abs(Math.hypot(diagonal.x,diagonal.z)-1)<1e-10);
+  }
+  assert.deepEqual(cameraMovement(0,0,1),{x:0,z:0});
+});
+
+test('camera collision retracts immediately and restores distance gradually',()=>{
+  const rig=new FollowCamera(16/9),player={x:0,y:0,z:0};
+  rig.update(player,1,(_o,_d,d)=>d);
+  rig.update(player,1/60,()=>4);
+  assert.equal(rig.distance,3.5);
+  assert.ok(Math.abs(rig.camera.position.distanceTo(rig.pivot)-3.5)<1e-10);
+  rig.update(player,1/60,(_o,_d,d)=>d);
+  assert.ok(rig.distance>3.5&&rig.distance<5);
+});
+
+test('camera clearance includes near-plane edges and stays outside a close obstruction',()=>{
+  const rig=new FollowCamera(16/9);let probes=0;
+  rig.update({x:0,y:-16,z:0},1,()=>++probes===4?2:12);
+  assert.equal(probes,5);assert.equal(rig.distance,1.5);
+  assert.ok(rig.camera.position.y>-16,'a horizontal floor does not become the camera target');
+});
+
+test('mouse pitch stays bounded and never changes the player or movement speed',()=>{
+  const rig=new FollowCamera(16/9),player={x:0,y:24,z:0},before={...player};
+  rig.turn(400,1e6);assert.equal(rig.pitch,.95);
+  rig.turn(0,-1e6);assert.equal(rig.pitch,-.65);
+  rig.update(player,1,(_o,_d,d)=>d);
+  assert.deepEqual(player,before);
+  assert.ok(rig.camera.isPerspectiveCamera);
+});
+
+test('small props fade along the view corridor, including when the camera is inside',()=>{
+  const post=new Box3(new Vector3(-.325,0,-.4),new Vector3(.325,2.8,.4));
+  assert.equal(cameraPropOpacity(post,new Vector3(0,1.8,0),new Vector3(0,1.6,-10)),.16);
+  assert.equal(cameraPropOpacity(post,new Vector3(0,5,10),new Vector3(0,1.6,0)),.16);
+  assert.equal(cameraPropOpacity(post,new Vector3(5,5,10),new Vector3(5,1.6,0)),1);
+  let previous=.16;
+  for(let x=0;x<=3;x+=.05){
+    const opacity=cameraPropOpacity(post,new Vector3(x,5,10),new Vector3(x,1.6,0));
+    assert.ok(opacity>=previous&&opacity-previous<.05,'spatial fade must not pop at a boundary');previous=opacity;
+  }
+});

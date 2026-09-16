@@ -63,3 +63,15 @@
 @keyframes ability-break{0%,74%{opacity:1;transform:translateX(0)}85%,100%{opacity:0;transform:translateX(14px)}}
 @media(max-width:700px){#tools.ability-tray{left:20px;bottom:106px;max-width:calc(100vw - 40px);gap:8px}.ability-group{padding-right:8px;gap:3px}#tools .ability-card{width:39px;min-height:67px}#tools .ability-card>svg{width:25px;height:25px}#acquired.ability-acquired{right:18px;bottom:275px;padding:12px;gap:12px}#glyphs{top:190px;bottom:auto}}
 @media(prefers-reduced-motion:reduce){#tools .ability-card.new-ability{animation:none;border-color:#fff0ba}.ability-acquired svg *{animation:none}.demo-lob{offset-distance:60%}.demo-pull{transform:translateX(-40px)}.demo-ram,.demo-drive{transform:translateX(65px)}}
+
+.third-person:not(.mouse-look) #game{cursor:pointer}
+
+#settings.camera-tuning{display:flex;align-items:center;justify-content:flex-end;padding:20px;background:none;backdrop-filter:none}
+#settings.camera-tuning>.panel{display:none}
+#camera-tuning{width:290px;max-width:calc(100vw - 40px);max-height:calc(100vh - 40px);overflow:auto;padding:22px;background:#173331ed;border:1px solid #b4d1b550;border-radius:12px;box-shadow:0 8px 30px #00100d40}
+#camera-tuning h2{font-size:16px;color:#f0ddab}
+#camera-tuning label{display:grid;grid-template-columns:1fr auto;gap:10px;margin:20px 0;font-size:13px}
+#camera-tuning output{font-variant-numeric:tabular-nums;color:#efcd79}
+#camera-tuning input{grid-column:1/-1;width:100%;accent-color:#e5c36c}
+#camera-tuning button{padding:9px 12px;margin:4px 4px 0 0;border:1px solid #aac5b448;border-radius:5px;background:#223d3b;color:#eceaca;font-size:12px}
+#camera-tuning button:last-child{background:#efcd79;color:#213634}

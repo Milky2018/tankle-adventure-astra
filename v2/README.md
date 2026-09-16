@@ -1,6 +1,6 @@
 # Furnace Born
 
-A playable, wordless, isometric tank Metroidvania built from the interconnected world design in [Gamespec.md](../Gamespec.md), the single source for all game-design decisions and proposals. All implementation lives in `v2`. No `v1` source or assets were used.
+A playable, wordless tank Metroidvania with selectable third-person and overhead views built from the interconnected world design in [Gamespec.md](../Gamespec.md), the single source for all game-design decisions and proposals. All implementation lives in `v2`. No `v1` source or assets were used.
 
 The game uses Three.js, procedural rounded industrial models, stepped lighting, real ground-plane collisions, and a synthesized mechanical soundtrack. There are no remote models, textures, fonts, audio files, or runtime CDN requests.
 
@@ -22,6 +22,8 @@ npm run preview
 
 The production output is `dist/`; it can be served by any static web server. A web server is required; opening `index.html` directly with `file://` does not work.
 
+The folded city defaults to third person. Click the playfield to capture the mouse, move the camera with the mouse, and drive with camera-relative WASD. Escape releases the mouse and opens Settings; **视角** switches between third person and overhead without changing progress. Choose **调整镜头** in Settings to preview pitch, following distance, height, shoulder offset and mouse sensitivity (0.25×–3×) in third person, or downward angle and view size overhead. Values save automatically; **恢复此视角默认** resets only the current view. If the browser cannot capture the mouse, hold the middle mouse button and drag to turn the camera, including while holding fire or Magnetic Traction. `?chapter=folded&view=third` and `?chapter=folded&view=overhead` select a view explicitly.
+
 ## Folded city
 
 The complete journey at `/?chapter=folded` uses `furnace-born-v2-city`, a separate save from the earlier journey. Seven regions now share one supporting-height world: the Foundry, transit hub, submerged gardens, observatory, Testworks, circulation works and the predecessor/furnace chambers. Cannon is starting equipment; seven modules can be found in the world. Mortar sits at the turntable bridge mouth and opens the dry freight approach. The optional Magnet/Flotation route approaches the same benches from the water. Both approaches use Mortar at the screened carrier load before Phoenix. Laser and Circulation can then be acquired in either order; their optical shutter and sustained conveyor converge on the inner route. Twelve permanent returns reconnect familiar places through supported paths and callable lifts. Defeating the keeper opens voluntary docking; Continue restores the final refuge for exploration.
@@ -38,8 +40,8 @@ The `scripts/folded-*-check.js` callbacks use the Playwright CLI with the develo
 
 | Input | Action |
 | --- | --- |
-| W / A / S / D | Screen-relative movement |
-| Mouse | Independent turret aim |
+| W / A / S / D | Camera-relative movement in third person; screen-relative movement overhead |
+| Mouse | Turn the third-person camera and aim through the center reticle; independent pointer aim overhead |
 | Left click | One Cannon/Mortar shot; hold to fire Laser |
 | Q, after weapon acquisition | Cycle through owned Cannon / Mortar / Laser |
 | Right mouse, after magnetic acquisition | Scan and pull blue magnetic targets in the folded city; pull rails or light enemies in the earlier journey |

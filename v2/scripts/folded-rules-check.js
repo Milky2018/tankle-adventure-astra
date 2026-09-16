@@ -1,7 +1,7 @@
 async page=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'||m.type()==='warning'&&/THREE|WebGL/.test(m.text()))errors.push(m.text());});
  await page.route('**/src/folded.js*',async route=>{const r=await route.fetch();await route.fulfill({response:r,body:await r.text()+`\nwindow.__rules={world,magneticBeam,shots,mines,layMine,shootEnemy,renderer,laserBeam,resetEnemies,clearShots};`});});
- await page.goto('http://127.0.0.1:5174/?chapter=folded&test');await page.waitForFunction(()=>!!window.__rules);await page.unroute('**/src/folded.js*');
+ await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>!!window.__rules);await page.unroute('**/src/folded.js*');
  await page.evaluate(()=>{__game.manual(true);for(const e of __rules.world.enemies){e.hp=0;e.deadAt=null;e.model.root.visible=false;}});
  async function fixture(player,state={}){await page.evaluate(({player,state})=>{__game.setInput([]);__rules.clearShots();__game.scenario({player:{hp:50,heat:0,overheated:false,lastHeat:-100,lastShot:-100,deployed:false,speed:1,...player},state});__game.step(.2);},{player,state});}
  async function aim(x,z,y){const q=await page.evaluate(([x,z,y])=>__game.project(x,z,y),[x,z,y]);await page.mouse.move(q.x,q.y);await page.evaluate(()=>__game.step(.01));}

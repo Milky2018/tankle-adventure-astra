@@ -1,6 +1,8 @@
+import {cameraPropOpacity} from './folded-camera.js';
 import {abilityIcon} from './folded-hud.js';
 import {SIGNAL,makeAperture,apertureOpacity,APERTURE_AIM_THRESHOLD} from './folded-visibility.js';
 import {foldedEnemyModel} from './folded-enemies.js';
+import {batchRigidParts} from './rigid-batching.js';
 import {cityBelts,cityMirrors} from './folded-city-layout.js';
 import * as T from 'three';
 import {box,cylinder,ring,mat,C,tankModel,batchStatic,chargeWarning} from './world.js';
@@ -9,6 +11,7 @@ import {foldedDecks,foldedLiftDefs,foldedSolids,foldedControls,foldedHives,folde
 
 export function makeFoldedWorld(scene,state){
   const aperture=makeAperture(),viewPlayer={x:0,y:0,z:0};
+  let thirdPerson=false;
   const fixed=new T.Group();scene.add(fixed);
   const surfaces=[],walls=[],controls=[],hives=[],pickups=[],lifts=[],enemies=[],pillars=[],floorDetails=[],mirrors=[],belts=[];
   const raycaster=new T.Raycaster();
@@ -29,8 +32,12 @@ export function makeFoldedWorld(scene,state){
     return pieces;
   });
   const floorDepthMaterial=new T.MeshBasicMaterial();aperture.apply(floorDepthMaterial,{depthOnly:true});
+  const floorMeshes=new T.Group(),floorBatches=new T.Group(),floorMaterials=new Map();
+  scene.add(floorMeshes,floorBatches);
   for(const d of patches){
-    const mesh=box(scene,d.w,.65,Math.hypot(d.d,d.rise||0),d.x+d.w/2,d.y+(d.rise||0)/2-.325-(d.recess||0),d.z+d.d/2,d.water?new T.MeshPhongMaterial({color:0x397d9d,specular:0xa6dce8,shininess:65}):mat(palette(d)),0);
+    const key=d.water?'water':palette(d);
+    if(!floorMaterials.has(key))floorMaterials.set(key,d.water?new T.MeshPhongMaterial({color:0x397d9d,specular:0xa6dce8,shininess:65}):mat(key));
+    const mesh=box(floorMeshes,d.w,.65,Math.hypot(d.d,d.rise||0),d.x+d.w/2,d.y+(d.rise||0)/2-.325-(d.recess||0),d.z+d.d/2,floorMaterials.get(key),0);
     aperture.apply(mesh.material);mesh.userData.aperture=true;
     mesh.name=`folded-floor:${d.id}`;if(d.rise)mesh.rotation.x=-Math.atan2(d.rise,d.d);
     {
@@ -40,9 +47,13 @@ export function makeFoldedWorld(scene,state){
     }
     // Opaque floor fragments must occlude lower structures regardless of transparent sorting.
     // Leave the camera aperture out of this depth pass so the lower room remains visible.
+    floorBatches.add(mesh.clone());
     const depth=new T.Mesh(mesh.geometry,floorDepthMaterial);depth.name=`folded-floor-depth:${d.id}`;mesh.add(depth);
     surfaces.push({...d,mesh,opacity:1});
   }
+  // Opaque third-person floors can batch; overhead patches must sort among other transparent props.
+  // Collision and aim queries keep using the original patches in both views.
+  batchStatic(floorBatches,{preserveGeometry:true});floorBatches.visible=false;
   // Quiet edge markings, with taller structure on the far side of each space.
   const edges=new Set();
   for(const d of foldedDecks)for(const side of ['left','right','front','back']){
@@ -60,9 +71,10 @@ export function makeFoldedWorld(scene,state){
       }
     }
   }
+  const trimMaterials=new Map(),floorTrimMeshes=new T.Group(),floorTrimBatches=new T.Group();scene.add(floorTrimMeshes,floorTrimBatches);
   for(const [id,g]of trims){
     const parts=surfaces.filter(s=>s.id===id);
-    for(const s of parts){s.trim=new T.Group();scene.add(s.trim);}
+    for(const s of parts){s.trim=new T.Group();floorTrimMeshes.add(s.trim);}
     for(const mesh of [...g.children]){
       const s=parts.find(s=>inRect(mesh.position.x,mesh.position.z,s,.01))||parts[0];s.trim.add(mesh);
     }
@@ -78,8 +90,15 @@ export function makeFoldedWorld(scene,state){
         }
         for(let z=s.z+2;z<s.z+s.d;z+=4){const seam=box(s.trim,s.w-.8,.045,.16,s.x+s.w/2,deckHeight(s,z)+.045,z,0xb5b99a,0);seam.rotation.x=pitch;}
       }
-      const cache=new Map();s.trim.traverse(m=>{if(m.isMesh){if(!cache.has(m.material)){const material=m.material.clone();aperture.apply(material);cache.set(m.material,material);}m.material=cache.get(m.material);}});batchStatic(s.trim);
+      s.trim.traverse(m=>{if(m.isMesh){if(!trimMaterials.has(m.material)){const material=m.material.clone();aperture.apply(material);trimMaterials.set(m.material,material);}m.material=trimMaterials.get(m.material);}});
+      for(const mesh of s.trim.children)floorTrimBatches.add(mesh.clone());
+      batchStatic(s.trim);
     }
+  }
+  batchStatic(floorTrimBatches);floorTrimBatches.visible=false;
+  // These transforms never change. Freeze both view representations, including the inactive one.
+  for(const root of [floorMeshes,floorBatches,floorTrimMeshes,floorTrimBatches]){
+    root.updateWorldMatrix(true,true);root.traverse(object=>{object.matrixAutoUpdate=false;object.matrixWorldAutoUpdate=false;});
   }
   const phoenixCanvas=document.createElement('canvas');phoenixCanvas.width=phoenixCanvas.height=96;
   const phoenixCtx=phoenixCanvas.getContext('2d');phoenixCtx.scale(2,2);phoenixCtx.strokeStyle='#ffe19b';phoenixCtx.lineWidth=2.8;phoenixCtx.lineJoin='round';phoenixCtx.stroke(new Path2D(abilityIcon('phoenix')));
@@ -236,6 +255,7 @@ export function makeFoldedWorld(scene,state){
   for(const e of foldedEnemies){
     const model=foldedEnemyModel(e.type);scene.add(model.root);model.root.position.set(e.x,e.y,e.z);
     if(e.magneticShield&&model.frontArmor){model.frontArmor.material=mat(SIGNAL.magnet);for(const x of [-.7,.7])box(model.frontArmor,.3,.55,.12,x,0,.34,mat(0xa9dcff,true));}
+    batchRigidParts(model.root,[...model.tracks,...(model.moving||[]),model.frontArmor,model.radiator]);
     const materials=[];model.root.traverse(m=>{if(m.isMesh&&m.material.color){m.material=m.material.clone();materials.push({m:m.material,color:m.material.color.clone()});}});
     const warningGeometry=new T.BufferGeometry().setAttribute('position',new T.BufferAttribute(new Float32Array(e.type==='welder'?45:6),3).setUsage(T.DynamicDrawUsage));warningGeometry.setDrawRange(0,2);
     const warning=new T.Line(warningGeometry,new T.LineBasicMaterial({color:C.orange,transparent:true,opacity:.85}));scene.add(warning);warning.visible=false;warning.frustumCulled=false;
@@ -408,17 +428,18 @@ export function makeFoldedWorld(scene,state){
   for(const root of cells.values()){fixed.add(root);batchStatic(root);}
   scene.updateMatrixWorld(true);
   const occluders=[];
-  function registerOccluder(root,owner=null,{clone=true,dynamic=false,layered=false}={}){
+  function registerOccluder(root,owner=null,{clone=true,dynamic=false,layered=false,cameraSoft=false}={}){
     const meshes=[],cache=new Map();
     root.traverse(mesh=>{
       if(!mesh.isMesh)return;
+      if(cameraSoft)cache.clear();
       const original=Array.isArray(mesh.material)?mesh.material:[mesh.material];
       const materials=original.map(material=>{
         if(!cache.has(material))cache.set(material,clone?material.clone():material);
         const result=cache.get(material);result.transparent=true;if(owner?.floorMark)aperture.apply(result);return result;
       });
       mesh.material=Array.isArray(mesh.material)?materials:materials[0];
-      meshes.push({mesh,shadow:mesh.castShadow,materials:materials.map(material=>({material,opacity:material.opacity,depthWrite:material.depthWrite}))});
+      meshes.push({mesh,cameraOpacity:1,cameraBounds:cameraSoft?new T.Box3():null,shadow:mesh.castShadow,materials:materials.map(material=>({material,opacity:material.opacity,depthWrite:material.depthWrite}))});
     });
     const bounds=new T.Box3().setFromObject(root),local=bounds.clone().applyMatrix4(new T.Matrix4().copy(root.matrixWorld).invert());
     if(owner?.model){
@@ -427,10 +448,10 @@ export function makeFoldedWorld(scene,state){
     }
     if(owner?.shutter)local.max.y+=1.5;
     if(owner?.arms)bounds.max.y+=.7;
-    occluders.push({root,owner,meshes,local,bounds,dynamic,layered,opacity:1});
+    occluders.push({root,owner,meshes,local,bounds,dynamic,layered,cameraSoft,opacity:1});
   }
   for(const wall of walls)registerOccluder(wall.mesh,wall,{dynamic:true});
-  for(const object of [...controls,...hives,...pickups,...lifts,...floorDetails,...mirrors])registerOccluder(object.root,object,{dynamic:object.stops!==undefined||mirrors.includes(object),layered:controls.includes(object)||hives.includes(object)||pickups.includes(object)});
+  for(const object of [...controls,...hives,...pickups,...lifts,...floorDetails,...mirrors])registerOccluder(object.root,object,{dynamic:object.stops!==undefined||mirrors.includes(object),cameraSoft:hives.includes(object)||controls.includes(object)||pickups.includes(object),layered:controls.includes(object)||hives.includes(object)||pickups.includes(object)});
   for(const object of pillars)registerOccluder(object.mesh,object);
   for(const root of cells.values())registerOccluder(root);
   for(const b of belts)for(const segment of b.segments)registerOccluder(segment.root,segment);
@@ -452,15 +473,58 @@ export function makeFoldedWorld(scene,state){
       const obscures=!!hit&&distance>1.8&&distance<58;
       const ground=object.owner?.ground??(object.owner?.kind?object.owner.y-1.3:object.owner?.y);
       const otherFloor=object.layered&&Math.abs(ground-p.y)>3;
-      const targetOpacity=obscures?(object.owner?.h&&!object.owner?.mass&&Math.abs(object.owner.y-p.y)<3?.36:.14):otherFloor?.28:1;
+      const targetOpacity=thirdPerson?1:obscures?(object.owner?.h&&!object.owner?.mass&&Math.abs(object.owner.y-p.y)<3?.36:.14):otherFloor?.28:1;
       object.opacity=T.MathUtils.damp(object.opacity,targetOpacity,10,dt);if(Math.abs(object.opacity-targetOpacity)<.001)object.opacity=targetOpacity;
       object.root.userData.cutaway=obscures&&object.opacity<.4;if(object.owner)object.owner.opacity=object.opacity;
+      if(thirdPerson&&object.cameraSoft)continue;
       if(object.lastOpacity===object.opacity)continue;
       for(const {mesh,shadow,materials}of object.meshes){
         mesh.castShadow=shadow&&object.opacity===1;
         for(const {material,opacity,depthWrite}of materials){material.opacity=opacity*object.opacity;material.depthWrite=depthWrite&&object.opacity===1;}
       }
       object.lastOpacity=object.opacity;
+    }
+  }
+  scene.updateMatrixWorld(true);
+  const cameraFloors=surfaces.map(s=>({mesh:s.mesh,bounds:new T.Box3().setFromObject(s.mesh)}));
+  function cameraDistance(origin,direction,distance){
+    raycaster.set(origin,direction);raycaster.far=distance;
+    let nearest=distance;
+    const probe=mesh=>{const hit=raycaster.intersectObject(mesh,false)[0];if(hit)nearest=Math.min(nearest,hit.distance);};
+    for(const floor of cameraFloors)if(raycaster.ray.intersectsBox(floor.bounds))probe(floor.mesh);
+    for(const object of occluders){
+      if(object.cameraSoft||object.owner?.model||object.owner?.enemy||!object.root.visible||!raycaster.ray.intersectsBox(object.bounds))continue;
+      if(object.owner?.id&&walls.includes(object.owner)&&!activeSolid(object.owner,state))continue;
+      for(const {mesh}of object.meshes){
+        let visible=true;for(let parent=mesh;parent;parent=parent.parent)if(!parent.visible){visible=false;break;}
+        if(visible)probe(mesh);
+      }
+    }
+    return nearest;
+  }
+  function setThirdPerson(value){
+    thirdPerson=value;aperture.enable(!value);
+    floorMeshes.visible=!value;floorBatches.visible=value;
+    floorTrimMeshes.visible=!value;floorTrimBatches.visible=value;
+    for(const material of floorMaterials.values()){material.transparent=!value;material.depthWrite=value;material.needsUpdate=true;}
+    for(const object of occluders){object.opacity=1;object.lastOpacity=undefined;}
+  }
+  const cameraTarget=new T.Vector3();
+  function updateCameraOcclusion(camera,p,dt){
+    if(!thirdPerson)return;
+    cameraTarget.set(p.x,p.y+1.6,p.z);
+    for(const object of occluders){
+      if(!object.cameraSoft)continue;
+      for(const part of object.meshes){
+        const {mesh,cameraBounds,materials,shadow}=part;
+        cameraBounds.setFromObject(mesh);
+        // Keep the floor pad visible; only the actual obstruction fades.
+        const target=cameraBounds.max.y<p.y+.5?1:cameraPropOpacity(cameraBounds,camera.position,cameraTarget);
+        part.cameraOpacity=target<part.cameraOpacity?target:T.MathUtils.damp(part.cameraOpacity,target,8,dt);
+        if(part.cameraOpacity>.999)part.cameraOpacity=1;
+        mesh.castShadow=shadow&&part.cameraOpacity===1;
+        for(const {material,opacity,depthWrite}of materials){material.opacity=opacity*part.cameraOpacity;material.depthWrite=depthWrite&&part.cameraOpacity===1;}
+      }
     }
   }
   function pulseHive(id,kind='repair'){
@@ -471,7 +535,7 @@ export function makeFoldedWorld(scene,state){
   function cast(origin,direction,distance,{targets=true,aiming=false,extras=[]}={}){
     raycaster.set(origin,direction);raycaster.far=distance;
     const meshes=[...surfaces.map(s=>s.mesh),...walls.filter(w=>activeSolid(w,state)&&(!aiming||w.opacity>.4)).map(w=>w.mesh),...lifts.filter(l=>!aiming||!l.root.userData.cutaway).map(l=>l.mesh),...mirrors.filter(m=>!aiming||!m.root.userData.cutaway).map(m=>m.mesh)];
-    let hit=raycaster.intersectObjects(meshes,false).find(h=>!aiming||!h.object.userData.aperture||apertureOpacity(h.point,viewPlayer)>APERTURE_AIM_THRESHOLD)||null;if(hit?.object.userData.mirror)hit.mirror=hit.object.userData.mirror;
+    let hit=raycaster.intersectObjects(meshes,false).find(h=>!aiming||thirdPerson||!h.object.userData.aperture||apertureOpacity(h.point,viewPlayer,sightDirection)>APERTURE_AIM_THRESHOLD)||null;if(hit?.object.userData.mirror)hit.mirror=hit.object.userData.mirror;
     if(targets)for(const t of [...controls.filter(c=>!['call','use','dock'].includes(c.kind)&&!state[c.id]),...enemies.filter(e=>e.hp>0),...enemies.filter(e=>e.hp>0).flatMap(e=>e.parts.filter(p=>p.hp>0)),...extras.filter(t=>!t.disarmed)]){
       const point=new T.Vector3(t.x,t.y+(t.model?1.5:0),t.z);
       if(aiming&&(t.root?.userData.cutaway||t.model?.root.userData.cutaway))continue;
@@ -481,9 +545,10 @@ export function makeFoldedWorld(scene,state){
     }
     return hit;
   }
-  function update(dt,time,p){
-    Object.assign(viewPlayer,{x:p.x,y:p.y,z:p.z});aperture.update(p);
-    for(const s of surfaces)s.opacity=apertureOpacity(s.mesh.position,p);
+  function update(dt,time,p,camera=null){
+    if(camera&&!thirdPerson)camera.getWorldDirection(sightDirection).negate();
+    Object.assign(viewPlayer,{x:p.x,y:p.y,z:p.z});aperture.update(p,sightDirection);
+    for(const s of surfaces)s.opacity=thirdPerson?1:apertureOpacity(s.mesh.position,p,sightDirection);
     for(const w of walls){w.open=T.MathUtils.damp(w.open,activeSolid(w,state)?0:1,9,dt);w.mesh.position.y=w.y+w.h/2-w.open*(w.h+.5);w.mesh.visible=!w.invisible&&w.open<.999;w.mesh.updateMatrixWorld();}
     for(const c of controls){
       c.flash=Math.max(0,c.flash-dt);
@@ -543,6 +608,7 @@ export function makeFoldedWorld(scene,state){
     waterTexture.offset.x=time*.015;
     updateOcclusion(dt,p);
     scene.updateMatrixWorld();
+    if(camera)updateCameraOcclusion(camera,p,dt);
   }
-  return {surfaces,walls,controls,hives,pickups,lifts,enemies,wheel,mirrors,belts,occluders,pulseHive,cast,update};
+  return {surfaces,walls,controls,hives,pickups,lifts,enemies,wheel,mirrors,belts,occluders,pulseHive,cast,update,cameraDistance,setThirdPerson,updateCameraOcclusion};
 }

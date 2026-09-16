@@ -69,7 +69,7 @@ export function foldedEnemyModel(type){
   }
   const eye=box(turret,.45,.18,.15,0,1.5,1.1,lamp);
   const radiator=box(body,.65,.5,.15,0,.9,-1.25,lamp);
-  return {root,body,turret,barrel,tracks,radiator,rollWheels:a=>tracks.forEach(w=>w.rotateY(-a)),
+  return {root,body,turret,barrel,tracks,radiator,moving,rollWheels:a=>tracks.forEach(w=>w.rotateY(-a)),
     animate(phase,timer,time,dt,active){eye.material.color.setHex(phase==='warn'?C.lightYellow:phase==='vent'?C.orange:active?C.red:C.dark);body.position.y=Math.sin(time*3)*.025;for(const m of moving)m.position.y+=Math.sin(time*20)*dt*(phase==='warn'?.08:0);}
   };
 }

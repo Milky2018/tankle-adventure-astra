@@ -7,7 +7,7 @@ async page=>{
       window.__floorCheck={world,scene,renderer,camera};
     `});
   });
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&test');
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');
   await page.waitForFunction(()=>window.__floorCheck);
   await page.unroute('**/src/folded.js*');
   await page.evaluate(()=>{
