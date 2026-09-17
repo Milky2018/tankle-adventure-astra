@@ -1793,3 +1793,83 @@ Settings offers a paused, unobscured preview with numeric sliders. Third person 
 Mouse look remains available while firing or using Magnetic Traction. In browsers using middle-button dragging, these inputs work together regardless of which button is pressed first, and releasing one action does not interrupt another held action. Mouse sensitivity spans 0.25× to 3×, with 1× as the default.
 
 Both views share the same world lighting. Shaded paths, machine sides and platform undersides receive enough indirect light to remain readable; upper floors still cast shadows and preserve the depth of stacked spaces.
+
+## Regional Architectural and Atmospheric Enrichment — Accepted Direction
+
+The user accepted this September 17 presentation plan and requested implementation. It develops presentation around the accepted story and folded-city routes; acceptance is not a claim that the treatments are already implemented. Preserve the eight abilities, mandatory Mortar application before Phoenix, optional Magnet and Flotation branches, independent Laser and Water Circulation acquisition after Phoenix, permanent shortcuts, and voluntary final docking. The Empty Hoist remains distributed freight infrastructure rather than an eighth region.
+
+### Shared direction
+
+Make the city believable through the purpose and construction of its spaces while retaining exaggerated industrial forms and the warm, expressive Tank. Buildings need substantial exterior volumes, retaining walls, foundations, columns, beams, door openings, service passages, and selective roof coverage. Rooms should show how cargo, coolant, workers, and maintenance machinery once moved through them. Damage exposes an underlying building; it must not substitute for designing one.
+
+Use enclosed rooms and passages to frame occasional courts, shafts, water basins, and outdoor bridges. The next opening reveals a meaningful destination or recognizable structure. Avoid both uninterrupted exposed platform networks and repetitive narrow corridors. Physical movement and combat clearance must accommodate the Tank and both cameras. Walls retain collision and purpose when visually cut away in overhead view; third-person interiors must remain illuminated and navigable without constant camera collapse.
+
+The visual progression is from machinery that threatens the Tank, through infrastructure whose purpose is becoming legible, to machinery into which the Tank can deliberately connect. R3 is optional, and R4 and R6 can be visited in either order: their scenes supply complementary evidence without presuming an earlier optional visit. Mandatory R2, R5, and R7 spaces carry enough of the story by themselves.
+
+Preserve the existing interaction language: blue for magnetic surfaces, yellow/green mechanism states, recognizable bounded mirror faces, and orange-red for heat and danger. Regional palettes belong mainly to subdued architecture and materials. Important silhouettes, mechanical motion, and sound reinforce color. Decorative panels must not resemble usable controls. Ambient movement stays quieter than enemy warnings and usable machinery.
+
+The split transit flywheel, bent Foundry press, three eastern coolant pipes, and distant furnace exhaust spine remain the shared landmarks. Show the actual structures through doors, grilles, shafts, and roof openings from different heights. Local recovery should remain visible on return, with routes and machines changing where the player acted rather than every room receiving a generic brighter lighting state.
+
+### R1 — Recycling Foundry
+
+Build a legible processing building: receiving and sorting bays, a press hall, lower material-return trenches, an engine test enclosure, and the local recycling furnace. Conveyor runs enter real feed openings, pass rollers and tension assemblies, and discharge into an identifiable destination. Steel roof trusses, thick refractory furnace walls, and a few missing roof panels give the space mass. Doorways and maintenance windows preview the other relay branch and later conveyor return without exposing the entire level at once.
+
+Retain muted teal machinery and dirty refractory surfaces, with warm furnace light confined to its sources and sufficient cool fill to read the Tank. The press supplies a repeated heavy rhythm; conveyor clatter changes as the Tank passes enclosed feed tunnels. Attacks and engine cues remain audible over both. Enemy silhouettes suggest inspection, protection, and material handling while preserving recognizable attack tells.
+
+Stage the central contradiction physically: a reclaiming mechanism feeds damaged hulls toward the furnace, while a sheltered Repair Hive carefully restores the player. The first Overdrive return makes familiar rollers and wall markings rush past at the player's own speed. Defeating the local Overseer quiets its feed machinery and opens an exterior loading terrace. The central furnace is seen beyond the building as a separate, much larger structure.
+
+### R2 — Empty Transit Hub
+
+Give the turntable a cargo hall with a high roof, crane beams, repair alcoves, side loading rooms, and a substantial bridge structure over the gardens. Several approach openings share the hall but remain distinguishable: a descending water-service passage, the exposed Mortar cradle and freight enclosure, and visible upper transport works. Align major views with the broken flywheel rather than adding competing landmark towers.
+
+Use dusty daylight from roof gaps and subdued steel surfaces. Rails carry localized sound into the hall; an empty carrier arrives, opens its clamps, waits, and leaves. A loading arm still reaches toward an absent load. Keep the turntable's safe orientation pocket quiet, with encounters concentrated in its working approaches rather than filling every resting space.
+
+Mortar is displayed as equipment on the common bridge-mouth mounting, visibly associated with the screened load ahead. Blue loader surfaces introduce Magnet in the optional gallery. The small maintenance machine repeats its failed rail repair until helped, then resumes useful work and briefly acknowledges the Tank with its light. Later returns reveal actual activity on released tracks and familiar architecture from the roof and underside. Cargo moving inward toward reclamation becomes understandable through its contents and direction.
+
+### R3 — Sunken Gardens
+
+Make this a former cooling and cultivation complex held inside a basin: retaining walls, broken greenhouse ribs, raised maintenance walks, pump rooms, submerged service roads, and growth frames at several water levels. Water routes pass through recognizable rooms and under real bridges. Use short turns and openings to alternate intimate flooded passages with views across the basin; avoid long, featureless water journeys.
+
+Muted green growth, pale mineral deposits, corroded metal, and soft reflected daylight distinguish the region without borrowing magnetic blue as a general interaction signal. Waterlines at different heights and deliberately closed outer valves reveal a gradual retreat of maintenance. Occasional drops, hull wakes, and the muffled turntable above establish position. Reflected light enriches nearby surfaces without hiding targets under glare or shimmer.
+
+The stranded ferry shell gives Flotation a clear former use; its first crossing ends at a visible ramp. The restored pump visibly transfers water through a connected pipe, drains the bridge ballast, and raises a dry return while the main water network remains. The press foundation and overhead transit structure make the basin part of the same city. Later access from R6 reveals the formerly inaccessible return-side pipework. Optional recovery of a small machine remains a quiet local consequence, not a completion requirement.
+
+### R5 — Prototype Testworks
+
+Develop a workshop and test building with receiving docks, enclosed assembly bays, a carrier shaft, a protected observation gallery, and a long reinforced exit runway. Freight and water approaches reveal different faces of the same building before meeting at its shared benches. Thick partitions and shutter openings make experimental stations distinct; the screened Mortar load remains visible and physically protected.
+
+Use pale worn panels, dark rubber stops, reinforced steel, and tightly localized scorch marks. Several failed chassis show different mechanical causes: torn engine mounts, a ruptured cooling jacket, and a carrier stopped at the end of an inadequate rail. Their sockets resemble the player's modules. Keep these readable as a few large arrangements rather than piles of unrelated scrap or written records.
+
+Phoenix acquisition starts with the sound of the player's engine gaining a new register. The exit offers a visible straight run-up, breakable shutter, and ordinary defenders. The enclosed runway opens onto the city roofline at player-controlled speed; the familiar transit flywheel appears below. The roof junction clearly frames the optical structure in one direction and the coolant stack in another. This is the major release of movement and choice, not a mandatory Boss collision or a camera cut.
+
+### R4 — Silent Observatory
+
+Give the eastern service stack a weighty outer shell containing a calibration shaft, optical workrooms, mirror galleries, and maintenance landings, capped by an open signal array. The early outer ring shows the inaccessible apparatus and the freight branch; the later Phoenix opening enters the deeper optical interior. Repeated aperture shapes and pale mirror frames identify optical routes without making every shiny surface reflective.
+
+Use pale stone-like industrial cladding, weathered metal, a restrained dark-blue-gray sky, and narrow warm beams. Interior ambient fill must reveal paths even where shutters exclude daylight. Laser puzzles read through the actual mirror face, beam, aperture, receiver, and connected shutter; decorative beams never imitate valid puzzle solutions. Openings reveal the same garden pump wall and loading cage that the player can physically reach.
+
+The tracking guardian occupies an inspection court whose architecture frames usable reflection angles and escape space. Its defenses share the area's shield and mirror construction, with immediate impact feedback. After restoration, the array sends a pulse outward, turns to receive, waits, and returns to its starting position. The missing reply is a brief audible and visible pause while the player retains control. This scene works before or after R6 and supplies no written explanation of the builders' fate.
+
+### R6 — Circulation Works
+
+Construct dense service floors inside the eastern stack: a receiving yard, pump hall, heat-exchange chambers, coolant galleries, and the deep material-return lane. Large parallel pipes form a traceable system with visible junctions and maintenance access. They provide orientation and connect to the broken branch seen from R3 and R4; they do not form visual clutter across active combat lanes.
+
+Use dark ceramic insulation, mineral-stained metal, restrained copper, and readable neutral light. Heat is localized around actual machinery. The entire scene must not glow red, because the Tank's overheating body and attack warnings need contrast. Pumps initially labour out of rhythm, valves knock, and individual leaks interrupt the sound. Repair establishes a steadier mechanical pulse and visible flow in the restored branch.
+
+Water Circulation is integrated through machinery whose jackets and fittings match the Tank. Its first sustained run clearly lets the body redden while the engine keeps working. Steam vents and structural openings pace the lane without obscuring opponents or stopping the run. The pressure release opens a nearby permanent bypass, then returns into recognizable garden infrastructure. Give the completed machine an exploration interval through reopened routes before the final descent; optional restoration adds local effects without requiring a city-wide checklist.
+
+### R7 — Predecessor Chambers and Central Furnace
+
+Make the descent feel like entering the oldest load-bearing part of the city: massive buttresses, thick refractory walls, low service openings between larger chambers, and broad supports around a vertical furnace void. Limit the predecessor passage to a small sequence of meaningful chambers rather than a long empty walk. Their installations gradually reveal tracks, turret mounts, cooling jackets, and familiar docking sockets. The final Repair Hive is sheltered and the return lift remains available before the keeper.
+
+Simplify the palette and composition as the player descends. Use readable charcoal and ash surfaces with a weak, irregular warm light from the central furnace. Earlier regional machinery becomes muffled overhead. One predecessor's headlight housing faces the corridor. The contrast with the player's engine and headlights conveys life without dialogue or explanatory tableaux.
+
+The keeper is visibly part of the material-feeding system. Its clamps, feed assemblies, conveyors, and protected drive explain both its task and its attacks. On defeat, the feeding rhythm stops but the furnace stays weak. The player controls the final approach and can still turn back from the empty cradle. Docking repeats the familiar Repair Hive vocabulary, with the direction of supply reversed.
+
+After the existing deliberate commitment, the player's drive joins the larger rhythm, pipes begin operating, and the furnace holds a steadier cycle. A brief closing sequence revisits specific restored places: useful cargo on a repaired rail, water reaching a garden frame, the unanswered signal still transmitting, and a small machine waking. Optional actions enrich their local shots without withholding the base ending. Retain the existing “Mission Accomplished” system screen and continuation rules; add no written explanation of the sacrifice.
+
+### Presentation acceptance
+
+Prioritize structural room composition and movement clearance, then lighting and material hierarchy, then mechanical animation and sound, and finally selective wear and small detail. Prove this treatment in R1 before extending its architectural vocabulary through R2 and the other regions.
+
+Every region should be identifiable from an unlabelled view and from its dominant ambient sound. A player should recognize its former function, find the next usable opening, and read enemies and impact surfaces in both views. Test interiors, thresholds, ramps, lifts, and shortcut returns while moving and fighting, including the supported camera adjustments. Require visible evidence that local restoration persists, and verify that new walls or openings neither block existing ability demonstrations nor bypass acquisition gates. Sparse quiet scenes need a specific spatial or narrative purpose; active scenes need readable visual and audio hierarchy.
