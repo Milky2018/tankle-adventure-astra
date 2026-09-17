@@ -3,7 +3,7 @@ async page=>{
   await page.route('**/src/folded.js*',async route=>{const response=await route.fetch();await route.fulfill({response,body:await response.text()+`
 window.__polish={
   enemy:id=>{const e=world.enemies.find(e=>e.id===id);return {hp:e.hp,visible:e.model.root.visible,height:e.model.root.scale.y};},
-  carrier:y=>{const l=world.lifts.find(l=>l.id==='carrier');l.y=l.destination=y;l.wait=10;l.used=false;world.update(1,time,p);},
+  carrier:y=>{const l=world.lifts.find(l=>l.id==='carrier');l.y=l.destination=y;l.wait=10;world.update(1,time,p);},
   brake:()=>{const c=world.controls.find(c=>c.id==='brake');return {cover:c.cover.position.y,color:c.lamp.material.color.getHex()};},
   hive:()=>{const h=world.hives.find(h=>h.id===state.anchor);return {pulse:h.pulse,kind:h.pulseKind,arms:h.arms.map(a=>a.pivot.rotation.z),scan:h.scan.position.y};},
   shot:()=>shots.filter(s=>!s.hostile).map(s=>({radius:s.mesh.geometry.parameters.radius,scale:s.mesh.scale.x,tail:s.mesh.children[0]?.geometry.parameters.depth})),
@@ -30,9 +30,9 @@ window.__polish={
   result.slopedBelts=after.filter(b=>Math.abs(b.slope)>.01);if(!result.slopedBelts.some(b=>b.phase!==before.find(a=>a.id===b.id).phase))throw Error('Sloped belt animation missing');
   await page.evaluate(()=>{__game.scenario({player:{x:-13,y:-8,z:85,weapon:'cannon',heat:0,overheated:false,lastHeat:-100,lastShot:-100},enemies:{'foundry-west-scout':1}});__game.aimAt(-23,85,-6.5);__game.fire();__game.step(.9);});
   result.wreck=await page.evaluate(()=>__polish.enemy('foundry-west-scout'));if(result.wreck.hp!==0||!result.wreck.visible||result.wreck.height>.4)throw Error('Enemy defeat has no lasting wreck feedback');
-  await page.evaluate(()=>{__game.scenario({state:{brake:false}});__polish.carrier(8);});result.brakeClosed=await page.evaluate(()=>__polish.brake());await page.evaluate(()=>__polish.carrier(16));result.brakeReady=await page.evaluate(()=>__polish.brake());
+  await page.evaluate(()=>{__game.scenario({state:{load:true,brake:false}});__polish.carrier(8);});result.brakeClosed=await page.evaluate(()=>__polish.brake());await page.evaluate(()=>__polish.carrier(16));result.brakeReady=await page.evaluate(()=>__polish.brake());
   if(result.brakeClosed.cover>.01||result.brakeReady.cover<1.3||result.brakeClosed.color===result.brakeReady.color)throw Error('Carrier brake availability is not visible');
-  await page.evaluate(()=>{__game.scenario({player:{x:78,y:8,z:-71,weapon:'cannon',heat:0,overheated:false,lastShot:-100},state:{brake:false}});__polish.carrier(8);__game.step(.01);});
+  await page.evaluate(()=>{__game.scenario({player:{x:78,y:8,z:-71,weapon:'cannon',heat:0,overheated:false,lastShot:-100},state:{load:true,brake:false}});__polish.carrier(8);__game.step(.01);});
   await page.keyboard.press('e');await page.evaluate(()=>__game.step(2.5));
   const automatic=await page.evaluate(()=>__game.snapshot());if(automatic.player.y!==16)throw Error('Manual input interrupted the automatic demonstration');
   await page.evaluate(()=>{__game.aimAt(78,-77.7,18);__game.fire();__game.step(.3);});

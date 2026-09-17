@@ -506,3 +506,45 @@ Third-person pointer capture now requests `unadjustedMovement: true`. This asks 
 `folded-raw-mouse-check.js` failed before the change because raw input was not requested. Afterward the test browser accepted native raw capture; forced unsupported and denied cases exercised ordinary capture and middle drag respectively. All three preserved vertical look while firing and exact stationary angles after input stopped. The existing mouse-chord and scheduling checks, all 137 Node tests and the production build passed (the existing bundle-size advisory remains).
 
 This is an input-path correction, not a verified cure for the reported physical-mouse stair stepping. Earlier quarter-pixel browser automation produced integer `movementY` values and stepped pitch at constant camera distance, but that experiment does not isolate physical device input from automation injection. Raw capture does not promise fractional deltas or eliminate sensor count granularity. Actual-device smoothness and frame pacing still need acceptance. Evidence is under `output/playwright/raw-mouse/`.
+
+## Regional architecture and environmental activity — 2026-09-17
+
+The accepted presentation design was committed separately as `ea8f1ad`. The folded city now has 27 regional room envelopes, with 1,670 wall, window, foundation and roof sections. The envelopes follow existing support surfaces; neighboring floors, ramps and swept lift volumes carve actual openings. A spatial grid supplies structural collision and analytical ray queries. The eight abilities and existing progression topology are unchanged.
+
+Regional treatments include the foundry's processing halls and local furnace light; a roofed transit hall with trusses, suspended empty carrier and optional magnetic rail repair; greenhouse ribs, basin waterlines and pump machinery; three distinct failed prototype assemblies; pale optical rooms and inspection apertures; circulation manifolds and insulated pipe supports; and buttressed predecessor/furnace chambers. The excavation, exhaust spine and supported transit bridge give views between floors an architectural setting. Textures and the sky are generated locally; no external image assets or asset downloads are required.
+
+Static geometry uses the existing batching pipeline and frozen transforms. Both views share lighting, with two additional local lights that do not cast shadows. New room shells use a continuous 36-unit overhead aperture, with matching CPU picking and GPU opacity. Existing floor apertures retain their original size. Third-person shells remain opaque and constrain the camera boom. The larger architectural aperture was verified against the Mortar screen and the guardian's reflected laser path, both of which were obstructed by early versions of the treatment. A slight offset on the new depth prepass eliminates depth/color striping; front-face shadow casting on closed architectural volumes avoids underside self-shadow artifacts.
+
+The carrier arrives, opens its clamps, waits, and returns along suspended rails. Magnetic Traction repairs the blue rail actuator; the nearby maintenance arm and rail respond, and the optional state survives reload. Garden and circulation pumps change cadence when restored. The signal array transmits, turns to receive, pauses without a reply, and returns. Quiet, distance-attenuated machine sounds follow their sources rather than selecting a region solely from the player's elevation. Sound tests cover mute, distance, repeated beat suppression and restored-machine changes; automated validation does not establish subjective listening quality.
+
+After the existing deliberate docking hold, the seven-second ending includes four short views of the carrier, pump channel, signal array and maintenance machine. These cameras never move the simulation player. The water view sits below the overlapping workshop foundation, and cinematic subjects do not use player-obstruction fading. The existing completion screen, cancellation before commitment, and continuation behavior remain. Continuing restores the chosen gameplay camera and its corresponding floor/architecture representation.
+
+Validation:
+
+- All 143 Node tests and the production build pass. The existing bundle-size advisory remains.
+- `folded-progression-check.js` completes all three real-input routes: freight/Laser-first (126 travel legs), freight/Circulation-first (150), and water/Circulation-first (165). Each acquires and uses Mortar before Phoenix, opens the optical/thermal convergence, defeats the keeper, completes docking and reloads the completion state. The route runner moves, fires and interacts through the debug input interface; it does not teleport the player or grant abilities. This is automated campaign verification rather than a fresh-player usability study.
+- `folded-progression-gates-check.js` preserves Cannon rejection and Mortar acceptance at both screened loads, and the final laser-only optical release. The rules check passes magnetic counterplay, single/double reflections, guardian rear damage, automatic lifts, conveyor effects on enemies/wrecks, and all ten ordinary enemy attack types.
+- `folded-regional-presentation-check.js` captures all seven regions in both views, checks room representation and camera clearance, guards against the wall-striping regression, uses actual cannon/magnetic input on the optional rail, checks persistence, captures the ending from both starting views, and verifies player position and camera restoration. The final montage rerun also checks that camera-soft scenery stays opaque during the closing shots. Screenshots were inspected and the water/optics framing corrected.
+- Camera settings, save-post/camera clearance, ability gates and completion-screen checks pass after the final changes, without browser errors.
+- A separate preview of the production bundle loads the third-person journey without test controls, accepts movement, and opens/resumes settings without browser errors. Its temporary preview server is stopped after verification.
+
+Real animation-frame measurements at 1600 × 900, pixel ratio 1.75, with three seconds of warm-up and eight seconds of sampling per fixture:
+
+| Fixture | Main draws | CPU render ms/frame | GPU mean ms | Observed FPS |
+| --- | ---: | ---: | ---: | ---: |
+| Third-person opening | 1,397 | 6.99 | 5.31 | 60.0 |
+| Overhead opening | 347 | 5.39 | 3.92 | 60.0 |
+| Third-person hub | 708 | 5.18 | 5.02 | 60.0 |
+| Third-person carrier | 384 | 3.91 | 5.38 | 60.0 |
+
+CPU submission and GPU execution overlap and must not be added. These are current-build headless Chromium samples, not a paired baseline comparison or a guarantee for all hardware and combat situations. Evidence is under `output/playwright/regional-art/`, with campaign screenshots under `output/playwright/progression/`. The dedicated verification browser is closed after testing; the existing development server on port 5174 remains available.
+
+## Automatic lifts without landing interaction — 2026-09-17
+
+Removed all eight folded-city lifts' call controls, their meshes and landing coordinates, E targeting, manual destination changes and boarding-triggered startup. Releasing the screened Mortar load now starts the carrier even when empty. Its upper brake only releases the onward gate; it cannot reset the lift's destination or dwell. Other lifts run from their existing persistent route-release flags. Map lock indicators use the same release flags.
+
+Every unlocked lift waits three seconds at its initial landing, then moves at five world units per second and dwells for three seconds at both endpoints. Arrival consumes only the movement portion of the current frame before starting the dwell. Player/enemy carriage and the existing hull clearance protection remain. Death and reload reset platform positions but preserve route releases, so automatic travel resumes without another interaction.
+
+The new tests reproduced the old carrier's dependence on boarding before the change. `folded-automatic-lifts-check.js` checks repeated rides on all eight lifts, endpoint dwell within one simulation frame, absence of call controls, ineffective E presses at former call stations, and automatic restart after save/reload. Enemies are removed in these timing fixtures to isolate the cycle from hull-clearance pauses; enemy carriage and clearance remain separately covered by the machinery tests. The campaign runner now waits for actual arrival instead of calling platforms or relying on fixed ride delays. Its upper ratchet shot occurs during the dwell rather than after consuming the entire three-second window.
+
+Verification passes all 145 Node tests, the production build (existing size advisory), all eight lift timing/input/persistence fixtures, the three full campaign routes (126/150/165 travel legs), and the machinery/combat rules check. All three routes complete and reload without using elevator interactions; browser checks report no errors. Evidence is under `output/playwright/automatic-lifts/`. The dedicated browser is closed afterward; the user's server remains on port 5174.

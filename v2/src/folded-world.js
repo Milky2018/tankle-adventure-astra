@@ -1,4 +1,5 @@
 import {cameraPropOpacity} from './folded-camera.js';
+import {makeCityPresentation} from './folded-presentation.js';
 import {abilityIcon} from './folded-hud.js';
 import {SIGNAL,makeAperture,apertureOpacity,APERTURE_AIM_THRESHOLD} from './folded-visibility.js';
 import {foldedEnemyModel} from './folded-enemies.js';
@@ -11,6 +12,7 @@ import {foldedDecks,foldedLiftDefs,foldedSolids,foldedControls,foldedHives,folde
 
 export function makeFoldedWorld(scene,state){
   const aperture=makeAperture(),viewPlayer={x:0,y:0,z:0};
+  const presentation=makeCityPresentation(scene,aperture);
   let thirdPerson=false;
   const fixed=new T.Group();scene.add(fixed);
   const surfaces=[],walls=[],controls=[],hives=[],pickups=[],lifts=[],enemies=[],pillars=[],floorDetails=[],mirrors=[],belts=[];
@@ -130,7 +132,7 @@ export function makeFoldedWorld(scene,state){
   function makeControl(c){
     const root=new T.Group();root.name=`folded-control:${c.id}`;root.position.set(c.x,c.y,c.z);scene.add(root);
     root.rotation.y=c.kind==='laser'||c.kind==='magnet'?Math.PI/2:Math.PI/4;
-    const ground=c.ground??(c.kind==='call'?c.stop:c.y-1.3),height=c.y-ground;
+    const ground=c.ground??c.y-1.3,height=c.y-ground;
     box(root,.42,height,.48,0,-height/2,0,C.dark);
     box(root,1.6,.16,1.2,0,-height+.08,0,C.metal);
     const moving=new T.Group();root.add(moving);
@@ -145,17 +147,11 @@ export function makeFoldedWorld(scene,state){
       for(const r of [.9,.62])ring(root,r,.09,0,0,.15,C.metal);
       lamp=cylinder(moving,.38,.12,0,0,.23,mat(C.lightYellow,true),12);lamp.rotation.x=Math.PI/2;
       for(let i=0;i<3;i++){const a=i*Math.PI*2/3,fin=box(moving,.25,.45,.16,Math.sin(a)*.72,Math.cos(a)*.72,.25,C.yellow,0);fin.rotation.z=-a;}
-    }else if(c.kind==='use'||c.kind==='call'){
+    }else if(c.kind==='use'){
       box(root,1.4,.95,.5,0,0,0,C.dark);
       lamp=box(root,.4,.22,.08,0,.3,.3,mat(SIGNAL.ready,true));
-      if(c.kind==='use'){
-        ring(moving,.62,.12,0,-.15,.44,C.yellow);
-        for(const angle of [0,Math.PI/2]){const spoke=box(moving,1,.12,.12,0,-.15,.44,C.metal);spoke.rotation.z=angle;}
-      }else{
-        box(moving,.18,.65,.18,0,-.15,.4,C.metal);
-        box(moving,.6,.18,.25,0,.08,.4,C.yellow);
-        for(const x of [-.45,.45]){const pointer=box(root,.3,.08,.08,x,-.35,.29,C.mint,0);pointer.rotation.z=x<0?Math.PI/4:-Math.PI/4;}
-      }
+      ring(moving,.62,.12,0,-.15,.44,C.yellow);
+      for(const angle of [0,Math.PI/2]){const spoke=box(moving,1,.12,.12,0,-.15,.44,C.metal);spoke.rotation.z=angle;}
     }else if(c.kind==='dock'){
       for(const x of [-1,1])box(root,.35,1.6,.8,x,-.2,0,C.metal);
       lamp=box(moving,1.3,.35,.65,0,-.6,.25,mat(C.mint,true));
@@ -177,7 +173,7 @@ export function makeFoldedWorld(scene,state){
     for(const child of [...root.children])if(child!==moving&&child!==lamp&&child!==casing)casing.add(child);
     batchStatic(casing);
     const cover=c.id==='brake'?box(root,1.2,1.2,.12,0,0,.64,C.dark,0):null;
-    const control={...c,root,lamp,moving,cover,radius:c.kind==='call'?.8:.95,flash:0,engaged:state[c.id]?1:0};controls.push(control);return control;
+    const control={...c,root,lamp,moving,cover,radius:.95,flash:0,engaged:state[c.id]?1:0};controls.push(control);return control;
   }
   for(const c of foldedControls)makeControl(c);
   const controlFeeds=[];
@@ -211,12 +207,7 @@ export function makeFoldedWorld(scene,state){
       pillars.push({mesh,x:x-.225,z:d.z-.225,w:.45,d:.45,y:d.stops[0],h});
       box(root,.18,1,.18,x,.5,d.z,C.dark,0);
     }
-    const l={...d,root,mesh,y:d.stops[0],destination:d.stops[0],wait:0,used:false};lifts.push(l);
-    for(const y of d.stops){
-      const call=d.calls?.find(c=>c[1]===y);
-      const c={lock:d.lock||(d.id==='cage'?'cage':d.id==='carrier'?'brake':null),id:`call-${d.id}-${y}`,kind:'call',lift:d.id,stop:y,x:call?call[0]:d.id==='cage'?18:87,y:y+1.3,z:call?call[2]:d.id==='cage'?25:y===8?-62:-85};
-      makeControl(c);
-    }
+    const l={...d,root,mesh,y:d.stops[0],destination:d.stops[0],wait:0};lifts.push(l);
   }
   for(const h of foldedHives){
     const root=new T.Group();root.name=`folded-hive:${h.id}`;root.position.set(h.x,h.y,h.z);scene.add(root);
@@ -489,7 +480,7 @@ export function makeFoldedWorld(scene,state){
   const cameraFloors=surfaces.map(s=>({mesh:s.mesh,bounds:new T.Box3().setFromObject(s.mesh)}));
   function cameraDistance(origin,direction,distance){
     raycaster.set(origin,direction);raycaster.far=distance;
-    let nearest=distance;
+    let nearest=presentation.cast(origin,direction,distance)?.distance??distance;
     const probe=mesh=>{const hit=raycaster.intersectObject(mesh,false)[0];if(hit)nearest=Math.min(nearest,hit.distance);};
     for(const floor of cameraFloors)if(raycaster.ray.intersectsBox(floor.bounds))probe(floor.mesh);
     for(const object of occluders){
@@ -503,7 +494,7 @@ export function makeFoldedWorld(scene,state){
     return nearest;
   }
   function setThirdPerson(value){
-    thirdPerson=value;aperture.enable(!value);
+    thirdPerson=value;aperture.enable(!value);presentation.setView(value);
     floorMeshes.visible=!value;floorBatches.visible=value;
     floorTrimMeshes.visible=!value;floorTrimBatches.visible=value;
     for(const material of floorMaterials.values()){material.transparent=!value;material.depthWrite=value;material.needsUpdate=true;}
@@ -520,7 +511,7 @@ export function makeFoldedWorld(scene,state){
         cameraBounds.setFromObject(mesh);
         // Keep the floor pad visible; only the actual obstruction fades.
         const target=cameraBounds.max.y<p.y+.5?1:cameraPropOpacity(cameraBounds,camera.position,cameraTarget);
-        part.cameraOpacity=target<part.cameraOpacity?target:T.MathUtils.damp(part.cameraOpacity,target,8,dt);
+        part.cameraOpacity=p.endingTime>2.5?1:target<part.cameraOpacity?target:T.MathUtils.damp(part.cameraOpacity,target,8,dt);
         if(part.cameraOpacity>.999)part.cameraOpacity=1;
         mesh.castShadow=shadow&&part.cameraOpacity===1;
         for(const {material,opacity,depthWrite}of materials){material.opacity=opacity*part.cameraOpacity;material.depthWrite=depthWrite&&part.cameraOpacity===1;}
@@ -536,7 +527,8 @@ export function makeFoldedWorld(scene,state){
     raycaster.set(origin,direction);raycaster.far=distance;
     const meshes=[...surfaces.map(s=>s.mesh),...walls.filter(w=>activeSolid(w,state)&&(!aiming||w.opacity>.4)).map(w=>w.mesh),...lifts.filter(l=>!aiming||!l.root.userData.cutaway).map(l=>l.mesh),...mirrors.filter(m=>!aiming||!m.root.userData.cutaway).map(m=>m.mesh)];
     let hit=raycaster.intersectObjects(meshes,false).find(h=>!aiming||thirdPerson||!h.object.userData.aperture||apertureOpacity(h.point,viewPlayer,sightDirection)>APERTURE_AIM_THRESHOLD)||null;if(hit?.object.userData.mirror)hit.mirror=hit.object.userData.mirror;
-    if(targets)for(const t of [...controls.filter(c=>!['call','use','dock'].includes(c.kind)&&!state[c.id]),...enemies.filter(e=>e.hp>0),...enemies.filter(e=>e.hp>0).flatMap(e=>e.parts.filter(p=>p.hp>0)),...extras.filter(t=>!t.disarmed)]){
+    const structure=presentation.cast(origin,direction,distance,aiming);if(structure&&(!hit||structure.distance<hit.distance))hit=structure;
+    if(targets)for(const t of [...controls.filter(c=>!['use','dock'].includes(c.kind)&&!state[c.id]),...enemies.filter(e=>e.hp>0),...enemies.filter(e=>e.hp>0).flatMap(e=>e.parts.filter(p=>p.hp>0)),...extras.filter(t=>!t.disarmed)]){
       const point=new T.Vector3(t.x,t.y+(t.model?1.5:0),t.z);
       if(aiming&&(t.root?.userData.cutaway||t.model?.root.userData.cutaway))continue;
       if(aiming&&(t.model&&!t.readable||t.enemy&&!t.enemy.readable))continue;
@@ -548,17 +540,17 @@ export function makeFoldedWorld(scene,state){
   function update(dt,time,p,camera=null){
     if(camera&&!thirdPerson)camera.getWorldDirection(sightDirection).negate();
     Object.assign(viewPlayer,{x:p.x,y:p.y,z:p.z});aperture.update(p,sightDirection);
+    presentation.sight(p,sightDirection);presentation.update(time,p,state);
     for(const s of surfaces)s.opacity=thirdPerson?1:apertureOpacity(s.mesh.position,p,sightDirection);
     for(const w of walls){w.open=T.MathUtils.damp(w.open,activeSolid(w,state)?0:1,9,dt);w.mesh.position.y=w.y+w.h/2-w.open*(w.h+.5);w.mesh.visible=!w.invisible&&w.open<.999;w.mesh.updateMatrixWorld();}
     for(const c of controls){
       c.flash=Math.max(0,c.flash-dt);
-      const lift=c.kind==='call'?lifts.find(l=>l.id===c.lift):null,enabled=!c.lock||state[c.lock],aligned=state[c.id]||c.id!=='brake'||Math.abs(lifts.find(l=>l.id==='carrier').y-16)<.15,engaged=lift?enabled&&Math.abs(lift.y-c.stop)<.15:!!state[c.id];
+      const aligned=state[c.id]||c.id!=='brake'||Math.abs(lifts.find(l=>l.id==='carrier').y-16)<.15,engaged=!!state[c.id];
       c.engaged=T.MathUtils.damp(c.engaged,engaged?1:0,8,dt);
-      c.lamp.material.color.setHex(!enabled||!aligned?C.dark:c.flash?C.lightYellow:engaged?SIGNAL.open:c.kind==='magnet'?SIGNAL.magnet:SIGNAL.ready);
+      c.lamp.material.color.setHex(!aligned?C.dark:c.flash?C.lightYellow:engaged?SIGNAL.open:c.kind==='magnet'?SIGNAL.magnet:SIGNAL.ready);
       if(c.cover)c.cover.position.y=T.MathUtils.damp(c.cover.position.y,aligned?1.4:0,12,dt);
       if(c.kind==='magnet'){c.moving.position.y=c.engaged*.55;if(state[c.id])c.moving.position.z=T.MathUtils.damp(c.moving.position.z,0,8,dt);}
       else if(c.kind==='laser'||c.kind==='use')c.moving.rotation.z=c.engaged*Math.PI*.55;
-      else if(c.kind==='call')c.moving.rotation.x=enabled?-c.engaged*.65:Math.PI/2;
       else c.moving.position.z=-c.engaged*.3-(c.flash?Math.sin(c.flash*24)*.08:0);
     }
     for(const m of mirrors){m.flash=Math.max(0,(m.flash||0)-dt);m.mesh.material.color.setHex(m.flash?C.lightYellow:0xd3eee4);}
@@ -603,12 +595,13 @@ export function makeFoldedWorld(scene,state){
     ram.position.y=8+Math.sin(time*.75)*2.5;
     tenderLamp.material.color.setHex(state.maintenance||p.endingTime?C.mint:C.dark);tender.position.x=110+(state.maintenance?Math.sin(time*.25):0);
     for(const {lamp,y}of pipeLights)lamp.material.color.setHex(p.endingTime||state.pump&&y===-8||state['pressure-return']&&y===-24?C.mint:C.orange);
-    bowl.rotation.y=state.signal?Math.sin(time*.15)*.35:0;
+    const signalPhase=p.endingTime?Math.max(0,p.endingTime-4.8)*2:time%9;
+    bowl.rotation.y=state.signal||p.endingTime?signalPhase<.65?0:signalPhase<1.5?(signalPhase-.65)/.85*.35:signalPhase<7.5?.35:(9-signalPhase)/1.5*.35:0;
     wheel.rotation.z=Math.sin(time*.08)*.06;
     waterTexture.offset.x=time*.015;
     updateOcclusion(dt,p);
     scene.updateMatrixWorld();
     if(camera)updateCameraOcclusion(camera,p,dt);
   }
-  return {surfaces,walls,controls,hives,pickups,lifts,enemies,wheel,mirrors,belts,occluders,pulseHive,cast,update,cameraDistance,setThirdPerson,updateCameraOcclusion};
+  return {surfaces,walls,controls,hives,pickups,lifts,enemies,wheel,mirrors,belts,occluders,presentation,pulseHive,cast,update,cameraDistance,setThirdPerson,updateCameraOcclusion};
 }

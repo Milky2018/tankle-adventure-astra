@@ -47,6 +47,13 @@ scene.add(new T.AmbientLight(0xdce7df,1.2));
 const sun=new T.DirectionalLight(0xffe3b1,3.2);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=sun.shadow.camera.bottom=-45;sun.shadow.camera.right=sun.shadow.camera.top=45;sun.shadow.camera.far=180;sun.shadow.bias=-.0001;sun.shadow.normalBias=.04;scene.add(sun,sun.target);
 const fill=new T.DirectionalLight(0x9ec5d5,.65);fill.position.set(20,12,-30);scene.add(fill);
 const world=makeFoldedWorld(scene,state),model=tankModel();scene.add(model.root);world.setThirdPerson(thirdPerson);
+const endingCamera=new T.PerspectiveCamera(55,innerWidth/innerHeight,.15,350);
+const endingShots=[
+  {from:2.5,to:3.7,eye:[3,8,31],at:[0,7,17]},
+  {from:3.7,to:4.8,eye:[77,-5.3,-25],at:[77,-4,-37]},
+  {from:4.8,to:5.9,eye:[220,52,131],at:[204,47,146]},
+  {from:5.9,to:Infinity,eye:[113,-20,35],at:[110,-23,30]}
+];
 // Rotate the actual trunnion, so pitch does not swing the whole barrel below the hull.
 for(const child of model.barrel.children)child.position.y-=2;model.barrel.position.y=2;
 const flotation=flotationAssembly(model.body);
@@ -83,10 +90,7 @@ $('reset-confirm').textContent=preview?'再次点击将重置当前试玩，完�
 function save(){state.discovered=[...discovered];write(SAVE_KEY,state);}
 function setState(id,kind){
   if(!releaseFolded(id,kind,p,state,world.lifts)){audio.event('armor');return false;}
-  if(id==='brake'){const l=world.lifts.find(l=>l.id==='carrier');l.destination=16;l.wait=0;}
-  if(id==='cage')world.lifts.find(l=>l.id==='cage').destination=24;
   if(state['relay-west']&&state['relay-east'])state.relays=true;
-  const lift=world.lifts.find(l=>l.lock===id);if(lift){lift.destination=id==='ballast'?0:lift.stops.at(-1);lift.wait=0;}
   audio.event('lever');save();return true;
 }
 function project(x,y,z){const v=new T.Vector3(x,y,z).project(camera);return {x:(v.x*.5+.5)*innerWidth,y:(-.5*v.y+.5)*innerHeight,visible:Math.abs(v.x)<.92&&Math.abs(v.y)<.9&&v.z>=-1&&v.z<=1};}
@@ -170,7 +174,7 @@ function impact(hit,shot){
       if(!world.cast(hit.point.clone().addScaledVector(path.clone().normalize(),.05),path.normalize(),Math.max(0,length-.2),{targets:false}))hitEnemy(e,MORTAR.damage,shot.origin,'mortar');
     }
     for(const e of world.enemies)if(e.hp>0)for(const part of e.parts)if(part.hp>0){const to=new T.Vector3(part.x,part.y,part.z).sub(hit.point),distance=to.length();if(distance<MORTAR.radius&&!world.cast(hit.point,to.normalize(),Math.max(0,distance-.2),{targets:false}))hitEnemy(e,MORTAR.damage,shot.origin,'mortar',part);}
-    for(const c of world.controls)if(c.kind!=='call'&&new T.Vector3(c.x,c.y,c.z).distanceTo(hit.point)<2){
+    for(const c of world.controls)if(new T.Vector3(c.x,c.y,c.z).distanceTo(hit.point)<2){
       const to=new T.Vector3(c.x,c.y,c.z).sub(hit.point),length=to.length();
       if(!world.cast(hit.point,to.normalize(),Math.max(0,length-.2),{targets:false})){c.flash=.2;setState(c.id,'mortar');}
     }
@@ -220,19 +224,16 @@ function updateShots(dt){
     }else {s.position.copy(next);s.mesh.position.copy(next);s.mesh.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),path.normalize());}
   }
 }
-function operateLift(l,stop){if((l.lock&&!state[l.lock])||(l.id==='cage'&&!state.cage)||(l.id==='carrier'&&!state.brake)){audio.event('blocked');return;}l.destination=stop;l.wait=.3;l.used=true;audio.event('lever');}
 function target(){
   const pickup=world.pickups.find(q=>!state[q.id]&&(!q.requires||state[q.requires])&&Math.hypot(q.x-p.x,q.z-p.z)<3.5&&Math.abs(q.y-p.y)<.5);if(pickup)return {...pickup,kind:'pickup'};
   const hive=world.hives.find(h=>(!h.requires||state[h.requires])&&Math.hypot(h.x-p.x,h.z-p.z)<3.5&&Math.abs(h.y-p.y)<.5);if(hive)return {...hive,kind:'hive'};
   const use=world.controls.find(c=>['use','dock'].includes(c.kind)&&!state[c.id]&&(c.kind!=='dock'||state.keeper)&&Math.abs(c.y-1.3-p.y)<.6&&Math.hypot(c.x-p.x,c.z-p.z)<3);if(use)return use;
-  return world.controls.find(c=>(!c.lock||state[c.lock])&&c.kind==='call'&&(c.lift!=='cage'||state.cage)&&Math.abs(c.stop-p.y)<.5&&Math.hypot(c.x-p.x,c.z-p.z)<3.5);
 }
 function interact(){
   const t=target();if(!t||p.hp<=0)return false;
   if(t.kind==='pickup'){state[t.id]=p[t.ability||t.id]=true;abilityHud.acquire(t.ability||t.id,time);audio.event('unlock');save();}
   if(t.kind==='hive'){state.anchor=t.id;p.hp=MAX_HP;p.heat=0;p.overheated=false;p.speed=1;p.invincible=time+1.5;repairAt=time;resetEnemies();clearShots();world.pulseHive(t.id);audio.event('repair');save();}
   if(t.kind==='use')setState(t.id,'use');
-  if(t.kind==='call')operateLift(world.lifts.find(l=>l.id===t.lift),t.stop);
   return true;
 }
 function updateLifts(dt){
@@ -243,11 +244,12 @@ function resetEnemies(){
 }
 function clearShots(){for(const s of [...shots,...waves]){scene.remove(s.mesh);s.mesh.material.dispose();}shots.length=0;waves.length=0;for(const m of mines){scene.remove(m.root);m.lamp.material.dispose();m.lamp.geometry.dispose();}mines.length=0;}
 function respawn(){
+  camera=thirdPerson?follow.camera:overheadCamera;world.setThirdPerson(thirdPerson);
   const h=foldedHives.find(h=>h.id===state.anchor);Object.assign(p,h,{hp:MAX_HP,heat:0,overheated:false,deployed:false,afloat:false,speed:1,lastHeat:-10,lastShot:-10,invincible:time+1});
   clearShots();
   resetEnemies();
   p.dockHold=0;p.endingTime=0;ending.hide();$('hud').classList.remove('ending-active');
-  for(const l of world.lifts){l.y=l.destination=l.stops[0];l.wait=0;l.used=false;}
+  for(const l of world.lifts){l.y=l.destination=l.stops[0];l.wait=0;}
   deathAt=-1;keys.clear();focus.set(p.x,p.y,p.z);updateCamera(1);
   repairAt=time;world.pulseHive(h.id,'respawn');audio.event('repair');
 }
@@ -413,8 +415,16 @@ function advance(dt){
   if(paused||mapOpen)return;time+=dt;
   if(deathAt>=0){if(time-deathAt>2.5)respawn();return;}
   if(p.endingTime){
-    p.endingTime+=dt;updateLifts(dt);audio.update(time,p,false,'r3-garden',false,false);world.update(dt,time,p,camera);
-    for(const {m,color}of hullMaterials)m.color.copy(color).lerp(new T.Color(C.dark),Math.min(1,p.endingTime/7));model.radiator.material.color.setHex(C.orange);
+    p.endingTime+=dt;updateLifts(dt);audio.update(time,p,false,'r7-furnace',false,false);
+    const shot=endingShots.find(s=>p.endingTime>=s.from&&p.endingTime<s.to);
+    if(shot){
+      if(camera!==endingCamera){camera=endingCamera;world.setThirdPerson(true);}endingCamera.aspect=innerWidth/innerHeight;endingCamera.updateProjectionMatrix();
+      camera.position.set(...shot.eye);camera.lookAt(new T.Vector3(...shot.at));camera.updateMatrixWorld();
+      const view={...p,x:shot.at[0],y:shot.at[1],z:shot.at[2]};sun.position.set(view.x-18,view.y+55,view.z+16);sun.target.position.set(view.x,view.y,view.z);sun.target.updateMatrixWorld();world.update(dt,time,view,camera);
+      audio.environment(time,view,world.presentation.region,state,Math.PI);
+    }else world.update(dt,time,p,camera);
+    for(const {m,color}of hullMaterials)m.color.copy(color).lerp(new T.Color(0xe99955),Math.min(.55,p.endingTime*.25));model.radiator.material.color.setHex(C.orange);
+    model.antenna.rotation.z=Math.sin(p.endingTime*2)*Math.max(0,.18-p.endingTime*.08);
     if(p.endingTime>=7&&!ending.visible){paused=true;keys.clear();audio.update(time,p,false,'r3-garden',true);audio.event('ending');ending.show();if(document.pointerLockElement)document.exitPointerLock();}
     return;
   }
@@ -422,7 +432,7 @@ function advance(dt){
   const walking=[bindings.up,bindings.down,bindings.left,bindings.right].some(k=>keys.has(k));
   p.dockHold=dock?.kind==='dock'&&keys.has(bindings.repair)&&!walking?(p.dockHold||0)+dt:0;
   if(p.dockHold){p.x*=Math.exp(-dt*2.5);p.z*=Math.exp(-dt*2.5);p.heading+=angleDelta(p.heading,Math.PI)*Math.min(1,dt*4);}
-  if(p.dockHold>=2){p.endingTime=.001;const carrier=world.lifts.find(l=>l.id==='carrier');if(state.brake)carrier.destination=carrier.y<12?16:8;state.endingSeen=true;state.anchor='last-refuge';save();keys.clear();laserBeam.visible=magneticBeam.visible=false;for(const s of shots){scene.remove(s.mesh);s.mesh.material.dispose();}shots.length=0;audio.event('unlock');return;}
+  if(p.dockHold>=2){p.endingTime=.001;state.endingSeen=true;state.anchor='last-refuge';save();keys.clear();laserBeam.visible=magneticBeam.visible=false;for(const s of shots){scene.remove(s.mesh);s.mesh.material.dispose();}shots.length=0;audio.event('unlock');return;}
   p.pumpPressure=Math.abs(p.y+8)<.5&&Math.hypot(p.x-64,p.z+28)<1.5?Math.min(1,(p.pumpPressure||0)+dt):0;
   updateLifts(dt);
   const horizontal=Number(keys.has(bindings.right))-Number(keys.has(bindings.left)),vertical=Number(keys.has(bindings.down))-Number(keys.has(bindings.up));
@@ -447,7 +457,9 @@ function advance(dt){
   const support=foldedSupport(p.x,p.z,p.y,p.deployed,world.lifts);let learned=false;
   for(const d of foldedDecks)if(!discovered.has(d.id)&&(Math.abs(deckHeight(d,clamp(p.z,d.z,d.z+d.d))-p.y)<3&&Math.hypot(p.x-clamp(p.x,d.x,d.x+d.w),p.z-clamp(p.z,d.z,d.z+d.d))<12)){discovered.add(d.id);learned=true;}
   if(support&&!discovered.has(support.id)){discovered.add(support.id);learned=true;}if(learned)save();
-  world.update(0,time,p,camera);audio.update(time,p,world.enemies.some(e=>e.phase==='warn'),p.y<0?'r3-garden':'r2-transit',false,moving);
+  world.update(0,time,p,camera);
+  const region=world.presentation.region,area={foundry:'r1-foundry',transit:'r2-transit',garden:'r3-garden',optics:'r4-optics',testworks:'r5-testworks',circulation:'r6-circulation',furnace:'r7-furnace'}[region];
+  audio.update(time,p,world.enemies.some(e=>e.phase==='warn'),area,false,moving);audio.environment(time,p,region,state,thirdPerson?follow.yaw:Math.PI*1.25);
 }
 
 function knownLayers(){return [...new Set(foldedDecks.filter(d=>discovered.has(d.id)).flatMap(d=>[d.y,d.y+(d.rise||0)]))].sort((a,b)=>a-b);}
@@ -467,8 +479,8 @@ function drawMap(large=false){
     ctx.strokeStyle=state[wall.id]?'#85db58':'#f3d250';ctx.lineWidth=state[wall.id]?1:3;
     ctx.beginPath();if(wall.w>wall.d){ctx.moveTo(ox+wall.x*scale,oz+(wall.z+wall.d/2)*scale);ctx.lineTo(ox+(wall.x+wall.w)*scale,oz+(wall.z+wall.d/2)*scale);}else {ctx.moveTo(ox+(wall.x+wall.w/2)*scale,oz+wall.z*scale);ctx.lineTo(ox+(wall.x+wall.w/2)*scale,oz+(wall.z+wall.d)*scale);}ctx.stroke();
   }
-  for(const l of world.lifts)if(l.stops.includes(layer)&&l.stops.some(y=>seen(l.x+l.w/2,y,l.z+l.d/2))){ctx.strokeStyle=state[l.lock||l.id]||l.id==='carrier'?'#a6e3cd':'#e8bd62';ctx.lineWidth=2;ctx.strokeRect(ox+l.x*scale,oz+l.z*scale,l.w*scale,l.d*scale);const x=ox+(l.x+l.w/2)*scale,z=oz+(l.z+l.d/2)*scale;ctx.beginPath();ctx.moveTo(x-4,z-5);ctx.lineTo(x+4,z+3);ctx.moveTo(x-4,z+1);ctx.lineTo(x+4,z+9);ctx.stroke();}
-  for(const c of world.controls)if(!['call','dock'].includes(c.kind)&&Math.abs(c.y-1.3-layer)<4&&seen(c.x,c.y-1.3,c.z)){
+  for(const l of world.lifts)if(l.stops.includes(layer)&&l.stops.some(y=>seen(l.x+l.w/2,y,l.z+l.d/2))){ctx.strokeStyle=state[l.lock||l.id]?'#a6e3cd':'#e8bd62';ctx.lineWidth=2;ctx.strokeRect(ox+l.x*scale,oz+l.z*scale,l.w*scale,l.d*scale);const x=ox+(l.x+l.w/2)*scale,z=oz+(l.z+l.d/2)*scale;ctx.beginPath();ctx.moveTo(x-4,z-5);ctx.lineTo(x+4,z+3);ctx.moveTo(x-4,z+1);ctx.lineTo(x+4,z+9);ctx.stroke();}
+  for(const c of world.controls)if(c.kind!=='dock'&&Math.abs(c.y-1.3-layer)<4&&seen(c.x,c.y-1.3,c.z)){
     const x=ox+c.x*scale,z=oz+c.z*scale;ctx.strokeStyle=state[c.id]?'#85db58':c.kind==='magnet'?'#328fff':'#f3d250';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,z,4,0,Math.PI*2);ctx.stroke();if(!state[c.id]){ctx.beginPath();ctx.moveTo(x-3,z);ctx.lineTo(x+3,z);ctx.moveTo(x,z-3);ctx.lineTo(x,z+3);ctx.stroke();}
   }
   for(const q of world.pickups)if(!state[q.id]&&(!q.requires||state[q.requires])&&Math.abs(q.y-layer)<1&&seen(q.x,q.y,q.z)){ctx.fillStyle='#ffe09a';ctx.fillRect(ox+q.x*scale-4,oz+q.z*scale-4,8,8);}

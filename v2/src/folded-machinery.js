@@ -21,14 +21,16 @@ export function stepLifts(lifts,state,player,dt,enemies=[]){
   for(const lift of lifts){
     const aboard=body=>Math.abs(body.y-lift.y)<.2&&inRect(body.x,body.z,lift,-.85);
     const riders=bodies.filter(aboard);
-    const enabled=lift.id==='carrier'?(lift.used||state.brake||riders.length>0):!!state[lift.lock||lift.id];
-    if(enabled&&!lift.used){lift.used=true;lift.destination=lift.y<lift.stops.at(-1)-.1?lift.stops.at(-1):lift.stops[0];lift.wait=.6;}
-    if(lift.wait>0){lift.wait=Math.max(0,lift.wait-dt);continue;}
-    if(enabled&&Math.abs(lift.y-lift.destination)<.01){lift.destination=lift.destination===lift.stops[0]?lift.stops.at(-1):lift.stops[0];lift.wait=3;continue;}
-    const next=lift.y+Math.max(-dt*5,Math.min(dt*5,lift.destination-lift.y));
+    if(!state[lift.lock||lift.id])continue;
+    if(lift.y===lift.destination){lift.destination=lift.y===lift.stops[0]?lift.stops.at(-1):lift.stops[0];lift.wait=3;}
+    const dwell=Math.min(lift.wait,dt),travel=dt-dwell;lift.wait-=dwell;
+    if(travel<1e-9)continue;
+    const next=lift.y+Math.max(-travel*5,Math.min(travel*5,lift.destination-lift.y));
     // Pause at a straddling hull; neither the player nor enemies can be sliced by a deck.
     if(bodies.some(body=>!aboard(body)&&inRect(body.x,body.z,lift,.9)&&Math.min(lift.y,next)<=body.y+2.7&&Math.max(lift.y,next)>=body.y))continue;
     for(const body of riders)body.y+=next-lift.y;
+    const elapsed=Math.abs(next-lift.y)/5;
     lift.y=next;
+    if(lift.y===lift.destination){lift.destination=lift.y===lift.stops[0]?lift.stops.at(-1):lift.stops[0];lift.wait=Math.max(0,3-(travel-elapsed));}
   }
 }

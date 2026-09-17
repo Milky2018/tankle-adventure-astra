@@ -1,6 +1,7 @@
 import {cityDecks,cityLifts,citySolids,cityControls,cityHives,cityPickups,cityEnemies,cityFlags} from './folded-city-layout.js';
 import {inRect,deckHeight} from './hoist-layout.js';
 import {phoenixReady,clamp} from './mechanics.js';
+import {buildArchitecture,architectureIndex} from './folded-architecture.js';
 
 const deck=(id,x,z,w,d,y,extra={})=>({id,x,z,w,d,y,...extra});
 export const foldedDecks=[
@@ -31,8 +32,8 @@ export const foldedDecks=[
   ...cityDecks
 ];
 export const foldedLiftDefs=[
-  {id:'carrier',x:72,z:-78,w:12,d:12,stops:[8,16]},
-  {id:'cage',x:4,z:10,w:12,d:12,stops:[0,24],recess:.6,calls:[[2,0,18],[22,24,12]]},
+  {id:'carrier',x:72,z:-78,w:12,d:12,stops:[8,16],lock:'load'},
+  {id:'cage',x:4,z:10,w:12,d:12,stops:[0,24],recess:.6},
   ...cityLifts
 ];
 // Bounds describe solid material, including the moving shutters while closed.
@@ -53,6 +54,7 @@ export const foldedSolids=[
   ...citySolids
 ];
 export const foldedControls=[
+  {id:'rail-repair',x:-18,y:1.4,z:23,kind:'magnet'},
   {id:'magnet',x:-39.7,y:-6.6,z:-8,kind:'magnet'},
   {id:'freight',x:32,y:1.3,z:-34,kind:'shot'},
   {id:'gangway',x:86,y:-6.6,z:31,kind:'shot'},
@@ -85,6 +87,8 @@ export const foldedEnemies=[
   ...cityEnemies
 ];
 
+export const foldedArchitecture=buildArchitecture(foldedDecks,foldedLiftDefs);
+export const architectureGrid=architectureIndex(foldedArchitecture.solids);
 export const activeSolid=(s,state)=>s.permanent||!state[s.id];
 export function foldedAimHeight(p,target){
   const verticalReach=Math.hypot(target.x-p.x,target.z-p.z)*Math.tan(Math.PI*40/180);
@@ -104,7 +108,7 @@ export function foldedSupport(x,z,y,deployed=false,lifts=[]){
   return best;
 }
 export function foldedBlocked(x,y,z,state,r=.9){
-  return foldedSolids.find(s=>activeSolid(s,state)&&y+2>s.y+.12&&y<s.y+s.h-.1&&inRect(x,z,s,r))||foldedDecks.find(d=>!d.water&&inRect(x,z,d,-.01)&&deckHeight(d,z)>y+.45&&deckHeight(d,z)<y+3.25);
+  return foldedSolids.find(s=>activeSolid(s,state)&&y+2>s.y+.12&&y<s.y+s.h-.1&&inRect(x,z,s,r))||[...architectureGrid.near(x,z,r)].find(s=>y+2>s.y+.12&&y<s.y+s.h-.1&&inRect(x,z,s,r))||foldedDecks.find(d=>!d.water&&inRect(x,z,d,-.01)&&deckHeight(d,z)>y+.45&&deckHeight(d,z)<y+3.25);
 }
 export function moveFolded(p,dx,dz,state,lifts=[]){
   const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.2));
@@ -125,7 +129,7 @@ export function moveFolded(p,dx,dz,state,lifts=[]){
 
 export function initialFoldedState(saved={}){
   const state={};
-  for(const id of ['magnet','freight','gangway','load','brake','cage','launch','optics','pressure','flotation','phoenix',...cityFlags])state[id]=saved[id]===true;
+  for(const id of ['magnet','freight','gangway','load','brake','cage','launch','optics','pressure','flotation','phoenix','rail-repair',...cityFlags])state[id]=saved[id]===true;
   state.anchor=foldedHives.some(h=>h.id===saved.anchor)?saved.anchor:'turntable';
   state.discovered=Array.isArray(saved.discovered)?saved.discovered.filter(id=>foldedDecks.some(d=>d.id===id)):['turntable'];
   return state;

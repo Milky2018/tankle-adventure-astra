@@ -24,7 +24,7 @@ test('ordinary walking cannot reverse the Foundry belt; a cold Overdrive crosses
 
 test('released lifts cycle repeatedly with endpoint dwell and no second input',()=>{
   for(const def of foldedLiftDefs){
-    const lift={...def,y:def.stops[0],destination:def.stops[0],wait:0,used:false};
+    const lift={...def,y:def.stops[0],destination:def.stops[0],wait:0};
     const state={[def.lock||def.id]:true,brake:true},p={x:def.x+def.w/2,y:lift.y,z:def.z+def.d/2};
     let visits=0,lastStop=null,dwell=0;
     for(let i=0;i<4800;i++){
@@ -38,14 +38,14 @@ test('released lifts cycle repeatedly with endpoint dwell and no second input',(
 });
 
 test('an automatic lift waits for a straddling hull and carries a fully boarded enemy',()=>{
-  const lift={...foldedLiftDefs[0],y:8,destination:16,used:true,wait:0},p={x:78,y:8,z:-66.6},s={brake:true};
+  const lift={...foldedLiftDefs[0],y:8,destination:16,wait:0},p={x:78,y:8,z:-66.6},s={load:true};
   stepLifts([lift],s,p,1);assert.equal(lift.y,8);
   p.z=-64;const enemy={hp:2,x:78,y:8,z:-71};stepLifts([lift],s,p,1,[enemy]);assert.equal(lift.y,13);assert.equal(enemy.y,13);
   enemy.x=lift.x+.94;stepLifts([lift],s,p,.2,[enemy]);assert.equal(lift.y,14,'driving to a supported edge must not freeze a lift between floors');
 });
 
 test('an absent lift leaves no walkable shaft bottom; holding movement boards its returning platform',()=>{
-  const lift={...foldedLiftDefs.find(l=>l.id==='cage'),y:24,destination:0,used:true,wait:0},state={cage:true},p={x:10,y:0,z:25,speed:1};
+  const lift={...foldedLiftDefs.find(l=>l.id==='cage'),y:24,destination:0,wait:0},state={cage:true},p={x:10,y:0,z:25,speed:1};
   assert.equal(foldedSupport(10,18,0,false,[lift]),null);
   for(let i=0;i<840;i++){moveFolded(p,0,p.z>18?-7/60:0,state,[lift]);stepLifts([lift],state,p,1/60);}
   assert.ok(p.z<18.2);assert.equal(p.y,24,'boarded hull reaches the upper landing without another input');
@@ -71,4 +71,28 @@ test('a stripped shield stays vulnerable while a repairer cannot revive dead all
   assert.equal(cityDamage(guard,1,front),.4);guard.shieldRemoved=true;assert.equal(cityDamage(guard,1,front),1);
   const medic={x:0,y:0,z:0,encounter:'pair'},dead={x:1,y:0,z:0,hp:0,max:3,encounter:'pair'},hurt={x:2,y:0,z:0,hp:1,max:3,encounter:'pair'};
   assert.equal(woundedAlly(medic,[medic,dead,hurt]),hurt);assert.equal(woundedAlly(medic,[dead]),undefined);
+});
+
+test('the released carrier runs empty without boarding or a brake interaction',()=>{
+  const def=foldedLiftDefs.find(l=>l.id==='carrier');
+  const lift={...def,y:8,destination:8,wait:0},p={x:90,y:8,z:-59};
+  for(let i=0;i<600;i++)stepLifts([lift],{},p,1/60);
+  assert.equal(lift.y,8,'locked carrier stays parked');
+  for(let i=0;i<240;i++)stepLifts([lift],{load:true},p,1/60);
+  assert.ok(lift.y>8,'releasing the screened load starts the empty carrier');
+});
+
+test('unlocked lifts dwell for three seconds at both endpoints without a passenger',()=>{
+  for(const def of foldedLiftDefs){
+    const lift={...def,y:def.stops[0],destination:def.stops[0],wait:0},state={load:true,[def.lock||def.id]:true},p={x:1000,y:0,z:1000};
+    for(let i=0;i<180;i++)stepLifts([lift],state,p,1/60);
+    assert.equal(lift.y,def.stops[0],`${def.id}: initial landing dwell`);
+    stepLifts([lift],state,p,1/60);assert.ok(lift.y>def.stops[0],`${def.id}: starts without input`);
+    for(let i=0;i<2000&&lift.y!==def.stops.at(-1);i++)stepLifts([lift],state,p,1/60);
+    assert.equal(lift.y,def.stops.at(-1));
+    for(let i=0;i<179;i++)stepLifts([lift],state,p,1/60);
+    assert.equal(lift.y,def.stops.at(-1),`${def.id}: upper landing dwell`);
+    for(let i=0;i<2;i++)stepLifts([lift],state,p,1/60);
+    assert.ok(lift.y<def.stops.at(-1),`${def.id}: returns without input`);
+  }
 });

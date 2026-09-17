@@ -50,12 +50,12 @@ export const cityDecks=[
   d('sump-descent',116,0,12,24,-16,{rise:-8}),d('sump-upper-dock',116,-12,12,12,-16),d('sump-upper-walk',128,-12,12,36,-16)
 ];
 export const cityLifts=[
-  {id:'training',x:-44,z:22,w:12,d:12,stops:[0,8],lock:'ballast',calls:[[-30,0,27],[-49,8,27]]},
-  {id:'loading-return',x:12,z:-52,w:12,d:12,stops:[-8,0],lock:'loading-return',calls:[[28,-8,-46],[20,0,-34]]},
-  {id:'emitter-cage',x:44,z:-92,w:12,d:12,stops:[-8,24],lock:'emitter-cage',calls:[[40,-8,-72],[63,24,-86]]},
-  {id:'garden-lift',x:104,z:12,w:12,d:12,stops:[-8,16],lock:'garden-optical',calls:[[99,-8,18],[110,16,8]]},
-  {id:'yard-lift',x:236,z:24,w:12,d:12,stops:[-8,16],lock:'yard-optical',recess:.6,calls:[[242,-8,40],[230,16,38]]},
-  {id:'last-cage',x:16,z:-24,w:12,d:12,stops:[-40,0],lock:'last-cage',calls:[[33,-40,-18],[22,0,-4]]}
+  {id:'training',x:-44,z:22,w:12,d:12,stops:[0,8],lock:'ballast'},
+  {id:'loading-return',x:12,z:-52,w:12,d:12,stops:[-8,0],lock:'loading-return'},
+  {id:'emitter-cage',x:44,z:-92,w:12,d:12,stops:[-8,24],lock:'emitter-cage'},
+  {id:'garden-lift',x:104,z:12,w:12,d:12,stops:[-8,16],lock:'garden-optical'},
+  {id:'yard-lift',x:236,z:24,w:12,d:12,stops:[-8,16],lock:'yard-optical',recess:.6},
+  {id:'last-cage',x:16,z:-24,w:12,d:12,stops:[-40,0],lock:'last-cage'}
 ];
 export const citySolids=[
   gate('furnace-shell',-5,-13,10,10,-56,7,{permanent:true,invisible:true}),

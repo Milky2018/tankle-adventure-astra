@@ -37,8 +37,8 @@ async page=>{
  result.boss=await page.evaluate(()=>({hp:__rules.world.enemies.find(e=>e.id==='guardian').hp,segments:__game.snapshot().laserSegments.length/6}));if(frontal!==36||result.boss.hp>=36)throw Error('Reflected rear attack does not beat protected front '+JSON.stringify({frontal,...result.boss}));
  await page.screenshot({path:'v2/output/playwright/rules-revision/laser-boss.png'});
  await page.evaluate(()=>{for(const e of __rules.world.enemies){e.hp=0;e.model.root.visible=false;}});
- await fixture({x:78,y:8,z:-71},{brake:true});
- result.lift=await page.evaluate(()=>{const l=__rules.world.lifts.find(l=>l.id==='carrier');l.y=l.destination=8;l.used=false;l.wait=0;const samples=[];for(let i=0;i<110;i++){__game.step(.2,false);samples.push(l.y);}return {min:Math.min(...samples),max:Math.max(...samples),changes:samples.filter((y,i)=>i&&Math.abs(y-samples[i-1])>.01).length,player:__game.snapshot().player.y};});
+ await fixture({x:78,y:8,z:-71},{load:true,brake:true});
+ result.lift=await page.evaluate(()=>{const l=__rules.world.lifts.find(l=>l.id==='carrier');l.y=l.destination=8;l.wait=0;const samples=[];for(let i=0;i<110;i++){__game.step(.2,false);samples.push(l.y);}return {min:Math.min(...samples),max:Math.max(...samples),changes:samples.filter((y,i)=>i&&Math.abs(y-samples[i-1])>.01).length,player:__game.snapshot().player.y};});
  if(result.lift.min!==8||result.lift.max!==16||result.lift.changes<25)throw Error('Activated lift did not keep cycling');
  const enemyResults=[];
  for(const type of ['scout','turret','guard','skirmisher','sniper','artillery','miner','welder','repairer','reflector']){

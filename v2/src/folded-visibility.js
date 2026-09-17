@@ -6,17 +6,17 @@ const direction=new T.Vector3(28,39.6,28).normalize();
 const smooth=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t);};
 
 // The camera aperture is continuous across meshes; a point's opacity never depends on a tile ID.
-export function apertureOpacity(point,player,viewDirection=direction){
+export function apertureOpacity(point,player,viewDirection=direction,outerRadius=13){
   const x=point.x-player.x,y=point.y-player.y-1.3,z=point.z-player.z;
   const along=x*viewDirection.x+y*viewDirection.y+z*viewDirection.z;
   const radius=Math.hypot(x-along*viewDirection.x,y-along*viewDirection.y,z-along*viewDirection.z);
-  const aperture=(1-smooth(5,13,radius))*smooth(1.5,3.5,y)*(1-smooth(55,62,along));
+  const aperture=(1-smooth(outerRadius*5/13,outerRadius,radius))*smooth(1.5,3.5,y)*(1-smooth(55,62,along));
   return 1-.84*aperture;
 }
 
 export function makeAperture(){
   const player={value:new T.Vector3()},enabled={value:1},viewDirection={value:direction.clone()};
-  function apply(material,{depthOnly=false}={}){
+  function apply(material,{depthOnly=false,radius=13}={}){
     if(material.userData.aperture)return;
     material.userData.aperture=true;material.transparent=!depthOnly;material.depthWrite=depthOnly;
     if(depthOnly)material.colorWrite=false;
@@ -37,14 +37,14 @@ export function makeAperture(){
         vec3 apertureDelta = apertureWorld - aperturePlayer - vec3(0.0, 1.3, 0.0);
         float apertureAlong = dot(apertureDelta, apertureDirection);
         float apertureRadius = length(apertureDelta - apertureDirection * apertureAlong);
-        float apertureCut = (1.0 - smoothstep(5.0, 13.0, apertureRadius)) * smoothstep(1.5, 3.5, apertureDelta.y) * (1.0 - smoothstep(55.0, 62.0, apertureAlong));
+        float apertureCut = (1.0 - smoothstep(${(radius*5/13).toFixed(4)}, ${radius.toFixed(4)}, apertureRadius)) * smoothstep(1.5, 3.5, apertureDelta.y) * (1.0 - smoothstep(55.0, 62.0, apertureAlong));
         diffuseColor.a *= 1.0 - 0.84 * apertureCut * apertureEnabled;
         ${depthOnly?'if (diffuseColor.a < 0.999) discard;':''}
         ${depthOnly?'':'outgoingLight *= mix(1.0, 0.42, smoothstep(3.0, 12.0, abs(apertureWorld.y - aperturePlayer.y)) * apertureEnabled);'}
         #include <opaque_fragment>
       `);
     };
-    material.customProgramCacheKey=()=> `folded-continuous-aperture-v5-${depthOnly?'depth':'color'}`;
+    material.customProgramCacheKey=()=> `folded-continuous-aperture-v6-${radius}-${depthOnly?'depth':'color'}`;
   }
   return {apply,update:(p,d=direction)=>{player.value.set(p.x,p.y,p.z);viewDirection.value.copy(d);},enable:value=>{enabled.value=value?1:0;}};
 }

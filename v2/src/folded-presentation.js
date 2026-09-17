@@ -1,0 +1,181 @@
+import * as T from 'three';
+import {box,cylinder,ring,mat,batchStatic} from './world.js';
+import {REGION_STYLE,regionAt} from './folded-architecture.js';
+import {foldedArchitecture,architectureGrid} from './folded-layout.js';
+import {apertureOpacity,APERTURE_AIM_THRESHOLD} from './folded-visibility.js';
+
+const ARCHITECTURE_APERTURE=36;
+
+export function makeCityPresentation(scene,aperture){
+  const architecture=new T.Group(),depth=new T.Group(),scenery=new T.Group();
+  architecture.name='city-architecture';depth.name='city-architecture-depth';scenery.name='city-history';scene.add(architecture,depth,scenery);
+  const materials=new Map(),colliders=new Map(),point=new T.Vector3(),ray=new T.Ray();let third=false;
+  const concrete=document.createElement('canvas');concrete.width=concrete.height=128;
+  const ctx=concrete.getContext('2d');ctx.fillStyle='#dadbd4';ctx.fillRect(0,0,128,128);
+  ctx.fillStyle='#c1c6bf';for(let row=0;row<4;row++){ctx.fillRect(0,row*32,128,1);for(let x=(row%2)*32;x<128;x+=64)ctx.fillRect(x,row*32,1,32);}
+  for(let n=0;n<180;n++){ctx.fillStyle=n%2?'#d1d4cd':'#e1e2da';ctx.fillRect((n*47)%128,(n*73)%128,1,2);}
+  const texture=new T.CanvasTexture(concrete);texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.colorSpace=T.SRGBColorSpace;
+  const metal=document.createElement('canvas');metal.width=metal.height=128;const paint=metal.getContext('2d');paint.fillStyle='#dbded6';paint.fillRect(0,0,128,128);paint.fillStyle='#afb9b3';
+  for(let x=0;x<128;x+=32){paint.fillRect(x,0,2,128);for(const y of [5,123])paint.fillRect(x+5,y,2,2);}paint.fillRect(0,64,128,1);
+  const panelTexture=new T.CanvasTexture(metal);panelTexture.wrapS=panelTexture.wrapT=T.RepeatWrapping;panelTexture.colorSpace=T.SRGBColorSpace;
+  const sky=document.createElement('canvas');sky.width=512;sky.height=256;const skyPaint=sky.getContext('2d'),skyGradient=skyPaint.createLinearGradient(0,0,0,256);
+  for(const [stop,color]of [[0,'#263e4a'],[.4,'#718d91'],[.52,'#bac5b5'],[.66,'#5c7876'],[1,'#243e43']])skyGradient.addColorStop(stop,color);
+  skyPaint.fillStyle=skyGradient;skyPaint.fillRect(0,0,512,256);const skyTexture=new T.CanvasTexture(sky);skyTexture.mapping=T.EquirectangularReflectionMapping;skyTexture.colorSpace=T.SRGBColorSpace;scene.background=skyTexture;
+  // Keep the independently batched color pass in front of its depth prepass.
+  const depthMaterial=new T.MeshBasicMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});aperture.apply(depthMaterial,{depthOnly:true,radius:ARCHITECTURE_APERTURE});
+  function material(region,part){
+    const key=`${region}/${part}`;if(materials.has(key))return materials.get(key);
+    const m=new T.MeshToonMaterial({color:REGION_STYLE[region][part],shadowSide:T.FrontSide,map:part==='wall'?(['garden','furnace'].includes(region)?texture:panelTexture):null});aperture.apply(m,{radius:ARCHITECTURE_APERTURE});materials.set(key,m);return m;
+  }
+  for(const s of foldedArchitecture.solids){
+    const part=['wall','foundation'].includes(s.kind)?'wall':s.kind==='roof'?'roof':'frame';
+    const mesh=box(architecture,s.w,s.h,s.d,s.x+s.w/2,s.y+s.h/2,s.z+s.d/2,material(s.region,part),0);
+    mesh.name=s.id;
+    if(part==='wall'){
+      const g=mesh.geometry.clone(),pos=g.attributes.position,uv=g.attributes.uv;
+      for(let i=0;i<pos.count;i++)uv.setXY(i,(s.w>s.d?pos.getX(i)+s.x:pos.getZ(i)+s.z)/8,(pos.getY(i)+s.y)/4);
+      mesh.geometry=g;
+    }
+    const prepass=new T.Mesh(mesh.geometry,depthMaterial);prepass.position.copy(mesh.position);depth.add(prepass);
+    colliders.set(s,new T.Box3(new T.Vector3(s.x,s.y,s.z),new T.Vector3(s.x+s.w,s.y+s.h,s.z+s.d)));
+    // Frames, drip caps and foundations give even a cut-away wall its construction.
+    if(s.kind==='wall'||s.kind==='lintel')box(architecture,s.w+.12,.12,s.d+.12,s.x+s.w/2,s.y+s.h+.04,s.z+s.d/2,material(s.region,'frame'),0);
+    if(s.kind==='roof')box(architecture,.22,.45,s.d,s.x+.2,s.y-.2,s.z+s.d/2,material(s.region,'frame'),0);
+  }
+  batchStatic(architecture,{preserveGeometry:true});batchStatic(depth,{preserveGeometry:true});
+  for(const root of [architecture,depth]){root.updateWorldMatrix(true,true);root.traverse(o=>{o.matrixAutoUpdate=false;o.matrixWorldAutoUpdate=false;});}
+  // The excavation walls sit beyond every playable floor, anchoring the city in earth.
+  const rock=mat(0x53615a),stratum=mat(0x637269),iron=mat(0x384c49),pale=mat(0xa8ada0),copper=mat(0xa98b69);
+  // Separate construction vocabularies: trusses, inspection rings, and insulated ribs.
+  for(const room of foldedArchitecture.rooms){
+    if(room.region==='transit'&&room.roof)for(let z=room.z+3;z<room.z+room.d;z+=10){
+      box(scenery,room.w,.35,.35,room.x+room.w/2,room.y+room.h-1,z,iron,0);
+      for(let x=room.x+3;x<room.x+room.w;x+=6){const brace=box(scenery,6.2,.18,.18,x,room.y+room.h-2,z,pale,0);brace.rotation.z=(Math.floor(x/6)%2?1:-1)*.35;}
+    }
+    if(room.region==='optics')for(let x=room.x+3;x<room.x+room.w;x+=12){
+      const arc=ring(scenery,2.2,.14,x,room.y+8,room.z-1.02,pale);arc.rotation.x=0;
+      box(scenery,.18,5.8,.18,x,room.y+2.9,room.z-1.02,pale,0);
+    }
+    if(room.region==='circulation')for(let z=room.z+3;z<room.z+room.d;z+=8){
+      cylinder(scenery,.6,room.h,room.x-1.8,room.y+room.h/2,z,copper,8);
+      for(const y of [2,6,10])ring(scenery,.68,.12,room.x-1.8,room.y+y,z,iron);
+    }
+  }
+  const hot=mat(0xffaf62,true);box(scenery,8,3.4,.12,-4,-5,34.05,hot,0);
+  for(const x of [-8,-6,-4,-2,0])box(scenery,.22,3.8,.25,x,-5,34.2,iron,0);
+  for(const [x,y,z]of [[-4,-3,38],[0,-49,-8]]){const glow=new T.PointLight(0xffa55b,32,27,2);glow.position.set(x,y,z);scene.add(glow);}
+  for(let x=-90;x<292;x+=24){const h=64+(Math.sin(x*.11)+1)*13;box(scenery,24,h,12,x+12,-65+h/2,-126,rock,0);for(let y=-50;y<h-65;y+=15)box(scenery,24,.6,12.4,x+12,y,-126,stratum,0);}
+  for(let z=-118;z<148;z+=24)box(scenery,10,54,24,-91,-38,z+12,rock,0);
+  box(scenery,390,3,300,102,-75,16,rock,0);
+  // A real exhaust spine above the deep furnace, visible through the transit void.
+  for(const x of [-23,-19]){cylinder(scenery,1.2,95,x,-13,-15,iron,12);for(let y=-54;y<35;y+=8)ring(scenery,1.35,.14,x,y,-15,copper);}
+  // Supported transit bridge, visible from the water and the later roof route.
+  for(const x of [-8,8]){
+    box(scenery,.65,2.5,60,x,-2,-2,iron,0);
+    for(let z=-26;z<30;z+=10){const brace=box(scenery,.25,3,6,x,-3,z,iron,0);brace.rotation.x=.4;}
+  }
+  // Greenhouse remnants and waterlines on the basin's retaining face.
+  for(let x=33;x<62;x+=7){
+    for(const z of [11,29])box(scenery,.18,8,.18,x,-4,z,iron,0);
+    const beam=box(scenery,.18,.18,18,x,.1,20,pale,0);beam.rotation.x=x%2?.06:-.03;
+  }
+  for(const y of [-15.8,-13.2,-10.4])box(scenery,27,.11,.12,46.5,y,29.05,pale,0);
+  for(let x=34;x<62;x+=6){
+    box(scenery,3,.6,1.4,x,-8.4,29.5,rock,0);
+    for(let j=0;j<3;j++){const leaf=box(scenery,.15,.8+j*.2,.55,x+j*.6-1,-7.8,29.5,mat(0x6f8865),0);leaf.rotation.z=(j-1)*.5;}
+  }
+  // Test failures are large readable assemblies, placed off the supported benches.
+  for(const [x,z,kind]of [[71,-29,'mount'],[83,-29,'cooling'],[98,-29,'rail']]){
+    const root=new T.Group();root.position.set(x,0,z-1.5);scenery.add(root);
+    box(root,4,.6,2.3,0,.3,0,iron,.15);for(const side of [-1,1])box(root,.75,.7,2.8,side*1.6,.65,0,iron,.15);
+    const hull=box(root,2.6,1,1.7,0,1.1,0,pale,.2);hull.rotation.z=kind==='mount'?.3:0;
+    const engine=cylinder(root,.65,1.5,0,1.8,0,copper,12);engine.rotation.x=Math.PI/2;
+    if(kind==='mount'){box(root,.2,2,.2,-2,1.1,0,iron,0).rotation.z=-.5;box(root,.2,1.3,.2,2,.75,0,iron,0).rotation.z=.6;}
+    if(kind==='cooling')for(const side of [-1,1])box(root,.4,1.5,.4,side*1.4,1.5,-.3,mat(0x4f625a),0).rotation.z=side*.4;
+    if(kind==='rail')for(const side of [-1,1])box(root,.2,.3,5,side*1.4,.1,0,iron,0);
+  }
+  // Original floor circuitry now belongs to a connected return pipe manifold.
+  for(const x of [202,205]){
+    box(scenery,.7,.7,106,x,-10,54,iron,0);
+    box(scenery,.7,20,.7,x,-17,103,iron,0);
+    box(scenery,9,.7,.7,x+4.5,-26,103,iron,0);
+    for(let z=6;z<103;z+=9)ring(scenery,.5,.1,x,-10,z,copper).rotation.x=0;
+  }
+  for(let x=35;x<252;x+=24){
+    box(scenery,1.3,11,1.3,x,-35,-1.6,iron,0);box(scenery,1.3,11,1.3,x,-35,13.6,iron,0);
+    box(scenery,1.3,1,16,x,-29.7,6,iron,0);
+  }
+  for(const x of [-30,30])for(const z of [18,38,58]){box(scenery,3,23,4,x,-45,z,rock,0);box(scenery,4,1,5,x,-33.5,z,copper,0);}
+  // Quiet practical lamps mark door heights, never use the control/target colors.
+  const lampMaterial=mat(0xbfb69b,true);
+  for(const r of foldedArchitecture.rooms){
+    for(const x of [r.x+1,r.x+r.w-1])box(scenery,.45,.15,1.2,x,r.y+6,r.z-.95,lampMaterial,0);
+  }
+  // Small mechanisms share the same animation clock as their environmental sounds.
+  const moving=new T.Group();moving.name='city-working-machines';scene.add(moving);
+  const carrier=new T.Group();moving.add(carrier);
+  box(carrier,4,.6,5,0,0,0,pale,.2);const jaws=[-1,1].map(s=>box(carrier,.35,1.4,3,s*1.6,.7,0,iron,0));
+  for(const x of [-2,2]){
+    box(scenery,.35,.35,44,x,9.3,-2,iron,0);
+    for(const z of [-1.8,1.8]){box(carrier,.12,2,.12,x,1,z,iron,0);cylinder(carrier,.3,.3,x,2,z,pale,10).rotation.z=Math.PI/2;}
+  }
+  for(const z of [-17,8]){box(scenery,.5,9,.5,-11,4.5,z,iron,0);box(scenery,.5,9,.5,11,4.5,z,iron,0);box(scenery,23,.6,.7,0,9,z,iron,0);}
+  const cargo=new T.Group();carrier.add(cargo);
+  box(cargo,2,.6,2,0,.75,0,copper,.1);ring(cargo,.55,.16,0,1.2,0,iron);
+  for(const x of [-1.1,1.1])box(cargo,.45,.55,2.4,x,.7,0,iron,.1);
+  const repairer=new T.Group();repairer.position.set(-20,0,25);moving.add(repairer);
+  box(repairer,2,.6,2,0,.4,0,iron,.2);const repairArm=box(repairer,.18,1.7,.18,.8,1.3,0,pale,0),eye=box(repairer,.6,.2,.1,0,1,1,mat(0xbcbca4,true),0);
+  const brokenRail=box(moving,.25,.3,5,-18,.5,25,pale,0);
+  const pumpFans=[];
+  for(const [x,y,z]of [[67,-3.5,-37],[83,-3.5,-37],[216,-20,138],[236,-20,138]]){
+    const root=new T.Group();root.position.set(x,y,z);moving.add(root);
+    ring(root,1.8,.3,0,0,0,iron).rotation.x=0;
+    const rotor=new T.Group();root.add(rotor);for(let i=0;i<4;i++){const vane=box(rotor,.45,2.9,.2,0,0,0,pale,0);vane.rotation.z=i*Math.PI/4;}pumpFans.push(rotor);
+  }
+  box(scenery,13,.4,1.2,77,-7.8,-35.3,rock,0);
+  for(const x of [67,83])box(scenery,.3,.3,2.1,x,-5.2,-36,iron,0);
+  const waterFlow=box(moving,12,.08,.6,77,-7.56,-35.3,mat(0xa8b7a0,true),0);
+  const opticalPulse=box(moving,.18,.18,22,204,48,162,mat(0xe3d1a5,true),0);opticalPulse.visible=false;
+  const pipeFlow=[];
+  for(const x of [142,146,150])for(let y=-24;y<=24;y+=8){const m=ring(moving,.73,.08,x,y,-42,mat(0x9aaf96,true));pipeFlow.push(m);}
+  const oldEye=box(moving,.4,.15,.15,150,-37.8,3.3,mat(0x8c8873,true),0);
+  const endingSprout=box(moving,.3,.8,.3,50,-7.4,29.5,mat(0x95aa75),0);
+  // Static scenery is batched; the small working mechanisms keep their own transforms.
+  const visualMaterials=new Set(materials.values());
+  for(const root of [scenery,moving])root.traverse(m=>{if(m.isMesh){m.castShadow=false;m.receiveShadow=true;aperture.apply(m.material);visualMaterials.add(m.material);}});
+  batchStatic(scenery,{preserveGeometry:true});
+  const bounds=()=>({solids:colliders.size,rooms:foldedArchitecture.rooms.length});
+  let frameRegion='foundry';
+  function update(time,p,state){
+    frameRegion=regionAt(p,foldedArchitecture.rooms);
+    const cycle=p.endingTime?7:time%18,travel=cycle<6?cycle/6:cycle<11?1:(18-cycle)/7;
+    carrier.position.set(0,7,-22+travel*40);
+    jaws.forEach((m,i)=>m.position.x=(i?1:-1)*(cycle>6&&cycle<11?2.1:1.6));
+    cargo.visible=!!state.endingSeen;
+    const repaired=state['rail-repair'];
+    repairArm.rotation.z=-.45+Math.sin(time*(repaired?1.4:2.4))*(repaired?.35:.65);
+    eye.material.color.setHex(repaired?0xc5c9ac:0x827f6c);brokenRail.rotation.x=repaired?0:.22;
+    pumpFans.forEach((m,i)=>m.rotation.z=time*(state[i<2?'pump':'rig']?2: .22+.08*Math.sin(time*.7+i)));
+    hot.color.setHex(state.foundry?0xc77b44:0xffaf62);
+    waterFlow.visible=!!state.pump||!!p.endingTime;waterFlow.scale.x=.85+Math.sin(time*2)*.05;
+    const signalPhase=p.endingTime?Math.max(0,p.endingTime-4.8)*2:time%9;
+    opticalPulse.visible=!!(state.signal||p.endingTime)&&signalPhase<.65;opticalPulse.scale.z=.8+signalPhase*.4;
+    for(let i=0;i<pipeFlow.length;i++){const m=pipeFlow[i],active=state.circulation||state.endingSeen||state.pump&&m.position.y===-8;m.visible=!!active;m.material.color.setHex((time*2+i)%4<1?0xb7c4a3:0x748d80);}
+    oldEye.material.color.setHex(state.endingSeen?0xcac5a1:0x575749);endingSprout.visible=!!state.pump;
+    carrier.visible=!!p.endingTime||Math.hypot(p.x,p.z)<100;
+  }
+  function cast(origin,direction,distance,aiming=false){
+    ray.set(origin,direction);let hit=null;
+    for(const s of architectureGrid.ray(origin,direction,distance)){
+      const b=colliders.get(s);if(!b||!ray.intersectBox(b,point))continue;
+      const d=point.distanceTo(origin);if(d>distance||hit&&d>=hit.distance)continue;
+      if(aiming&&!third&&apertureOpacity(point,viewPlayer,viewDirection,ARCHITECTURE_APERTURE)<=APERTURE_AIM_THRESHOLD)continue;
+      hit={point:point.clone(),distance:d,architecture:s};
+    }return hit;
+  }
+  const viewPlayer=new T.Vector3(),viewDirection=new T.Vector3();
+  return {update,cast,bounds,carrier,pumpFans,get region(){return frameRegion;},
+    setView(value){third=value;depth.visible=!value;for(const m of visualMaterials){m.transparent=!value;m.depthWrite=value;m.needsUpdate=true;}},
+    sight(p,d){viewPlayer.set(p.x,p.y,p.z);viewDirection.copy(d);}
+  };
+}
