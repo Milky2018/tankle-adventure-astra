@@ -1,5 +1,6 @@
+import {expansionCurrents} from './folded-expansion-layout.js';
 import {cityBelts} from './folded-city-layout.js';
-import {inRect,deckHeight,moveFolded} from './folded-layout.js';
+import {inRect,deckHeight,moveFolded,foldedSupport} from './folded-layout.js';
 
 export function conveyorVelocity(body,enemies=[],state={}){
   const belt=cityBelts.find(b=>inRect(body.x,body.z,b)&&Math.abs(deckHeight(b,body.z)-body.y)<.5);
@@ -14,7 +15,8 @@ export function conveyorVelocity(body,enemies=[],state={}){
 
 export function moveWithConveyor(body,dx,dz,dt,state,lifts=[],enemies=[]){
   const belt=conveyorVelocity(body,enemies,state);
-  moveFolded(body,dx+belt.x*dt,dz+belt.z*dt,state,lifts);
+  const current=body.deployed&&foldedSupport(body.x,body.z,body.y,true,lifts)?.water&&expansionCurrents.find(c=>inRect(body.x,body.z,c)&&Math.abs(c.y-body.y)<.5)?.current;
+  moveFolded(body,dx+(belt.x+(current?.x||0))*dt,dz+(belt.z+(current?.z||0))*dt,state,lifts);
 }
 
 export function stepLifts(lifts,state,player,dt,enemies=[]){

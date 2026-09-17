@@ -14,20 +14,21 @@ test('third-person movement follows yaw with equal cardinal and diagonal speed',
   assert.deepEqual(cameraMovement(0,0,1),{x:0,z:0});
 });
 
-test('camera collision retracts immediately and restores distance gradually',()=>{
+test('third-person camera keeps its configured boom through obstructions',()=>{
   const rig=new FollowCamera(16/9),player={x:0,y:0,z:0};
   rig.update(player,1,(_o,_d,d)=>d);
   rig.update(player,1/60,()=>4);
-  assert.equal(rig.distance,3.5);
-  assert.ok(Math.abs(rig.camera.position.distanceTo(rig.pivot)-3.5)<1e-10);
+  assert.ok(rig.distance>12);
+  assert.ok(Math.abs(rig.camera.position.distanceTo(rig.pivot)-rig.distance)<1e-10);
+  const distance=rig.distance;
   rig.update(player,1/60,(_o,_d,d)=>d);
-  assert.ok(rig.distance>3.5&&rig.distance<5);
+  assert.equal(rig.distance,distance);
 });
 
-test('camera clearance includes near-plane edges and stays outside a close obstruction',()=>{
+test('third-person camera does not query collision to change its distance',()=>{
   const rig=new FollowCamera(16/9);let probes=0;
   rig.update({x:0,y:-16,z:0},1,()=>++probes===4?2:12);
-  assert.equal(probes,5);assert.equal(rig.distance,1.5);
+  assert.equal(probes,0);assert.ok(rig.distance>12);
   assert.ok(rig.camera.position.y>-16,'a horizontal floor does not become the camera target');
 });
 

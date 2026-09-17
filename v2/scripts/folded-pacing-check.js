@@ -1,0 +1,47 @@
+async page=>{
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.route('**/src/folded.js*',async route=>{const r=await route.fetch();await route.fulfill({response:r,body:(await r.text()).replace('let manual=false','let manual=true')+'\nwindow.__pacing={world,hitEnemy,T,encounterPacing};'});});
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>window.__pacing);
+  await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');});await page.reload();await page.waitForFunction(()=>window.__pacing);
+  const trials=await page.evaluate(async()=>{
+    const {expansionRoutes,expansionControls}=await import('/src/folded-expansion-layout.js');
+    const g=__game,results=[];g.manual(true);
+    for(const route of expansionRoutes){
+      const c=expansionControls.find(c=>c.id===route.trial),r=route.rooms[1];
+      g.scenario({player:{x:r.x,y:r.y,z:r.z,hp:50,invincible:0,mortar:true,heat:0,overheated:false,weapon:c.surface?'mortar':'cannon'},state:{[c.id]:false}});
+      if(c.pressure){
+        g.scenario({player:{x:r.x-5}});g.aimAt(c.x,c.z,c.y);g.setInput(['Mouse0']);g.step(1.2,false);g.setInput([]);
+        if(g.snapshot().state[c.id])throw Error('Pressure plate accepted an empty floor '+c.id);
+        g.scenario({player:{x:r.x,heat:0,overheated:false}});
+      }
+      for(let i=0;i<360&&!g.snapshot().state[c.id];i++){g.aimAt(c.x,c.z,c.y);g.setInput(['Mouse0']);g.step(1/60,false);}g.setInput([]);
+      if(!g.snapshot().state[c.id])throw Error('Trial could not be solved '+JSON.stringify({id:c.id,player:g.snapshot().player,aim:g.snapshot().aim}));
+      results.push({id:c.id,hp:g.snapshot().player.hp});g.step(0);
+    }
+    return results;
+  });
+  await page.screenshot({path:'v2/output/playwright/overhaul/pacing-trial.png'});
+  const waves=await page.evaluate(async()=>{
+    const {expansionRoutes}=await import('/src/folded-expansion-layout.js');
+    const g=__game,a=__pacing,r=expansionRoutes.find(r=>r.id==='proving').rooms[2],group=a.world.enemies.filter(e=>e.battle===r.id);
+    g.scenario({player:{x:r.x,y:r.y,z:r.z,hp:50,invincible:1e9},state:{'proving-endurance':false}});
+    const reserve=group.filter(e=>e.wave);if(reserve.some(e=>e.awake))throw Error('Reserves started awake');
+    for(const e of group.filter(e=>!e.wave))a.hitEnemy(e,100,new a.T.Vector3(r.x,r.y,r.z),'mortar');
+    g.step(3.9,false);if(reserve.some(e=>e.awake)||g.snapshot().state['proving-endurance'])throw Error('Wave break skipped');
+    g.step(.2,false);if(reserve.some(e=>!e.awake))throw Error('Reserve never deployed');
+    for(const e of reserve)a.hitEnemy(e,100,new a.T.Vector3(r.x,r.y,r.z),'mortar');g.step(.1,false);
+    if(!g.snapshot().state['proving-endurance'])throw Error('Finished battle left gate shut');
+    g.respawn();if(reserve.some(e=>e.awake)||!g.snapshot().state['proving-endurance'])throw Error('Rest lost a cleared return or reserve reset');
+    return {pause:4,finite:group.length,persistentReturn:true};
+  });
+  const thermal=await page.evaluate(async()=>{
+    const {expansionHeat}=await import('/src/folded-expansion-layout.js'),q=expansionHeat[0],g=__game;
+    g.scenario({player:{x:q.x+q.w-4,y:q.y,z:q.z+6,hp:50,invincible:0,heat:0,overheated:false,speed:1,overdrive:true,phoenix:true,circulation:true},state:{'coolant-return':false}});
+    g.setInput(['KeyW','KeyA','ShiftLeft']);g.step(8,false);g.setInput([]);g.step(0);
+    const s=g.snapshot();if(!s.state['coolant-return']||!s.player.overheated||s.player.x>=q.x+6)throw Error('Cold Circulation runout failed '+JSON.stringify(s.player));
+    return {coldStart:true,redContact:true,opened:true,hp:s.player.hp};
+  });
+  await page.screenshot({path:'v2/output/playwright/overhaul/pacing-thermal.png'});
+  await page.unroute('**/src/folded.js*');if(errors.length)throw Error(errors.join('\n'));
+  return {trials,waves,thermal,errors};
+}

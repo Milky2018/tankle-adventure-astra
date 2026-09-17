@@ -18,7 +18,7 @@ export class FollowCamera{
     this.yaw-=dx*.0025*this.sensitivity;
     this.pitch=T.MathUtils.clamp(this.pitch+dy*.002*this.sensitivity,-.65,.95);
   }
-  update(player,dt,obstruction){
+  update(player,dt){
     this.pivot.set(player.x,player.y+1.8,player.z);
     this.forward.set(Math.sin(this.yaw)*Math.cos(this.pitch),-Math.sin(this.pitch),Math.cos(this.yaw)*Math.cos(this.pitch));
     this.right.set(-Math.cos(this.yaw),0,Math.sin(this.yaw));
@@ -26,15 +26,7 @@ export class FollowCamera{
     this.offset.copy(this.forward).multiplyScalar(-this.boom).addScaledVector(this.right,this.shoulder).addScaledVector(this.up,this.height);
     // Looking above the horizon must not swing the camera underneath the hull.
     this.offset.y=Math.max(this.height,this.offset.y);
-    const desired=this.offset.length();this.offset.normalize();
-    let clear=desired;
-    // Probe a small volume so the near plane cannot slip through a corner.
-    for(const [x,y]of [[0,0],[.4,0],[-.4,0],[0,.4],[0,-.4]]){
-      this.probe.copy(this.pivot).addScaledVector(this.right,x).addScaledVector(this.up,y);
-      clear=Math.min(clear,obstruction(this.probe,this.offset,desired)-.5);
-    }
-    clear=Math.max(.3,clear);
-    this.distance=clear<this.distance?clear:T.MathUtils.damp(this.distance,clear,6,dt);
+    this.distance=this.offset.length();this.offset.normalize();
     this.camera.position.copy(this.pivot).addScaledVector(this.offset,this.distance);
     this.camera.lookAt(this.probe.copy(this.camera.position).add(this.forward));
     this.camera.updateMatrixWorld();

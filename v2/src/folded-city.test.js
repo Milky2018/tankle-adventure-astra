@@ -131,6 +131,7 @@ test('Circulation opens its own return but the inner lane also needs the optical
   travel(p,s,[[266,120]]);
   travel(p,s,[[266,6]],{boost:true});assert.equal(p.y,-40);
   travel(p,s,[[44,6],[44,-10]]);assert.ok(releaseFolded('last-cage','cannon',p,s,[]));
+  s['core-feed']=true; // The separate hearth circuit is covered by the expansion route test.
   travel(p,s,[[34,-10],[34,6],[34,68],[0,68],[0,48]]);assert.equal(p.y,-56);
   s.keeper=true;travel(p,s,[[0,8],[0,0]]);assert.equal(p.y,-56);
 });
@@ -147,6 +148,27 @@ test('the ordinary Phoenix heat budget cannot cross either sustained belt even w
   }
 });
 
+test('predecessor service bays are reachable without obstructing the final through-rail',()=>{
+  const s=initialFoldedState(),p=player(250,-40,6,{overdrive:true,phoenix:true,circulation:true});
+  for(const x of [210,146,82]){
+    travel(p,s,[[x,6],[x,-2],[x-6,-2],[x-6,-9],[x-6,-2],[x,6]]);
+    assert.equal(p.y,-40);
+  }
+  travel(p,s,[[44,6],[44,-10]]);
+  assert.equal(releaseFolded('last-cage','cannon',p,s,[]),true);
+  travel(p,s,[[44,6],[250,6]],{boost:true});
+  travel(p,s,[[44,6]],{boost:true});
+  assert.equal(p.y,-40);
+  assert.equal(s.keeper,false);
+});
+
+test('the steep signal ascent supports the entire hull in both directions',()=>{
+  const state=initialFoldedState({guardian:true});
+  const p=player(186,16,89);
+  travel(p,state,[[186,144]]);assert.equal(p.y,40);
+  travel(p,state,[[186,89]]);assert.equal(p.y,16);
+});
+
 test('armoured cores expose physical parts, reflected rear hits and red contact have no per-round quota',()=>{
   const e={x:0,z:0,aim:0,hp:48,type:'boss',parts:[{hp:12},{hp:12}]};
   assert.equal(cityDamage(e,3,{x:0,z:10}),0);
@@ -158,6 +180,16 @@ test('armoured cores expose physical parts, reflected rear hits and red contact 
   assert.equal(cityDamage(g,2.5,{x:0,z:8},'laser'),0);assert.equal(cityDamage(g,2.5,{x:0,z:-8},'laser'),2.5);
   assert.equal(cityContact(player(0,0,0,{phoenix:true,speed:3.2}),g),0);
   assert.equal(cityContact(player(0,0,0,{phoenix:true,speed:3.2,circulation:true,overheated:true}),g),24);
+});
+
+test('full-speed Phoenix contact crushes ordinary armor without bypassing boss armor',()=>{
+  const p=player(0,0,8,{phoenix:true,speed:3.2});
+  for(const type of ['guard','reflector']){
+    const enemy={x:0,z:0,aim:0,hp:5,type,phase:'idle'};
+    assert.ok(cityDamage(enemy,1,p,'cannon')<1);
+    assert.equal(cityDamage(enemy,cityContact(p,enemy),p,'ram'),5);
+  }
+  assert.equal(cityContact(p,{type:'boss'}),0);
 });
 
 test('the water route reaches the same Mortar apron and the pressure loop returns to both old layers',()=>{

@@ -29,7 +29,7 @@ async page=>{
     const hits=await page.evaluate(({id})=>{const g=window.__game,health=[];for(const keys of [['KeyS','KeyD','ShiftLeft'],['KeyW','KeyA','ShiftLeft']]){g.setInput(keys);g.step(.8,false);health.push(g.snapshot().enemies.find(e=>e.id===id).hp);}g.setInput([]);return health;},{id});
     if(hits[0]!==hp-24||hits[1]!==0)throw Error('Red contact lost damage '+id+' '+JSON.stringify(hits));result[id+'Red']=hits;
   }
-  await scenario({x:64,y:-8,z:-28},{pump:false});await page.evaluate(()=>window.__game.step(1));await fireAt(72,-28,-4.5);
+  await scenario({x:58,y:-8,z:4},{pump:false});await page.evaluate(()=>window.__game.step(1));await fireAt(58,-4,-5.5);
   if(!(await snap()).state.pump)throw Error('Hull pressure and cannon pump failed');result.pump=true;
   await scenario({x:218,y:-16,z:13},{'pressure-return':false});await fireAt(218,18,-14.6);
   if(!(await snap()).state['pressure-return'])throw Error('Far-side pressure return failed');result.pressureReturn=true;

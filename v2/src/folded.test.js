@@ -29,6 +29,23 @@ test('Flotation crosses below the real bridge and reaches the bank without selec
   assert.equal(foldedSupport(0,-4,0,false).id,'transport-bridge');
 });
 
+test('the pump return reveals its closed gate at the machine and reconnects dry to the ferry',()=>{
+  const s=initialFoldedState({magnet:true}),p=Object.assign(player(),{x:58,y:-8,z:20});
+  const firstVisit=Object.assign(player(),{x:-26,y:-8,z:-8});
+  for(let i=0;i<250;i++)moveFolded(firstVisit,0,-.15,s);
+  assert.ok(firstVisit.z>-23,'the ferry-side shutter must prevent bypassing the first Flotation crossing');
+  drive(p,58,4,s);
+  assert.equal(releaseFolded('pump','cannon',p,s,[]),false);
+  for(let i=0;i<90;i++)moveFolded(p,0,-.15,s);
+  assert.ok(p.z>-9,'the closed return is visible before entering the long bridge');
+  drive(p,58,4,s);p.pumpPressure=.8;
+  assert.ok(releaseFolded('pump','cannon',p,s,[]));
+  drive(p,58,-28,s);drive(p,-26,-28,s);drive(p,-26,-8,s);
+  assert.equal(p.y,-8);assert.equal(p.deployed,false);assert.equal(p.afloat,false);
+  const restored=initialFoldedState(s);drive(p,-26,-28,restored);drive(p,58,-28,restored);drive(p,58,20,restored);
+  assert.equal(restored.pump,true);
+});
+
 test('the dry freight approach reaches common benches without Magnet or Flotation',()=>{
   const p=Object.assign(player(),{magnet:false,mortar:true}),s=initialFoldedState({freight:true,'bridge-crane':true});
   for(const [x,z]of [[0,-34],[59,-34],[59,-84],[67,-84],[67,-34],[70,-34],[70,-19],[90,-19]])drive(p,x,z,s);

@@ -1,3 +1,4 @@
+import {expansionRooms} from './folded-expansion-layout.js';
 // Room envelopes follow existing supporting floors. Open connections are carved
 // from actual neighboring floors and lift shafts, not inventory checks.
 export const REGION_STYLE={
@@ -14,15 +15,38 @@ export const ROOM_PLAN=[
   ['foundry-awakening','foundry',6,false],['foundry-west','foundry',5.5,false],
   ['press-working-floor','foundry',6,false],['reclaim-sorting-bay','foundry',6,false],['prototype-court','foundry',7,false],['recycling-furnace','foundry',10,false],
   ['turntable','transit',10,false],['hub-entry','transit',7,false],['loading','transit',7,false],['mortar-apron','transit',12,false],['training-gallery','transit',6,false],['freight','transit',7,false],
-  ['ferry-cradle','garden',9,false],['garden-bank','garden',11,false],['pump-terrace','garden',12,false],
-  ['common-benches','testworks',14,true],['carrier-landing','testworks',13,false],['phoenix-cradle','testworks',15,true],
-  ['calibration','optics',15,true],['mirror-service-gallery','optics',13,true],['guardian-court','optics',17,false],
-  ['circulation-yard','circulation',14,true],['circulation-rig','circulation',16,true],['pressure-release-court','circulation',12,false],
-  ['predecessor-gallery','furnace',13,true],['last-refuge','furnace',13,true],['keeper-court','furnace',19,false],['central-furnace','furnace',27,false]
+  ['ferry-cradle','garden',5,false],['bridge-underside','garden',3.5,false],['canal-landing','garden',4,false],
+  ['garden-bank','garden',5,false],['pump-terrace','garden',5,false],['rear-dock','garden',5,false],
+  ['common-benches','testworks',6,false],['carrier-landing','testworks',6,false],['phoenix-cradle','testworks',7,false],
+  ['calibration','optics',7,false],['mirror-service-gallery','optics',6,false],['guardian-court','optics',10,false],
+  ['circulation-yard','circulation',6,false],['circulation-rig','circulation',7,false],['pressure-release-court','circulation',6,false],
+  ['predecessor-gallery','furnace',7,false],['predecessor-mount','furnace',8,false],['predecessor-cooling','furnace',8,false],['predecessor-dock','furnace',8,false],['last-refuge','furnace',7,false],['keeper-court','furnace',12,false],['central-furnace','furnace',16,false]
 ];
 // Authored receiving bays frame the first route. Openings correspond to the
 // service ramp, local shutter and later engine return; no ceiling covers a fight.
 const roomWalls={
+  'common-benches':[[76.1,-28.85,7.8,.8],[96.1,-28.85,3.9,.8],[68,-11.95,13.9,.8],[94.1,-11.95,5.9,.8]],
+  'carrier-landing':[[84.1,-66.85,15.9,.8],[100.05,-66,.8,14],[72,-51.95,11.9,.8],[96.1,-51.95,3.9,.8]],
+  'phoenix-cradle':[[64,-94.85,28,.8],[63.15,-94,.8,16],[64,-77.95,7.9,.8],[84.1,-77.95,7.9,.8]],
+  'calibration':[[224.1,-36.85,11.8,.8],[196,-36.85,15.9,.8],[196,-11.95,7.9,.8]],
+  'mirror-service-gallery':[[208.1,23.15,15.8,.8],[208.1,40.05,27.9,.8]],
+  'guardian-court':[[179.15,44,.8,46],[228.05,44,.8,46],[180,43.15,15.9,.8],[208.1,43.15,19.9,.8],[192.1,90.05,35.9,.8]],
+  'circulation-yard':[[148,52.05,87.9,.8],[147.15,36,.8,16],[196.1,35.15,39.8,.8]],
+  'circulation-rig':[[208,136.05,52,.8],[207.15,100,.8,36],[220.1,99.15,15.8,.8]],
+  'pressure-release-court':[[208,3.15,52,.8],[260.05,4,.8,24],[220.1,28.05,27.8,.8]],
+  'predecessor-gallery':[[40.1,12.05,31.8,.8],[92.1,12.05,43.8,.8],[156.1,12.05,43.8,.8],[220.1,12.05,27.8,.8],[28,-.85,43.9,.8],[92.1,-.85,43.8,.8],[156.1,-.85,43.8,.8],[220.1,-.85,39.8,.8]],
+  'predecessor-mount':[[200,-12.85,20,.8],[199.15,-12,.8,11.9],[220.05,-12,.8,11.9]],
+  'predecessor-cooling':[[136,-12.85,20,.8],[135.15,-12,.8,11.9],[156.05,-12,.8,11.9]],
+  'predecessor-dock':[[72,-12.85,20,.8],[71.15,-12,.8,11.9],[92.05,-12,.8,11.9]],
+  'last-refuge':[[28,-24.85,28,.8],[56.05,-24,.8,24]],
+  'keeper-court':[[-28.85,12,.8,48],[28.05,12,.8,48],[-28,11.15,11.9,.8],[16.1,11.15,11.9,.8]],
+  'central-furnace':[[-16,-16.85,32,.8],[-16.85,-16,.8,28],[16.05,-16,.8,28]],
+  'ferry-cradle':[[-52.85,-14,.8,16],[-52,-14.85,12,.8]],
+  'bridge-underside':[[-29.8,2.05,61.8,.8],[-30,-10.85,29.9,.8]],
+  'canal-landing':[[28,-22.85,12,.8],[27.15,-22,.8,9.9]],
+  'garden-bank':[[31.15,12,.8,16],[32,28.05,21.9,.8]],
+  'pump-terrace':[[52,-36.85,52,.8]],
+  'rear-dock':[[76,28.05,5.9,.8]],
   'turntable':[[-16,36.05,46,.8],[-16.85,10,.8,11.9],[-16,9.15,9.9,.8]],
   'hub-entry':[[42.05,-2,.8,38],[30,36.05,12,.8],[30,-2.85,12,.8]],
   'loading':[[-6,-40.85,42,.8],[6.1,-27.95,19.3,.8]],
@@ -46,8 +70,29 @@ export function buildArchitecture(decks,lifts){
     if(lifts.some(l=>overlaps(s,l,.15)&&l.stops[0]<y+h&&l.stops.at(-1)+4>y))return;
     const key=[x,y,z,w,h,d].map(n=>n.toFixed(2)).join('/');if(seen.has(key))return;seen.add(key);solids.push(s);return s;
   }
-  for(const [id,region,h,roof]of ROOM_PLAN){
+  for(const [id,region,h,roof]of [...ROOM_PLAN,...expansionRooms.map(r=>[r.id,r.region,r.region==='optics'?12:r.region==='furnace'?10:7,false])]){
     const f=decks.find(d=>d.id===id),room={...f,region,h,roof};rooms.push(room);
+    if(f.district){
+      // Region silhouettes differ before ornament: garden retaining banks,
+      // industrial half-walls, tall optical piers and solid furnace masonry.
+      const wallHeight={transit:5,garden:1.4,testworks:7,optics:12,circulation:3,furnace:10}[region];
+      for(const side of ['west','east','north','south']){
+        const along=side==='north'||side==='south',length=along?f.w:f.d;
+        for(let t=0;t<length;t+=4){
+          const x=along?f.x+t:side==='west'?f.x-.85:f.x+f.w+.05,z=along?(side==='north'?f.z-.85:f.z+f.d+.05):f.z+t;
+          const w=along?Math.min(4,length-t):.8,d=along?.8:Math.min(4,length-t);
+          const h=region==='transit'&&Math.floor(t/4)%4===1?2.5:wallHeight;
+          const base=add(room,'wall',x,f.y,z,w,h,d);
+          if(base){
+            add(room,'foundation',x,f.y-4,z,w,3.9,d);
+            if(t%16===0&&region!=='circulation')add(room,'pier',x,f.y+h,z,along?.65:w,region==='garden'?4:1.8,along?d:.65);
+          }
+        }
+      }
+      // Grounded corner supports are omitted where an older lower route passes.
+      for(const x of [f.x-2,f.x+f.w+1])for(const z of [f.z-2,f.z+f.d+1])add(room,'foundation',x,-73,z,1,f.y+72,1);
+      continue;
+    }
     if(roomWalls[id]){
       for(const [x,z,w,d]of roomWalls[id])if(add(room,'wall',x,f.y,z,w,h,d))add(room,'foundation',x,f.y-4,z,w,3.9,d);
       continue;
