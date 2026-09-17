@@ -142,7 +142,7 @@ function factoryEnemy(type) {
   const radiator=box(body,elite?1.35:.8,elite?.7:.45,.06,0,1.2,-1.12,mat(C.dark,true));
   for(let i=0;i<5;i++)box(body,.065,elite?.68:.45,.06,-.5+i*.25,1.2,-1.17,C.dark,.01);
   root.scale.setScalar(boss?2.8:elite?1.35:1);
-  return {root,body,turret,barrel,tracks,antenna,headlights,radiator,frontArmor,
+  return {root,body,turret,barrel,tracks,antenna,headlights,radiator,frontArmor,phaseMaterials:[eyeMaterial],
     rollWheels(angle){for(const w of tracks)w.rotateY(-angle);},
     animate(state,timer,time,dt,active){
       const warning=state==='warn',vent=state==='vent'||state==='stunned',charge=state==='charge';

@@ -1,3 +1,4 @@
+import {sideDecks,sideGates,sideObstacles,sideEnemies} from './folded-side-layout.js';
 import {expansionDecks,expansionSolids,expansionControls,expansionHives,expansionEnemies,expansionPickups,expansionFlags} from './folded-expansion-layout.js';
 import {cityDecks,cityLifts,citySolids,cityControls,cityHives,cityPickups,cityEnemies,cityFlags} from './folded-city-layout.js';
 import {inRect,deckHeight} from './hoist-layout.js';
@@ -31,7 +32,7 @@ export const foldedDecks=[
   deck('roof-walk',29,-32,6,30,24),deck('cage-landing',16,-2,22,16,24),
   deck('observatory-outlook',172,-36,24,12,24),
   deck('circulation-outlook',156,-22,12,22,24),
-  ...cityDecks,...expansionDecks
+  ...cityDecks,...expansionDecks,...sideDecks
 ];
 export const foldedLiftDefs=[
   {id:'carrier',x:72,z:-78,w:12,d:12,stops:[8,16],lock:'load'},
@@ -54,7 +55,7 @@ export const foldedSolids=[
   {id:'upper-cover',x:94,z:-58,w:3,d:3,y:8,h:2,permanent:true},
   {id:'gangway-casing',x:84.4,z:28,w:.5,d:6,y:-8,h:3,permanent:true},
   {id:'dock-cover',x:78,z:13,w:3,d:3,y:-8,h:2,magnetic:true},
-  ...citySolids,...expansionSolids
+  ...citySolids,...expansionSolids,...sideGates
 ];
 export const foldedControls=[
   {id:'rail-repair',x:-18,y:1.4,z:23,kind:'magnet'},
@@ -86,7 +87,7 @@ export const foldedEnemies=[
   {id:'upper-gunner',x:96,y:8,z:-61,hp:2,type:'sniper',encounter:'carrier-brake'},
   {id:'upper-scout',x:88,y:8,z:-63,hp:2,type:'miner',encounter:'carrier-brake'},
   {id:'track-scout',x:148,y:16,z:-86,hp:2,type:'scout'},
-  ...cityEnemies,...expansionEnemies
+  ...cityEnemies,...expansionEnemies,...sideEnemies
 ];
 
 export const foldedArchitecture=buildArchitecture(foldedDecks,foldedLiftDefs);
@@ -110,7 +111,8 @@ export function foldedSupport(x,z,y,deployed=false,lifts=[]){
   return best;
 }
 export function foldedBlocked(x,y,z,state,r=.9){
-  return foldedSolids.find(s=>activeSolid(s,state)&&y+2>s.y+.12&&y<s.y+s.h-.1&&inRect(x,z,s,r))||[...architectureGrid.near(x,z,r)].find(s=>y+2>s.y+.12&&y<s.y+s.h-.1&&inRect(x,z,s,r))||foldedDecks.find(d=>!d.water&&inRect(x,z,d,-.01)&&deckHeight(d,z)>y+.45&&deckHeight(d,z)<y+3.25);
+  const blocks=s=>activeSolid(s,state)&&y+2>s.y+.12&&y<s.y+s.h-.1&&inRect(x,z,s,r);
+  return sideObstacles.find(blocks)||foldedSolids.find(blocks)||[...architectureGrid.near(x,z,r)].find(s=>y+2>s.y+.12&&y<s.y+s.h-.1&&inRect(x,z,s,r))||foldedDecks.find(d=>!d.water&&inRect(x,z,d,-.01)&&deckHeight(d,z)>y+.45&&deckHeight(d,z)<y+3.25);
 }
 export function moveFolded(p,dx,dz,state,lifts=[]){
   const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.2));
@@ -140,6 +142,10 @@ export function initialFoldedState(saved={}){
     if(state[ability]||saved.anchor===`${district}-hive-3`)state[`${district}-transfer`]=true;
     if(['proving','hearth'].includes(district)&&(state[ability]||saved.anchor===`${district}-hive-3`))state[`${district}-endurance`]=true;
   }
+  state.sorter=saved.sorter===true;
+  state['maintenance-started']=saved['maintenance-started']===true;
+  state.sidePuzzles=saved.sidePuzzles||{};
+  state['rail-crossing']=!!(saved.sidePuzzles?.rail?.solved||saved.sidePuzzles?.rail?.secured);
   state.anchor=foldedHives.some(h=>h.id===saved.anchor)?saved.anchor:'turntable';
   // The old lower Hive was reachable before the workshop shutter opened.
   if(state.anchor==='lower-foundry'&&!state['relay-west'])state.anchor='awakening';

@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
-import {initialFoldedState,moveFolded,foldedSupport,foldedBlocked,foldedDecks,foldedEnemies,foldedPickups,foldedLiftDefs,releaseFolded,inRect,deckHeight} from './folded-layout.js';
+import {initialFoldedState,moveFolded,foldedSupport,foldedBlocked,foldedDecks,foldedEnemies,foldedPickups,foldedLiftDefs,foldedHives,releaseFolded,inRect,deckHeight} from './folded-layout.js';
+import {cameraMovement} from './folded-camera.js';
 import {cityBelts,cityControls,citySolids} from './folded-city-layout.js';
 import {cityDamage,cityContact} from './folded-combat.js';
 
@@ -21,6 +22,14 @@ function travel(p,state,points,{boost=false,lifts=[]}={}){
     }
   }
 }
+
+test('awakening faces its open approach before the player learns camera rotation',()=>{
+  const p={...newPlayer(),...foldedHives.find(h=>h.id==='awakening')},state=initialFoldedState();
+  const forward=cameraMovement(0,-1,p.heading);
+  for(let i=0;i<180;i++)moveFolded(p,forward.x*BASE_SPEED/60,forward.z*BASE_SPEED/60,state);
+  assert.equal(foldedSupport(p.x,p.z,p.y).id,'foundry-west');
+  assert.ok(p.x<-20,'holding forward enters the opening corridor instead of a wall');
+});
 
 test('awakening, local relay sequence, Overdrive return and foundry exit connect continuously',()=>{
   const p=player(0,-8,86),s=initialFoldedState();

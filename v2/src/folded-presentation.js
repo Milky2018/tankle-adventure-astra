@@ -209,7 +209,7 @@ export function makeCityPresentation(scene,aperture){
     opticalPulse.visible=!!(state.signal||p.endingTime)&&signalPhase<.65;opticalPulse.scale.z=.8+signalPhase*.4;
     for(let i=0;i<pipeFlow.length;i++){const m=pipeFlow[i],active=state.circulation||state.endingSeen||state.pump&&m.position.y===-8;m.visible=!!active;m.material.color.setHex((time*2+i)%4<1?0xb7c4a3:0x748d80);}
     oldEye.material.color.setHex(state.endingSeen?0xcac5a1:0x575749);endingSprout.visible=!!state.pump;
-    carrier.visible=!!p.endingTime||Math.hypot(p.x,p.z)<100;
+    carrier.visible=true;
   }
   function cast(origin,direction,distance,aiming=false){
     ray.set(origin,direction);let hit=null;

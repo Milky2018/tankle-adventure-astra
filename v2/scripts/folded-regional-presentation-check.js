@@ -9,7 +9,7 @@ async page=>{
     for(const [name,x,y,z]of [['foundry',0,-8,86],['transit',0,0,27],['garden',48,-8,20],['testworks',90,0,-18],['optics',218,24,-20],['circulation',231,-24,125],['furnace',0,-56,53]]){
       await page.evaluate(({x,y,z})=>{__game.scenario({player:{x,y,z,hp:100,invincible:1e9}});__game.look(Math.PI,.18);__game.step(.2);},{x,y,z});
       const s=await page.evaluate(()=>({camera:__game.snapshot().camera,region:__artCheck.world.presentation.region,bounds:__artCheck.world.presentation.bounds(),depth:__artCheck.scene.getObjectByName('city-architecture-depth').visible}));
-      if(s.region!==name||s.bounds.rooms!==70||s.bounds.solids===0||!s.depth)throw Error('Regional presentation '+JSON.stringify({name,view,s}));
+      if(s.region!==name||s.bounds.rooms!==72||s.bounds.solids===0||!s.depth)throw Error('Regional presentation '+JSON.stringify({name,view,s}));
       if(view==='third'&&s.camera.distance<7)throw Error('Room envelope collapsed the camera '+name);
       if(name==='testworks'&&view==='overhead'){
         const white=await page.evaluate(async()=>{const im=new Image();im.src=__game.pixel();await im.decode();const c=document.createElement('canvas');c.width=1440;c.height=900;const ctx=c.getContext('2d');ctx.drawImage(im,0,0,1440,900);const a=ctx.getImageData(200,260,230,120).data;let white=0;for(let i=0;i<a.length;i+=4)if(a[i]>220&&a[i+1]>220&&a[i+2]>220)white++;return white;});

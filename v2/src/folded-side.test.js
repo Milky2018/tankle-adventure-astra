@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createDelivery} from './folded-delivery.js';
+import {foldedSupport,initialFoldedState,moveFolded} from './folded-layout.js';
+import {cityContact,cityDamage} from './folded-combat.js';
+
+test('maintenance delivery waits for occupants, follows supported banks, and restores its completed berth',()=>{
+ const d=createDelivery();d.update(5,false,()=>false);assert.deepEqual(d.position,[110,-24,30]);
+ d.update(5,true,()=>true);assert.deepEqual(d.position,[110,-24,30]);
+ let arrived=false;
+ for(let i=0;i<1800&&!d.complete;i++){arrived=d.update(1/60,true,()=>false)||arrived;assert.ok(foldedSupport(d.position[0],d.position[2],d.position[1],true),JSON.stringify(d.position));}
+ assert.equal(arrived,true);assert.deepEqual(d.position,[130,-16,18]);assert.deepEqual(createDelivery(true).position,d.position);
+});
+test('optional rail crossing joins old rooms only after docking and persists with old secured saves',()=>{
+ const p={x:-292,y:8,z:-35,speed:1};const s=initialFoldedState();moveFolded(p,0,30,s);assert.ok(p.z<-29);
+ const restored=initialFoldedState({sidePuzzles:{rail:{secured:true}}});moveFolded(p,0,30,restored);assert.ok(p.z>-14);
+});
+test('garden care side room has a traversable shore entrance',()=>{
+ const p={x:46,y:-8,z:24,speed:1};moveFolded(p,0,14,{});assert.ok(Math.abs(p.z-38)<1e-6);
+});
+test('optional sorting machine protects its drive while working; major elites resist ordinary Phoenix',()=>{
+ const e={id:'sorter',type:'boss',hp:12,phase:'warn'};
+ assert.equal(cityDamage(e,1,{x:100,z:0}),0);e.phase='vent';assert.equal(cityDamage(e,1,{x:100,z:0}),1);
+ assert.equal(cityContact({phoenix:true,speed:3.2},{type:'elite',persistent:true,hp:9}),0);
+});
+
+test('the parked shunting carrier leaves the arsenal repair approach and Hive reachable',()=>{
+ const p={x:-330,y:8,z:-62,speed:1};moveFolded(p,-65,0,{});assert.ok(Math.abs(p.x+395)<1e-6);
+ moveFolded(p,0,-23,{});assert.ok(Math.abs(p.z+85)<1e-6);
+ moveFolded(p,0,23,{});moveFolded(p,23,0,{});assert.ok(Math.abs(p.x+372)<1e-6);
+});

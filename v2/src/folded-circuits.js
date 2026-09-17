@@ -17,6 +17,7 @@ export function circuitLinks(controls,solids,lifts,mirrors=[]){
       }
       if(target.n)end[1]=target.y-2;
       let points=[[c.x,ground+.12,c.z],[c.x,ground+.12,end[2]],[end[0],ground+.12,end[2]],end];
+      if(c.id==='rail-crossing')points=[[-372,8.12,-70],[-372,8.12,-62],[-292,8.12,-62],end];
       if(c.id==='pump'&&target.x<0)points=[[58,-7.88,-4],[58,-7.88,-30],[-26,-7.88,-30],end];
       if(c.id==='load'&&target.stops)points=[[90,2.12,-34],[90,8.12,-52],[78,8.12,-52],end];
       if(c.id==='garden-optical'){

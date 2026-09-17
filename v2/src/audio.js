@@ -57,7 +57,7 @@ export class FactoryAudio {
       const beat=Math.floor(time/period);if(this.environmentBeats[key]===beat)return;this.environmentBeats[key]=beat;
       const gain=Math.max(0,1-distance/48)*.045,pan=Math.max(-1,Math.min(1,(-(x-p.x)*Math.cos(yaw)+(z-p.z)*Math.sin(yaw))/24));sound(gain,pan,beat);
     };
-    source('press',-46,-8,40,Math.PI/.75,(g,pan)=>{this.tone(48,.6,'triangle',g,-20,pan);this.noise(.13,g*.5,pan);});
+    if(!state.foundry)source('press',-46,-8,40,Math.PI/.75,(g,pan)=>{this.tone(48,.6,'triangle',g,-20,pan);this.noise(.13,g*.5,pan);});
     source('carrier',0,5,10,3,(g,pan,n)=>{this.tone(n%6===2?310:82,.65,'triangle',g*.6,-12,pan);this.noise(.1,g*.3,pan);});
     source('garden-pump',75,-8,-28,state.pump?1.4:3.7,(g,pan,n)=>{this.tone(state.pump?73:61+n%2*9,.9,'sine',g,0,pan);if(!state.pump)this.noise(.06,g*.25,pan);});
     source('drip',44,-16,5,2.7,(g,pan,n)=>this.tone(740+n%3*120,.24,'sine',g*.3,-290,pan));

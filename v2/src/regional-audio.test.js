@@ -18,3 +18,10 @@ test('restored circulation changes the pump sound and the silent array remains s
   const signal=fixture(),at={x:204,y:40,z:146,hp:50};signal.audio.environment(1,at,'optics',{},0);assert.equal(signal.sounds.length,0);
   signal.audio.environment(10,at,'optics',{signal:true},0);assert.ok(signal.sounds.some(s=>s[1]===660));
 });
+
+test('defeating the foundry quiets its reclaim press without muting the whole city',()=>{
+ const p={x:-46,y:-8,z:40,hp:50},before=fixture(),after=fixture();
+ before.audio.environment(5,p,'foundry',{},0);after.audio.environment(5,p,'foundry',{foundry:true},0);
+ assert.ok(before.sounds.some(s=>s[0]==='tone'&&s[1]===48));
+ assert.equal(after.sounds.some(s=>s[0]==='tone'&&s[1]===48),false);
+});

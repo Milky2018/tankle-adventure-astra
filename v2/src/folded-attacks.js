@@ -5,3 +5,4 @@ export function barrageTargets(origin,target){
 }
 export const RAIL={range:86,speed:120,lockTime:.8};
 export const BARRAGE={duration:1.65,height:15,radius:4};
+export const SORTER_REACH=18;

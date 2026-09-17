@@ -1,5 +1,8 @@
+import {makeSidePuzzles} from './folded-side-puzzles.js';
 import {architectureIndex,REGION_STYLE} from './folded-architecture.js';
+import {magnetPullable} from './folded-combat.js';
 import {REFUGE_RADIUS} from './folded-refuges.js';
+import {SORTER_REACH} from './folded-attacks.js';
 import {mechanismReady} from './folded-pacing.js';
 import {expansionBattles} from './folded-expansion-layout.js';
 import {circuitLinks,circuitColor} from './folded-circuits.js';
@@ -7,8 +10,7 @@ import {routeSigns,gateAbility} from './folded-guidance.js';
 import {makeCityPresentation} from './folded-presentation.js';
 import {abilityIcon} from './folded-hud.js';
 import {SIGNAL,makeAperture,cameraApertureOpacity,apertureOpacity,APERTURE_AIM_THRESHOLD,STRUCTURE_APERTURE_RADIUS} from './folded-visibility.js';
-import {foldedEnemyModel} from './folded-enemies.js';
-import {batchRigidParts} from './rigid-batching.js';
+import {foldedEnemyModel,prepareEnemyMaterials} from './folded-enemies.js';
 import {cityBelts,cityMirrors} from './folded-city-layout.js';
 import * as T from 'three';
 import {box,cylinder,ring,mat,C,tankModel,batchStatic,chargeWarning} from './world.js';
@@ -16,6 +18,7 @@ import {renderDecks} from './hoist-layout.js';
 import {foldedDecks,foldedLiftDefs,foldedSolids,foldedControls,foldedHives,foldedPickups,foldedEnemies,activeSolid,inRect,deckHeight} from './folded-layout.js';
 
 export function makeFoldedWorld(scene,state){
+  const sidePuzzles=makeSidePuzzles(scene,state);
   const aperture=makeAperture(),viewPlayer={x:0,y:0,z:0};
   const presentation=makeCityPresentation(scene,aperture);
   let thirdPerson=false;
@@ -221,7 +224,7 @@ export function makeFoldedWorld(scene,state){
     for(const x of [-.6,.6])cylinder(root,.35,2.5,x,1.25,0,C.metal,8);
     floorDetails.push({root,x:b.x,y:b.y-1.3,z:b.z,radius:3});
   }
-  for(const link of circuitLinks([...foldedControls,...expansionBattles],foldedSolids,foldedLiftDefs,cityMirrors)){
+  for(const link of circuitLinks([...foldedControls,...expansionBattles,{id:'rail-crossing',x:-372,y:9.3,z:-70}],foldedSolids,foldedLiftDefs,cityMirrors)){
     const points=link.points.map(p=>new T.Vector3(...p)),root=new T.Group(),lamps=[];scene.add(root);root.name=`folded-circuit:${link.id}:${link.target}`;
     let length=0;for(let i=1;i<points.length;i++)length+=points[i].distanceTo(points[i-1]);
     if(length<.01){scene.remove(root);continue;}
@@ -298,15 +301,16 @@ export function makeFoldedWorld(scene,state){
     pickups.push({...p,root,item,halo,cage});
   }
   for(const e of foldedEnemies){
-    const model=foldedEnemyModel(e.type);scene.add(model.root);model.root.position.set(e.x,e.y,e.z);
+    const model=foldedEnemyModel(e.id==='sorter'?'sorter':e.type);scene.add(model.root);model.root.position.set(e.x,e.y,e.z);
+    if(magnetPullable(e)){for(const side of [-1,1])box(model.body,.2,.38,1,side*.75,1.1,0,mat(SIGNAL.magnet,true),0);}
     if(e.magneticShield&&model.frontArmor){model.frontArmor.material=mat(SIGNAL.magnet);for(const x of [-.7,.7])box(model.frontArmor,.3,.55,.12,x,0,.34,mat(0xa9dcff,true));}
-    batchRigidParts(model.root,[...model.tracks,...(model.moving||[]),model.frontArmor,model.radiator]);
-    const materials=[];model.root.traverse(m=>{if(m.isMesh&&m.material.color){m.material=m.material.clone();materials.push({m:m.material,color:m.material.color.clone()});}});
+    const materials=prepareEnemyMaterials(model);
     const warningGeometry=new T.BufferGeometry().setAttribute('position',new T.BufferAttribute(new Float32Array(e.type==='welder'?45:6),3).setUsage(T.DynamicDrawUsage));warningGeometry.setDrawRange(0,2);
     const warning=new T.Line(warningGeometry,new T.LineBasicMaterial({color:e.type==='sniper'?0xff263c:C.orange,transparent:true,opacity:.95}));scene.add(warning);warning.visible=false;warning.frustumCulled=false;
     if(e.type==='boss')model.root.scale.setScalar(1.8);
     const charge=['scout','elite'].includes(e.type)?chargeWarning(e.type):null;if(charge)scene.add(charge.root);
-    const zone=ring(scene,e.type==='artillery'?4:3,.1,e.x,e.y+.1,e.z,mat(C.orange,true));zone.visible=false;
+    const zone=e.id==='sorter'?new T.LineLoop(new T.BufferGeometry().setFromPoints([new T.Vector3(),...Array.from({length:25},(_,i)=>{const a=-.9+i*1.8/24;return new T.Vector3(Math.sin(a)*SORTER_REACH,0,Math.cos(a)*SORTER_REACH);})]),new T.LineBasicMaterial({color:C.lightYellow,transparent:true,opacity:.8})):ring(scene,e.type==='artillery'?4:3,.1,e.x,e.y+.1,e.z,mat(C.orange,true));
+    if(e.id==='sorter')scene.add(zone);zone.visible=false;
     const flame=e.type==='welder'||e.id==='keeper'?new T.Mesh(new T.ConeGeometry(1,1,10,1,true),new T.MeshBasicMaterial({color:C.orange,transparent:true,opacity:.32,depthWrite:false,side:T.DoubleSide})):null;
     if(flame){scene.add(flame);flame.visible=false;}
     const supportBeam=new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(),new T.Vector3()]),new T.LineBasicMaterial({color:SIGNAL.open}));scene.add(supportBeam);supportBeam.visible=false;supportBeam.frustumCulled=false;
@@ -321,6 +325,11 @@ export function makeFoldedWorld(scene,state){
       const shutter=e.id==='foundry'?box(root,1.8,1.3,.2,0,1.7,1.05,C.metal):null;
       const part={shutter,x:root.position.x,y:e.y+1.7,z:e.z,hp,max:hp,root,lamp,radius:1.45,enemy};return part;
     });
+    if(e.parts){
+      const lamp=box(model.body,1.2,.95,.08,0,1.3,1.49,mat(C.orange,true),0);
+      const panelMaterial=mat(C.metal),shutters=[-1,1].map(side=>box(model.body,.65,1,.14,side*.325,1.3,1.6,panelMaterial,0));
+      enemy.coreModel={lamp,shutters};
+    }
     if(e.mirror&&e.type!=='reflector'){const plate=box(model.body,1.65,1.25,.1,0,1.4,1.52,mat(0xd3eee4,true));plate.name='mirror-plate';}
     if(e.guardian){model.root.scale.setScalar(1.35);const weak=box(model.body,1.2,1,.15,0,1.3,-1.8,mat(C.orange,true));weak.name='rear-aperture';}
     enemy.baseScale=model.root.scale.clone();
@@ -501,7 +510,8 @@ export function makeFoldedWorld(scene,state){
   }
   const tender=new T.Group();tender.position.set(110,-24,30);scene.add(tender);
   box(tender,1.8,.8,2,0,.5,0,C.metal);const tenderLamp=box(tender,.65,.22,.1,0,1,1,mat(C.dark,true));
-  floorDetails.push({root:tender,x:110,y:-24,z:30,radius:2});
+  for(const side of [-1,1])box(tender,.35,.35,2.2,side*1.05,.2,0,C.metal,.1);
+  const tenderDetail={root:tender,x:110,y:-24,z:30,radius:2,stops:[-24,-16]};floorDetails.push(tenderDetail);
   const dish=new T.Group();dish.position.set(204,42,146);scene.add(dish);
   cylinder(dish,.5,5,0,2.5,0,C.dark,12);
   const bowl=new T.Mesh(new T.SphereGeometry(4,16,8,0,Math.PI*2,0,Math.PI/2),new T.MeshToonMaterial({color:C.metal,side:T.DoubleSide}));bowl.position.y=5;bowl.rotation.z=.5;dish.add(bowl);
@@ -542,6 +552,7 @@ export function makeFoldedWorld(scene,state){
     if(owner?.arms)bounds.max.y+=.7;
     occluders.push({root,owner,meshes,local,bounds,dynamic,layered,cameraSoft,opacity:1});
   }
+  for(const root of sidePuzzles.roots)registerOccluder(root,sidePuzzles.owners.get(root),{dynamic:true});
   for(const wall of walls)registerOccluder(wall.mesh,wall,{dynamic:true,clone:!wall.mass});
   for(const object of [...controls,...hives,...pickups,...lifts,...floorDetails,...mirrors])registerOccluder(object.root,object,{dynamic:object.stops!==undefined||mirrors.includes(object),cameraSoft:hives.includes(object)||controls.includes(object)||pickups.includes(object),layered:controls.includes(object)||hives.includes(object)||pickups.includes(object)});
   for(const object of pillars)registerOccluder(object.mesh,object);
@@ -605,6 +616,7 @@ export function makeFoldedWorld(scene,state){
     if(terrainOnly)return raycaster.intersectObjects([...[...surfaceGrid.ray(origin,direction,distance)].map(s=>s.mesh),...lifts.map(l=>l.mesh)],false).find(h=>h.face.normal.y>.5&&(!aiming||(thirdPerson?cameraApertureOpacity(h.point,viewPlayer,viewCamera)>APERTURE_AIM_THRESHOLD:!h.object.userData.aperture||apertureOpacity(h.point,viewPlayer,sightDirection)>APERTURE_AIM_THRESHOLD)))||null;
     const meshes=[...[...surfaceGrid.ray(origin,direction,distance)].map(s=>s.mesh),...[...wallGrid.ray(origin,direction,distance)].filter(w=>activeSolid(w,state)&&(!aiming||w.opacity>.4)).map(w=>w.mesh),...lifts.filter(l=>!aiming||!l.root.userData.cutaway).map(l=>l.mesh),...mirrors.filter(m=>!aiming||!m.root.userData.cutaway).map(m=>m.mesh)];
     let hit=raycaster.intersectObjects(meshes,false).find(h=>!aiming||(thirdPerson?cameraApertureOpacity(h.point,viewPlayer,viewCamera)>APERTURE_AIM_THRESHOLD:!(h.object.userData.aperture||h.object.userData.massAperture)||apertureOpacity(h.point,viewPlayer,sightDirection,h.object.userData.massAperture?STRUCTURE_APERTURE_RADIUS:13)>APERTURE_AIM_THRESHOLD))||null;if(hit?.object.userData.mirror)hit.mirror=hit.object.userData.mirror;
+    const puzzleHit=sidePuzzles.cast(raycaster,targets);if(puzzleHit&&(!hit||puzzleHit.distance<hit.distance)&&(!aiming||!(puzzleHit.target?.root?.userData.cutaway)&&(thirdPerson?cameraApertureOpacity(puzzleHit.point,viewPlayer,viewCamera):apertureOpacity(puzzleHit.point,viewPlayer,sightDirection))>APERTURE_AIM_THRESHOLD))hit=puzzleHit;
     const structure=presentation.cast(origin,direction,distance,aiming);if(structure&&(!hit||structure.distance<hit.distance))hit=structure;
     if(targets)for(const t of [...controls.filter(c=>!['use','dock'].includes(c.kind)&&!state[c.id]),...enemies.filter(e=>e.hp>0),...enemies.filter(e=>e.hp>0).flatMap(e=>e.parts.filter(p=>p.hp>0)),...extras.filter(t=>!t.disarmed)]){
       const point=new T.Vector3(t.x,t.y+(t.model?1.5:0),t.z);
@@ -698,11 +710,18 @@ export function makeFoldedWorld(scene,state){
     pumpPlate.material.color.setHex(pressure>=1?SIGNAL.open:SIGNAL.ready);
     pumpPiston.scale.y=.4+pressure*.6;
     pumpFeed.forEach((lamp,i)=>lamp.material.color.setHex(pressure>i/pumpFeed.length?SIGNAL.open:SIGNAL.ready));
-    for(const e of enemies)for(const part of e.parts){if(part.shutter)part.shutter.position.y=T.MathUtils.damp(part.shutter.position.y,e.phase==='vent'?3.2:1.7,10,dt);part.lamp.material.color.setHex(part.hp?C.orange:C.dark);part.root.visible=e.hp>0;}
+    for(const e of enemies){
+      for(const part of e.parts){if(part.shutter)part.shutter.position.y=T.MathUtils.damp(part.shutter.position.y,e.phase==='vent'?3.2:1.7,10,dt);part.lamp.material.color.setHex(part.hp?C.orange:C.dark);part.root.visible=e.hp>0;}
+      if(e.coreModel){
+        const open=e.hp>0&&e.parts.every(part=>part.hp<=0)&&(e.id!=='foundry'||e.phase==='vent');
+        e.coreModel.lamp.material.color.setHex(open?C.orange:C.dark);
+        e.coreModel.shutters.forEach((shutter,i)=>shutter.position.x=T.MathUtils.damp(shutter.position.x,(i?1:-1)*(open?1:.325),10,dt));
+      }
+    }
     const glow=p.endingTime?Math.min(1,p.endingTime/7):.08;firebox.material.color.setRGB(.4+glow*.6,.15+glow*.65,.04+glow*.3);
     clamps.forEach((m,i)=>m.position.x=(i?1:-1)*(3-Math.min(1,p.dockHold/2||0)*1.3));
-    ram.position.y=8+Math.sin(time*.75)*2.5;
-    tenderLamp.material.color.setHex(state.maintenance||p.endingTime?C.mint:C.dark);tender.position.x=110+(state.maintenance?Math.sin(time*.25):0);
+    ram.position.y=state.foundry?T.MathUtils.damp(ram.position.y,10.5,3,dt):8+Math.sin(time*.75)*2.5;
+    tenderLamp.material.color.setHex(state.maintenance||p.endingTime?C.mint:C.dark);tender.position.set(...sidePuzzles.delivery.position);tender.rotation.y=sidePuzzles.delivery.heading;Object.assign(tenderDetail,{x:tender.position.x,y:tender.position.y,z:tender.position.z});
     for(const {lamp,y}of pipeLights)lamp.material.color.setHex(p.endingTime||state.pump&&y===-8||state['pressure-return']&&y===-24?C.mint:C.orange);
     const signalPhase=p.endingTime?Math.max(0,p.endingTime-4.8)*2:time%9;
     bowl.rotation.y=state.signal||p.endingTime?signalPhase<.65?0:signalPhase<1.5?(signalPhase-.65)/.85*.35:signalPhase<7.5?.35:(9-signalPhase)/1.5*.35:0;
@@ -712,5 +731,5 @@ export function makeFoldedWorld(scene,state){
     scene.updateMatrixWorld();
     if(camera)updateCameraOcclusion(camera,p,dt);
   }
-  return {signalRelease,controlFeeds,signs,surfaces,walls,controls,hives,pickups,lifts,enemies,wheel,mirrors,belts,occluders,presentation,pulseHive,cast,update,setThirdPerson,updateCameraOcclusion};
+  return {sidePuzzles,signalRelease,controlFeeds,signs,surfaces,walls,controls,hives,pickups,lifts,enemies,wheel,mirrors,belts,occluders,presentation,pulseHive,cast,update,setThirdPerson,updateCameraOcclusion};
 }

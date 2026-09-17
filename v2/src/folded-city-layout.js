@@ -121,11 +121,11 @@ export const cityControls=[
   control('pump',58,-5.5,-4,'shot',{ground:-8}),control('rig',242,-21,96,'shot',{ground:-23}),
   control('rig-cover',229.5,-21.6,108.5,'magnet',{ground:-24}),control('yard-cover',221.5,-5.6,44,'magnet',{ground:-8}),
   control('pressure-return',218,-14.6,18),control('last-cage',40,-38.6,-12),
-  control('signal',198,41.3,146,'use'),control('maintenance',110,-22.6,30,'use'),
+  control('signal',198,41.3,146,'use'),control('maintenance',110,-22.1,30,'shot'),
   control('dock',0,-54.6,0,'dock')
 ];
 export const cityHives=[
-  {id:'awakening',x:0,y:-8,z:86,heading:-Math.PI*.75},{id:'lower-foundry',x:-56,y:-16,z:76,heading:0},
+  {id:'awakening',x:0,y:-8,z:86,heading:-Math.PI/2},{id:'lower-foundry',x:-56,y:-16,z:76,heading:0},
   {id:'foundry-exit',x:6,y:-8,z:48,requires:'foundry'},
   {id:'emitter',x:202,y:24,z:-24,heading:Math.PI/2},{id:'yard',x:210,y:-8,z:44},{id:'rig',x:214,y:-24,z:116,heading:Math.PI},
   {id:'industrial',x:234,y:-16,z:18},{id:'last-refuge',x:44,y:-40,z:-10,heading:0}

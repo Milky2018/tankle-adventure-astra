@@ -11,12 +11,11 @@ const previews=[
 export function createJourneyMenu(back=null){
   const menu=document.createElement('div');menu.className='journey-menu';menu.hidden=true;menu.setAttribute('role','dialog');menu.setAttribute('aria-modal','true');menu.setAttribute('aria-labelledby','journey-title');
   menu.innerHTML=`<section class="journey-panel">
-    <header><div><p class="journey-kicker">FURNACE BORN</p><h1 id="journey-title">旅程与选关</h1><p>从铸造厂苏醒，进入相互连通的机械城。</p></div><button class="journey-back" ${back?'':'hidden'}>返回设置</button></header>
+    <header><div><p class="journey-kicker">一座沉寂的城 · 一台苏醒的机器</p><h1 id="journey-title">FURNACE<br><span>BORN</span></h1><p class="journey-intro">在余烬之下，寻找仍在运转的心脏。</p></div><button class="journey-back" ${back?'':'hidden'}>返回设置</button></header>
     <section class="journey-campaign" aria-label="完整旅程">
-      <div class="journey-emblem" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="43"/><path d="M50 16c18 20-6 24 10 36l10-16c18 24 1 49-20 49S9 61 29 37l10 16c14-13-3-19 11-37z"/></svg></div>
-      <div><h2>完整旅程</h2><p>第一关：回收铸造厂。之后沿世界中的道路继续探索。</p><div class="journey-actions"><button id="journey-continue" class="journey-primary">继续旅程</button><button id="journey-start">从第一关开始</button></div><p id="journey-confirm" role="status" hidden>重新开始将覆盖完整旅程的进度。再次点击确认，或选择下方的第一关独立试玩保留进度。</p></div>
+      <div><h2>完整旅程</h2><p>从回收铸造厂苏醒，探索彼此相连的机械城。</p><div class="journey-actions"><button id="journey-continue" class="journey-primary">继续旅程</button><button id="journey-start">从第一关开始</button></div><p id="journey-confirm" role="status" hidden>重新开始将覆盖完整旅程的进度。再次点击确认，或选择下方的第一关独立试玩保留进度。</p></div>
     </section>
-    <section aria-label="独立试玩"><h2>独立试玩</h2><p>每次从所选入口开始，不影响完整旅程存档。</p><div class="journey-previews">${previews.map(p=>`<button data-preview="${p.id}"><strong>${p.name}</strong><span>${p.description}</span><span class="journey-play">开始试玩 →</span></button>`).join('')}</div></section>
+    <section class="journey-preview-section" aria-label="独立试玩"><div class="journey-section-heading"><h2>独立试玩</h2><p>不影响完整旅程存档</p></div><div class="journey-previews">${previews.map((p,i)=>`<button data-preview="${p.id}"><span class="journey-route-number" aria-hidden="true">0${i+1}</span><span class="journey-route-copy"><strong>${p.name}</strong><span>${p.description}</span></span><span class="journey-play" aria-hidden="true">↗</span></button>`).join('')}</div></section>
     <details class="journey-history"><summary>历史版本试玩</summary><p>以下是早期地图版本，与当前机械城及其旅程存档分开。</p><div>${[['legacy','旧版第一关'],['2','旧版第二关'],['3','旧版第三关'],['4','旧版中段'],['hoist','旧版升降井']].map(([id,name])=>`<a href="/?chapter=${id}">${name}</a>`).join('')}</div></details>
   </section>`;
   document.body.append(menu);
@@ -26,7 +25,7 @@ export function createJourneyMenu(back=null){
   function show(){
     returnFocus=document.activeElement;armed=false;confirmation.hidden=true;start.textContent='从第一关开始';resume.hidden=!hasSave();
     let completed=false;try{completed=JSON.parse(localStorage.getItem(citySave))?.endingSeen===true;}catch{}
-    resume.textContent=completed?'继续探索 · 已传火':'继续旅程';
+    resume.textContent=completed?'继续探索 · Mission Accomplished':'继续旅程';
     start.classList.toggle('journey-primary',resume.hidden);menu.hidden=false;(resume.hidden?start:resume).focus();
   }
   function close(){menu.hidden=true;back();returnFocus?.focus();}

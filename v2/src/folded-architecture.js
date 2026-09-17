@@ -12,6 +12,7 @@ export const REGION_STYLE={
 };
 // [support, region, wall height, roof]. Loading apertures and test run-ups stay open overhead.
 export const ROOM_PLAN=[
+  ['garden-care','garden',6,false],['sorting-bay','testworks',7,false],
   ['foundry-awakening','foundry',6,false],['foundry-west','foundry',5.5,false],
   ['press-working-floor','foundry',6,false],['reclaim-sorting-bay','foundry',6,false],['prototype-court','foundry',7,false],['recycling-furnace','foundry',10,false],
   ['turntable','transit',10,false],['hub-entry','transit',7,false],['loading','transit',7,false],['mortar-apron','transit',12,false],['training-gallery','transit',6,false],['freight','transit',7,false],
@@ -44,7 +45,7 @@ const roomWalls={
   'ferry-cradle':[[-52.85,-14,.8,16],[-52,-14.85,12,.8]],
   'bridge-underside':[[-29.8,2.05,61.8,.8],[-30,-10.85,29.9,.8]],
   'canal-landing':[[28,-22.85,12,.8],[27.15,-22,.8,9.9]],
-  'garden-bank':[[31.15,12,.8,16],[32,28.05,21.9,.8]],
+  'garden-bank':[[31.15,12,.8,16],[32,28.05,8,.8],[50,28.05,3.9,.8]],
   'pump-terrace':[[52,-36.85,52,.8]],
   'rear-dock':[[76,28.05,5.9,.8]],
   'turntable':[[-16,36.05,46,.8],[-16.85,10,.8,11.9],[-16,9.15,9.9,.8]],
