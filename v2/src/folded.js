@@ -65,7 +65,7 @@ const keys=new Set(),pointer=new T.Vector2(0,0),picker=new T.Raycaster(),aim=new
 const shots=[],sparks=[],waves=[],mines=[],discovered=new Set(state.discovered);
 const projectileGeometry=new T.SphereGeometry(.23,10,6),blastGeometry=new T.RingGeometry(.78,1,40);
 let time=0,frames=0,paused=false,mapOpen=false,chosenLayer=Math.round(p.y/8)*8,deathAt=-1,hitAt=-10,rebind=null,resetArmed=false,last=performance.now(),mapAt=-1,moved=false,fired=false,mapped=false;
-let pointerLockFailed=false,hadPointerLock=false,orbiting=false;
+let pointerLockFailed=false,capturePending=false,hadPointerLock=false,orbiting=false;
 let manual=false,pointerOver=false,magnetic=null,magnetLock=null,recoil=0,laserSoundAt=-1,repairAt=-10,wakeAt=-1,magnetSoundAt=-10;
 const hp=$('hp');for(let i=0;i<10;i++)hp.append(document.createElement('i'));
 const abilityHud=createAbilityHud($('tools'),$('acquired'),keyGlyph);
@@ -521,18 +521,33 @@ function pointerLockUnavailable(){
   pointerLockFailed=true;pointerOver=true;
   cameraNote.textContent='第三人称：按住鼠标中键拖动视角，WASD 移动；左键射击，右键磁力牵引。';
 }
-function captureMouse(){
-  if(!thirdPerson||paused||mapOpen||ending.visible||pointerLockFailed)return;
-  try{if(!$('game').requestPointerLock){pointerLockUnavailable();return;}$('game').requestPointerLock()?.catch(pointerLockUnavailable);}catch{pointerLockUnavailable();}
+async function captureMouse(){
+  if(!thirdPerson||paused||mapOpen||ending.visible||pointerLockFailed||capturePending)return;
+  const canvas=$('game');
+  if(!canvas.requestPointerLock){pointerLockUnavailable();return;}
+  capturePending=true;
+  try{
+    try{await canvas.requestPointerLock({unadjustedMovement:true});}
+    catch(error){
+      if(error.name!=='NotSupportedError')throw error;
+      await canvas.requestPointerLock();
+    }
+    if((!thirdPerson||paused||mapOpen||ending.visible)&&document.pointerLockElement===canvas)document.exitPointerLock();
+  }catch{pointerLockUnavailable();}
+  finally{capturePending=false;}
 }
-document.addEventListener('pointerlockerror',pointerLockUnavailable);
+document.addEventListener('pointerlockerror',()=>{
+  // Promise failures are handled above, including the retry without raw input.
+  if(!capturePending&&!document.pointerLockElement)pointerLockUnavailable();
+});
 document.addEventListener('pointerlockchange',()=>{
   const locked=document.pointerLockElement===$('game'),wasLocked=hadPointerLock;hadPointerLock=locked;pointerOver=locked;keys.clear();
   document.body.classList.toggle('mouse-look',locked);
   if(thirdPerson&&wasLocked&&!locked&&!paused&&!mapOpen&&!ending.visible)setPause(true);
 });
 document.addEventListener('mousemove',e=>{
-  if(thirdPerson&&(document.pointerLockElement===$('game')||orbiting)&&!paused&&!mapOpen){follow.turn(e.movementX,e.movementY);updateCamera(0);updateAim();}
+  // Keep high-rate input cheap; advance resolves collision and aim once per frame.
+  if(thirdPerson&&(document.pointerLockElement===$('game')||orbiting)&&!paused&&!mapOpen)follow.turn(e.movementX,e.movementY);
 });
 $('game').addEventListener('pointermove',e=>{if(!thirdPerson){pointer.set(e.clientX/innerWidth*2-1,1-e.clientY/innerHeight*2);pointerOver=true;}});
 $('game').addEventListener('pointerleave',()=>{if(!document.pointerLockElement&&!orbiting)pointerOver=false;});
@@ -541,6 +556,7 @@ $('game').addEventListener('mousedown',e=>{
   if(thirdPerson&&e.button===1&&document.pointerLockElement!==$('game')){orbiting=true;pointerOver=true;return;}
   if(thirdPerson&&!pointerLockFailed&&document.pointerLockElement!==$('game')){captureMouse();return;}
   if(!thirdPerson)pointer.set(e.clientX/innerWidth*2-1,1-e.clientY/innerHeight*2);
+  if(thirdPerson)updateCamera(0);
   updateAim();input(`Mouse${e.button}`);
 });
 addEventListener('mouseup',e=>{keys.delete(`Mouse${e.button}`);if(e.button===1)orbiting=false;});addEventListener('contextmenu',e=>e.preventDefault());

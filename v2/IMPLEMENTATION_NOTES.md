@@ -487,3 +487,22 @@ Final paired measurements (Apple M3 Max, settings above):
 | third / carrier | 670 → 363 | 8.60 → 3.56 | 58.7% | 2.95 → 2.33 |
 
 The opening third-person main-pass triangle count remains 275,572 in both runs. The primary gain is CPU submission, not polygon reduction. Dedicated verification browsers were closed; the existing user server on port 5174 was retained.
+
+
+## Mouse-event scene query scheduling — 2026-09-17
+
+Every captured or middle-drag mouse event previously called `updateCamera(0)` and `updateAim`, including five collision probes and per-part camera fading, in addition to the normal frame updates. Mouse events now change only the follow camera's yaw/pitch. `advance` resolves the latest orientation, collision and aim once per frame. A mouse-button press synchronizes the camera before aiming/firing, so a press between frames uses the latest direction. This adds no angle smoothing, sensitivity changes or movement-control changes.
+
+Controlled browser interception measured 500 dispatched events taking 128.5 ms with the old handler versus 1.5 ms with scene queries deferred. The old batch performed 500 camera updates, 2,500 collision probes and 500 aim queries; the deferred batch performed none. An open-view six-second control delivering eight small events every 8 ms reduced camera/aim calls from 6,361 to 361. Camera distance remained constant in both controls. Both maintained approximately 60 FPS in this headless fixture, so this demonstrates unnecessary input work, not a measured improvement to every player's frame pacing or a physical mouse polling-rate benchmark.
+
+`folded-mouse-scheduling-check.js` first failed on 100 event-driven camera/aim updates. It now passes zero scene queries during the event burst, exactly one update per frame, preserved total yaw, unchanged stationary hull heading, immediate fire using the latest orientation, and ignored paused input. The existing mouse-chord check passes real captured look while firing or pulling, both button orders in middle-drag fallback, independent release, and sensitivity persistence/reset. All 137 Node tests and the production build pass, with the existing bundle-size advisory.
+
+Evidence is under `output/playwright/mouse-latency/`. The dedicated test browser was closed; the user server on port 5174 remains running.
+
+## Raw third-person mouse input — 2026-09-17
+
+Third-person pointer capture now requests `unadjustedMovement: true`. This asks the browser for raw platform mouse movement instead of movement affected by the system pointer acceleration. A `NotSupportedError` retries ordinary pointer lock; a denied capture retains middle-drag look. Pending requests are deduplicated, and the raw-request error event does not disable the ordinary-lock retry. Angle multipliers, saved sensitivity, camera collision and per-frame scene-query scheduling remain unchanged. No aim smoothing or extrapolation is added.
+
+`folded-raw-mouse-check.js` failed before the change because raw input was not requested. Afterward the test browser accepted native raw capture; forced unsupported and denied cases exercised ordinary capture and middle drag respectively. All three preserved vertical look while firing and exact stationary angles after input stopped. The existing mouse-chord and scheduling checks, all 137 Node tests and the production build passed (the existing bundle-size advisory remains).
+
+This is an input-path correction, not a verified cure for the reported physical-mouse stair stepping. Earlier quarter-pixel browser automation produced integer `movementY` values and stepped pitch at constant camera distance, but that experiment does not isolate physical device input from automation injection. Raw capture does not promise fractional deltas or eliminate sensor count granularity. Actual-device smoothness and frame pacing still need acceptance. Evidence is under `output/playwright/raw-mouse/`.
