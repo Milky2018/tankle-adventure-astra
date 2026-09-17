@@ -26,7 +26,7 @@ async page=>{
   }
   async function settle(){await page.evaluate(()=>{window.__game.setInput([]);window.__game.step(3);});}
   async function shoot(id){
-    const targets={load:[90,-34,3.3],brake:[78,-77.7,18],gangway:[86,31,-6.6],cage:[22,8,25.4]};
+    const targets={load:[90,-34,7],brake:[78,-77.7,18],gangway:[86,31,-6.6],cage:[22,8,25.4]};
     if(id==='load')await page.keyboard.press('q');
     const target=targets[id];if(id!=='brake')await settle();
     const result=await page.evaluate(({id,target})=>{const g=window.__game;g.aimAt(...target);g.setInput(['Mouse0']);g.step(1.2);g.setInput([]);return g.snapshot();},{id,target});

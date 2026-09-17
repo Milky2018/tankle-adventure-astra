@@ -24,6 +24,8 @@ export class FollowCamera{
     this.right.set(-Math.cos(this.yaw),0,Math.sin(this.yaw));
     this.up.crossVectors(this.right,this.forward).normalize();
     this.offset.copy(this.forward).multiplyScalar(-this.boom).addScaledVector(this.right,this.shoulder).addScaledVector(this.up,this.height);
+    // Looking above the horizon must not swing the camera underneath the hull.
+    this.offset.y=Math.max(this.height,this.offset.y);
     const desired=this.offset.length();this.offset.normalize();
     let clear=desired;
     // Probe a small volume so the near plane cannot slip through a corner.

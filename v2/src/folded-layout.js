@@ -5,7 +5,7 @@ import {buildArchitecture,architectureIndex} from './folded-architecture.js';
 
 const deck=(id,x,z,w,d,y,extra={})=>({id,x,z,w,d,y,...extra});
 export const foldedDecks=[
-  deck('turntable',-16,10,32,26,0),deck('transport-bridge',-6,-28,12,38,0),
+  deck('turntable',-16,10,32,26,0),deck('hub-entry',30,-2,12,38,0),deck('hub-entry-neck',16,26,14,10,0),deck('transport-bridge',-6,-28,12,38,0),
   deck('west-landing',-32,22,16,12,0),deck('garden-descent',-32,-2,12,24,-8,{rise:8}),
   deck('ferry-approach',-40,-14,20,12,-8),deck('ferry-cradle',-52,-14,12,16,-8),
   deck('launch-ramp',-52,2,12,24,-8,{rise:-8}),
@@ -39,9 +39,9 @@ export const foldedLiftDefs=[
 // Bounds describe solid material, including the moving shutters while closed.
 export const foldedSolids=[
   {id:'magnet',x:-40.5,z:-14,w:1,d:12,y:-8,h:3},
-  {id:'freight',x:25.5,z:-40,w:1,d:12,y:0,h:5},
+  {id:'freight',x:25.5,z:-40,w:1,d:12,y:0,h:3.2},
   {id:'gangway',x:69.5,z:30,w:1,d:8,y:-8,h:3},
-  {id:'load',x:84,z:-29,w:12,d:1.4,y:0,h:5.5},
+  {id:'load',x:84,z:-29,w:12,d:1.4,y:0,h:6.2},
   {id:'brake',x:72,z:-78.5,w:12,d:1,y:16,h:2.5},
   {id:'launch',x:139.5,z:-92,w:1,d:12,y:16,h:3},
   {id:'optics',x:175.5,z:-36,w:1,d:12,y:24,h:3},
@@ -56,9 +56,9 @@ export const foldedSolids=[
 export const foldedControls=[
   {id:'rail-repair',x:-18,y:1.4,z:23,kind:'magnet'},
   {id:'magnet',x:-39.7,y:-6.6,z:-8,kind:'magnet'},
-  {id:'freight',x:32,y:1.3,z:-34,kind:'shot'},
+  {id:'freight',x:32,y:4.2,z:-34,ground:0,kind:'shot',surface:'top'},
   {id:'gangway',x:86,y:-6.6,z:31,kind:'shot'},
-  {id:'load',x:90,y:3.3,z:-34,ground:2,kind:'shot'},
+  {id:'load',x:90,y:7,z:-34,ground:2,kind:'shot'},
   {id:'brake',x:78,y:18,z:-77.7,kind:'shot'},
   {id:'cage',x:22,y:25.4,z:8,kind:'shot'},
   {id:'dock-cover',x:79.5,y:-5.6,z:14.5,kind:'magnet',ground:-8},
@@ -66,7 +66,7 @@ export const foldedControls=[
   ...cityControls
 ];
 export const foldedHives=[
-  {id:'turntable',x:0,y:0,z:27},{id:'garden-entry',x:-27,y:-8,z:-7},{id:'loading-entry',x:12,y:0,z:-34},{id:'bank',x:56,y:-8,z:20},
+  {id:'turntable',x:0,y:0,z:27,heading:Math.PI},{id:'garden-entry',x:-27,y:-8,z:-7},{id:'loading-entry',x:12,y:0,z:-34},{id:'bank',x:56,y:-8,z:20},
   {id:'benches',x:94,y:0,z:-18},{id:'roof',x:32,y:24,z:6},
   ...cityHives
 ];
@@ -131,6 +131,8 @@ export function initialFoldedState(saved={}){
   const state={};
   for(const id of ['magnet','freight','gangway','load','brake','cage','launch','optics','pressure','flotation','phoenix','rail-repair',...cityFlags])state[id]=saved[id]===true;
   state.anchor=foldedHives.some(h=>h.id===saved.anchor)?saved.anchor:'turntable';
+  // The old lower Hive was reachable before the workshop shutter opened.
+  if(state.anchor==='lower-foundry'&&!state['relay-west'])state.anchor='awakening';
   state.discovered=Array.isArray(saved.discovered)?saved.discovered.filter(id=>foldedDecks.some(d=>d.id===id)):['turntable'];
   return state;
 }

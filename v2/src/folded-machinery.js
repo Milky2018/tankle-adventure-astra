@@ -1,18 +1,19 @@
 import {cityBelts} from './folded-city-layout.js';
 import {inRect,deckHeight,moveFolded} from './folded-layout.js';
 
-export function conveyorVelocity(body,enemies=[]){
+export function conveyorVelocity(body,enemies=[],state={}){
   const belt=cityBelts.find(b=>inRect(body.x,body.z,b)&&Math.abs(deckHeight(b,body.z)-body.y)<.5);
   if(!belt)return {x:0,z:0};
   if(belt.id.includes('feed-')){
     const owner=enemies.find(e=>e.id===(belt.id.startsWith('foundry')?'foundry':'keeper'));
     if(owner?.parts[belt.id.endsWith('left')?0:1]?.hp===0)return {x:0,z:0};
   }
+  if(belt.release&&state[belt.release])return {x:0,z:-4};
   return {x:belt.vx,z:belt.vz};
 }
 
 export function moveWithConveyor(body,dx,dz,dt,state,lifts=[],enemies=[]){
-  const belt=conveyorVelocity(body,enemies);
+  const belt=conveyorVelocity(body,enemies,state);
   moveFolded(body,dx+belt.x*dt,dz+belt.z*dt,state,lifts);
 }
 

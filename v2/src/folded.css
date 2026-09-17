@@ -75,3 +75,9 @@
 #camera-tuning input{grid-column:1/-1;width:100%;accent-color:#e5c36c}
 #camera-tuning button{padding:9px 12px;margin:4px 4px 0 0;border:1px solid #aac5b448;border-radius:5px;background:#223d3b;color:#eceaca;font-size:12px}
 #camera-tuning button:last-child{background:#efcd79;color:#213634}
+
+#threats{position:fixed;inset:0;pointer-events:none;z-index:5}
+#threats i{position:absolute;width:32px;height:12px;border-top:4px solid #ff9b62;border-radius:50%;filter:drop-shadow(0 1px 3px #201509);animation:threat-pulse .5s ease-in-out infinite alternate}
+#threats i[hidden],#threats[hidden]{display:none}
+@keyframes threat-pulse{to{opacity:.5}}
+@media(prefers-reduced-motion:reduce){#threats i{animation:none}}

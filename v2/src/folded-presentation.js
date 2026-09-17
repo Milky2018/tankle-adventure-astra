@@ -2,9 +2,7 @@ import * as T from 'three';
 import {box,cylinder,ring,mat,batchStatic} from './world.js';
 import {REGION_STYLE,regionAt} from './folded-architecture.js';
 import {foldedArchitecture,architectureGrid} from './folded-layout.js';
-import {apertureOpacity,APERTURE_AIM_THRESHOLD} from './folded-visibility.js';
-
-const ARCHITECTURE_APERTURE=36;
+import {apertureOpacity,APERTURE_AIM_THRESHOLD,STRUCTURE_APERTURE_RADIUS as ARCHITECTURE_APERTURE} from './folded-visibility.js';
 
 export function makeCityPresentation(scene,aperture){
   const architecture=new T.Group(),depth=new T.Group(),scenery=new T.Group();

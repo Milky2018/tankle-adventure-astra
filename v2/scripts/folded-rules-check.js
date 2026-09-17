@@ -1,4 +1,5 @@
 async page=>{
+ await page.setViewportSize({width:1280,height:720});
  const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'||m.type()==='warning'&&/THREE|WebGL/.test(m.text()))errors.push(m.text());});
  await page.route('**/src/folded.js*',async route=>{const r=await route.fetch();await route.fulfill({response:r,body:await r.text()+`\nwindow.__rules={world,magneticBeam,shots,mines,layMine,shootEnemy,renderer,laserBeam,resetEnemies,clearShots};`});});
  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>!!window.__rules);await page.unroute('**/src/folded.js*');

@@ -33,16 +33,16 @@ async page=>{
     },{id,x0,x1,z});if(result.error)throw Error(id+' '+JSON.stringify(result));return result;
   }
   await move(-40,86);await move(-40,49);await shoot(-35,44,-14.5,'relay-west');
-  await move(-17,49);await page.keyboard.press('e');await move(0,52);await move(36,52);await shoot(43,44,-14.5,'relay-east');
-  await move(-55,52);await move(-55,128);await move(-43,132);const prototype=await fight('prototype',-43,-20,132);
-  await move(-30,128);await page.keyboard.press('e');
+  await move(-57,52);await move(-57,76);await page.keyboard.press('e');await move(-57,118);await shoot(-65,114,-14.5,'relay-east');
+  await move(-57,128);await move(-43,132);const prototype=await fight('prototype',-43,-20,132);
+  await move(-30,136);await page.keyboard.press('e');
   if(!(await page.evaluate(()=>window.__game.snapshot())).player.overdrive)throw Error('Overdrive was not acquired');
   await move(-20,128);await move(-20,86,true);await move(0,86);await page.keyboard.press('e');
   await move(0,54,true);const foundry=await fight('foundry',-10,10,55);
-  await move(6,48);await page.keyboard.press('e');await move(24,48);await move(24,4);await move(10,4);await move(0,27);await page.keyboard.press('e');
+  await move(6,48);await page.keyboard.press('e');await move(24,48);await move(24,4);await move(36,4);await move(36,30);await move(22,30);await move(0,27);await page.keyboard.press('e');
   await page.screenshot({path:'v2/output/playwright/city-foundry-complete.png'});
   await move(0,12);if(!(await page.evaluate(()=>__game.snapshot())).player.mortar)throw Error('Hub Mortar missed');
-  await move(0,-6);await page.keyboard.press('q');await shoot(0,-24,1.3,'bridge-crane');await page.keyboard.press('q');await move(0,27);
+  await move(0,-6);await page.keyboard.press('q');await shoot(0,-24,4.2,'bridge-crane');await page.keyboard.press('q');await move(0,27);
   await move(-26,27);await shoot(-29,27,1.3,'ballast');await move(-38,27);await page.keyboard.press('e');await page.evaluate(()=>window.__game.step(2.5));
   await shoot(-45.5,27,9.3,'ratchet');await move(-50,27);await move(-50,33);await page.keyboard.press('e');
   if(!(await page.evaluate(()=>window.__game.snapshot())).player.magnet)throw Error('Magnet was not acquired');

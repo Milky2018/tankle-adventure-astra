@@ -51,3 +51,13 @@ test('small props fade along the view corridor, including when the camera is ins
     assert.ok(opacity>=previous&&opacity-previous<.05,'spatial fade must not pop at a boundary');previous=opacity;
   }
 });
+
+test('looking upward keeps the shoulder camera above the hull instead of orbiting into the floor',()=>{
+ const follow=new FollowCamera(16/9,Math.PI),p={x:90,y:0,z:-18};
+ for(const pitch of [-.12,-.24,-.6]){
+  follow.pitch=pitch;follow.update(p,1,(_origin,_direction,distance)=>distance+.5);
+  assert.ok(follow.camera.position.y>=p.y+1.8+follow.height-.001);
+  const forward=follow.camera.getWorldDirection(new Vector3());
+  assert.ok(Math.abs(forward.y+Math.sin(pitch))<1e-9,'mouse pitch still controls the actual view without smoothing');
+ }
+});

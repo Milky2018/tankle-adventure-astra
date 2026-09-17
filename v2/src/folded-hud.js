@@ -54,3 +54,18 @@ export function createAbilityHud(tools,acquired,keyGlyph){
   }
   return {acquire,update,updateBindings};
 }
+
+// Only committed attacks outside the view get a directional warning. This never
+// points at an aim target or changes the player's cursor.
+export function createThreatHud(container){
+  const root=document.createElement('div');root.id='threats';root.setAttribute('aria-hidden','true');container.append(root);
+  const markers=Array.from({length:4},()=>{const m=document.createElement('i');m.hidden=true;root.append(m);return m;});
+  return (threats,hidden)=>{
+    root.hidden=hidden;
+    for(let i=0;i<markers.length;i++){
+      const m=markers[i],t=threats[i];m.hidden=!t;if(!t)continue;
+      const radius=Math.min(innerWidth,innerHeight)*.38,x=Math.sin(t.angle)*radius,y=-Math.cos(t.angle)*radius;
+      m.style.left=`${innerWidth/2+x}px`;m.style.top=`${innerHeight/2+y}px`;m.style.transform=`translate(-50%,-50%) rotate(${t.angle}rad)`;
+    }
+  };
+}

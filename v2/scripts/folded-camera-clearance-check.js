@@ -16,11 +16,12 @@ async page=>{
   if(minimum<10)throw Error(`Passing the save-point posts collapsed the camera to ${minimum}`);
   const views=[];
   for(const [name,x,y,z,yaw,pitch]of [
-    ['save-post',2.4,-8,85.2,Math.PI,.32],['save-camera',1.25,-8,74,Math.PI,-.2],
+    ['save-post',2.4,-8,85.2,Math.PI,.32],['save-camera',1.2,-8,73.5,Math.PI,-.2],
     ['save-left',-2.4,-8,85.2,0,.32],['under-furnace',0,-16,50,Math.PI,.6],
     ['wall',-40,-16,49,Math.PI/2,.1]
   ]){
-    await page.evaluate(({x,y,z,yaw,pitch})=>{__game.scenario({player:{x,y,z,hp:100,invincible:1e9},state:{'relay-west':false}});__game.look(yaw,pitch);__game.step(.5);},{x,y,z,yaw,pitch});
+    // The raised default shoulder no longer enters a low post; retain containment coverage at a supported low setting.
+    await page.evaluate(({name,x,y,z,yaw,pitch})=>{__clearanceProbe.follow.height=name==='save-camera'?.2:1.6;__game.scenario({player:{x,y,z,hp:100,invincible:1e9},state:{'relay-west':false}});__game.look(yaw,pitch);__game.step(.5);},{name,x,y,z,yaw,pitch});
     const s=await page.evaluate(()=>__game.snapshot());
     if(name.startsWith('save')&&s.camera.distance<10)throw Error(`${name}: repair machinery still pushes the camera`);
     if(name==='save-camera'){

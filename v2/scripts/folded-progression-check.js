@@ -50,13 +50,13 @@ async page=>{
     },{id,x0,x1,z});if(result.error)throw Error(id+' '+JSON.stringify(result));return result;
   }
   await move(-40,86);await move(-40,49);await shoot(-35,44,-14.5,'relay-west');
-  await move(-17,49);await page.keyboard.press('e');await move(0,52);await move(36,52);await shoot(43,44,-14.5,'relay-east');
-  await move(-55,52);await move(-55,128);await move(-43,132);const prototype=await fight('prototype',-43,-20,132);
-  await move(-30,128);await page.keyboard.press('e');
+  await move(-57,52);await move(-57,76);await page.keyboard.press('e');await move(-57,118);await shoot(-65,114,-14.5,'relay-east');
+  await move(-57,128);await move(-43,132);const prototype=await fight('prototype',-43,-20,132);
+  await move(-30,136);await page.keyboard.press('e');
   if(!(await page.evaluate(()=>window.__game.snapshot())).player.overdrive)throw Error('Overdrive was not acquired');
   await move(-20,128);await move(-20,86,true);await move(0,86);await page.keyboard.press('e');
   await move(0,54,true);const foundry=await fight('foundry',-10,10,55);
-  await move(6,48);await page.keyboard.press('e');await move(24,48);await move(24,4);await move(10,4);await move(0,27);await page.keyboard.press('e');
+  await move(6,48);await page.keyboard.press('e');await move(24,48);await move(24,4);await move(36,4);await move(36,30);await move(22,30);await move(0,27);await page.keyboard.press('e');
 
   await move(0,12);if(!(await page.evaluate(()=>__game.snapshot())).player.mortar)throw Error('Hub Mortar missed');await record('hub-mortar');
   await page.screenshot({path:`v2/output/playwright/progression/${approach}-pickup.png`});
@@ -75,13 +75,13 @@ async page=>{
 
   }else{
 
-  await move(0,-6);await shoot(0,-24,1.3,'bridge-crane','mortar');await move(0,-34);await move(18,-34);await shoot(32,-34,1.3,'freight','mortar');
+  await move(0,-6);await shoot(0,-24,4.2,'bridge-crane','mortar');await move(0,-34);await move(18,-34);await shoot(32,-34,4.2,'freight','mortar');
   for(const [x,z]of [[59,-34],[59,-84],[67,-84],[67,-34],[70,-34],[70,-19],[94,-18]])await move(x,z);
   await use();await record('dry-approach');
 
   }
 
-  await move(90,-18);await shoot(90,-34,3.3,'load','mortar');await record('mortar-reuse');
+  await move(90,-18);await shoot(90,-34,7,'load','mortar');await record('mortar-reuse');
   await move(90,-59);await move(78,-59);await move(78,-71);
   for(let i=0;i<20&&(await page.evaluate(()=>__game.snapshot())).player.y<15.99;i++)await settle(.5);
   await shoot(78,-77.7,18,'brake');await move(77,-87);await use();await record('phoenix');

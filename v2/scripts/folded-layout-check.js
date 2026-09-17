@@ -8,7 +8,7 @@ async page=>{
   await page.evaluate(()=>__game.manual(true));
   const views=[];
   for(const [name,x,y,z]of [
-    ['west-relay',-35,-16,49],['east-relay',40,-16,52],
+    ['west-relay',-35,-16,49],['sorting-relay',-57,-16,118],
     ['mortar-cradle',0,0,18],['loading-apron',32,-8,-72],
     ['garden-bank',40,-16,-18],['carrier-fight',90,8,-59],
     ['roof-landing',28,24,8],['roof-junction',32,24,-35],['optical-return',254,24,-30]

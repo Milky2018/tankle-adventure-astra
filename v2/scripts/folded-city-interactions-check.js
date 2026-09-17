@@ -7,9 +7,9 @@ async page=>{
   async function scenario(player,state={}){await page.evaluate(({player,state})=>{const g=window.__game;g.setInput([]);g.scenario({player:{hp:50,heat:0,overheated:false,lastShot:-100,lastHeat:-100,weapon:'cannon',endingTime:0,...player},state});g.step(.3);},{player,state});}
   async function fireAt(x,z,y,seconds=1.2){const q=await page.evaluate(([x,z,y])=>window.__game.project(x,z,y),[x,z,y]);await page.mouse.move(q.x,q.y);await page.mouse.down();await page.evaluate(t=>window.__game.step(t),seconds);await page.mouse.up();}
   async function snap(){return page.evaluate(()=>window.__game.snapshot());}
-  await scenario({x:20,y:0,z:-46},{freight:false});await fireAt(32,-34,1.3);
+  await scenario({x:20,y:0,z:-46},{freight:false});await fireAt(32,-34,4.2);
   if((await snap()).state.freight)throw Error('C02 return bypassed the Mortar enclosure');
-  await scenario({x:18,y:0,z:-34,mortar:true,weapon:'mortar'},{freight:false});await fireAt(32,-34,1.3,1.4);
+  await scenario({x:18,y:0,z:-34,mortar:true,weapon:'mortar'},{freight:false});await fireAt(32,-34,4.2,1.4);
   if(!(await snap()).state.freight)throw Error('Mortar failed to enter the open-topped enclosure');result.freightEnclosure=true;
   await scenario({x:216,y:24,z:-20,laser:true,weapon:'laser'},{gallery:false});
   await fireAt(216,-4,26,1);

@@ -6,8 +6,11 @@ function tick(p,start,duration,boost=false,moving=false){for(let t=start;t<start
 test('four safe shots, fifth overheats; holding fire cannot bypass the interval',()=>{
  const p=newPlayer();for(let i=0;i<4;i++){assert.equal(shootHeat(p,i*.5),true);assert.equal(shootHeat(p,i*.5+.1),false);assert.equal(p.overheated,false);}assert.equal(p.heat,80);assert.equal(shootHeat(p,2),true);assert.equal(p.overheated,true);assert.equal(shootHeat(p,3),false);
 });
-test('cooling waits and overheated lockout lasts until completely cold',()=>{
- const p=newPlayer();for(let i=0;i<5;i++)shootHeat(p,i*.5);tick(p,2,.7);assert.equal(p.heat,100);tick(p,2.7,1);assert(p.heat<55&&p.heat>50);assert.equal(p.overheated,true);assert.equal(shootHeat(p,3.7),false);tick(p,3.7,1.1);assert.equal(p.heat,0);assert.equal(p.overheated,false);assert.equal(shootHeat(p,4.8),true);
+test('cooling begins after a short pause and restores weapons below thirty heat',()=>{
+ const p=newPlayer();for(let i=0;i<5;i++)shootHeat(p,i*.5);
+ tick(p,2,.2);assert.equal(p.heat,100);assert.equal(p.overheated,true);
+ tick(p,2.2,1.2);assert(p.heat>30);assert.equal(p.overheated,true);
+ tick(p,3.4,.3);assert(p.heat<=30&&p.heat>0);assert.equal(p.overheated,false);assert.equal(shootHeat(p,3.7),true);
 });
 test('stationary Overdrive produces neither acceleration nor heat',()=>{
  const p=newPlayer();p.overdrive=true;tick(p,0,2,true,false);assert.equal(p.speed,1);assert.equal(p.heat,0);
@@ -20,7 +23,7 @@ test('acceleration, release heat and re-engagement preserve the shared budget',(
  tick(p,.5,.1,false,true);assert(p.speed>1&&p.speed<1.6);assert(Math.abs(p.heat-29)<1e-6);
  const speed=p.speed;tick(p,.6,.1,true,true);assert(p.speed>speed);
  tick(p,.7,.35,false,false);assert.equal(p.speed,1);
- const heat=p.heat;tick(p,1.05,.6);assert.equal(p.heat,heat);tick(p,1.65,.3);assert(p.heat<heat);
+ const heat=p.heat;tick(p,1.05,.15);assert.equal(p.heat,heat);tick(p,1.2,.3);assert(p.heat<heat);
 });
 test('screen-relative movement is normalized and preserves orthogonal axes',()=>{
  const up=screenMovement(0,-1),right=screenMovement(1,0),diagonal=screenMovement(1,-1);assert(Math.abs(Math.hypot(diagonal.x,diagonal.z)-1)<1e-9);assert(Math.abs(up.x*right.x+up.z*right.z)<1e-9);assert(up.x<0&&up.z<0);assert(right.x>0&&right.z<0);

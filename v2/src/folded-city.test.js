@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
 import {initialFoldedState,moveFolded,foldedSupport,foldedBlocked,foldedDecks,foldedEnemies,foldedPickups,foldedLiftDefs,releaseFolded,inRect,deckHeight} from './folded-layout.js';
-import {cityBelts} from './folded-city-layout.js';
+import {cityBelts,cityControls,citySolids} from './folded-city-layout.js';
 import {cityDamage,cityContact} from './folded-combat.js';
 
 const player=(x,y,z,abilities={})=>Object.assign(newPlayer(),{x,y,z,...abilities});
@@ -22,17 +22,56 @@ function travel(p,state,points,{boost=false,lifts=[]}={}){
   }
 }
 
-test('awakening branches, reclaim route, Overdrive return and foundry exit connect continuously',()=>{
+test('awakening, local relay sequence, Overdrive return and foundry exit connect continuously',()=>{
   const p=player(0,-8,86),s=initialFoldedState();
   travel(p,s,[[-40,86],[-40,49],[-35,49]]);assert.equal(p.y,-16);
   releaseFolded('relay-west','cannon',p,s,[]);
-  travel(p,s,[[0,52],[36,52],[36,49]]);releaseFolded('relay-east','cannon',p,s,[]);s.relays=true;
-  travel(p,s,[[36,52],[-55,52],[-55,128],[-30,128]]);assert.equal(p.y,-16);
+  travel(p,s,[[-57,52],[-57,118]]);releaseFolded('relay-east','cannon',p,s,[]);s.relays=true;
+  travel(p,s,[[-57,128],[-30,128]]);assert.equal(p.y,-16);
   s.prototype=s['overdrive-return']=true;p.overdrive=true;
   travel(p,s,[[-20,128],[-20,86],[0,86]],{boost:true});assert.equal(p.y,-8);
   for(let i=0;i<240;i++){p.clock+=1/60;updateHeat(p,1/60,p.clock,false,false);}
   travel(p,s,[[0,49]],{boost:true});s.foundry=true;
   travel(p,s,[[24,49],[24,4],[10,4],[10,27]]);assert.equal(p.y,0);
+});
+
+test('the Prototype entrance cannot be skirted before its local relay opens',()=>{
+  const state=initialFoldedState({'relay-west':true});
+  for(let z=115;z<=141;z+=.5){
+    const p=player(-53,-16,z);
+    if(!foldedSupport(p.x,p.z,p.y))continue;
+    for(let i=0;i<80;i++)moveFolded(p,.15,0,state);
+    assert.ok(p.x<-50,`closed enclosure bypassed at ${p.x},${p.z}`);
+  }
+  state.relays=true;const p=player(-57,-16,126);
+  travel(p,state,[[-43,126]]);assert.ok(p.x>-44);
+});
+
+test('old lower-Hive saves cannot resume behind the relocated workshop lock',()=>{
+  const saved={anchor:'lower-foundry','relay-east':true,discovered:['foundry-relay-east','foundry-awakening']};
+  const restored=initialFoldedState(saved);
+  assert.equal(restored.anchor,'awakening');assert.equal(restored['relay-east'],true);assert.equal(restored['relay-west'],false);
+  assert.deepEqual(restored.discovered,['foundry-awakening']);
+  assert.equal(initialFoldedState({...saved,'relay-west':true}).anchor,'lower-foundry');
+});
+
+test('Foundry controls have local consequences and unobstructed overhead target silhouettes',()=>{
+  const q=28/39.6;
+  for(const [id,gateId]of [['relay-west','relay-west'],['relay-east','relays']]){
+    const c=cityControls.find(c=>c.id===id),gate=citySolids.find(s=>s.id===gateId);
+    assert.ok(Math.hypot(c.x-gate.x-gate.w/2,c.z-gate.z-gate.d/2)<20);
+    for(let y=c.y+.2;y<c.y+30;y+=.2){
+      const x=c.x+(y-c.y)*q,z=c.z+(y-c.y)*q;
+      for(const s of citySolids.filter(s=>s.permanent&&!s.invisible))assert.ok(!(y>s.y&&y<s.y+s.h&&inRect(x,z,s)),`${id} hidden behind ${s.id}`);
+    }
+  }
+});
+
+test('the transit side entrance bypasses the locked roof cage and clears the Foundry ramp',()=>{
+  const state=initialFoldedState({foundry:true}),p=player(24,-8,48);
+  travel(p,state,[[24,4],[36,4],[36,30],[22,30],[0,27]]);assert.equal(p.y,0);
+  assert.equal(state.cage,false);assert.equal(state.phoenix,false);
+  travel(p,state,[[22,30],[36,30],[36,4],[24,4],[24,48]]);assert.equal(p.y,-8);
 });
 
 test('Magnet training and the unassisted Mortar route preserve dry access',()=>{

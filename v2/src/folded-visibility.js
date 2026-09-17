@@ -2,6 +2,7 @@ import * as T from 'three';
 
 export const SIGNAL={magnet:0x328fff,ready:0xf3d250,open:0x85db58};
 export const APERTURE_AIM_THRESHOLD=.45;
+export const STRUCTURE_APERTURE_RADIUS=36;
 const direction=new T.Vector3(28,39.6,28).normalize();
 const smooth=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t);};
 

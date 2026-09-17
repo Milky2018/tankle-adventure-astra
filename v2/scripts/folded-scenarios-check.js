@@ -33,7 +33,7 @@ window.__foldedProbe={
   }
   // Use the real single reticle and barrel, including upper and lower visible machinery.
   const aimChecks=[];
-  for(const [name,x,z,y,tx,tz,ty]of [['level',0,27,0,0,18,2],['upper-latch',90,-18,0,90,-34,3.3],['lower-panel',-26,10,-4,-39.7,-8,-6.6]]){
+  for(const [name,x,z,y,tx,tz,ty]of [['level',0,27,0,0,18,2],['upper-latch',90,-18,0,90,-34,7],['lower-panel',-26,10,-4,-39.7,-8,-6.6]]){
     await page.evaluate(([x,z,y])=>{__game.scenario({player:{x,z,y,deployed:false,weapon:'cannon'},state:{load:false,magnet:false}});__game.step(.2);},[x,z,y]);
     const point=await page.evaluate(([x,z,y])=>__game.project(x,z,y),[tx,tz,ty]);await page.mouse.move(point.x,point.y);await page.evaluate(()=>__game.step(.1));
     const result=await page.evaluate(q=>{const a=__foldedProbe.aim(),r=document.getElementById('reticle').getBoundingClientRect();return {pitch:a.pitch,error:Math.hypot(r.x+r.width/2-q.x,r.y+r.height/2-q.y),count:document.querySelectorAll('#reticle').length};},point);
