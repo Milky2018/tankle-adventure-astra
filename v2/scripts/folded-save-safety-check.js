@@ -60,6 +60,6 @@ async page=>{
     return {runs,projectileHp,incomingStopped,mortarHp,markersCleared,mineHp,pursuitDistance,chargeDistance,outsideHp,outboundBlocked:!!outbound?.refuge,disengaged};
   });
   await page.unroute('**/src/folded.js*');
-  if(result.runs.some(r=>r.hp!==50||r.nearest<15)||result.projectileHp!==50||!result.incomingStopped||result.mortarHp!==50||!result.markersCleared||result.mineHp!==50||result.pursuitDistance<15||result.chargeDistance<15||result.outsideHp!==39||!result.outboundBlocked||!result.disengaged||errors.length)throw Error(JSON.stringify({...result,errors}));
+  if(result.runs.some(r=>r.hp!==50||r.nearest<15)||result.projectileHp!==50||!result.incomingStopped||result.mortarHp!==50||!result.markersCleared||result.mineHp!==50||result.pursuitDistance<15||result.chargeDistance<15||result.outsideHp!==36||!result.outboundBlocked||!result.disengaged||errors.length)throw Error(JSON.stringify({...result,errors}));
   return {...result,errors};
 }

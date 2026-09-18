@@ -46,13 +46,13 @@ test('acquisition modules have clear dry support and authored districts have dif
   assert.equal(new Set(shapes).size,6);
 });
 test('a visible current gives Flotation a quicker downstream return without moving a dry tank',()=>{
-  const s=initialFoldedState(),dry={x:-121,y:-8,z:-100,speed:1},float={...dry,deployed:true};
+  const s=initialFoldedState(),dry={x:-94,y:-8,z:85,speed:1},float={...dry,deployed:true};
   for(let i=0;i<60;i++){moveWithConveyor(float,0,0,1/60,s);moveWithConveyor(dry,0,0,1/60,s);}
-  assert.ok(float.z>dry.z+4);assert.equal(dry.z,-100);
-  const refuge={x:-124,y:-8,z:-114,speed:1,deployed:true};
+  assert.ok(float.z<dry.z-4);assert.equal(dry.z,85);
+  const refuge={x:-98,y:-8,z:52,speed:1,deployed:true};
   assert.equal(foldedSupport(refuge.x,refuge.z,refuge.y,true).water,undefined);
   for(let i=0;i<60;i++)moveWithConveyor(refuge,0,0,1/60,s);
-  assert.equal(refuge.z,-114);
+  assert.equal(refuge.z,52);
 });
 test('camera obstruction opacity is local and continuous across arbitrary mesh boundaries',()=>{
   const p={x:0,y:0,z:0},camera={x:0,y:5,z:-12};
@@ -83,12 +83,12 @@ test('new return routes reject unearned engines, Magnet, Laser and water crossin
   const gate=foldedSolids.find(w=>w.id===id);assert.ok(foldedBlocked(gate.x+gate.w/2,gate.y,gate.z+gate.d/2,s));
   p[ability]=true;assert.equal(releaseFolded(id,kind,p,s,[]),true);
  }
- const ordinary={x:178,y:16,z:-170,speed:1.6,overdrive:true,boosting:true},a=initialFoldedState();
- moveFolded(ordinary,-12,0,a);assert.ok(ordinary.x>173);assert.equal(a['proving-return'],false);
- const phoenix={...ordinary,x:178,speed:3.2,phoenix:true};moveFolded(phoenix,-12,0,a);assert.ok(phoenix.x<170);assert.equal(a['proving-return'],true);
- const cold={x:426,y:-24,z:106,speed:3.2,phoenix:true,boosting:true,circulation:true,overheated:false},b=initialFoldedState();
- moveFolded(cold,-12,0,b);assert.ok(cold.x>421);assert.equal(b['coolant-return'],false);
- const red={...cold,x:426,speed:3.2,heat:100,overheated:true};moveFolded(red,-12,0,b);assert.ok(red.x<418);assert.equal(b['coolant-return'],true);
- const dry={x:-242,y:-8,z:-214,speed:1},c=initialFoldedState({'reservoir-transfer':true,'reservoir-inlet':true});moveFolded(dry,20,0,c);assert.ok(dry.x<-230);
- const floating={x:-242,y:-8,z:-214,speed:1,deployed:true};moveFolded(floating,20,0,c);assert.ok(floating.x>-225);
+ const ordinary={x:181,y:16,z:-122,speed:1.6,overdrive:true,boosting:true},a=initialFoldedState();
+ moveFolded(ordinary,-12,0,a);assert.ok(ordinary.x>176);assert.equal(a['proving-return'],false);
+ const phoenix={...ordinary,x:181,speed:3.2,phoenix:true};moveFolded(phoenix,-12,0,a);assert.ok(phoenix.x<174);assert.equal(a['proving-return'],true);
+ const cold={x:330,y:-24,z:106,speed:3.2,phoenix:true,boosting:true,circulation:true,overheated:false},b=initialFoldedState();
+ moveFolded(cold,-12,0,b);assert.ok(cold.x>325);assert.equal(b['coolant-return'],false);
+ const red={...cold,x:330,speed:3.2,heat:100,overheated:true};moveFolded(red,-12,0,b);assert.ok(red.x<323);assert.equal(b['coolant-return'],true);
+ const dry={x:-146,y:-8,z:64,speed:1},c=initialFoldedState({'reservoir-transfer':true,'reservoir-inlet':true});moveFolded(dry,20,0,c);assert.ok(dry.x<-145);
+ const floating={x:-146,y:-8,z:64,speed:1,deployed:true};moveFolded(floating,20,0,c);assert.ok(floating.x>-129);
 });

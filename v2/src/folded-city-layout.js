@@ -102,6 +102,8 @@ export const citySolids=[
   gate('pressure-housing-west',214,14,.7,9,-16,5,{permanent:true}),gate('pressure-housing-east',222,14,.7,9,-16,5,{permanent:true}),
   gate('pressure-housing-back',214,22,8,1,-16,5,{permanent:true}),gate('pressure-housing-roof',214,14,8,9,-12,1,{permanent:true}),
   gate('keeper-cover-left',-16,42,4,3,-56,2,{permanent:true}),gate('keeper-cover-right',12,42,4,3,-56,2,{permanent:true}),
+  gate('prototype-column-left',-44,118,2,3,-16,6,{permanent:true}),
+  gate('prototype-column-right',-19,119,2,3,-16,6,{permanent:true}),
   gate('reclaim-cover',-64,99,3,3,-16,2,{permanent:true}),
   gate('relay-west-drive',-37.3,37.25,4.6,2.5,-16,3.3,{permanent:true,invisible:true}),
   gate('relay-east-drive',-67.3,107.25,4.6,2.5,-16,3.3,{permanent:true,invisible:true}),
@@ -170,6 +172,7 @@ export const cityEnemies=[
   {id:'keeper',x:0,y:-56,z:32,hp:48,type:'boss',parts:[9,9],core:30,persistent:true}
 ];
 export const cityBelts=[
+  {id:'press-crossing',x:-44,z:47,w:22,d:5,y:-16,vx:2.4,vz:0},
   {id:'rejection',x:-6,z:64,w:12,d:8,y:-8,vx:0,vz:7.15},
   {id:'overdrive-return-belt',x:-26,z:98,w:12,d:4,y:-10,rise:-4/3,vx:0,vz:7.15},
   {id:'loading',x:-4,z:-76,w:8,d:8,y:-8,vx:-7.15,vz:0},

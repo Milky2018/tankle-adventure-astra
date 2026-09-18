@@ -1,3 +1,4 @@
+import {transportSolids,stepTransport} from './folded-transport.js';
 import {groundPatches} from './folded-ground.js';
 import {makeSidePuzzles} from './folded-side-puzzles.js';
 import {architectureIndex,REGION_STYLE} from './folded-architecture.js';
@@ -5,7 +6,7 @@ import {magnetPullable} from './folded-combat.js';
 import {REFUGE_RADIUS} from './folded-refuges.js';
 import {SORTER_REACH} from './folded-attacks.js';
 import {mechanismReady} from './folded-pacing.js';
-import {expansionBattles,expansionMirrors} from './folded-expansion-layout.js';
+import {expansionBattles,expansionMirrors,expansionBelts} from './folded-expansion-layout.js';
 import {circuitLinks,circuitColor} from './folded-circuits.js';
 import {routeSigns,gateAbility} from './folded-guidance.js';
 import {makeCityPresentation} from './folded-presentation.js';
@@ -138,6 +139,13 @@ export function makeFoldedWorld(scene,state){
       aperture.apply(mesh.material,{radius:STRUCTURE_APERTURE_RADIUS});mesh.userData.massAperture=true;
       const prepass=new T.Mesh(mesh.geometry,massDepthMaterial);prepass.position.copy(mesh.position);massDepth.add(prepass);
     }
+    if(d.motion){
+      // Suspended scrap hulls ride real rails, with open wheel wells and lifting eyes.
+      for(const side of [-1,1]){box(mesh,d.w,.3,.35,0,-d.h/2+.25,side*(d.d/2+.15),C.metal,0);ring(mesh,.4,.12,side*d.w*.3,d.h/2+.25,0,C.metal).rotation.x=Math.PI/2;}
+      for(const x of [-d.w*.3,d.w*.3])box(mesh,.22,d.h+.25,d.d+.15,x,0,0,C.dark,0);
+      const turret=cylinder(mesh,.75,.55,0,d.h/2+.15,0,C.metal,10);turret.rotation.z=.15;box(mesh,.28,.28,1.6,0,d.h/2+.3,.65,C.dark,0);
+      for(const side of [-1,1])for(const x of [-d.w*.3,0,d.w*.3]){const wheel=cylinder(mesh,.35,.18,x,-d.h/2+.6,side*(d.d/2+.08),C.dark,8);wheel.rotation.x=Math.PI/2;}
+    }
     if(!d.permanent)box(mesh,d.w>2?d.w*.85:.12,.18,d.d>2?d.d*.85:.12,0,.1,0,C.metal,0);
     if(!d.permanent){
       for(const side of [-1,1])box(mesh,d.w>d.d?.24:d.w+.12,d.h+.3,d.w>d.d?d.d+.12:.24,d.w>d.d?side*(d.w/2-.15):0,0,d.w>d.d?0:side*(d.d/2-.15),C.metal,0);
@@ -236,7 +244,7 @@ export function makeFoldedWorld(scene,state){
     for(const x of [-.6,.6])cylinder(root,.35,2.5,x,1.25,0,C.metal,8);
     floorDetails.push({root,x:b.x,y:b.y-1.3,z:b.z,radius:3});
   }
-  for(const link of circuitLinks([...foldedControls,...expansionBattles,{id:'rail-crossing',x:-372,y:9.3,z:-70}],foldedSolids,foldedLiftDefs,cityMirrors)){
+  for(const link of circuitLinks([...foldedControls,...expansionBattles,{id:'rail-crossing',x:-162,y:9.3,z:-66}],foldedSolids,foldedLiftDefs,cityMirrors)){
     const points=link.points.map(p=>new T.Vector3(...p)),root=new T.Group(),lamps=[];scene.add(root);root.name=`folded-circuit:${link.id}:${link.target}`;
     let length=0;for(let i=1;i<points.length;i++)length+=points[i].distanceTo(points[i-1]);
     if(length<.01){scene.remove(root);continue;}
@@ -406,7 +414,7 @@ export function makeFoldedWorld(scene,state){
     const arrow=box(fixed,1.7,.04,.2,x,16.06,-86+sign*.65,C.lightYellow,0);arrow.rotation.y=sign*Math.PI/4;
   }
   // Short assemblies keep sloped transport readable and cutaways local.
-  for(const b of cityBelts){
+  for(const b of [...cityBelts,...expansionBelts]){
     const horizontal=!!b.vx,length=horizontal?b.w:b.d,slope=horizontal?0:(b.rise||0)/b.d,stretch=Math.hypot(1,slope),segments=[];
     for(let start=0;start<length;start+=12){
       const span=Math.min(12,length-start),travel=span*stretch,cross=horizontal?b.d:b.w;
@@ -626,11 +634,16 @@ export function makeFoldedWorld(scene,state){
     hive.pulse=kind==='respawn'?2.4:1.8;hive.pulseKind=kind;
   }
 
-  const surfaceGrid=architectureIndex(surfaces),wallGrid=architectureIndex(walls);
+  const surfaceGrid=architectureIndex(surfaces),wallGrid=architectureIndex(walls.filter(w=>!w.motion));
+  const movingWalls=walls.filter(w=>w.motion);
+  function transport(dt,p){
+    stepTransport(transportSolids,dt,[p,...enemies]);
+    for(const w of movingWalls){const s=transportSolids.find(s=>s.id===w.id);w.x=s.x;w.z=s.z;w.mesh.position.x=s.x+s.w/2;w.mesh.position.z=s.z+s.d/2;w.mesh.updateMatrixWorld();}
+  }
   function cast(origin,direction,distance,{targets=true,aiming=false,extras=[],terrainOnly=false}={}){
     raycaster.set(origin,direction);raycaster.far=distance;
     if(terrainOnly)return raycaster.intersectObjects([...[...surfaceGrid.ray(origin,direction,distance)].map(s=>s.mesh),...lifts.map(l=>l.mesh)],false).find(h=>h.face.normal.y>.5&&(!aiming||(thirdPerson?cameraApertureOpacity(h.point,viewPlayer,viewCamera,h.object.userData.supportSurface?supportPatches:[])>APERTURE_AIM_THRESHOLD:!h.object.userData.aperture||apertureOpacity(h.point,viewPlayer,sightDirection,13,supportPatches)>APERTURE_AIM_THRESHOLD)))||null;
-    const meshes=[...[...surfaceGrid.ray(origin,direction,distance)].map(s=>s.mesh),...[...wallGrid.ray(origin,direction,distance)].filter(w=>activeSolid(w,state)&&(!aiming||w.opacity>.4)).map(w=>w.mesh),...lifts.filter(l=>!aiming||!l.root.userData.cutaway).map(l=>l.mesh),...mirrors.filter(m=>!aiming||!m.root.userData.cutaway).map(m=>m.mesh)];
+    const meshes=[...[...surfaceGrid.ray(origin,direction,distance)].map(s=>s.mesh),...[...wallGrid.ray(origin,direction,distance),...movingWalls].filter(w=>activeSolid(w,state)&&(!aiming||w.opacity>.4)).map(w=>w.mesh),...lifts.filter(l=>!aiming||!l.root.userData.cutaway).map(l=>l.mesh),...mirrors.filter(m=>!aiming||!m.root.userData.cutaway).map(m=>m.mesh)];
     let hit=raycaster.intersectObjects(meshes,false).find(h=>!aiming||(thirdPerson?cameraApertureOpacity(h.point,viewPlayer,viewCamera,h.object.userData.supportSurface?supportPatches:[])>APERTURE_AIM_THRESHOLD:!(h.object.userData.aperture||h.object.userData.massAperture)||apertureOpacity(h.point,viewPlayer,sightDirection,h.object.userData.massAperture?STRUCTURE_APERTURE_RADIUS:13,h.object.userData.supportSurface?supportPatches:[])>APERTURE_AIM_THRESHOLD))||null;if(hit?.object.userData.mirror)hit.mirror=hit.object.userData.mirror;
     const puzzleHit=sidePuzzles.cast(raycaster,targets);if(puzzleHit&&(!hit||puzzleHit.distance<hit.distance)&&(!aiming||!(puzzleHit.target?.root?.userData.cutaway)&&(thirdPerson?cameraApertureOpacity(puzzleHit.point,viewPlayer,viewCamera):apertureOpacity(puzzleHit.point,viewPlayer,sightDirection))>APERTURE_AIM_THRESHOLD))hit=puzzleHit;
     const structure=presentation.cast(origin,direction,distance,aiming);if(structure&&(!hit||structure.distance<hit.distance))hit=structure;
@@ -754,5 +767,5 @@ export function makeFoldedWorld(scene,state){
     scene.updateMatrixWorld();
     if(camera)updateCameraOcclusion(camera,p,dt);
   }
-  return {sidePuzzles,signalRelease,controlFeeds,signs,surfaces,walls,controls,hives,pickups,lifts,enemies,wheel,mirrors,belts,occluders,presentation,pulseHive,cast,update,setThirdPerson,updateCameraOcclusion};
+  return {transport,sidePuzzles,signalRelease,controlFeeds,signs,surfaces,walls,controls,hives,pickups,lifts,enemies,wheel,mirrors,belts,occluders,presentation,pulseHive,cast,update,setThirdPerson,updateCameraOcclusion};
 }

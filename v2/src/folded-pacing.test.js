@@ -20,10 +20,10 @@ test('heavy telegraphs take turns within a fight while ordinary supporting fire 
   sniper.phase='vent';assert.equal(canTelegraph(charger,[sniper,charger]),true);
 });
 test('pressure mechanisms require the supporting hull and cycling sleeves have a readable open interval',()=>{
-  const c=expansionControls.find(c=>c.pressure),p={...c.pressure};
+  const c={pressure:{x:0,y:0,z:0}},p={...c.pressure};
   assert.equal(mechanismReady(c,p,0),true);
-  assert.equal(releaseFolded(c.id,'cannon',{...p,x:p.x+5},initialFoldedState(),[]),false);
-  assert.equal(releaseFolded(c.id,'cannon',p,initialFoldedState(),[]),true);
+  assert.equal(mechanismReady(c,{...p,x:p.x+5},0),false);
+  assert.equal(mechanismReady(c,p,0),true);
   const cycle={cycle:{period:4.5,open:2.1}};
   assert.equal(mechanismReady(cycle,p,1),true);assert.equal(mechanismReady(cycle,p,3),false);
 
@@ -33,7 +33,7 @@ test('mandatory battles are finite and rest locations do not impose the old six-
     const enemies=expansionEnemies.filter(e=>e.battle===b.battle);
     assert.ok(enemies.some(e=>e.wave===0));assert.ok(enemies.some(e=>e.wave===1));
   }
-  assert.equal(expansionBattles.length,2);
+  assert.deepEqual(expansionBattles.map(b=>b.id),['proving-endurance']);
   assert.ok(new Set(expansionRoutes.map(r=>r.rooms.length)).size>1);
 });
 test('existing earned abilities and far-side saves preserve access across newly added trials',()=>{

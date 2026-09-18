@@ -1,5 +1,5 @@
 import {makeFinalMachinery} from './folded-final-machinery.js';
-import {makeDistrictMachinery} from './folded-district-machinery.js';
+import {makeDistrictMachinery,makeWorkingDistricts} from './folded-district-machinery.js';
 import {expansionCurrents,expansionDecks,expansionHeat} from './folded-expansion-layout.js';
 import * as T from 'three';
 import {box,cylinder,ring,mat,batchStatic} from './world.js';
@@ -63,9 +63,9 @@ export function makeCityPresentation(scene,aperture){
   for(const [x,y,z]of [[-4,-3,38],[0,-49,-8]]){const glow=new T.PointLight(0xffa55b,32,27,2);glow.position.set(x,y,z);scene.add(glow);}
   // The enlarged districts remain inside a single excavation, with no old cliff
   // walls crossing their approaches.
-  for(let x=-440;x<580;x+=32)box(scenery,32,90,12,x+16,-28,-346,rock,0);
-  for(let z=-340;z<264;z+=32)box(scenery,12,90,32,-434,-28,z+16,rock,0);
-  box(scenery,1040,3,660,70,-75,-40,rock,0);
+  for(let x=-216;x<420;x+=32)box(scenery,32,90,12,x+16,-28,-226,rock,0);
+  for(let z=-220;z<224;z+=32)box(scenery,12,90,32,-218,-28,z+16,rock,0);
+  box(scenery,660,3,460,100,-75,0,rock,0);
   // District machines occupy authored work positions, rather than the same
   // decorative strip behind every room. Their bounds are in the level layout.
   makeDistrictMachinery(scenery);
@@ -131,6 +131,7 @@ export function makeCityPresentation(scene,aperture){
   }
   // Small mechanisms share the same animation clock as their environmental sounds.
   const moving=new T.Group();moving.name='city-working-machines';scene.add(moving);
+  const districts=makeWorkingDistricts(scenery,moving);
   const currents=[];
   for(const c of expansionCurrents)for(let n=0;n<Math.max(c.w,c.d)/8;n++){
     const m=box(moving,1.4,.035,.15,0,c.y+.08,0,mat(0xc3ded0,true),0);currents.push({m,c,n});
@@ -172,8 +173,9 @@ export function makeCityPresentation(scene,aperture){
   const bounds=()=>({solids:colliders.size,rooms:foldedArchitecture.rooms.length});
   let frameRegion='foundry';
   function update(time,p,state){
+    districts.update(time,state);
     frameRegion=expansionDecks.find(d=>d.region&&Math.abs(d.y-p.y)<.5&&p.x>=d.x&&p.x<=d.x+d.w&&p.z>=d.z&&p.z<=d.z+d.d)?.region||regionAt(p,foldedArchitecture.rooms);
-    for(const {m,c,n}of currents){const along=(n*8+time*4)%Math.max(c.w,c.d);m.position.x=c.current.x?c.x+(c.current.x>0?along:c.w-along):c.x+c.w/2+Math.sin(n)*4;m.position.z=c.current.z?c.z+along:c.z+c.d/2;m.rotation.y=c.current.x?Math.PI/2:0;}
+    for(const {m,c,n}of currents){const along=(n*8+time*4)%Math.max(c.w,c.d);m.position.x=c.current.x?c.x+(c.current.x>0?along:c.w-along):c.x+c.w/2+Math.sin(n)*4;m.position.z=c.current.z?c.z+(c.current.z>0?along:c.d-along):c.z+c.d/2;m.rotation.y=c.current.x?Math.PI/2:0;}
     const cycle=p.endingTime?4+Math.max(0,p.endingTime-9)/3:time%18,travel=cycle<6?cycle/6:cycle<11?1:(18-cycle)/7;
     carrier.position.set(0,7,-22+travel*40);
     jaws.forEach((m,i)=>m.position.x=(i?1:-1)*(cycle>6&&cycle<11?2.1:1.6));

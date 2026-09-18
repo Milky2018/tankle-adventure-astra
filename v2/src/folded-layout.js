@@ -1,3 +1,4 @@
+import {transportSolids} from './folded-transport.js';
 import {sideDecks,sideGates,sideObstacles,sideEnemies} from './folded-side-layout.js';
 import {expansionDecks,expansionSolids,expansionControls,expansionHives,expansionEnemies,expansionPickups,expansionFlags} from './folded-expansion-layout.js';
 import {cityDecks,cityLifts,citySolids,cityControls,cityHives,cityPickups,cityEnemies,cityFlags} from './folded-city-layout.js';
@@ -55,7 +56,7 @@ export const foldedSolids=[
   {id:'upper-cover',x:94,z:-58,w:3,d:3,y:8,h:2,permanent:true},
   {id:'gangway-casing',x:84.4,z:28,w:.5,d:6,y:-8,h:3,permanent:true},
   {id:'dock-cover',x:78,z:13,w:3,d:3,y:-8,h:2,magnetic:true},
-  ...citySolids,...expansionSolids,...sideGates
+  ...citySolids,...expansionSolids,...sideGates,...transportSolids
 ];
 export const foldedControls=[
   {id:'rail-repair',x:-18,y:1.4,z:23,kind:'magnet'},

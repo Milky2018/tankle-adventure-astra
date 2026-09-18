@@ -1,9 +1,9 @@
-import {expansionCurrents} from './folded-expansion-layout.js';
+import {expansionCurrents,expansionBelts} from './folded-expansion-layout.js';
 import {cityBelts} from './folded-city-layout.js';
 import {inRect,deckHeight,moveFolded,foldedSupport} from './folded-layout.js';
 
 export function conveyorVelocity(body,enemies=[],state={}){
-  const belt=cityBelts.find(b=>inRect(body.x,body.z,b)&&Math.abs(deckHeight(b,body.z)-body.y)<.5);
+  const belt=[...cityBelts,...expansionBelts].find(b=>inRect(body.x,body.z,b)&&Math.abs(deckHeight(b,body.z)-body.y)<.5);
   if(!belt)return {x:0,z:0};
   if(belt.id.includes('feed-')){
     const owner=enemies.find(e=>e.id===(belt.id.startsWith('foundry')?'foundry':'keeper'));

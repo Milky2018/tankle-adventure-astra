@@ -23,15 +23,15 @@ export function makeSidePuzzles(scene,state){
   if(plate)for(const x of [-.8,.8])for(const z of [-.7,0,.7])box(root,.3,.025,.2,x,.19,z,C.dark,0);
   const t={id,x,y:y+1.3,z,radius:.7,sidePuzzle:true,root,handle,lamp,plate,contact:false,flash:0};targets.push(t);return t;
  }
- const a=paddle('rail-a',-376,8,-84,true),b=paddle('rail-b',-368,8,-80,true);paddle('rail-signal',-386,8,-75);
+ const a=paddle('rail-a',-166,8,-80,true),b=paddle('rail-b',-158,8,-76,true);paddle('rail-signal',-176,8,-71);
  const edges=new Map();for(const switches of [[false,false],[true,false],[true,true]]){const route=carrierRoute(switches);for(let i=1;i<route.length;i++){const points=[route[i-1],route[i]],key=points.map(p=>p.join(',')).sort().join(':');edges.set(key,points);}}
  for(const [a,b]of edges.values())for(const side of [-.65,.65]){const horizontal=a[1]===b[1];segment(fixed,[a[0]+offset.x+(horizontal?0:side),8.08,a[1]+offset.z+(horizontal?side:0)],[b[0]+offset.x+(horizontal?0:side),8.08,b[1]+offset.z+(horizontal?side:0)]);}
- const blades=[-380,-372].map(x=>{const root=new T.Group();root.position.set(x,8.2,-80);scene.add(root);roots.push(root);box(root,.2,.1,3,0,0,-1.5,C.yellow,0);return root;});
- for(const [t,x]of [[a,-380],[b,-372]])segment(fixed,[t.x,8.15,t.z],[x,8.15,-80],.09,C.yellow);
+ const blades=[-170,-162].map(x=>{const root=new T.Group();root.position.set(x,8.2,-76);scene.add(root);roots.push(root);box(root,.2,.1,3,0,0,-1.5,C.yellow,0);return root;});
+ for(const [t,x]of [[a,-170],[b,-162]])segment(fixed,[t.x,8.15,t.z],[x,8.15,-76],.09,C.yellow);
  const cart=new T.Group();scene.add(cart);roots.push(cart);owners.set(cart,carBounds);box(cart,2,.6,2,0,.65,0,C.metal);const wheels=[];for(const x of [-1,1])for(const z of [-.7,.7]){const wheel=cylinder(cart,.3,.2,x,.3,z,C.dark,8);wheel.rotation.z=Math.PI/2;wheels.push(wheel);}
- const brake=paddle('rail-carrier',-386,8,-80);scene.remove(brake.root);cart.add(brake.root);brake.root.position.set(0,.6,0);roots.splice(roots.indexOf(brake.root),1);brake.root=cart;
+ const brake=paddle('rail-carrier',-176,8,-76);scene.remove(brake.root);cart.add(brake.root);brake.root.position.set(0,.6,0);roots.splice(roots.indexOf(brake.root),1);brake.root=cart;
  const cartBody=box(cart,2.1,1.5,2.1,0,.75,0,new T.MeshBasicMaterial({visible:false}),0);solids.push(cartBody);
- ring(fixed,1.7,.07,-372,8.12,-70,C.yellow);
+ ring(fixed,1.7,.07,-162,8.12,-66,C.yellow);
  const hinges=[{x:38,z:40,y:-5,length:5,goal:Math.PI/2},{x:43,z:40,y:-6,length:6,goal:Math.PI}];
  const trays=hinges.map(h=>{const root=new T.Group();root.position.set(h.x,h.y,h.z);scene.add(root);roots.push(root);box(root,.7,.1,h.length,0,0,h.length/2,C.metal,0);for(const x of [-.4,.4])box(root,.1,.3,h.length,x,.1,h.length/2,C.dark,0);const flow=box(root,.45,.035,h.length,0,.09,h.length/2,mat(0x97dbdc,true),0);const drip=cylinder(root,.12,1,0,-.5,h.length,mat(0x97dbdc,true),8);cylinder(fixed,.14,h.y+8,h.x,(h.y-8)/2,h.z,C.dark,8);return {...h,root,flow,drip};});
  for(const q of gutterControls)paddle(q.id,q.x,-8,q.z,q.id!=='gutter-plug');

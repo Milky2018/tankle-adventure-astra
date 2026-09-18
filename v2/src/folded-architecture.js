@@ -76,13 +76,14 @@ export function buildArchitecture(decks,lifts){
     if(f.district){
       // Region silhouettes differ before ornament: garden retaining banks,
       // industrial half-walls, tall optical piers and solid furnace masonry.
-      const wallHeight={transit:5,garden:1.4,testworks:7,optics:12,circulation:3,furnace:10}[region];
+      const wallHeight={transit:5,garden:.8,testworks:7,optics:12,circulation:3,furnace:10}[region];
       for(const side of ['west','east','north','south']){
         const along=side==='north'||side==='south',length=along?f.w:f.d;
         for(let t=0;t<length;t+=4){
           const x=along?f.x+t:side==='west'?f.x-.85:f.x+f.w+.05,z=along?(side==='north'?f.z-.85:f.z+f.d+.05):f.z+t;
           const w=along?Math.min(4,length-t):.8,d=along?.8:Math.min(4,length-t);
-          const h=region==='transit'&&Math.floor(t/4)%4===1?2.5:wallHeight;
+          const overlook={'lens-west-gallery':['east'],'lens-north-gallery':['south'],'lens-east-gallery':['west'],'proving-observation':['north','south'],'proving-impact':['south']}[f.id]?.includes(side);
+          const h=overlook?1.05:region==='transit'&&Math.floor(t/4)%4===1?2.5:wallHeight;
           const base=add(room,'wall',x,f.y,z,w,h,d);
           if(base){
             add(room,'foundation',x,f.y-4,z,w,3.9,d);

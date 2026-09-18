@@ -6,7 +6,7 @@ async page=>{
  for(const [approach,first]of [['dry','laser'],['dry','circulation'],['water','circulation']]){
   await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>window.__game);
   await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');localStorage.removeItem('furnace-born-v2-settings');});await page.reload();await page.waitForFunction(()=>window.__game);await page.evaluate(()=>__game.manual(true));
-  const legs=[],milestones=[];let expeditionMoving=false;
+  const legs=[],milestones=[];
   async function choose(weapon){
     for(let i=0;i<3;i++){
       if((await page.evaluate(()=>__game.snapshot())).player.weapon===weapon)return;
@@ -22,7 +22,7 @@ async page=>{
   }
   async function record(label){const s=await page.evaluate(()=>__game.snapshot());milestones.push({label,hp:s.player.hp,time:s.time,abilities:['overdrive','mortar','magnet','flotation','phoenix','laser','circulation'].filter(k=>s.player[k])});}
   async function move(x,z,boost=false){
-    await choose(expeditionMoving&&(await page.evaluate(()=>__game.snapshot())).player.mortar?"mortar":"cannon");
+    await choose((await page.evaluate(()=>__game.snapshot())).player.mortar?"mortar":"cannon");
     const result=await page.evaluate(({x,z,boost})=>{
       const g=window.__game,start=g.snapshot().time;let last=null,blocked=0,detour=false;
       for(let i=0;i<3600;i++){
@@ -55,9 +55,21 @@ async page=>{
       }return {error:'fight timeout',s:g.snapshot()};
     },{id,x0,x1,z});if(result.error)throw Error(id+' '+JSON.stringify(result));return result;
   }
+  async function opticalFight(){
+    await choose('laser');
+    const result=await page.evaluate(()=>{
+      const g=__game,orbit=[[222,37],[222,29],[216,29],[216,37]];let corner=0;
+      for(let i=0;i<3600;i++){
+        const s=g.snapshot(),p=s.player,enemies=s.enemies.filter(e=>['gallery-repairer','gallery-sentry','gallery-scout'].includes(e.id)&&e.hp>0);
+        if(!enemies.length){g.setInput([]);return {hp:p.hp};}if(p.hp<=0)return {error:'optical fight death',p};
+        if(Math.hypot(p.x-orbit[corner][0],p.z-orbit[corner][1])<.6)corner=(corner+1)%orbit.length;
+        const dx=orbit[corner][0]-p.x,dz=orbit[corner][1]-p.z,keys=Math.abs(dx)>Math.abs(dz)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD'];
+        const e=enemies.sort((a,b)=>['gallery-repairer','gallery-sentry','gallery-scout'].indexOf(a.id)-['gallery-repairer','gallery-sentry','gallery-scout'].indexOf(b.id))[0];g.aimAt(e.x,e.z,e.y+1.5);keys.push('Mouse0');g.setInput(keys);g.step(1/30,false);
+      }return {error:'optical fight timeout',s:g.snapshot()};
+    });if(result.error)throw Error(JSON.stringify(result));await record('optical-gallery-cleared');
+  }
   async function expedition(id){
     const route=await page.evaluate(async id=>(await import('/src/folded-expansion-layout.js')).expansionRoutes.find(r=>r.id===id),id);
-    expeditionMoving=true;
     for(const [x,z]of route.approach)await move(x,z);
     async function action(name,x,z){
       if(!name||name==='boost')return;
@@ -70,7 +82,7 @@ async page=>{
       if(name==='battle'){
         await choose('mortar');
         const result=await page.evaluate(({id,x,z})=>{
-          const g=__game,orbit=id==='proving'?[[210,-280],[216,-280],[216,-260],[210,-260]]:[[x-8,z-10],[x-8,z+12],[x+2,z+12],[x+2,z-10]];let corner=0;
+          const g=__game,orbit=id==='proving'?[[139,-177],[160,-177],[160,-173],[139,-173]]:[[x-8,z-10],[x-8,z+12],[x+2,z+12],[x+2,z-10]];let corner=0;
           for(let i=0;i<7200;i++){
             const s=g.snapshot(),p=s.player;if(s.state[id+'-endurance']){g.setInput([]);return {hp:p.hp};}if(p.hp<=0)return {error:'wave death',p};
             if(Math.hypot(p.x-orbit[corner][0],p.z-orbit[corner][1])<.7)corner=(corner+1)%orbit.length;
@@ -89,7 +101,7 @@ async page=>{
     for(const [x,z,name]of route.path){await move(x,z);await action(name,x,z);}
     if(route.ability&&!(await page.evaluate(()=>__game.snapshot())).player[route.ability])throw Error('Missing module '+id);
     for(const [x,z,name]of route.returns){await move(x,z,name==='boost');await action(name,x,z);}
-    expeditionMoving=false;await record('district-'+id);
+    await record('district-'+id);
   }
 
   await move(-40,86);await move(-40,49);await shoot(-35,44,-14.5,'relay-west');
@@ -139,13 +151,13 @@ async page=>{
       await move(52,-86);await arrive(-8);await move(52,-72);await move(40,-72);
       if((await page.evaluate(()=>__game.snapshot())).player.y!==-8)throw Error('C08 did not return to loading apron');
       await move(52,-72);await move(52,-86);await arrive(24);await move(64,-86);await move(64,-98);await move(254,-98,true);await move(254,-30);await move(242,-30);await move(242,-20);await move(228,-20);
-      await move(242,-20);await move(242,6);await move(230,6);await move(230,38);
+      await move(202,-24);await use();await move(216,-20);await move(228,-20);await move(242,-20);await move(242,6);await move(230,6);await move(230,38);await opticalFight();
       await shoot(228,38,17.5,'yard-optical','laser');
       // Both returns open before the tracking guardian.
       if((await page.evaluate(()=>__game.snapshot())).state.guardian)throw Error('Guardian was unexpectedly required');
-      await move(202,38);await move(202,6);await move(110,6);await move(110,18);await arrive(-8);await move(98,18);
+      await move(218,38);await move(218,29);await move(202,29);await move(202,6);await move(110,6);await move(110,18);await arrive(-8);await move(98,18);
       if((await page.evaluate(()=>__game.snapshot())).player.y!==-8)throw Error('C09 did not reach the garden bank');
-      await move(110,18);await arrive(16);await move(110,6);await move(202,6);await move(202,38);await move(230,38);
+      await move(110,18);await arrive(16);await move(110,6);await move(202,6);await move(202,29);await move(218,29);await move(218,38);await move(230,38);
     }
     async function rigFromYard(){
       await move((await page.evaluate(()=>__game.snapshot())).player.x,48);await move(242,48);await move(210,48);await move(210,44);await use();await move(210,48);await move(242,48);await move(242,95);await shoot(242,96,-21,'rig');

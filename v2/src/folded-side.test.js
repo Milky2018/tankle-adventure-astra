@@ -12,8 +12,8 @@ test('maintenance delivery waits for occupants, follows supported banks, and res
  assert.equal(arrived,true);assert.deepEqual(d.position,[130,-16,18]);assert.deepEqual(createDelivery(true).position,d.position);
 });
 test('optional rail crossing joins old rooms only after docking and persists with old secured saves',()=>{
- const p={x:-292,y:8,z:-35,speed:1};const s=initialFoldedState();moveFolded(p,0,30,s);assert.ok(p.z<-29);
- const restored=initialFoldedState({sidePuzzles:{rail:{secured:true}}});moveFolded(p,0,30,restored);assert.ok(p.z>-14);
+ const p={x:-82,y:8,z:-31,speed:1};const s=initialFoldedState();moveFolded(p,0,30,s);assert.ok(p.z<-25);
+ const restored=initialFoldedState({sidePuzzles:{rail:{secured:true}}});moveFolded(p,0,30,restored);assert.ok(p.z>-10);
 });
 test('garden care side room has a traversable shore entrance',()=>{
  const p={x:46,y:-8,z:24,speed:1};moveFolded(p,0,14,{});assert.ok(Math.abs(p.z-38)<1e-6);
@@ -24,8 +24,8 @@ test('optional sorting machine protects its drive while working; major elites re
  assert.equal(cityContact({phoenix:true,speed:3.2},{type:'elite',persistent:true,hp:9}),0);
 });
 
-test('the parked shunting carrier leaves the arsenal repair approach and Hive reachable',()=>{
- const p={x:-330,y:8,z:-62,speed:1};moveFolded(p,-65,0,{});assert.ok(Math.abs(p.x+395)<1e-6);
- moveFolded(p,0,-23,{});assert.ok(Math.abs(p.z+85)<1e-6);
- moveFolded(p,0,23,{});moveFolded(p,23,0,{});assert.ok(Math.abs(p.x+372)<1e-6);
+test('the parked shunting carrier leaves the warehouse inspection route reachable',()=>{
+ const p={x:-136,y:8,z:-54,speed:1};moveFolded(p,-26,0,{});assert.ok(Math.abs(p.x+162)<1e-6);
+ moveFolded(p,0,-12,{});assert.ok(Math.abs(p.z+66)<1e-6);
+ moveFolded(p,-14,0,{});assert.ok(Math.abs(p.x+176)<1e-6);
 });

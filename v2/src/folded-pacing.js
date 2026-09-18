@@ -24,7 +24,7 @@ export function createEncounterPacing(enemies){
     if(!enemy.wave)return;
     for(const e of battles.get(enemy.battle)||[])if(e.wave===enemy.wave)e.awake=true;
   }
-  function update(dt,player,resting){
+  function update(dt,player,resting,time=0){
     for(const [id,group] of battles){
       const reserve=group.filter(e=>e.wave&&e.hp>0&&!e.awake);
       if(!reserve.length)continue;
@@ -32,7 +32,7 @@ export function createEncounterPacing(enemies){
       if(resting||!near){timers.delete(id);for(const e of reserve)e.deploy=0;continue;}
       if(group.some(e=>!e.wave&&e.hp>0))continue;
       const elapsed=(timers.get(id)||0)+dt;timers.set(id,elapsed);
-      for(const e of reserve){e.deploy=Math.min(1,elapsed/4);if(elapsed>=4){e.awake=true;e.timer=.8;}}
+      for(const e of reserve){e.deploy=Math.min(1,elapsed/4);if(elapsed>=4){e.awake=true;e.timer=.8;e.lastSeen={x:player.x,y:player.y,z:player.z};e.alertUntil=time+12;}}
     }
   }
   reset();return {update,wake,reset};

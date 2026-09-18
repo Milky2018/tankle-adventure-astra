@@ -467,7 +467,7 @@ function updateSorter(e,dt){
 }
 function updateEnemies(dt){
   const resting=!!refugeAt(p,world.hives,state);
-  encounterPacing.update(dt,p,resting);
+  encounterPacing.update(dt,p,resting,time);
   for(const battle of expansionBattles)if(!state[battle.id]&&world.enemies.filter(e=>e.battle===battle.battle).every(e=>e.hp<=0)){
     state[battle.id]=true;world.signalRelease(battle.id,time);audio.event('lever');save();
   }
@@ -498,7 +498,7 @@ function updateEnemies(dt){
         e.alertUntil=0;e.lastSeen=null;
         if(spec.speed&&Math.hypot(e.x-e.spawn.x,e.z-e.spawn.z)>1)moveEnemy(e,Math.atan2(e.spawn.x-e.x,e.spawn.z-e.z),spec.speed,dt);
       }
-      if(!resting&&p.hp>0&&spec.speed&&time<e.alertUntil&&e.lastSeen&&Math.hypot(e.x-e.lastSeen.x,e.z-e.lastSeen.z)>3)approachEnemy(e,e.lastSeen,dt);
+      if(!resting&&p.hp>0&&spec.speed&&!e.guardian&&time<e.alertUntil&&e.lastSeen&&Math.hypot(e.x-e.lastSeen.x,e.z-e.lastSeen.z)>3)approachEnemy(e,e.lastSeen,dt);
       e.phase='idle';e.timer=.55;
     }else{
       e.timer-=dt;
@@ -633,6 +633,7 @@ function updateMagnet(dt){
   else {c.pull=(c.pull||0)+dt;c.moving.position.z=Math.min(.9,c.pull);c.root.rotation.z=Math.sin(time*30)*.08;if(c.pull>.6){setState(c.id,'magnet');audio.event('lever');c.root.rotation.z=0;}}
 }
 function updateEnding(dt){
+  world.transport(dt,p);
   updateLifts(dt);
   const shot=endingShot(p.endingTime);
   if(camera!==endingCamera){camera=endingCamera;world.setThirdPerson(true);}
@@ -668,6 +669,7 @@ function advance(dt){
   if(p.dockHold){p.x*=Math.exp(-dt*2.5);p.z*=Math.exp(-dt*2.5);p.heading+=angleDelta(p.heading,Math.PI)*Math.min(1,dt*4);}
   if(p.dockHold>=2){p.endingTime=.001;p.speed=1;recoil=0;state.endingSeen=true;state.anchor='last-refuge';save();keys.clear();updatePlayerPose(1,true);laserBeam.visible=magneticBeam.visible=mortarGuide.visible=false;clearShots();audio.event('couple');if(document.pointerLockElement)document.exitPointerLock();updateEnding(0);return;}
   p.pumpPressure=Math.abs(p.y+8)<.5&&Math.hypot(p.x-58,p.z-4)<1.5?Math.min(1,(p.pumpPressure||0)+dt):0;
+  world.transport(dt,p);
   updateLifts(dt);
   const horizontal=Number(keys.has(bindings.right))-Number(keys.has(bindings.left)),vertical=Number(keys.has(bindings.down))-Number(keys.has(bindings.up));
   const move=thirdPerson?cameraMovement(horizontal,vertical,follow.yaw):screenMovement(horizontal,vertical);

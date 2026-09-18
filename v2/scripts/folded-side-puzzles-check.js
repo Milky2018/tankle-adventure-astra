@@ -7,16 +7,16 @@ async page=>{
   const g=__game,w=__audit.world,q=w.sidePuzzles;g.manual(true);
   g.scenario({enemies:Object.fromEntries(w.enemies.map(e=>[e.id,0]))});
   const shoot=(id,x,z)=>{const t=q.targets.find(t=>t.id===id);g.scenario({player:{x,y:t.y-1.3-(id==='rail-carrier'?.6:0),z,hp:50,heat:0,overheated:false,lastShot:-100,lastHeat:-100,weapon:'cannon'}});g.aimAt(t.x,t.z,t.y);g.setInput(['Mouse0']);g.step(.1,false);g.setInput([]);g.step(1,false);};
-  g.scenario({player:{x:-391,y:8,z:-80,speed:1,overdrive:true,hp:50}});g.setInput(['KeyS','KeyD']);g.step(.8,false);g.setInput([]);if(q.rail.state.moving)throw Error('Walking released the detent');
-  g.scenario({player:{x:-391,y:8,z:-80,speed:1.6,heat:0}});g.setInput(['KeyS','KeyD','ShiftLeft']);g.step(.5,false);g.setInput([]);if(!q.rail.state.moving)throw Error('Overdrive could not push the detent');
-  shoot('rail-signal',-386,-69);g.step(8,false);if(q.rail.state.moving)throw Error('Carrier recall failed');
-  shoot('rail-a',-376,-92);if(!q.rail.state.switches[0])throw Error('Rail paddle cannot be shot');
+  g.scenario({player:{x:-181,y:8,z:-76,speed:1,overdrive:true,hp:50}});g.setInput(['KeyS','KeyD']);g.step(.8,false);g.setInput([]);if(q.rail.state.moving)throw Error('Walking released the detent');
+  g.scenario({player:{x:-181,y:8,z:-76,speed:1.6,heat:0}});g.setInput(['KeyS','KeyD','ShiftLeft']);g.step(.5,false);g.setInput([]);if(!q.rail.state.moving)throw Error('Overdrive could not push the detent');
+  shoot('rail-signal',-176,-65);g.step(8,false);if(q.rail.state.moving)throw Error('Carrier recall failed');
+  shoot('rail-a',-166,-88);if(!q.rail.state.switches[0])throw Error('Rail paddle cannot be shot');
   // Drive onto a treadle, hold, withdraw, then cross again.
-  g.scenario({player:{x:-368,y:8,z:-80}});g.step(.1,false);g.step(1,false);if(!q.rail.state.switches[1])throw Error('Treadle failed/debounced incorrectly');
-  shoot('rail-carrier',-386,-88);if(!q.rail.state.moving)throw Error('Cart brake not hittable');
-  g.scenario({player:{x:-386,y:8,z:-73}});g.interact();g.step(3,false);if(q.rail.state.moving)throw Error('Nearby recall failed');
-  shoot('rail-carrier',-386,-88);
-  g.scenario({player:{x:-386,y:8,z:-93}});g.step(7,false);if(!g.snapshot().state['rail-crossing'])throw Error('Cart failed to dock/open both gates');
+  g.scenario({player:{x:-158,y:8,z:-76}});g.step(.1,false);g.step(1,false);if(!q.rail.state.switches[1])throw Error('Treadle failed/debounced incorrectly');
+  shoot('rail-carrier',-176,-84);if(!q.rail.state.moving)throw Error('Cart brake not hittable');
+  g.scenario({player:{x:-176,y:8,z:-69}});g.interact();g.step(3,false);if(q.rail.state.moving)throw Error('Nearby recall failed');
+  shoot('rail-carrier',-176,-84);
+  g.scenario({player:{x:-176,y:8,z:-89}});g.step(7,false);if(!g.snapshot().state['rail-crossing'])throw Error('Cart failed to dock/open both gates');
   shoot('gutter-plug',39,44);shoot('gutter-a',37,30);shoot('gutter-b',49,32);shoot('gutter-b',49,32);
   g.step(3,false);if(!q.gutter.state.grown)throw Error('Gutter did not grow '+JSON.stringify(q.gutter.state));
   g.scenario({player:{x:44,y:-8,z:39}});g.step(0);g.save();
