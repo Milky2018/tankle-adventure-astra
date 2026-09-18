@@ -4,7 +4,7 @@ import {angleDelta,clamp} from './mechanics.js';
 export function bossPattern(enemy,clearSight=true){
  const cycle=enemy.attackCycle||1,late=enemy.hp/enemy.max<.4,parts=enemy.parts?.filter(p=>p.hp>0).length||0;
  if(enemy.id==='foundry')return {kind:!clearSight||cycle%3===0?'barrage':parts?'batteries':'fan',warn:parts?1.05:.9,recovery:1.45,speed:32,offsets:parts?[-.3,-.15,0,.15,.3]:[-.45,-.3,-.15,0,.15,.3,.45],waves:2,spacing:.32};
- if(enemy.guardian)return {kind:cycle%3===0?'seekers':'fan',warn:late?.85:1.05,recovery:1.35,speed:36,offsets:[-.36,-.18,0,.18,.36],waves:2,spacing:.38};
+ if(enemy.guardian)return {kind:cycle%3===0?'seekers':'fan',warn:late?.85:1.05,recovery:2.2,speed:36,offsets:[-.36,-.18,0,.18,.36],waves:2,spacing:.38};
  if(enemy.id==='sorter')return {kind:!clearSight||cycle%3===0?'barrage':'sweep',warn:1.1,recovery:1.5,speed:30};
  return {kind:!clearSight||cycle%4===0?'barrage':cycle%4===2?'seekers':!parts&&cycle%4===3?'sweep':parts?'batteries':'fan',warn:late?.85:1.1,recovery:late?1.05:1.35,speed:late?38:32,offsets:late?[-.45,-.3,-.15,0,.15,.3,.45]:[-.36,-.18,0,.18,.36],waves:2,spacing:.36,overlay:late};
 }

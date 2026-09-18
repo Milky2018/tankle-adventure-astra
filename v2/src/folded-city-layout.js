@@ -94,11 +94,11 @@ export const citySolids=[
   gate('inner-thermal',260,40,12,1,-36,3,{red:true}),
   gate('keeper',-8,11.5,16,1,-56),
   gate('ratchet',-48.5,22,1,18,8),
-  gate('receiver-south',222,-.5,14,.5,24,6,{permanent:true}),gate('receiver-east',235.5,-8,.5,8,24,6,{permanent:true}),
-  gate('receiver-aperture-north',221.5,-8,.5,3.6,24,6,{permanent:true}),gate('receiver-aperture-south',221.5,-3.6,.5,3.6,24,6,{permanent:true}),
+  gate('receiver-south',222,-.5,14,.5,24,3,{permanent:true}),gate('receiver-east',235.5,-8,.5,8,24,3,{permanent:true}),
+  gate('receiver-aperture-north',221.5,-8,.5,2,24,3,{permanent:true}),gate('receiver-aperture-south',221.5,-2,.5,2,24,3,{permanent:true}),
   gate('rig-cover',228,106,3,5,-24,2,{magnetic:true}),gate('yard-cover',219,42,5,4,-8,2,{magnetic:true}),
-  gate('mirror-housing',222,-8,9.55,1,24,6,{permanent:true}),gate('mirror-housing-end',232.45,-8,3.55,1,24,6,{permanent:true}),
-  gate('relay-well-back',230,-11,4,.5,24,8,{permanent:true}),gate('relay-well-west',230,-11,.5,3,24,8,{permanent:true}),gate('relay-well-east',233.5,-11,.5,3,24,8,{permanent:true}),
+  gate('mirror-housing',222,-8,8,1,24,3,{permanent:true}),gate('mirror-housing-end',234,-8,2,1,24,3,{permanent:true}),
+  gate('relay-well-back',229.5,-11,5,.5,24,3,{permanent:true}),gate('relay-well-west',229.5,-11,.5,3,24,3,{permanent:true}),gate('relay-well-east',234,-11,.5,3,24,3,{permanent:true}),
   gate('pressure-housing-west',214,14,.7,9,-16,5,{permanent:true}),gate('pressure-housing-east',222,14,.7,9,-16,5,{permanent:true}),
   gate('pressure-housing-back',214,22,8,1,-16,5,{permanent:true}),gate('pressure-housing-roof',214,14,8,9,-12,1,{permanent:true}),
   gate('keeper-cover-left',-16,42,4,3,-56,2,{permanent:true}),gate('keeper-cover-right',12,42,4,3,-56,2,{permanent:true}),
@@ -118,10 +118,10 @@ export const citySolids=[
 export const cityControls=[
   control('relay-west',-35,-14.5,44),control('relay-east',-65,-14.5,114),
   control('press-return',-70,-14.6,50),control('ballast',-29,1.3,27),control('ratchet',-45.5,9.3,27),
-  control('bridge-crane',0,4.2,-24,'shot',{ground:0,surface:'top'}),control('inner-optics',278,-22,124,'laser',{ground:-24}),
+  control('bridge-crane',0,4.2,-24,'shot',{ground:0,surface:'top'}),control('inner-optics',278,-22,124,'laser',{ground:-24,normal:[-1,0,0]}),
   control('loading-return',32,-6.7,-58),control('freight-return',70,1.3,-34),
-  control('emitter-cage',63,25.4,-86),control('gallery',228,28.54,-3.73,'laser',{ground:24}),
-  control('mirror-index',238,25.3,-4),control('garden-optical',232,29.39411255,-9.5,'laser',{ground:24}),control('yard-optical',228,17.5,38,'laser'),
+  control('emitter-cage',63,25.4,-86),control('gallery',228,26,-4,'laser',{ground:24,normal:[-1,0,0]}),
+  control('mirror-index',238,25.3,-4),control('garden-optical',232,26,-9.5,'laser',{ground:24,normal:[0,0,1]}),control('yard-optical',228,18,38,'laser',{ground:16}),
   control('pump',58,-5.5,-4,'shot',{ground:-8}),control('rig',242,-21,96,'shot',{ground:-23}),
   control('rig-cover',229.5,-21.6,108.5,'magnet',{ground:-24}),control('yard-cover',221.5,-5.6,44,'magnet',{ground:-8}),
   control('pressure-return',218,-14.6,18),control('last-cage',40,-38.6,-12),
@@ -186,13 +186,11 @@ export const cityBelts=[
 ];
 const q=Math.SQRT1_2;
 export const cityMirrors=[
-  {id:'inner-turn',x:254,y:-22,z:124,n:[q,0,q],size:4},
-  {id:'calibration',x:216,y:26,z:-4,n:[-q,-.15,q],size:6},
-  {id:'return-index',x:232,y:29.39411255,z:-3.64,n:[q,0,-q],rotated:[.684061579,.145111374,.71484435],index:'mirror-index',size:4},
-  {id:'guardian-east-a',x:214,y:18,z:54,n:[q,0,-q],size:6},
-  {id:'guardian-east-b',x:214,y:18,z:72,n:[.4718579,0,.8816746],size:7},
-  {id:'guardian-west-a',x:190,y:18,z:54,n:[-q,0,-q],size:6},
-  {id:'guardian-west-b',x:190,y:18,z:72,n:[-.4718579,0,.8816746],size:7},
+  {id:'inner-turn',x:254,y:-22,z:124,n:[q,0,q],size:8},
+  {id:'calibration',x:216,y:26,z:-4,n:[-Math.sqrt(3)/2,0,.5],size:10},
+  {id:'return-index',x:232,y:26,z:-4,n:[q,0,-q],rotated:[q,0,q],index:'mirror-index',size:6},
+  {id:'guardian-east-b',x:210,y:18,z:70,n:[1.1417430631,0,1.5397934235],size:10},
+  {id:'guardian-west-b',x:190,y:18,z:68,n:[-1.4631790535,0,1.1737206917],size:10},
   {id:'keeper-mirror',x:22,y:-54,z:18,n:[q,0,-q],size:6}
 ];
 export const cityFlags=['pressure-thermal','inner-thermal','bridge-crane','inner-optics','mirror-index','dock-cover','bench-cover','rig-cover','yard-cover','overdrive','magnetModule','mortarModule','laser','circulation','relay-west','relay-east','relays','prototype','overdrive-return','foundry','press-return','ballast','ratchet','loading-return','freight-return','optics-outer','emitter-cage','gallery','garden-optical','yard-optical','guardian','pump','rig','pressure-return','last-cage','keeper','signal','maintenance','endingSeen','inner-transit'];

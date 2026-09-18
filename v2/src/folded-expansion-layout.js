@@ -81,7 +81,7 @@ const routes={
   returns:[[24,110,'hearth-return'],[24,58],[24,-10],[28,-10]],
   branches:[],
   hives:[[68,60],[14,114]],
-  controls:[['hearth-transfer',42,96,'shot',{surface:'top',ground:-40,height:2.6}],['core-feed',24,118,'laser'],['hearth-return',24,103,'shot']],
+  controls:[['hearth-transfer',42,96,'shot',{surface:'top',ground:-40,height:2.6}],['core-feed',24,118,'laser',{height:2,normal:[0,0,-1]}],['hearth-return',24,103,'shot']],
   gates:[['hearth-transfer',32,76,1,46],['hearth-return',18,58,12,1]],
   cover:[[19,80,3,7]],
   enemies:[['sniper',15,87,'intake'],['guard',10,92,'intake']],
@@ -131,7 +131,7 @@ floor('reservoir-eddy',-102,47,8,9,-8,{region:'garden'});
 expansionHeat.push({id:'coolant-runout',x:284,z:100,w:96,d:12,y:-24,heat:28});
 expansionSolids.push({id:'core-feed',x:28,z:13,w:12,d:1,y:-40,h:4});
 expansionControls.find(c=>c.id==='core-feed').circuit=[[24,-39.88,118],[24,-39.88,110],[24,-39.88,58],[24,-39.88,6],[34,-39.88,6],[34,-39.88,13.5]];
-expansionMirrors.push({id:'lens-first-reflection',x:324,y:26,z:-14,n:[Math.SQRT1_2,0,Math.SQRT1_2],size:5});
+expansionMirrors.push({id:'lens-first-reflection',x:324,y:26,z:-14,n:[Math.SQRT1_2,0,Math.SQRT1_2],size:8});
 // The collimator court stays empty in its centre: a real shaft establishes the
 // opposing sightlines, while these rails carry shields through the dispatch hall.
 expansionBelts.push({id:'dispatch-line',x:-138,z:-4,w:70,d:8,y:8,vx:3.2,vz:0});

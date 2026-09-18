@@ -1,5 +1,6 @@
 import {BOSS_ARENAS,createBossArenas} from './folded-boss-arenas.js';
 import {bossPattern,bossBarrage,steerSeeker} from './folded-bosses.js';
+import {traceFoldedLaser} from './folded-laser.js';
 import {createGroundPose,groundPatches,groundAim} from './folded-ground.js';
 import {sideObstacles} from './folded-side-layout.js';
 import {barrageTargets,RAIL,BARRAGE,SORTER_REACH} from './folded-attacks.js';
@@ -68,6 +69,8 @@ const flotation=flotationAssembly(model.body);
 const hullMaterials=[];model.root.traverse(m=>{if(m.isMesh&&m.material.color){m.material=m.material.clone();hullMaterials.push({m:m.material,color:m.material.color.clone(),opacity:m.material.opacity,transparent:m.material.transparent,depthWrite:m.material.depthWrite});}});
 const laserBeam=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.BufferAttribute(new Float32Array(36),3).setUsage(T.DynamicDrawUsage)),new T.LineBasicMaterial({color:0xffedbe}));scene.add(laserBeam);laserBeam.visible=false;laserBeam.frustumCulled=false;
 const laserCores=Array.from({length:6},()=>cylinder(laserBeam,.055,1,0,0,0,mat(0xffedbe,true),6));
+const laserGuide=new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.BufferAttribute(new Float32Array(36),3)),new T.LineDashedMaterial({color:0xffedbe,transparent:true,opacity:.65,depthTest:false,depthWrite:false,dashSize:.3,gapSize:.18}));scene.add(laserGuide);laserGuide.visible=false;laserGuide.frustumCulled=false;laserGuide.renderOrder=4;
+const laserEndpoint=new T.Mesh(new T.SphereGeometry(.14,8,6),new T.MeshBasicMaterial({color:0xffedbe,depthTest:false,depthWrite:false}));scene.add(laserEndpoint);laserEndpoint.visible=false;laserEndpoint.renderOrder=4;
 const mortarGuide=new T.Line(new T.BufferGeometry().setAttribute('position',new T.BufferAttribute(new Float32Array(75),3)),new T.LineDashedMaterial({color:0xffe4a9,transparent:true,opacity:.5,dashSize:.6,gapSize:.5}));scene.add(mortarGuide);mortarGuide.visible=false;mortarGuide.frustumCulled=false;
 const magneticBeam=new T.Group();scene.add(magneticBeam);magneticBeam.visible=false;
 const magneticCore=cylinder(magneticBeam,.07,1,0,0,0,mat(0xc8e7ff,true),8);
@@ -187,15 +190,23 @@ function hitEnemy(e,damage,origin,kind='cannon',part=null){
   }
 }
 function updateLaser(dt){
-  laserBeam.visible=false;if(p.weapon!=='laser'||!keys.has(bindings.fire)||!p.laser||p.overheated||p.hp<=0)return;
+  laserBeam.visible=laserGuide.visible=laserEndpoint.visible=false;if(p.weapon!=='laser'||!p.laser||p.hp<=0||p.endingTime)return;
+  const origin=weaponOrigin(),path=traceFoldedLaser(origin,aim.clone().sub(origin),(start,dir,range)=>castWeapon(start,dir,range,{extras:mines})),points=path.flatMap(s=>[s.start,s.end]);
+  const firing=keys.has(bindings.fire)&&!p.overheated;
+  // Show the computed path over foreground cover; the trace itself still stops
+  // at every physical obstruction. Keep a faint guide under the live beam.
+  laserGuide.geometry.setFromPoints(points);laserGuide.geometry.setDrawRange(0,points.length);laserGuide.computeLineDistances();laserGuide.visible=true;laserGuide.material.opacity=firing?.2:.65;
+  if(!firing){
+    const last=path.at(-1);laserEndpoint.visible=!!last?.hit;if(last)laserEndpoint.position.copy(last.end);
+    return;
+  }
   p.heat=Math.min(100,p.heat+24*dt);p.lastHeat=time;if(p.heat>=100)p.overheated=true;
-  let origin=weaponOrigin(),dir=aim.clone().sub(origin).normalize(),remaining=90;const points=[];
-  for(let bounce=0;bounce<6&&remaining>.05;bounce++){
-    const hit=castWeapon(origin,dir,remaining,{extras:mines}),end=hit?hit.point:origin.clone().addScaledVector(dir,remaining);points.push(origin.clone(),end.clone());
-    if(hit?.refuge){refugeImpact(end,origin);break;}
-    if(hit?.mirror){hit.mirror.flash=.15;remaining-=hit.distance;dir.reflect(hit.mirror.normal);origin=end.clone().addScaledVector(dir,.03);continue;}
-    if(hit?.target?.mirror&&Math.cos(Math.atan2(origin.x-hit.target.x,origin.z-hit.target.z)-hit.target.aim)>.55){remaining-=hit.distance;dir.reflect(new T.Vector3(Math.sin(hit.target.aim),0,Math.cos(hit.target.aim)));origin=hit.point.clone().addScaledVector(dir,.05);continue;}
-    if(hit?.target){const t=hit.target;if(t.kind==='mine')detonateMine(t);else if(t.enemy||t.model)hitEnemy(t.enemy||t,4.5*dt,origin,'laser',t.enemy?t:null);else setState(t.id,'laser');}break;
+  for(let i=0;i<path.length;i++){
+    const {start,end,hit}=path[i];
+    if(hit?.refuge){refugeImpact(end,start);break;}
+    if(hit?.mirror){hit.mirror.flash=.15;continue;}
+    if(path[i].reflected)continue;
+    if(hit?.target){const t=hit.target;if(t.kind==='mine')detonateMine(t);else if(t.enemy||t.model)hitEnemy(t.enemy||t,4.5*dt,start,'laser',t.enemy?t:null);else setState(t.id,'laser');}
   }
   if(time-laserSoundAt>.13){audio.event('laser');laserSoundAt=time;}
   laserBeam.geometry.setFromPoints(points);laserBeam.geometry.setDrawRange(0,points.length);laserBeam.visible=true;
@@ -518,7 +529,7 @@ function updateEnemies(dt){
     if(!e.hp){if(e.deadAt!=null){const collapse=Math.min(1,(time-e.deadAt)/.45);e.model.root.scale.y=e.baseScale.y*(1-collapse*.7);e.model.root.rotation.z=collapse*.12;for(const {m,color}of e.materials)m.color.copy(color).lerp(new T.Color(C.dark),collapse*.85);}continue;}
     const spec=ENEMY_KINDS[e.type];
     if(!e.awake||BOSS_ARENAS.some(a=>a.id===e.id)&&state.combatArena!==e.id){e.readable=false;e.model.animate('idle',0,time,dt,false);continue;}
-    if(e.guardian)e.aim=Math.atan2(p.x-e.x,p.z-e.z);e.flash=Math.max(0,e.flash-dt);e.armor=Math.max(0,e.armor-dt);
+    if(e.guardian&&e.phase==='idle')e.aim=Math.atan2(p.x-e.x,p.z-e.z);e.flash=Math.max(0,e.flash-dt);e.armor=Math.max(0,e.armor-dt);
     const origin=new T.Vector3(e.x,e.y+(e.type==='boss'?4:e.guardian?2.8:1.5),e.z),to=new T.Vector3(p.x,p.y+1.2,p.z).sub(origin),distance=to.length();
     const retaliating=state.combatArena===e.id&&Math.abs(e.y-p.y)<4,engageRange=retaliating?94:Math.max(30,spec.reach);
     if(distance>Math.max(45,engageRange+8)){e.phase='idle';e.timer=.55;e.readable=false;continue;}
@@ -698,7 +709,7 @@ function completeEnding(){
 }
 function advance(dt){
   if(paused||mapOpen)return;time+=dt;
-  if(deathAt>=0){if(time-deathAt>2.5)respawn();return;}
+  if(deathAt>=0){laserBeam.visible=laserGuide.visible=laserEndpoint.visible=false;if(time-deathAt>2.5)respawn();return;}
   if(p.endingTime){
     p.endingTime=Math.min(ENDING_DURATION,p.endingTime+dt);updateEnding(dt);
     if(p.endingTime>=ENDING_DURATION)completeEnding();
@@ -708,7 +719,7 @@ function advance(dt){
   const walking=[bindings.up,bindings.down,bindings.left,bindings.right].some(k=>keys.has(k));
   p.dockHold=dock?.kind==='dock'&&keys.has(bindings.repair)&&!walking?(p.dockHold||0)+dt:0;
   if(p.dockHold){p.x*=Math.exp(-dt*2.5);p.z*=Math.exp(-dt*2.5);p.heading+=angleDelta(p.heading,Math.PI)*Math.min(1,dt*4);}
-  if(p.dockHold>=2){p.endingTime=.001;p.speed=1;recoil=0;state.endingSeen=true;state.anchor='last-refuge';save();keys.clear();updatePlayerPose(1,true);laserBeam.visible=magneticBeam.visible=mortarGuide.visible=false;clearShots();audio.event('couple');if(document.pointerLockElement)document.exitPointerLock();updateEnding(0);return;}
+  if(p.dockHold>=2){p.endingTime=.001;p.speed=1;recoil=0;state.endingSeen=true;state.anchor='last-refuge';save();keys.clear();updatePlayerPose(1,true);laserBeam.visible=laserGuide.visible=laserEndpoint.visible=magneticBeam.visible=mortarGuide.visible=false;clearShots();audio.event('couple');if(document.pointerLockElement)document.exitPointerLock();updateEnding(0);return;}
   p.pumpPressure=Math.abs(p.y+8)<.5&&Math.hypot(p.x-58,p.z-4)<1.5?Math.min(1,(p.pumpPressure||0)+dt):0;
   world.transport(dt,p);
   updateLifts(dt);
@@ -891,7 +902,9 @@ $('game').addEventListener('mousedown',e=>{
   e.preventDefault();
   if(thirdPerson&&e.button===1&&document.pointerLockElement!==$('game')){orbiting=true;pointerOver=true;return;}
   if(thirdPerson&&!pointerLockFailed&&document.pointerLockElement!==$('game')){captureMouse();return;}
-  if(!thirdPerson)pointer.set(e.clientX/innerWidth*2-1,1-e.clientY/innerHeight*2);
+  // Keep the fractional pointermove position: MouseEvent rounds coordinates,
+  // which otherwise shifts the reflected path on the frame fire is pressed.
+  if(!thirdPerson&&!pointerOver)pointer.set(e.clientX/innerWidth*2-1,1-e.clientY/innerHeight*2);
   if(thirdPerson)updateCamera(0);
   updateAim();input(`Mouse${e.button}`);
 });

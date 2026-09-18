@@ -176,6 +176,8 @@ export function makeFoldedWorld(scene,state){
   function makeControl(c){
     const root=new T.Group();root.name=`folded-control:${c.id}`;root.position.set(c.x,c.y,c.z);scene.add(root);
     root.rotation.y=c.id==='pump'?0:c.kind==='laser'||c.kind==='magnet'?Math.PI/2:Math.PI/4;
+    const opticalNormal=c.kind==='laser'?new T.Vector3(...(c.normal||[1,0,0])).normalize():null,opticalRadius=c.radius??1.8;
+    if(opticalNormal)root.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),opticalNormal);
     const ground=c.ground??c.y-1.3,height=c.y-ground;
     box(root,.42,height,.48,0,-height/2,0,C.dark);
     box(root,1.6,.16,1.2,0,-height+.08,0,C.metal);
@@ -199,10 +201,10 @@ export function makeFoldedWorld(scene,state){
       lamp=box(moving,.85,.55,.42,0,-.2,.12,mat(SIGNAL.magnet,true));
       box(moving,.22,.65,.2,0,.2,.08,C.dark);
     }else if(c.kind==='laser'){
-      const casing=cylinder(root,1,.5,0,0,-.15,C.dark,12);casing.rotation.x=Math.PI/2;
-      for(const r of [.9,.62])ring(root,r,.09,0,0,.15,C.metal);
-      lamp=cylinder(moving,.38,.12,0,0,.23,mat(C.lightYellow,true),12);lamp.rotation.x=Math.PI/2;
-      for(let i=0;i<3;i++){const a=i*Math.PI*2/3,fin=box(moving,.25,.45,.16,Math.sin(a)*.72,Math.cos(a)*.72,.25,C.yellow,0);fin.rotation.z=-a;}
+      const casing=cylinder(root,opticalRadius+.16,.3,0,0,-.18,C.dark,24);casing.rotation.x=Math.PI/2;
+      for(const r of [opticalRadius,opticalRadius*.7])ring(root,r,.09,0,0,0,C.metal);
+      lamp=cylinder(moving,opticalRadius,.06,0,0,0,mat(C.lightYellow,true),24);lamp.rotation.x=Math.PI/2;
+      for(let i=0;i<4;i++){const a=i*Math.PI/2,fin=box(moving,.2,.35,.12,Math.sin(a)*(opticalRadius+.16),Math.cos(a)*(opticalRadius+.16),.04,C.yellow,0);fin.rotation.z=-a;}
     }else if(c.kind==='use'){
       box(root,1.4,.95,.5,0,0,0,C.dark);
       lamp=box(root,.4,.22,.08,0,.3,.3,mat(SIGNAL.ready,true));
@@ -240,7 +242,7 @@ export function makeFoldedWorld(scene,state){
       plateFeed=box(base,.16,.08,length,delta.x/2,.13,delta.z/2,mat(SIGNAL.ready,true),0);plateFeed.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),delta.normalize());
       floorDetails.push({root:base,x:q.x,y:q.y,z:q.z,radius:length+3});
     }
-    const control={...c,root,lamp,moving,cover,weight,plate,plateFeed,radius:.95,flash:0,engaged:state[c.id]?1:0};controls.push(control);return control;
+    const control={...c,root,lamp,moving,cover,weight,plate,plateFeed,opticalNormal,radius:opticalNormal?opticalRadius:.95,flash:0,engaged:state[c.id]?1:0};controls.push(control);return control;
   }
   for(const c of foldedControls)makeControl(c);
   const controlFeeds=[],circuitLampGeometry=new T.BoxGeometry(.25,.13,.25);
@@ -367,7 +369,7 @@ export function makeFoldedWorld(scene,state){
       enemy.coreModel={lamp,shutters};
     }
     if(e.mirror&&e.type!=='reflector'){const plate=box(model.body,1.65,1.25,.1,0,1.4,1.52,mat(0xd3eee4,true));plate.name='mirror-plate';}
-    if(e.guardian){model.root.scale.setScalar(1.35);const weak=box(model.body,1.2,1,.15,0,1.3,-1.8,mat(C.orange,true));weak.name='rear-aperture';}
+    if(e.guardian){model.root.scale.setScalar(1.35);const weak=box(model.body,1.8,1.3,.15,0,1.3,-1.8,mat(C.orange,true));weak.name='rear-aperture';}
     enemy.baseScale=model.root.scale.clone();
     model.root.visible=enemy.hp>0;for(const part of enemy.parts)part.root.visible=enemy.hp>0;
     enemies.push(enemy);
@@ -468,7 +470,7 @@ export function makeFoldedWorld(scene,state){
   floorDetails.push({root:indexLink,x:235,y:24,z:-4,radius:9});
   box(indexLink,.2,5.6,.2,238,29,-4,C.metal,0);
   box(indexLink,6,.2,.2,235,31.8,-4,C.metal,0);
-  box(indexLink,.2,4.4,.4,232,29.6,-3.82,C.metal,0);
+  box(indexLink,.2,6.8,.4,232,28.4,-3.82,C.metal,0);
   const indexLamp=box(indexLink,.45,.5,.45,238,26.4,-4,mat(SIGNAL.ready,true),0);
   // Continuous recessed tracks make the quiet final approach a clear Phoenix run.
   for(const side of [-1,1])box(fixed,218,.05,.14,145,-39.93,6+side*2.3,0x89978f,0);
@@ -663,10 +665,13 @@ export function makeFoldedWorld(scene,state){
       const point=new T.Vector3(t.x,t.y+(t.model?1.5:0),t.z);
       if(aiming&&(t.root?.userData.cutaway||t.model?.root.userData.cutaway))continue;
       if(aiming&&(t.model&&!t.readable||t.enemy&&!t.enemy.readable))continue;
-      const intersection=t.surface==='top'&&!aiming
+      const intersection=t.opticalNormal
+        ? raycaster.ray.intersectPlane(new T.Plane().setFromNormalAndCoplanarPoint(t.opticalNormal,point),new T.Vector3())
+        : t.surface==='top'&&!aiming
         ? raycaster.ray.intersectPlane(new T.Plane(new T.Vector3(0,1,0),-t.y),new T.Vector3())
         : raycaster.ray.intersectSphere(new T.Sphere(point,t.radius),new T.Vector3());
       if(t.surface==='top'&&intersection&&Math.hypot(intersection.x-t.x,intersection.z-t.z)>t.radius)continue;
+      if(t.opticalNormal&&intersection&&intersection.distanceTo(point)>t.radius)continue;
       if(intersection){const d=intersection.distanceTo(origin);if(d<=distance&&(!hit||d<hit.distance))hit={point:intersection,distance:d,...(!aiming&&(t.surface==='top'&&direction.y>=0||t.cover&&!t.ready)?{blockedTarget:t}:{target:t})};}
     }
     return hit;

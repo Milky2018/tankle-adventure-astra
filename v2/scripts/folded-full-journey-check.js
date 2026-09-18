@@ -146,8 +146,8 @@ async page=>{
     async function getLaser(){
       await move(136,-35);await move(136,-30);await settle();await move(228,-30,true);await move(228,-20);await move(242,-20);await move(242,-24);await expedition('lens');await move(242,-24);await move(228,-24);await move(228,-20);
       if(!(await page.evaluate(()=>__game.snapshot())).player.laser)throw Error('Laser acquisition');
-      await move(202,-24);await use();await move(216,-20);await shoot(216,-4,26,'gallery','laser');
-      await move(242,-20);await move(242,-4);await shoot(238,-4,25.3,'mirror-index');await move(242,-20);await move(216,-20);await shoot(216,-4,26,'garden-optical','laser');
+      await move(202,-24);await use();await move(225.2376,-20);await shoot(216,-4,26,'gallery','laser');
+      await move(242,-20);await move(242,-4);await shoot(238,-4,25.3,'mirror-index');await move(242,-20);await move(225.2376,-20);await shoot(216,-4,26,'garden-optical','laser');
       await move(242,-20);await move(242,-30);await move(254,-30);await move(254,-98);await move(64,-98,true);await move(64,-86);await shoot(63,-86,25.4,'emitter-cage');
       await move(52,-86);await arrive(-8);await move(52,-72);await move(40,-72);
       if((await page.evaluate(()=>__game.snapshot())).player.y!==-8)throw Error('C08 did not return to loading apron');
