@@ -1,8 +1,7 @@
 async page=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'||m.type()==='warning'&&/THREE|WebGL/.test(m.text()))errors.push(m.text());});
- await page.route('**/src/folded.js*',async route=>{const response=await route.fetch();await route.fulfill({response,body:await response.text()+`\nwindow.__laserReview={world,p,state,T,traceFoldedLaser,castWeapon,laserGuide,laserEndpoint,laserBeam,aim,weaponOrigin,updateLaser,beginBossAttack,updateEnemies,setCameraView,follow,keys,clearShots};`});});
- await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>window.__laserReview);await page.unroute('**/src/folded.js*');
- await page.evaluate(()=>{__game.manual(true);for(const e of __laserReview.world.enemies){e.hp=0;e.model.root.visible=false;}});
+ await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>window.__game?.debug);
+ await page.evaluate(()=>{__game.manual(true);for(const e of __game.debug.world.enemies){e.hp=0;e.model.root.visible=false;}});
  const assert=(ok,message)=>{if(!ok)throw Error(message);};
  const cases=[
   {id:'lens-return',from:[324,24,-32],mirror:[324,26,-14],state:{'lens-return':false}},
@@ -11,7 +10,7 @@ async page=>{
   {id:'inner-optics',from:[254,-24,134],mirror:[254,-22,124],state:{'inner-optics':false}}
  ];
  async function fixture(c,view){await page.evaluate(({c,view})=>{
-  const a=__laserReview,g=__game;g.setInput([]);a.clearShots();a.setCameraView(view);
+  const a=__game.debug,g=__game;g.setInput([]);a.clearShots();a.setCameraView(view);
   g.scenario({player:{x:c.from[0],y:c.from[1],z:c.from[2],hp:50,heat:0,lastHeat:-100,overheated:false,speed:1,laser:true,weapon:'laser',deployed:false},state:c.state});g.step(1.6);
  },{c,view});
  if(view==='third'&&!await page.evaluate(()=>!!document.pointerLockElement)){await page.mouse.click(600,427);await page.waitForFunction(()=>!!document.pointerLockElement||__game.snapshot().camera.dragLook);}
@@ -22,7 +21,7 @@ async page=>{
   }else{
    await page.mouse.move(600,427);
    await page.evaluate(point=>{
-    const a=__laserReview,g=__game;let yaw=Math.atan2(point[0]-a.p.x,point[2]-a.p.z),pitch=0;
+    const a=__game.debug,g=__game;let yaw=Math.atan2(point[0]-a.p.x,point[2]-a.p.z),pitch=0;
     for(let i=0;i<24;i++){g.look(yaw,pitch);const q=g.project(point[0],point[2],point[1]);yaw-=(q.x/innerWidth*2-1)*Math.tan(Math.PI/6)*(innerWidth/innerHeight)*.8;pitch+=(q.y/innerHeight*2-1)*Math.tan(Math.PI/6)*.8;}
     g.look(yaw,pitch);
    },point);
@@ -34,19 +33,19 @@ async page=>{
  for(const view of ['overhead','third'])for(const c of cases){
   await fixture(c,view);await aimAt(c.mirror,view);
   const before=await page.evaluate(id=>{
-   const a=__laserReview,g=__game;g.step(.25);return {heat:a.p.heat,open:a.state[id],guide:a.laserGuide.visible,path:Array.from(a.laserGuide.geometry.attributes.position.array.slice(0,a.laserGuide.geometry.drawRange.count*3)),hp:a.world.enemies.map(e=>e.hp)};
+   const a=__game.debug,g=__game;g.step(.25);return {heat:a.p.heat,open:a.state[id],guide:a.laserGuide.visible,path:Array.from(a.laserGuide.geometry.attributes.position.array.slice(0,a.laserGuide.geometry.drawRange.count*3)),hp:a.world.enemies.map(e=>e.hp)};
   },c.id);
   assert(before.guide&&before.heat===0&&!before.open,`${view}/${c.id}: preview changed heat or the mechanism`);
   await page.screenshot({path:`v2/output/playwright/laser/${c.id}-${view}-preview.png`});
   await page.mouse.down({button:'left'});await page.evaluate(()=>__game.step(1/60));await page.mouse.up({button:'left'});
-  const after=await page.evaluate(id=>({open:__laserReview.state[id],heat:__laserReview.p.heat,path:__game.snapshot().laserSegments,hp:__laserReview.world.enemies.map(e=>e.hp)}),c.id);
+  const after=await page.evaluate(id=>({open:__game.debug.state[id],heat:__game.debug.p.heat,path:__game.snapshot().laserSegments,hp:__game.debug.world.enemies.map(e=>e.hp)}),c.id);
   assert(after.open,`${view}/${c.id}: firing along the guide did not operate the receiver: ${JSON.stringify({before,after})}`);
   assert(Math.abs(after.heat-.4)<1e-8,'Laser heat cost changed');
   assert(after.path.length===before.path.length&&after.path.every((n,i)=>Math.abs(n-before.path[i])<.001),`${view}/${c.id}: Preview and live beam diverged ${JSON.stringify({before:before.path,after:after.path})}`);
   views.push({view,id:c.id,segments:before.path.length/6});
  }
  const mechanics=await page.evaluate(()=>{
-  const a=__laserReview,g=__game,check=(ok,msg)=>{if(!ok)throw Error(msg);};
+  const a=__game.debug,g=__game,check=(ok,msg)=>{if(!ok)throw Error(msg);};
   const trace=(from,to)=>a.traceFoldedLaser(new a.T.Vector3(...from),new a.T.Vector3(...to).sub(new a.T.Vector3(...from)),(o,d,r)=>a.castWeapon(o,d,r));
   g.setInput([]);g.scenario({player:{x:225.2376,y:24,z:-20,weapon:'laser',heat:0,overheated:false},state:{gallery:true,'mirror-index':false,'garden-optical':false}});g.step(2);
   check(trace([225.2376,26,-20],[216,26,-4]).at(-1).hit?.target?.id!=='garden-optical','Unindexed mirror solved the return');
@@ -76,7 +75,7 @@ async page=>{
   return {areas};
  });
  const guardian=await page.evaluate(()=>{
-  const a=__laserReview,g=__game,e=a.world.enemies.find(e=>e.guardian),check=(ok,msg)=>{if(!ok)throw Error(msg);};
+  const a=__game.debug,g=__game,e=a.world.enemies.find(e=>e.guardian),check=(ok,msg)=>{if(!ok)throw Error(msg);};
   a.setCameraView('overhead');g.setInput([]);a.clearShots();g.scenario({player:{x:202,y:16,z:48,hp:50,heat:0,overheated:false,weapon:'laser',invincible:1e9},state:{guardian:false}});
   for(const m of a.world.mirrors.filter(m=>m.id.startsWith('guardian'))){const q=g.project(m.x,m.z,m.y);check(q.x>20&&q.x<innerWidth-20&&q.y>20&&q.y<innerHeight-20,'Guardian mirror centre is outside the playable view');}
   Object.assign(e,{hp:e.max,phase:'idle',timer:0,stunnedUntil:0});e.model.root.visible=true;for(let i=0;i<120&&e.phase==='idle';i++)g.step(1/60);check(e.phase==='warn','Guardian never committed');const locked=e.aim;
@@ -92,7 +91,7 @@ async page=>{
   return {locked,rearDamage,segments:path.length,hp:e.hp};
  });
  const battle=await page.evaluate(()=>{
-  const a=__laserReview,g=__game,e=a.world.enemies.find(e=>e.guardian);g.setInput([]);a.clearShots();a.setCameraView('overhead');
+  const a=__game.debug,g=__game,e=a.world.enemies.find(e=>e.guardian);g.setInput([]);a.clearShots();a.setCameraView('overhead');
   g.scenario({player:{x:196,y:16,z:50,hp:50,overdrive:true,phoenix:true,heat:0,overheated:false,lastHeat:-100,invincible:0,speed:1,weapon:'laser'},state:{guardian:false}});
   Object.assign(e,{hp:e.max,phase:'idle',timer:1.2,stunnedUntil:0,attackCycle:0});
   const orbit=[[196,50],[210,50]],phases=new Set(),outcomes={};let corner=0,cooling=false,previousPhase='idle',start=g.snapshot().time;
@@ -112,7 +111,7 @@ async page=>{
   g.setInput([]);g.step(.001);return {won:e.hp<=0,hp:a.p.hp,bossHp:e.hp,seconds:g.snapshot().time-start,phases:[...phases],outcomes};
  });
  assert(battle.won&&battle.hp>0,'Scripted reflected guardian fight failed '+JSON.stringify(battle));
- await page.evaluate(()=>{__game.setInput([]);__laserReview.setCameraView('third');__game.look(0,.2);__game.step(.01);});
+ await page.evaluate(()=>{__game.setInput([]);__game.debug.setCameraView('third');__game.look(0,.2);__game.step(.01);});
  await page.screenshot({path:'v2/output/playwright/laser/guardian-third.png'});
  assert(!errors.length,errors.join('\n'));return {views,...mechanics,guardian,battle,errors};
 }

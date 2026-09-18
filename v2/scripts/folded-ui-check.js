@@ -4,13 +4,12 @@ async page=>{
   const check=(value,message)=>{if(!value)throw Error(message);};
   const shot=async name=>{await page.waitForTimeout(300);await page.screenshot({path:root+name+'.png'});};
   await page.setViewportSize({width:1440,height:900});await page.emulateMedia({reducedMotion:'no-preference'});
-  await page.route('**/src/folded.js*',async route=>{const r=await route.fetch();await route.fulfill({response:r,body:(await r.text()).replace('let manual=false','let manual=true')+'\nwindow.__uiReview={abilityHud,ending};'});});
   await page.goto('http://127.0.0.1:5174/');
   await page.evaluate(()=>localStorage.clear());await page.reload();
   check(!await page.locator('#journey-continue').isVisible(),'Fresh menu offers nonexistent save');
   await shot('menu');
   await page.locator('#journey-start').click();await page.waitForURL('**/?chapter=folded');
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&test');await page.waitForFunction(()=>window.__game);
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&test&manual');await page.waitForFunction(()=>window.__game);
   await page.evaluate(()=>__game.step(.1));
   await shot('hud-opening');
   await page.keyboard.press('Escape');
@@ -46,7 +45,7 @@ async page=>{
   await page.locator('.close-map').click();
   await page.keyboard.press('c');
   check(await page.evaluate(()=>__game.snapshot().camera.view)==='overhead','Camera shortcut failed');
-  await page.evaluate(()=>{__game.scenario({player:{overdrive:true,magnet:true,mortar:true,flotation:true,phoenix:true,laser:true,circulation:true,weapon:'mortar',heat:70,hp:12}});__uiReview.abilityHud.acquire('mortar',__game.snapshot().time);__game.step(.1);});
+  await page.evaluate(()=>{__game.scenario({player:{overdrive:true,magnet:true,mortar:true,flotation:true,phoenix:true,laser:true,circulation:true,weapon:'mortar',heat:70,hp:12}});__game.debug.abilityHud.acquire('mortar',__game.snapshot().time);__game.step(.1);});
   await page.mouse.move(720,450);await shot('hud-equipped');
   check(await page.locator('#tools .ability-card:not([hidden])').count()===8,'Equipped tray omits an ability');
   check(await page.locator('#status').evaluate(el=>el.classList.contains('critical')),'Low health feedback missing');
@@ -66,9 +65,9 @@ async page=>{
   await page.locator('#journey-button').click();await shot('menu-return-390');
   check(await page.locator('.journey-back').isVisible(),'Return to settings missing');
   await page.locator('.journey-back').click();
-  await page.keyboard.press('Escape');await page.evaluate(()=>{__game.scenario({player:{overdrive:true,magnet:true,mortar:true,flotation:true,phoenix:true,laser:true,circulation:true}});__uiReview.abilityHud.acquire('magnet',__game.snapshot().time);__game.step(.1);});
+  await page.keyboard.press('Escape');await page.evaluate(()=>{__game.scenario({player:{overdrive:true,magnet:true,mortar:true,flotation:true,phoenix:true,laser:true,circulation:true}});__game.debug.abilityHud.acquire('magnet',__game.snapshot().time);__game.step(.1);});
   await shot('hud-390');
-  await page.evaluate(()=>__uiReview.ending.show());await page.waitForTimeout(1600);await shot('ending-390');
+  await page.evaluate(()=>__game.debug.ending.show());await page.waitForTimeout(1600);await shot('ending-390');
   await page.setViewportSize({width:1440,height:900});await shot('ending');
   await page.goto('http://127.0.0.1:5174/');
   await page.evaluate(()=>localStorage.setItem('furnace-born-v2-city',JSON.stringify({endingSeen:true})));await page.reload();
@@ -78,6 +77,6 @@ async page=>{
   await page.setViewportSize({width:390,height:844});await shot('menu-390');
   await page.emulateMedia({reducedMotion:'reduce'});
   check(await page.locator('#journey-start').evaluate(el=>getComputedStyle(el).transitionDuration)==='0s','Reduced motion ignored');
-  await page.unroute('**/src/folded.js*');check(!errors.length,errors.join('\n'));
+  check(!errors.length,errors.join('\n'));
   return {settings:true,keyboard:true,bindings:true,persistence:true,hud:true,map:true,ending:true,sizes:[1440,1280,800,390],errors};
 }

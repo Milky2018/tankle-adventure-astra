@@ -1,8 +1,7 @@
 async page=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.setViewportSize({width:1440,height:900});
- await page.route('**/src/folded.js*',async route=>{const r=await route.fetch();await route.fulfill({response:r,body:(await r.text()).replace('let manual=false','let manual=true')+'\nwindow.__review={audio,mortarGuide,waves};'});});
- await page.goto('http://127.0.0.1:5174/?chapter=folded&view=third&test');await page.waitForFunction(()=>window.__game);
+ await page.goto('http://127.0.0.1:5174/?chapter=folded&view=third&test&manual');await page.waitForFunction(()=>window.__game);
  await page.evaluate(()=>localStorage.clear());await page.reload();await page.waitForFunction(()=>window.__game);
  await page.evaluate(()=>__game.step(.1));
  if(!await page.locator('#look-hint').isVisible())throw Error('Initial look cue is missing');
@@ -17,13 +16,13 @@ async page=>{
  await page.screenshot({path:'v2/output/playwright/player-review/map-aim-through.png'});
  await page.mouse.move(500,500);await page.waitForFunction(()=>!document.querySelector('#minimap-wrap').classList.contains('aim-through'));
  const refuge=await page.evaluate(()=>{
-  const g=__game,sounds=[],original=__review.audio.event;
+  const g=__game,sounds=[],original=__game.debug.audio.event;
   g.scenario({player:{x:12,y:0,z:-34,weapon:'mortar',mortar:true,hp:50,heat:0,overheated:false,lastShot:-100},state:{freight:false}});g.step(.5);g.aimAt(32,-34,4.2);g.step(.1);
-  const clipped=__review.mortarGuide.geometry.drawRange.count;
-  __review.audio.event=name=>sounds.push(name);g.fire();g.step(.22);
+  const clipped=__game.debug.mortarGuide.geometry.drawRange.count;
+  __game.debug.audio.event=name=>sounds.push(name);g.fire();g.step(.22);
   g.step(1.3);const insideOpen=g.snapshot().state.freight;
-  g.scenario({player:{x:20,y:0,z:-34,hp:50,heat:0,overheated:false,lastShot:-100}});g.step(.5);g.aimAt(32,-34,4.2);g.step(.1);const restored=__review.mortarGuide.geometry.drawRange.count;
-  g.fire();g.step(1.5);__review.audio.event=original;
+  g.scenario({player:{x:20,y:0,z:-34,hp:50,heat:0,overheated:false,lastShot:-100}});g.step(.5);g.aimAt(32,-34,4.2);g.step(.1);const restored=__game.debug.mortarGuide.geometry.drawRange.count;
+  g.fire();g.step(1.5);__game.debug.audio.event=original;
   if(clipped>=25||restored!==25||insideOpen||!g.snapshot().state.freight||!sounds.includes('blocked'))throw Error('Sanctuary preview/interception regression '+JSON.stringify({clipped,restored,insideOpen,sounds}));
   return {clipped,restored,insideOpen,outsideOpen:g.snapshot().state.freight,blockedSound:sounds.includes('blocked')};
  });
@@ -32,5 +31,5 @@ async page=>{
  if(!(await page.locator('#camera-tuning').textContent()).includes('跟随距离保持不变'))throw Error('Camera settings contradict fixed boom');
  await page.evaluate(()=>localStorage.setItem('furnace-born-v2-city',JSON.stringify({endingSeen:true})));await page.goto('http://127.0.0.1:5174/');
  const completed=await page.locator('#journey-continue').textContent();if(!completed.includes('Mission Accomplished')||completed.includes('传火'))throw Error('Completed journey label regressed');
- await page.unroute('**/src/folded.js*');if(errors.length)throw Error(errors.join('\n'));return {opening:{x:opening.player.x,z:opening.player.z},cameraShortcut:true,refuge,completed,errors};
+ if(errors.length)throw Error(errors.join('\n'));return {opening:{x:opening.player.x,z:opening.player.z},cameraShortcut:true,refuge,completed,errors};
 }

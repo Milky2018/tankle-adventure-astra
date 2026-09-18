@@ -1,10 +1,9 @@
 async page=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.route('**/src/folded.js*',async route=>{const r=await route.fetch();await route.fulfill({response:r,body:(await r.text()).replace('let manual=false','let manual=true')+'\nwindow.__audit={world,scene,T,p,hitEnemy};'});});
- await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>window.__audit);
- await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');});await page.reload();await page.waitForFunction(()=>window.__audit);
+ await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test&manual');await page.waitForFunction(()=>window.__game?.debug);
+ await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');});await page.reload();await page.waitForFunction(()=>window.__game?.debug);
  const results=await page.evaluate(()=>{
-  const g=__game,w=__audit.world,q=w.sidePuzzles;g.manual(true);
+  const g=__game,w=__game.debug.world,q=w.sidePuzzles;g.manual(true);
   g.scenario({enemies:Object.fromEntries(w.enemies.map(e=>[e.id,0]))});
   const shoot=(id,x,z)=>{const t=q.targets.find(t=>t.id===id);g.scenario({player:{x,y:t.y-1.3-(id==='rail-carrier'?.6:0),z,hp:50,heat:0,overheated:false,lastShot:-100,lastHeat:-100,weapon:'cannon'}});g.aimAt(t.x,t.z,t.y);g.setInput(['Mouse0']);g.step(.1,false);g.setInput([]);g.step(1,false);};
   g.scenario({player:{x:-181,y:8,z:-76,speed:1,overdrive:true,hp:50}});g.setInput(['KeyS','KeyD']);g.step(.8,false);g.setInput([]);if(q.rail.state.moving)throw Error('Walking released the detent');
@@ -23,8 +22,8 @@ async page=>{
   return {rail:q.rail.serialize(),gutter:q.gutter.serialize(),state:g.snapshot().state['rail-crossing']};
  });
  await page.screenshot({path:'v2/output/playwright/completion/garden-care-overhead.png'});
- await page.reload();await page.waitForFunction(()=>window.__audit);
- const restored=await page.evaluate(()=>({rail:__audit.world.sidePuzzles.rail.serialize(),gutter:__audit.world.sidePuzzles.gutter.serialize()}));
+ await page.reload();await page.waitForFunction(()=>window.__game?.debug);
+ const restored=await page.evaluate(()=>({rail:__game.debug.world.sidePuzzles.rail.serialize(),gutter:__game.debug.world.sidePuzzles.gutter.serialize()}));
  if(!restored.rail.solved||!restored.gutter.grown)throw Error('Restoration did not survive reload');
- await page.unroute('**/src/folded.js*');if(errors.length)throw Error(errors.join('\n'));return {results,restored,errors};
+ if(errors.length)throw Error(errors.join('\n'));return {results,restored,errors};
 }

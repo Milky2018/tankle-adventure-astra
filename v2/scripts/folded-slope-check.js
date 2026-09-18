@@ -1,13 +1,12 @@
 async page=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
- await page.route('**/src/folded.js*',async route=>{const r=await route.fetch();await route.fulfill({response:r,body:(await r.text()).replace('let manual=false','let manual=true')+'\nwindow.__slope={T,p,model,world,shots,aim,weaponOrigin,updatePlayerPose,updateAim,setCameraView,groundPatches,get camera(){return camera;}};'});});
- try{
- await page.setViewportSize({width:1440,height:900});await page.goto('http://127.0.0.1:5174/?chapter=folded&view=third&test');await page.waitForFunction(()=>window.__slope);
+
+ await page.setViewportSize({width:1440,height:900});await page.goto('http://127.0.0.1:5174/?chapter=folded&view=third&test&manual');await page.waitForFunction(()=>window.__game?.debug);
  const samples=[];
  for(const view of ['third','overhead'])for(const [name,z,heading,yaw]of [['up',110,0,0],['down',110,Math.PI,Math.PI],['across',110,Math.PI/2,Math.PI/2],['crest',137.8,0,0],['foot',90.2,0,0]]){
   const result=await page.evaluate(async ({view,name,z,heading,yaw})=>{
-   const {Vector3}=__slope.T,{deckHeight}=await import('/src/folded-layout.js');
-   const a=__slope,g=__game;g.scenario({state:{guardian:true},player:{x:186,y:16+(z-90)*.5,z,heading,hp:50,weapon:'cannon',heat:0,overheated:false,endingTime:0}});a.setCameraView(view);g.look(yaw,.4);g.step(.5);
+   const {Vector3}=__game.debug.T,{deckHeight}=await import('/src/folded-layout.js');
+   const a=__game.debug,g=__game;g.scenario({state:{guardian:true},player:{x:186,y:16+(z-90)*.5,z,heading,hp:50,weapon:'cannon',heat:0,overheated:false,endingTime:0}});a.setCameraView(view);g.look(yaw,.4);g.step(.5);
    a.model.root.updateWorldMatrix(true,true);
    const patches=a.groundPatches(a.p,a.world.lifts);let min=Infinity;
    for(const wheel of a.model.tracks){const center=wheel.getWorldPosition(new Vector3()),d=patches.find(d=>center.x>=d.x&&center.x<=d.x+d.w&&center.z>=d.z&&center.z<=d.z+d.d);if(d)min=Math.min(min,(center.y-deckHeight(d,center.z))/Math.hypot(1,(d.rise||0)/d.d)-.3);}
@@ -20,8 +19,8 @@ async page=>{
  }
  if(samples.some(s=>s.minClearance<-.015||s.agreement!==null&&s.agreement<.999))throw Error('Slope contact or barrel mismatch '+JSON.stringify(samples));
  const travel=await page.evaluate(async ()=>{
-  const {Vector3}=__slope.T,{foldedDecks,deckHeight}=await import('/src/folded-layout.js'),{groundHeight}=await import('/src/folded-ground.js');
-  const g=__game,a=__slope;a.setCameraView('overhead');const results=[];
+  const {Vector3}=__game.debug.T,{foldedDecks,deckHeight}=await import('/src/folded-layout.js'),{groundHeight}=await import('/src/folded-ground.js');
+  const g=__game,a=__game.debug;a.setCameraView('overhead');const results=[];
   for(const [start,end,keys,boost]of [[88,143,['KeyS','KeyA'],false],[143,88,['KeyW','KeyD'],false],[88,143,['KeyS','KeyA'],true],[143,88,['KeyW','KeyD'],true]]){
    const y=start<90?16:start>138?40:16+(start-90)*.5;g.scenario({player:{x:186,y,z:start,heading:start<90?0:Math.PI,hp:50,heat:0,speed:boost?3.2:1,overdrive:boost,phoenix:boost,circulation:boost,overheated:false}});
    if(boost)keys.push(g.snapshot().bindings.overdrive);
@@ -37,11 +36,10 @@ async page=>{
  });
  if(travel.some(t=>Math.abs(t.arrived-t.end)>.6||t.minClearance<-.02||t.maxTurn>.1))throw Error('Ramp transition failed '+JSON.stringify(travel));
  const occlusion=await page.evaluate(async()=>{
-  const a=__slope,g=__game,{Vector3}=__slope.T;g.scenario({player:{x:186,y:26,z:110,heading:Math.PI}});a.setCameraView('third');g.look(Math.PI,.4);g.step(.1);
+  const a=__game.debug,g=__game,{Vector3}=__game.debug.T;g.scenario({player:{x:186,y:26,z:110,heading:Math.PI}});a.setCameraView('third');g.look(Math.PI,.4);g.step(.1);
   const origin=new Vector3(186,32,114),dir=new Vector3(0,-1,0),hit=a.world.cast(origin,dir,20,{aiming:true,terrainOnly:true});
   return {hit:hit?.point.toArray(),floor:hit?.object.name};
  });
  if(!occlusion.hit||Math.abs(occlusion.hit[1]-28)>.1)throw Error('Aim pierced the supporting ramp '+JSON.stringify(occlusion));
  if(errors.length)throw Error(JSON.stringify(errors));return {samples,travel,occlusion,errors};
- }finally{if(!page.isClosed())await page.unroute('**/src/folded.js*');}
 }

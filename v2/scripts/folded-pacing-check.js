@@ -1,8 +1,7 @@
 async page=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.route('**/src/folded.js*',async route=>{const r=await route.fetch();await route.fulfill({response:r,body:(await r.text()).replace('let manual=false','let manual=true')+'\nwindow.__pacing={world,hitEnemy,T,encounterPacing};'});});
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>window.__pacing);
-  await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');});await page.reload();await page.waitForFunction(()=>window.__pacing);
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test&manual');await page.waitForFunction(()=>window.__game?.debug);
+  await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');});await page.reload();await page.waitForFunction(()=>window.__game?.debug);
   const trials=await page.evaluate(async()=>{
     const {expansionRoutes,expansionControls}=await import('/src/folded-expansion-layout.js');
     const g=__game,results=[];g.manual(true);
@@ -29,7 +28,7 @@ async page=>{
   await page.screenshot({path:'v2/output/playwright/overhaul/pacing-trial.png'});
   const waves=await page.evaluate(async()=>{
     const {expansionRoutes}=await import('/src/folded-expansion-layout.js');
-    const g=__game,a=__pacing,route=expansionRoutes.find(r=>r.id==='proving'),point=route.path.find(p=>p[2]==='battle'),r={x:point[0],y:route.y,z:point[1]},group=a.world.enemies.filter(e=>e.battle==='proving-endurance');
+    const g=__game,a=__game.debug,route=expansionRoutes.find(r=>r.id==='proving'),point=route.path.find(p=>p[2]==='battle'),r={x:point[0],y:route.y,z:point[1]},group=a.world.enemies.filter(e=>e.battle==='proving-endurance');
     g.scenario({player:{x:r.x,y:r.y,z:r.z,hp:50,invincible:1e9},state:{'proving-endurance':false}});
     const reserve=group.filter(e=>e.wave);if(reserve.some(e=>e.awake))throw Error('Reserves started awake');
     for(const e of group.filter(e=>!e.wave))a.hitEnemy(e,100,new a.T.Vector3(r.x,r.y,r.z),'mortar');
@@ -48,6 +47,6 @@ async page=>{
     return {coldStart:true,redContact:true,opened:true,hp:s.player.hp};
   });
   await page.screenshot({path:'v2/output/playwright/overhaul/pacing-thermal.png'});
-  await page.unroute('**/src/folded.js*');if(errors.length)throw Error(errors.join('\n'));
+  if(errors.length)throw Error(errors.join('\n'));
   return {trials,waves,thermal,errors};
 }

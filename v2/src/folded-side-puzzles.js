@@ -4,10 +4,11 @@ import * as T from 'three';
 import {box,cylinder,ring,mat,C,batchStatic} from './world.js';
 import {createRailPuzzle,createGutterPuzzle} from './puzzle-rules.js';
 import {carrierRoute} from './puzzle-layout.js';
-import {railOffset as offset,gutterControls,sideObstacles} from './folded-side-layout.js';
+import {railOffset as offset,gutterControls} from './folded-side-layout.js';
 import {SIGNAL} from './folded-visibility.js';
 
 export function makeSidePuzzles(scene,state){
+ const sideObstacles=state.bodies.obstacles;
  const delivery=createDelivery(state.maintenance);
  const rail=createRailPuzzle(state.sidePuzzles?.rail),gutter=createGutterPuzzle(state.sidePuzzles?.gutter);
  const owners=new Map(),roots=[],targets=[],solids=[],fixed=new T.Group();scene.add(fixed);roots.push(fixed);

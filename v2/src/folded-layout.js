@@ -114,7 +114,7 @@ export function foldedSupport(x,z,y,deployed=false,lifts=[]){
 }
 export function foldedBlocked(x,y,z,state,r=.9){
   const blocks=s=>activeSolid(s,state)&&y+2>s.y+.12&&y<s.y+s.h-.1&&inRect(x,z,s,r);
-  return sideObstacles.find(blocks)||foldedSolids.find(blocks)||[...architectureGrid.near(x,z,r)].find(s=>y+2>s.y+.12&&y<s.y+s.h-.1&&inRect(x,z,s,r))||foldedDecks.find(d=>!d.water&&inRect(x,z,d,-.01)&&deckHeight(d,z)>y+.45&&deckHeight(d,z)<y+3.25);
+  return (state.bodies?.obstacles||sideObstacles).find(blocks)||(state.bodies?.solids||foldedSolids).find(blocks)||[...architectureGrid.near(x,z,r)].find(s=>y+2>s.y+.12&&y<s.y+s.h-.1&&inRect(x,z,s,r))||foldedDecks.find(d=>!d.water&&inRect(x,z,d,-.01)&&deckHeight(d,z)>y+.45&&deckHeight(d,z)<y+3.25);
 }
 export function moveFolded(p,dx,dz,state,lifts=[]){
   const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.2));
@@ -136,6 +136,12 @@ export function moveFolded(p,dx,dz,state,lifts=[]){
 
 export function initialFoldedState(saved={}){
   const state={};
+  // Session-owned collision bodies share positions with animated machinery,
+  // but are neither authored definitions nor saved progression.
+  Object.defineProperty(state,'bodies',{value:{
+    obstacles:sideObstacles.map(body=>({...body})),
+    solids:foldedSolids.map(body=>({...body})),
+  },enumerable:false});
   for(const id of ['magnet','freight','gangway','load','brake','cage','launch','optics','pressure','flotation','phoenix','rail-repair',...cityFlags,...expansionFlags])state[id]=saved[id]===true;
   if(state['pressure-return'])state['pressure-thermal']=true;
   if(state['inner-transit'])state['inner-thermal']=true;

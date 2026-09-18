@@ -1,16 +1,12 @@
 async page=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.route('**/src/folded.js*',async route=>{
-    const response=await route.fetch();
-    await route.fulfill({response,body:(await response.text()).replace('let manual=false','let manual=true')+'\nwindow.__safety={world,p,shootEnemy,layMine,clearShots,updateShots,updateEnemies,updateMines,moveEnemy,castWeapon,hitEnemy,get time(){return time;},get shots(){return shots;},get mines(){return mines;}};'});
-  });
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');
-  await page.waitForFunction(()=>window.__safety);
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test&manual');
+  await page.waitForFunction(()=>window.__game?.debug);
   await page.evaluate(()=>localStorage.removeItem('furnace-born-v2-city'));
-  await page.reload();await page.waitForFunction(()=>window.__safety);
+  await page.reload();await page.waitForFunction(()=>window.__game?.debug);
   const result=await page.evaluate(async()=>{
     const {foldedHives}=await import('/src/folded-layout.js');
-    const g=__game,a=__safety,runs=[];g.manual(true);
+    const g=__game,a=__game.debug,runs=[];g.manual(true);
     for(const h of foldedHives){
       g.scenario({state:{anchor:h.id,...h.requires?{[h.requires]:true}:{}}});g.respawn();
       g.setInput(['Mouse2']);g.step(12,false);g.setInput([]);
@@ -59,7 +55,6 @@ async page=>{
     g.respawn();g.step(0);
     return {runs,projectileHp,incomingStopped,mortarHp,markersCleared,mineHp,pursuitDistance,chargeDistance,outsideHp,outboundBlocked:!!outbound?.refuge,disengaged};
   });
-  await page.unroute('**/src/folded.js*');
   if(result.runs.some(r=>r.hp!==50||r.nearest<15)||result.projectileHp!==50||!result.incomingStopped||result.mortarHp!==50||!result.markersCleared||result.mineHp!==50||result.pursuitDistance<15||result.chargeDistance<15||result.outsideHp!==36||!result.outboundBlocked||!result.disengaged||errors.length)throw Error(JSON.stringify({...result,errors}));
   return {...result,errors};
 }

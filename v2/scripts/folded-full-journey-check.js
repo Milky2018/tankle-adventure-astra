@@ -1,10 +1,9 @@
 async page=>{
- await page.unroute('**/src/folded.js*');
- await page.route('**/src/folded.js*',async route=>{const r=await route.fetch();await route.fulfill({response:r,body:(await r.text()).replace('let manual=false','let manual=true')});});
- try{return await (async()=>{
+
+ return await (async()=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));const runs=[];
  for(const [approach,first]of [['dry','laser'],['dry','circulation'],['water','circulation']]){
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>window.__game);
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test&manual');await page.waitForFunction(()=>window.__game);
   await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');localStorage.removeItem('furnace-born-v2-settings');});await page.reload();await page.waitForFunction(()=>window.__game);await page.evaluate(()=>__game.manual(true));
   const legs=[],milestones=[];
   async function choose(weapon){
@@ -199,5 +198,5 @@ async page=>{
   await page.evaluate(run=>sessionStorage.setItem('completed-journey-'+run.approach+'-'+run.first,JSON.stringify(run)),run);
  }
  if(errors.length)throw Error(JSON.stringify(errors));return {runs,errors};
- })();}finally{if(!page.isClosed())await page.unroute('**/src/folded.js*');}
+ })();
 }

@@ -1,9 +1,12 @@
 async page=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
-  await page.route('**/src/folded.js*',async route=>{
-    const response=await route.fetch();await route.fulfill({response,body:await response.text()+`
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&route=garden&view=overhead&test&manual');await page.waitForFunction(()=>window.__game?.debug);
+  await page.evaluate(()=>{
+    const {T,p,world,scene,renderer,model,aim}=__game.debug;
+
 window.__foldedProbe={
   visual(){
+    const camera=__game.debug.camera;
     const gl=renderer.getContext(),w=gl.drawingBufferWidth,h=gl.drawingBufferHeight;
     const read=()=>{renderer.render(scene,camera);const pixels=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,pixels);return pixels;};
     const start=camera.position.x,base=read(),counts=[],cells={};
@@ -14,11 +17,10 @@ window.__foldedProbe={
   aim:()=>({pitch:model.barrel.rotation.x,point:aim.clone(),player:{...p}}),
   carrier(y,destination){const l=world.lifts.find(l=>l.id==='carrier');l.y=y;l.destination=destination;l.used=true;l.wait=0;},
   collision:(from,to)=>{const a=new T.Vector3(...from),b=new T.Vector3(...to).sub(a);const hit=world.cast(a,b.clone().normalize(),b.length(),{targets:false});return !!hit;},
-  resetHealth:()=>{p.hp=50;p.invincible=time+20;},
+  resetHealth:()=>{p.hp=50;p.invincible=__game.debug.time+20;},
   worldBytes:()=>{const seen=new Set();let bytes=0;scene.traverse(o=>{if(o.geometry&&!seen.has(o.geometry)){seen.add(o.geometry);for(const a of Object.values(o.geometry.attributes))bytes+=a.array.byteLength;bytes+=o.geometry.index?.array.byteLength||0;}});return bytes;}
-};`});
+};
   });
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&route=garden&view=overhead&test');await page.waitForFunction(()=>!!window.__foldedProbe);await page.unroute('**/src/folded.js*');
   await page.evaluate(()=>window.__game.manual(true));
   const samples=[];
   for(const [name,x,z,y]of [['turntable',0,27,0],['canal',0,-4,-16],['load',90,-34,2],['carrier',78,-71,16],['roof',24,8,24],['foundry',-30,128,-16],['emitter',216,-20,24],['rig',222,117,-24],['pressure',211,24,-16],['predecessors',44,-10,-40],['furnace',0,0,-56]]){
@@ -36,16 +38,16 @@ window.__foldedProbe={
   for(const [name,x,z,y,tx,tz,ty]of [['level',0,27,0,0,18,2],['upper-latch',90,-18,0,90,-34,7],['lower-panel',-26,10,-4,-39.7,-8,-6.6]]){
     await page.evaluate(([x,z,y])=>{__game.scenario({player:{x,z,y,deployed:false,weapon:'cannon'},state:{load:false,magnet:false}});__game.step(.2);},[x,z,y]);
     const point=await page.evaluate(([x,z,y])=>__game.project(x,z,y),[tx,tz,ty]);await page.mouse.move(point.x,point.y);await page.evaluate(()=>__game.step(.1));
-    const result=await page.evaluate(q=>{const a=__foldedProbe.aim(),r=document.getElementById('reticle').getBoundingClientRect();return {pitch:a.pitch,error:Math.hypot(r.x+r.width/2-q.x,r.y+r.height/2-q.y),count:document.querySelectorAll('#reticle').length};},point);
-    if(Math.abs(result.pitch)>Math.PI*40/180+.001||result.error>1||result.count!==1)throw Error('Reticle/pitch mismatch '+JSON.stringify(result));if(name==='upper-latch'&&result.pitch>-.1||name==='lower-panel'&&result.pitch<.05)throw Error('Vertical target was flattened '+JSON.stringify(result));aimChecks.push({name,...result});
+    const result=await page.evaluate(q=>{const a=__foldedProbe.aim(),r=document.getElementById('reticle').getBoundingClientRect();const debug=__game.debug,barrel=new debug.T.Vector3(0,0,1).transformDirection(debug.model.barrel.matrixWorld),target=a.point.clone().sub(debug.weaponOrigin()).normalize();return {directionError:barrel.distanceTo(target),pitch:a.pitch,error:Math.hypot(r.x+r.width/2-q.x,r.y+r.height/2-q.y),count:document.querySelectorAll('#reticle').length};},point);
+    if(Math.abs(result.pitch)>Math.PI*40/180+.001||result.error>1||result.count!==1)throw Error('Reticle/pitch mismatch '+JSON.stringify(result));if(result.directionError>1e-5)throw Error('Barrel disagrees with the visible aim point '+JSON.stringify(result));aimChecks.push({name,...result});
   }
   const floors=await page.evaluate(()=>({bridge:__foldedProbe.collision([0,-14,-4],[0,4,-4]),openCanal:__foldedProbe.collision([-5,-14,-4],[5,-14,-4])}));
   if(!floors.bridge||floors.openCanal)throw Error('Vertical shell occlusion failed');
-  await page.evaluate(()=>{__game.scenario({player:{x:78,z:-66.6,y:8},state:{brake:true}});__foldedProbe.carrier(8,16);__game.step(1);});
+  await page.evaluate(()=>{__game.scenario({player:{x:78,z:-66.6,y:8},state:{load:true,brake:true}});__foldedProbe.carrier(8,16);__game.step(1);});
   let s=await page.evaluate(()=>__game.snapshot());if(s.lifts.find(l=>l.id==='carrier').y!==8||s.player.y!==8)throw Error('Lift moved through half-boarded hull');
   await page.evaluate(()=>{__game.scenario({player:{x:78,z:-71,y:8}});__game.step(2);});
   s=await page.evaluate(()=>__game.snapshot());if(s.player.y!==16)throw Error('Lift failed to carry a fully boarded hull');
-  await page.evaluate(()=>{__game.scenario({player:{x:32,y:24,z:22,phoenix:true},state:{cage:true,phoenix:true}});__game.interact();});
+  await page.evaluate(()=>{const refuge=__game.debug.world.hives.find(h=>h.id==='roof');__game.scenario({player:{x:refuge.x,y:refuge.y,z:refuge.z,phoenix:true},state:{cage:true,phoenix:true}});__game.interact();});
   await page.reload();await page.waitForFunction(()=>!!window.__game);s=await page.evaluate(()=>__game.snapshot());
   if(s.player.y!==24||!s.state.cage||!s.player.phoenix)throw Error('Upper refuge persistence failed');
   await page.keyboard.press('Escape');if(errors.length)throw Error(JSON.stringify(errors));

@@ -31,7 +31,8 @@ async page=>{
   await page.getByRole('button',{name:'返回设置',exact:true}).click();await page.getByLabel('视角',{exact:true}).selectOption('third');await tune();
   for(const name of ['俯仰角','跟随距离','镜头高度']){const slider=page.getByRole('slider',{name,exact:true});await slider.focus();await slider.press('End');}
   const ceiling=await page.evaluate(()=>{__game.scenario({player:{x:0,y:-16,z:50,hp:100,invincible:1e9}});__game.look(Math.PI,.95);__game.step(.1);return __game.snapshot().camera;});
-  if(ceiling.position[1]>-8.75)throw Error('Maximum camera settings bypassed ceiling collision');
+  // Camera obstruction is resolved by transparency, without shortening the boom.
+  if(Math.abs(ceiling.distance-Math.hypot(20,5,-1))>1e-6)throw Error('Ceiling changed the configured camera distance');
   await page.getByRole('button',{name:'恢复此视角默认',exact:true}).click();
   const defaults=await prefs();if(defaults.third.distance!==12||defaults.third.height!==1.6||defaults.third.shoulder!==1.2)throw Error('Third-person reset failed');
   await page.setViewportSize({width:640,height:600});

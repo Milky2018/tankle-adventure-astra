@@ -1,8 +1,10 @@
 async page=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.route('**/src/folded.js*',async route=>{
-    const response=await route.fetch();
-    await route.fulfill({response,body:await response.text()+`
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test&manual');
+  await page.waitForFunction(()=>window.__game?.debug);
+  await page.evaluate(()=>{
+    const {T,p,model,aim,shots,updateAim}=__game.debug;
+
 window.__heightAimProbe={
   sample(){
     const before=aim.clone();updateAim();const drift=before.distanceTo(aim);
@@ -11,10 +13,8 @@ window.__heightAimProbe={
   },
   shot:()=>shots.filter(s=>!s.hostile).map(s=>({dir:s.dir.clone(),mortar:s.mortar,origin:s.origin.clone(),target:s.target.clone()})),
   barrel:()=>new T.Vector3(0,0,1).transformDirection(model.barrel.matrixWorld)
-};`});
+};
   });
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');
-  await page.waitForFunction(()=>!!window.__heightAimProbe);await page.unroute('**/src/folded.js*');
   await page.evaluate(()=>window.__game.manual(true));
   async function setup(player){
     await page.evaluate(player=>{window.__game.setInput([]);window.__game.scenario({player:{hp:50,heat:0,overheated:false,lastHeat:-100,lastShot:-100,weapon:'cannon',...player}});window.__game.step(.2);},player);

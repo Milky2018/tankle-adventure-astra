@@ -1,17 +1,10 @@
 async page=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
-  await page.route('**/src/folded.js*',async route=>{
-    const response=await route.fetch();
-    await route.fulfill({response,body:await response.text()+`
-      window.__floorCheck={world,scene,renderer,camera};
-    `});
-  });
   await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');
-  await page.waitForFunction(()=>window.__floorCheck);
-  await page.unroute('**/src/folded.js*');
+  await page.waitForFunction(()=>window.__game?.debug);
   await page.evaluate(()=>{
-    __game.manual(true);__floorCheck.renderer.shadowMap.enabled=false;
+    __game.manual(true);__game.debug.renderer.shadowMap.enabled=false;
     __game.scenario({player:{x:0,y:-8,z:86,hp:50}});__game.step(.1);
   });
   async function sample(){
@@ -30,11 +23,11 @@ async page=>{
   if(difference(fixed)>14)throw Error('Continuous awakening floor has a false hole: '+JSON.stringify(fixed));
   await page.screenshot({path:'v2/output/playwright/polish-pass/floor-fixed.png'});
   // Counterfactual: removing only the depth pass must reproduce the original false hole.
-  await page.evaluate(()=>__floorCheck.scene.traverse(o=>{if(o.name.startsWith('folded-floor-depth:'))o.visible=false;}));
+  await page.evaluate(()=>__game.debug.scene.traverse(o=>{if(o.name.startsWith('folded-floor-depth:'))o.visible=false;}));
   const broken=await sample();
   if(difference(broken)<30)throw Error('Floor reproduction no longer exercises lower-structure overdraw: '+JSON.stringify(broken));
   await page.screenshot({path:'v2/output/playwright/polish-pass/floor-counterfactual.png'});
-  await page.evaluate(()=>{__floorCheck.scene.traverse(o=>{if(o.name.startsWith('folded-floor-depth:'))o.visible=true;});__floorCheck.renderer.shadowMap.enabled=true;});
+  await page.evaluate(()=>{__game.debug.scene.traverse(o=>{if(o.name.startsWith('folded-floor-depth:'))o.visible=true;});__game.debug.renderer.shadowMap.enabled=true;});
   const samples=[];
   for(const [name,x,y,z] of [['relay',-35,-16,49],['hub',0,0,27],['canal',0,-16,-4],['carrier',90,0,-18],['optics',216,24,-20],['inner',254,-24,132]]){
     await page.evaluate(([x,y,z])=>{__game.scenario({player:{x,y,z,hp:50,invincible:1e9}});__game.step(.7);},[x,y,z]);

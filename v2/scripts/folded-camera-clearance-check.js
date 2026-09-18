@@ -1,10 +1,7 @@
 async page=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.route('**/src/folded.js*',async route=>{
-    const response=await route.fetch();await route.fulfill({response,body:await response.text()+`\nwindow.__clearanceProbe={world,follow};`});
-  });
   await page.goto('http://127.0.0.1:5174/?chapter=folded&view=third&route=foundry&test');
-  await page.waitForFunction(()=>window.__clearanceProbe);await page.unroute('**/src/folded.js*');
+  await page.waitForFunction(()=>window.__game?.debug);
   await page.evaluate(()=>{__game.manual(true);__game.scenario({player:{x:-4,y:-8,z:85.2,hp:100,invincible:1e9}});__game.look(Math.PI,.32);__game.step(.2);});
   await page.keyboard.down('d');
   const crossing=await page.evaluate(()=>{
@@ -21,11 +18,11 @@ async page=>{
     ['wall',-40,-16,49,Math.PI/2,.1]
   ]){
     // The raised default shoulder no longer enters a low post; retain containment coverage at a supported low setting.
-    await page.evaluate(({name,x,y,z,yaw,pitch})=>{__clearanceProbe.follow.height=name==='save-camera'?.2:1.6;__game.scenario({player:{x,y,z,hp:100,invincible:1e9},state:{'relay-west':false}});__game.look(yaw,pitch);__game.step(.5);},{name,x,y,z,yaw,pitch});
+    await page.evaluate(({name,x,y,z,yaw,pitch})=>{__game.debug.follow.height=name==='save-camera'?.2:1.6;__game.scenario({player:{x,y,z,hp:100,invincible:1e9},state:{'relay-west':false}});__game.look(yaw,pitch);__game.step(.5);},{name,x,y,z,yaw,pitch});
     const s=await page.evaluate(()=>__game.snapshot());
     if(name.startsWith('save')&&s.camera.distance<10)throw Error(`${name}: repair machinery still pushes the camera`);
     if(name==='save-camera'){
-      const inside=await page.evaluate(()=>__clearanceProbe.world.occluders.filter(o=>o.owner?.id==='awakening').some(o=>o.meshes.some(m=>m.cameraBounds?.containsPoint(__clearanceProbe.follow.camera.position)&&m.mesh.material.opacity<.4)));
+      const inside=await page.evaluate(()=>__game.debug.world.occluders.filter(o=>o.owner?.id==='awakening').some(o=>o.meshes.some(m=>m.cameraBounds?.containsPoint(__game.debug.follow.camera.position)&&m.mesh.material.opacity<.4)));
       if(!inside)throw Error('The inside-post fixture did not exercise translucent camera containment');
     }
     if(name==='wall'&&s.camera.distance>7)throw Error('Solid wall stopped obstructing the camera');
@@ -34,7 +31,7 @@ async page=>{
   }
   await page.evaluate(()=>{__game.scenario({player:{x:2.4,y:-8,z:85.2}});__game.look(Math.PI,.32);__game.step(1);});
   const opacity=await page.evaluate(()=>{
-    const h=__clearanceProbe.world.hives.find(h=>h.id==='awakening'),posts=[];
+    const h=__game.debug.world.hives.find(h=>h.id==='awakening'),posts=[];
     h.root.traverse(m=>{if(m.isMesh&&Math.abs(m.position.x)===2.4&&m.position.y===1.4)posts.push({x:m.position.x,opacity:m.material.opacity});});return posts;
   });
   if(opacity.find(p=>p.x>0)?.opacity>.4)throw Error('The obstructing post did not become translucent');
@@ -48,7 +45,7 @@ async page=>{
   await page.keyboard.press('Escape');await page.getByLabel('视角',{exact:true}).selectOption('overhead');
   const overhead=await page.evaluate(()=>__game.snapshot());if(overhead.camera.view!=='overhead')throw Error('Overhead view was lost');
   const restored=await page.evaluate(()=>{
-    const h=__clearanceProbe.world.hives.find(h=>h.id==='awakening');let valid=true;
+    const h=__game.debug.world.hives.find(h=>h.id==='awakening');let valid=true;
     h.root.traverse(m=>{if(m.isMesh&&Math.abs(m.position.x)===2.4&&m.position.y===1.4&&m.material.opacity<.99)valid=false;});return valid;
   });
   if(!restored)throw Error('Third-person prop fading leaked into overhead view');

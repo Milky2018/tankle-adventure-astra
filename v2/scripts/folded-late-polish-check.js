@@ -3,9 +3,8 @@
 async page=>{
   const errors=[],runs=[];page.on('pageerror',e=>errors.push(e.message));
   await page.setViewportSize({width:1440,height:900});
-  await page.route('**/src/folded.js*',async route=>{const r=await route.fetch();await route.fulfill({response:r,body:await r.text()+'\nwindow.__late={world,scene,T};'});});
   for(const view of ['overhead','third']){
-    await page.goto(`http://127.0.0.1:5174/?chapter=folded&view=${view}&test`);await page.waitForFunction(()=>window.__late);
+    await page.goto(`http://127.0.0.1:5174/?chapter=folded&view=${view}&test`);await page.waitForFunction(()=>window.__game?.debug);
     await page.evaluate(()=>{__game.manual(true);__game.scenario({state:{keeper:false,'last-cage':false,endingSeen:false},player:{endingTime:0},enemies:Object.fromEntries(__game.snapshot().enemies.map(e=>[e.id,0]))});});
     async function aim(x,z,y){
       if(view==='third'&&!await page.evaluate(()=>!!document.pointerLockElement)){await page.mouse.click(720,450);await page.waitForFunction(()=>!!document.pointerLockElement);}
@@ -22,26 +21,26 @@ async page=>{
     }
     await page.evaluate(()=>{
       __game.scenario({player:{x:78,y:8,z:-61,hp:50},state:{load:false,brake:false}});
-      const l=__late.world.lifts.find(l=>l.id==='carrier');l.y=l.destination=8;l.wait=3;__game.step(.1);
+      const l=__game.debug.world.lifts.find(l=>l.id==='carrier');l.y=l.destination=8;l.wait=3;__game.step(.1);
     });
     const covered=await page.evaluate(()=>{
-      const {world,T}=__late,c=world.controls.find(c=>c.id==='brake');
+      const {world,T}=__game.debug,c=world.controls.find(c=>c.id==='brake');
       const hit=world.cast(new T.Vector3(78,18,-70),new T.Vector3(0,0,-1),12);
       return {ready:c.ready,cover:c.cover.position.y,blocked:hit?.blockedTarget?.id};
     });
     if(covered.ready||covered.cover>.1||covered.blocked!=='brake')throw Error('Unaligned carrier target is not physically covered '+JSON.stringify(covered));
     await page.evaluate(()=>{
       __game.scenario({player:{x:78,y:16,z:-71,weapon:'cannon',heat:0,overheated:false},state:{load:true,brake:false}});
-      const l=__late.world.lifts.find(l=>l.id==='carrier');l.y=16;l.destination=8;l.wait=3;__game.step(.4);
+      const l=__game.debug.world.lifts.find(l=>l.id==='carrier');l.y=16;l.destination=8;l.wait=3;__game.step(.4);
     });
     await shot(78,-77.7,18,'brake');
     await page.screenshot({path:`v2/output/playwright/late-polish/carrier-${view}.png`});
     await page.evaluate(()=>{__game.scenario({player:{x:242,y:24,z:-4,weapon:'cannon',laser:true,heat:0,overheated:false},state:{'mirror-index':false}});__game.step(1);});
-    const original=await page.evaluate(()=>__late.world.mirrors.find(m=>m.index).normal.toArray());
+    const original=await page.evaluate(()=>__game.debug.world.mirrors.find(m=>m.index).normal.toArray());
     await shot(238,-4,25.3,'mirror-index');
     const rotation=await page.evaluate(original=>{
-      const m=__late.world.mirrors.find(m=>m.index),lamp=__late.scene.getObjectByName('folded-mirror-link').children.at(-1);
-      return {distance:m.normal.distanceTo(new __late.T.Vector3(...original)),lamp:lamp.material.color.getHex()};
+      const m=__game.debug.world.mirrors.find(m=>m.index),lamp=__game.debug.scene.getObjectByName('folded-mirror-link').children.at(-1);
+      return {distance:m.normal.distanceTo(new __game.debug.T.Vector3(...original)),lamp:lamp.material.color.getHex()};
     },original);
     if(rotation.distance<.1)throw Error('Shot paddle did not turn the actual mirror');
     await page.screenshot({path:`v2/output/playwright/late-polish/mirror-${view}.png`});
@@ -83,5 +82,5 @@ async page=>{
     if(await page.evaluate(()=>__game.snapshot().state.keeper))throw Error('Bay traversal incorrectly granted keeper completion');
     runs.push({view,covered,rotation,fightHp,transit});
   }
-  await page.unroute('**/src/folded.js*');if(errors.length)throw Error(errors.join('\n'));return {runs,errors};
+  if(errors.length)throw Error(errors.join('\n'));return {runs,errors};
 }

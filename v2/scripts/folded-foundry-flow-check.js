@@ -18,7 +18,7 @@ async page=>{
    };
   });
   const milestones=[];
-  async function capture(name){await page.evaluate(()=>{__game.setInput([]);__game.step(0);});const s=await page.evaluate(()=>__game.snapshot());await page.screenshot({path:`output/playwright/rooms/flow-${view}-${name}.png`});milestones.push({name,hp:s.player.hp,time:s.time,position:[s.player.x,s.player.y,s.player.z]});}
+  async function capture(name){await page.evaluate(()=>{__game.setInput([]);__game.step(0);});const s=await page.evaluate(()=>__game.snapshot());await page.screenshot({path:`v2/output/playwright/rooms/flow-${view}-${name}.png`});milestones.push({name,hp:s.player.hp,time:s.time,position:[s.player.x,s.player.y,s.player.z]});}
   async function move(x,z,boost=false){
    const r=await page.evaluate(({x,z,boost})=>{
     const g=__game;let stall=0,last=Infinity;

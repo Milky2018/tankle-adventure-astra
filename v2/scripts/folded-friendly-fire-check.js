@@ -1,9 +1,8 @@
 async page=>{
- await page.route('**/src/folded.js*',async route=>{const response=await route.fetch();await route.fulfill({response,body:(await response.text()).replace('let manual=false','let manual=true')+'\nwindow.__crossfire={world,p,T,shootEnemy,updateShots,impact,clearShots};'});});
- try{
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>window.__crossfire);
+
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test&manual');await page.waitForFunction(()=>window.__game?.debug);
   return await page.evaluate(()=>{
-   const a=__crossfire,{world:w,T}=a;__game.manual(true);a.clearShots();for(const e of w.enemies)e.hp=0;
+   const a=__game.debug,{world:w,T}=a;__game.manual(true);a.clearShots();for(const e of w.enemies)e.hp=0;
    const [shooter,ally,behind]=w.enemies.filter(e=>!e.persistent).slice(0,3);
    function body(e,x,y,z){Object.assign(e,{x,y,z,hp:10,max:10,type:'turret',guardian:false,persistent:false,phase:'idle',parts:[],radius:1});}
    function fly(){for(let i=0;i<150;i++)a.updateShots(1/60);}
@@ -26,5 +25,4 @@ async page=>{
    if(ally.hp!==10||a.p.hp!==50)throw Error('Crossfire breached sanctuary');
    return {direct,mortar,cover:true,sanctuary:true};
   });
- }finally{await page.unroute('**/src/folded.js*');}
 }

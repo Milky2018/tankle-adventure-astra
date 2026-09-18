@@ -2,18 +2,15 @@ async page=>{
   await page.setViewportSize({width:1280,height:720});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{HTMLCanvasElement.prototype.requestPointerLock=()=>Promise.reject(new Error('Test capture denial'));});
-  await page.route('**/src/folded.js*',async route=>{
-    const response=await route.fetch();await route.fulfill({response,body:await response.text()+`
-      const counts={camera:0,aim:0},originalCamera=updateCamera,originalAim=updateAim;
-      updateCamera=function(...args){counts.camera++;return originalCamera(...args);};
-      updateAim=function(...args){counts.aim++;return originalAim(...args);};
-      window.__mouseSchedule={counts,reset:()=>{counts.camera=counts.aim=0;},sample:()=>{
-        const direction=camera.getWorldDirection(new T.Vector3());
-        return {yaw:follow.yaw,cameraYaw:Math.atan2(direction.x,direction.z),heading:p.heading,heat:p.heat};
-      }};
-    `});
+  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=third&test&manual');await page.waitForFunction(()=>window.__game?.debug);
+  await page.evaluate(()=>{
+    const q=__game.debug;
+    window.__mouseSchedule={
+      get counts(){return {camera:q.profile.stats.camera?.count||0,aim:q.profile.stats.aim?.count||0};},
+      reset:()=>q.profile.start({gpu:false}),
+      sample:()=>{const direction=q.camera.getWorldDirection(new q.T.Vector3());return {yaw:q.follow.yaw,cameraYaw:Math.atan2(direction.x,direction.z),heading:q.p.heading,heat:q.p.heat};}
+    };
   });
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=third&test');await page.waitForFunction(()=>window.__mouseSchedule);
   await page.evaluate(()=>{__game.manual(true);__game.scenario({player:{x:0,y:-8,z:86,hp:100,heat:0,overheated:false,lastShot:-100,invincible:1e9}});__game.look(0,.15);});
   await page.locator('#game').click({position:{x:600,y:360}});await page.waitForFunction(()=>__game.snapshot().camera.dragLook);
   await page.mouse.down({button:'middle'});
@@ -38,7 +35,7 @@ async page=>{
   await page.keyboard.press('Escape');
   const paused=await page.evaluate(()=>{const before=__mouseSchedule.sample().yaw;document.dispatchEvent(new MouseEvent('mousemove',{movementX:100,bubbles:true}));return __mouseSchedule.sample().yaw===before;});
   if(!paused)throw Error('Paused mouse input changed the view');
-  await page.unroute('**/src/folded.js*');
+  await page.evaluate(()=>__game.debug.profile.stop());
   if(errors.length)throw Error(errors.join('\n'));
   return {burst,click,paused,errors};
 }

@@ -1,4 +1,4 @@
-import {transportSolids,stepTransport} from './folded-transport.js';
+import {stepTransport} from './folded-transport.js';
 import {groundPatches} from './folded-ground.js';
 import {makeSidePuzzles} from './folded-side-puzzles.js';
 import {architectureIndex,REGION_STYLE} from './folded-architecture.js';
@@ -15,11 +15,13 @@ import {SIGNAL,makeAperture,cameraApertureOpacity,apertureOpacity,APERTURE_AIM_T
 import {foldedEnemyModel,prepareEnemyMaterials} from './folded-enemies.js';
 import {cityBelts,cityMirrors} from './folded-city-layout.js';
 import * as T from 'three';
-import {box,cylinder,ring,mat,C,tankModel,batchStatic,chargeWarning} from './world.js';
+import {box,cylinder,ring,mat,C,tankModel,batchStatic as batchGeometry,chargeWarning} from './world.js';
 import {renderDecks} from './hoist-layout.js';
-import {foldedDecks,foldedLiftDefs,foldedSolids,foldedControls,foldedHives,foldedPickups,foldedEnemies,activeSolid,inRect,deckHeight} from './folded-layout.js';
+import {foldedDecks,foldedLiftDefs,foldedControls,foldedHives,foldedPickups,foldedEnemies,activeSolid,inRect,deckHeight} from './folded-layout.js';
 
-export function makeFoldedWorld(scene,state){
+export function makeFoldedWorld(scene,state,{batching=true}={}){
+  const batchStatic=batching?batchGeometry:()=>{};
+  const foldedSolids=state.bodies.solids,transportSolids=foldedSolids.filter(s=>s.motion);
   const sidePuzzles=makeSidePuzzles(scene,state);
   const aperture=makeAperture(),viewPlayer={x:0,y:0,z:0};
   const presentation=makeCityPresentation(scene,aperture);
@@ -336,7 +338,7 @@ export function makeFoldedWorld(scene,state){
     }
     if(magnetPullable(e)){for(const side of [-1,1])box(model.body,.2,.38,1,side*.75,1.1,0,mat(SIGNAL.magnet,true),0);}
     if(e.magneticShield&&model.frontArmor){model.frontArmor.material=mat(SIGNAL.magnet);for(const x of [-.7,.7])box(model.frontArmor,.3,.55,.12,x,0,.34,mat(0xa9dcff,true));}
-    const materials=prepareEnemyMaterials(model);
+    const materials=prepareEnemyMaterials(model,{batching});
     const warningGeometry=new T.BufferGeometry().setAttribute('position',new T.BufferAttribute(new Float32Array(e.type==='welder'?45:6),3).setUsage(T.DynamicDrawUsage));warningGeometry.setDrawRange(0,2);
     const warning=new T.Line(warningGeometry,new T.LineBasicMaterial({color:e.type==='sniper'?0xff263c:C.orange,transparent:true,opacity:.95}));scene.add(warning);warning.visible=false;warning.frustumCulled=false;
     if(e.type==='boss')model.root.scale.setScalar(1.8);

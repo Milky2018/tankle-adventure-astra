@@ -1,11 +1,10 @@
 async page=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.route('**/src/folded.js*',async route=>{const r=await route.fetch();let source=(await r.text()).replace('let manual=false','let manual=true');source=source.replace('function shootEnemy(e,offset=0,source=null,target=e.lock,delay=0,lob=false){','function shootEnemy(e,offset=0,source=null,target=e.lock,delay=0,lob=false){ window.__enemyShots?.push({id:e.id,lob,time});');await route.fulfill({response:r,body:source+'\nwindow.__balance={T,p,state,world,resetEnemies,clearShots,respawn,setPause,setCameraView,get time(){return time;}};window.__enemyShots=[];'});});
- try{
- await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>window.__balance);await page.setViewportSize({width:1440,height:900});
+
+ await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test&manual');await page.waitForFunction(()=>window.__game?.debug);await page.evaluate(()=>__game.debug.traceCombat());await page.setViewportSize({width:1440,height:900});
  const results=await page.evaluate(()=>{
-  const a=__balance,g=__game,T=a.T;
-  function setup(player){a.state.keeper=false;a.respawn();a.setPause(false);a.clearShots();a.resetEnemies();for(const e of a.world.enemies){e.hp=0;e.model.root.visible=false;}g.scenario({player:{hp:50,heat:0,overheated:false,weapon:'mortar',mortar:true,laser:true,lastShot:-100,shotCooldown:0,...player}});__enemyShots.length=0;}
+  const a=__game.debug,g=__game,T=a.T;
+  function setup(player){a.state.keeper=false;a.respawn();a.setPause(false);a.clearShots();a.resetEnemies();for(const e of a.world.enemies){e.hp=0;e.model.root.visible=false;}g.scenario({player:{hp:50,heat:0,overheated:false,weapon:'mortar',mortar:true,laser:true,lastShot:-100,shotCooldown:0,...player}});__game.debug.enemyShots.length=0;}
   const covers=[];
   for(const x of [-14,14]){
    setup({x,y:-56,z:46});const e=a.world.enemies.find(e=>e.id==='keeper');e.hp=e.max;e.model.root.visible=true;
@@ -14,7 +13,7 @@ async page=>{
    for(let i=0;i<2400&&a.p.hp>0&&e.hp>0;i++){
     const t=e.parts.find(t=>t.hp>0)||{x:e.x,y:e.y+1.5,z:e.z};g.aimAt(t.x,t.z,t.y);g.setInput(['Mouse0']);g.step(1/60,false);phases.add(e.phase+'/'+e.attack);if(e.zone.visible&&e.attack==='barrage')warned=true;if(a.p.hp<50&&firstHit===null)firstHit=i/60;
    }
-   g.setInput([]);covers.push({x,blocked,hp:a.p.hp,bossHP:e.hp,warned,firstHit,lobs:__enemyShots.filter(s=>s.lob).length,phases:[...phases]});
+   g.setInput([]);covers.push({x,blocked,hp:a.p.hp,bossHP:e.hp,warned,firstHit,lobs:__game.debug.enemyShots.filter(s=>s.lob).length,phases:[...phases]});
   }
   const mobility=[];
   for(const type of ['scout','turret','guard','skirmisher','sniper','artillery','miner','welder','reflector','elite']){
@@ -31,7 +30,7 @@ async page=>{
  if(results.mobility.some(r=>r.attacks<2||r.type!=='turret'&&r.distance<2))throw Error('Enemy pressure failed '+JSON.stringify(results));
  if(Math.abs(results.laser.damage-1.35)>.02)throw Error('Laser damage failed '+JSON.stringify(results));
  await page.evaluate(()=>{
-  const a=__balance,g=__game;a.state.keeper=false;a.respawn();a.setPause(false);a.clearShots();a.resetEnemies();
+  const a=__game.debug,g=__game;a.state.keeper=false;a.respawn();a.setPause(false);a.clearShots();a.resetEnemies();
   for(const e of a.world.enemies){e.hp=0;e.model.root.visible=false;}
   g.scenario({player:{x:14,y:-56,z:46,hp:50,heat:0,overheated:false,weapon:'mortar',mortar:true,lastShot:-100}});
   const e=a.world.enemies.find(e=>e.id==='keeper');e.hp=e.max;e.model.root.visible=true;const t=e.parts[1];g.aimAt(t.x,t.z,t.y);g.fire();
@@ -40,5 +39,4 @@ async page=>{
  });
  await page.screenshot({path:'v2/output/playwright/balance/keeper-warning.png'});
  if(errors.length)throw Error(JSON.stringify(errors));return {...results,errors};
- }finally{if(!page.isClosed())await page.unroute('**/src/folded.js*');}
 }
