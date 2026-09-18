@@ -4,7 +4,7 @@ import {makeSidePuzzles} from './folded-side-puzzles.js';
 import {architectureIndex,REGION_STYLE} from './folded-architecture.js';
 import {magnetPullable} from './folded-combat.js';
 import {REFUGE_RADIUS} from './folded-refuges.js';
-import {SORTER_REACH} from './folded-attacks.js';
+import {SORTER_REACH,BARRAGE} from './folded-attacks.js';
 import {mechanismReady} from './folded-pacing.js';
 import {expansionBattles,expansionMirrors,expansionBelts} from './folded-expansion-layout.js';
 import {circuitLinks,circuitColor} from './folded-circuits.js';
@@ -150,10 +150,16 @@ export function makeFoldedWorld(scene,state){
     if(!d.permanent){
       for(const side of [-1,1])box(mesh,d.w>d.d?.24:d.w+.12,d.h+.3,d.w>d.d?d.d+.12:.24,d.w>d.d?side*(d.w/2-.15):0,0,d.w>d.d?0:side*(d.d/2-.15),C.metal,0);
     }
+    if(d.arena){
+      const across=d.w>d.d;
+      for(let t=-Math.max(d.w,d.d)/2+.7;t<Math.max(d.w,d.d)/2;t+=1.5){
+        const stripe=box(mesh,across?.65:d.w+.04,.18,across?d.d+.04:.65,across?t:0,.45,across?0:t,C.yellow,0);stripe.rotation.z=across?.35:0;
+      }
+    }
     if(gateAbility(d)){
       for(const side of [-1,1]){const emblem=new T.Mesh(new T.PlaneGeometry(2.2,2.2),iconMaterial(gateAbility(d)));emblem.position.set(d.d>d.w?side*(d.w/2+.04):0,.1,d.d>d.w?0:side*(d.d/2+.04));if(d.d>d.w)emblem.rotation.y=Math.PI/2;mesh.add(emblem);}
     }
-    mesh.material.transparent=true;walls.push({...d,mesh,opacity:1,open:state[d.id]?1:0});
+    mesh.material.transparent=true;walls.push({...d,mesh,opacity:1,open:activeSolid(d,state)?0:1});
   }
   // Status stays on the fixed jambs when a shutter retracts into its floor pocket.
   const gateSignals=[];
@@ -165,7 +171,7 @@ export function makeFoldedWorld(scene,state){
       box(root,.55,1.1,.55,x,.55,z,C.dark,0);
       lamps.push(box(root,.38,.18,.38,x,1.15,z,mat(SIGNAL.ready,true),0));
     }
-    gateSignals.push({id:d.id,root,lamps});floorDetails.push({root,x:root.position.x,y:d.y,z:root.position.z,radius:Math.max(d.w,d.d)/2});
+    gateSignals.push({id:d.id,arena:d.arena,root,lamps});floorDetails.push({root,x:root.position.x,y:d.y,z:root.position.z,radius:Math.max(d.w,d.d)/2});
   }
   function makeControl(c){
     const root=new T.Group();root.name=`folded-control:${c.id}`;root.position.set(c.x,c.y,c.z);scene.add(root);
@@ -338,11 +344,17 @@ export function makeFoldedWorld(scene,state){
     const flame=e.type==='welder'||e.id==='keeper'?new T.Mesh(new T.ConeGeometry(1,1,10,1,true),new T.MeshBasicMaterial({color:C.orange,transparent:true,opacity:.32,depthWrite:false,side:T.DoubleSide})):null;
     if(flame){scene.add(flame);flame.visible=false;}
     const supportBeam=new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(),new T.Vector3()]),new T.LineBasicMaterial({color:SIGNAL.open}));scene.add(supportBeam);supportBeam.visible=false;supportBeam.frustumCulled=false;
-    const batteryWarning=['keeper','foundry'].includes(e.id)?new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.BufferAttribute(new Float32Array(36),3).setUsage(T.DynamicDrawUsage)),new T.LineBasicMaterial({color:C.orange})):null;
+    const batteryWarning=['keeper','foundry','guardian','sorter'].includes(e.id)?new T.LineSegments(new T.BufferGeometry().setAttribute('position',new T.BufferAttribute(new Float32Array(240),3).setUsage(T.DynamicDrawUsage)),new T.LineBasicMaterial({color:C.orange})):null;
     if(batteryWarning){scene.add(batteryWarning);batteryWarning.visible=false;batteryWarning.frustumCulled=false;}
-    const deployment=e.wave?ring(scene,2,.1,e.x,e.y+.09,e.z,mat(SIGNAL.ready,true)):null;
+    const deployment=e.wave||e.reserveFor?ring(scene,2,.1,e.x,e.y+.09,e.z,mat(SIGNAL.ready,true)):null;
     if(deployment)floorDetails.push({root:deployment,x:e.x,y:e.y,z:e.z,radius:2.2});
-    const enemy={deployment,batteryWarning,charge,zone,flame,supportBeam,spawn:{x:e.x,y:e.y,z:e.z},...e,hp:e.persistent&&state[e.id]?0:e.hp,max:e.hp,model,materials,warning,phase:'idle',timer:e.startup??1,aim:Math.PI/2,flash:0,armor:0,ramAt:-10,shieldPull:0,shieldRemoved:false,radius:e.type==='boss'?3.2:e.guardian?2.4:e.type==='guard'?1.75:1.35};
+    const enemy={deployment,batteryWarning,charge,zone,flame,supportBeam,spawn:{x:e.x,y:e.y,z:e.z},...e,hp:e.reserveFor||e.persistent&&state[e.id]?0:e.hp,max:e.hp,model,materials,warning,phase:'idle',timer:e.startup??1,aim:Math.PI/2,flash:0,armor:0,ramAt:-10,shieldPull:0,shieldRemoved:false,radius:e.type==='boss'?3.2:e.guardian?2.4:e.type==='guard'?1.75:1.35};
+    enemy.barrageWarnings=batteryWarning?Array.from({length:3},()=>{const marker=ring(scene,BARRAGE.radius,.1,e.x,e.y+.12,e.z,mat(C.orange,true));marker.visible=false;return marker;}):[];
+    if(e.reserveFor){
+      const hatch=new T.Group();hatch.position.set(e.x,e.y+.03,e.z);scene.add(hatch);
+      ring(hatch,2.1,.15,0,0,0,C.metal);for(const side of [-1,1])box(hatch,3.5,.06,.18,0,.03,side*1.4,C.metal,0);
+      floorDetails.push({root:hatch,x:e.x,y:e.y,z:e.z,radius:2.3});
+    }
     enemy.parts=(e.parts||[]).map((hp,i)=>{
       const root=new T.Group();root.position.set(e.x+(i?4:-4),e.y,e.z);scene.add(root);
       box(root,2.4,1.6,2.8,0,.8,0,C.dark);const lamp=box(root,1.5,1.1,1.8,0,1.7,0,mat(C.orange,true));
@@ -728,7 +740,7 @@ export function makeFoldedWorld(scene,state){
       }
     }
     for(const feed of relayFeeds)feed.lamps.forEach((lamp,i)=>lamp.material.color.setHex(feedColor(feed,i,time)));
-    for(const feed of gateSignals)feed.lamps.forEach((lamp,i)=>lamp.material.color.setHex(feedColor(feed,i,time)));
+    for(const feed of gateSignals)feed.lamps.forEach((lamp,i)=>lamp.material.color.setHex(feed.arena?state.combatArena===feed.arena?C.red:SIGNAL.open:feedColor(feed,i,time)));
     for(const feed of controlFeeds){
       const active=!!state[feed.id],elapsed=time-(releaseTimes.get(feed.id)??-Infinity);
       if(feed.resting===active&&(!active||elapsed>=feed.duration))continue;

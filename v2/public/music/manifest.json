@@ -1,0 +1,870 @@
+{
+  "title": "The City Remembers",
+  "version": 2,
+  "sampleRate": 44100,
+  "attribution": "Clockwork Crypt retains the historical Dies irae incipit. Ten independent new compositions; locally synthesized instruments. No game recordings or external samples.",
+  "tracks": [
+    {
+      "id": "clockwork-crypt",
+      "title": "Clockwork Crypt",
+      "zh": "齿轮古堡",
+      "region": "foundry",
+      "bpm": 96,
+      "kind": "region",
+      "description": "保留的齿轮主题：拨弦、簧管与唯一的管风琴。新增钟匠回廊和齿轮合奏段。",
+      "genre": "Gothic clockwork",
+      "meter": "4/4",
+      "sampleRate": 44100,
+      "frames": 4851000,
+      "duration": 110.0,
+      "loopStartFrame": 441000,
+      "loopEndFrameExclusive": 4851000,
+      "loopStart": 10.0,
+      "loopEnd": 110.0,
+      "assets": {
+        "bed": "clockwork-crypt-bed.flac",
+        "melody": "clockwork-crypt-melody.flac",
+        "pulse": "clockwork-crypt-pulse.flac"
+      },
+      "preview": "clockwork-crypt-preview.mp3",
+      "explorationPulse": 0.7,
+      "sections": [
+        {
+          "bar": 1,
+          "name": "The original clockwork theme",
+          "energy": 1,
+          "time": 10.0
+        },
+        {
+          "bar": 21,
+          "name": "The clockmaker gallery",
+          "energy": 0.75,
+          "time": 60.0
+        },
+        {
+          "bar": 29,
+          "name": "Gears interlock",
+          "energy": 1.12,
+          "time": 80.0
+        }
+      ],
+      "instruments": [
+        "anvil",
+        "bass",
+        "gear",
+        "harp",
+        "kick",
+        "lead",
+        "organ",
+        "snare",
+        "strings"
+      ],
+      "peakDbfs": -4.061460178180085,
+      "rmsDbfs": -16.80000008911194,
+      "seamDelta": 0.012155238538980484,
+      "adjacentDeltaP999": 0.09754875302314758
+    },
+    {
+      "id": "platform-zero",
+      "title": "Platform Zero",
+      "zh": "零号站台",
+      "region": "transit",
+      "bpm": 68,
+      "kind": "region",
+      "description": "降A大调的慢拍电钢琴、拨奏低音与刷奏；空站台里的温暖夜曲。",
+      "genre": "Electric-piano nocturne",
+      "meter": "4/4",
+      "sampleRate": 44100,
+      "frames": 5292000,
+      "duration": 120.0,
+      "loopStartFrame": 311294,
+      "loopEndFrameExclusive": 5292000,
+      "loopStart": 7.058820861678004,
+      "loopEnd": 120.0,
+      "assets": {
+        "bed": "platform-zero-bed.flac",
+        "melody": "platform-zero-melody.flac",
+        "pulse": "platform-zero-pulse.flac"
+      },
+      "preview": "platform-zero-preview.mp3",
+      "explorationPulse": 0.32,
+      "sections": [
+        {
+          "bar": 1,
+          "name": "Empty departures",
+          "energy": 0.68,
+          "time": 7.058820861678004
+        },
+        {
+          "bar": 9,
+          "name": "A train once arrived",
+          "energy": 0.95,
+          "time": 35.29411497932506
+        },
+        {
+          "bar": 17,
+          "name": "The vacant platform",
+          "energy": 0.5,
+          "time": 63.52940909697212
+        },
+        {
+          "bar": 25,
+          "name": "Distant departures",
+          "energy": 0.8,
+          "time": 91.76470321461917
+        }
+      ],
+      "instruments": [
+        "brush",
+        "hat",
+        "kick",
+        "nylon",
+        "pluckbass",
+        "rhodes"
+      ],
+      "peakDbfs": -2.0474579382684253,
+      "rmsDbfs": -20.558548009668783,
+      "seamDelta": 1.453980803489685e-05,
+      "adjacentDeltaP999": 0.08138382434844971
+    },
+    {
+      "id": "water-remembers",
+      "title": "Water Remembers",
+      "zh": "水的记忆",
+      "region": "garden",
+      "bpm": 84,
+      "kind": "region",
+      "description": "六八拍木琴、拇指琴和气息长笛；水波、暗渠和开阔水面形成三个段落。",
+      "genre": "6/8 mallet water dance",
+      "meter": "6/8",
+      "sampleRate": 44100,
+      "frames": 4914000,
+      "duration": 111.42857142857143,
+      "loopStartFrame": 378000,
+      "loopEndFrameExclusive": 4914000,
+      "loopStart": 8.571428571428571,
+      "loopEnd": 111.42857142857143,
+      "assets": {
+        "bed": "water-remembers-bed.flac",
+        "melody": "water-remembers-melody.flac",
+        "pulse": "water-remembers-pulse.flac"
+      },
+      "preview": "water-remembers-preview.mp3",
+      "explorationPulse": 0.45,
+      "sections": [
+        {
+          "bar": 1,
+          "name": "First ripples",
+          "energy": 0.75,
+          "time": 8.571428571428571
+        },
+        {
+          "bar": 9,
+          "name": "Canal current",
+          "energy": 1,
+          "time": 25.714285714285715
+        },
+        {
+          "bar": 17,
+          "name": "Below the surface",
+          "energy": 0.5,
+          "time": 42.857142857142854
+        },
+        {
+          "bar": 25,
+          "name": "Sun on the water",
+          "energy": 0.9,
+          "time": 60.0
+        },
+        {
+          "bar": 33,
+          "name": "Open water",
+          "energy": 1.1,
+          "time": 77.14285714285714
+        },
+        {
+          "bar": 41,
+          "name": "Return current",
+          "energy": 0.65,
+          "time": 94.28571428571429
+        }
+      ],
+      "instruments": [
+        "brush",
+        "flute",
+        "kalimba",
+        "marimba",
+        "pluckbass",
+        "tom"
+      ],
+      "peakDbfs": -2.0474579382684253,
+      "rmsDbfs": -17.12976137112085,
+      "seamDelta": 0.0008779158815741539,
+      "adjacentDeltaP999": 0.07855561375617981
+    },
+    {
+      "id": "flight-test",
+      "title": "Flight Test",
+      "zh": "试飞轨道",
+      "region": "testworks",
+      "bpm": 140,
+      "kind": "region",
+      "description": "疾驰的模拟合成器与四拍底鼓；中途悬停蓄力，再进入双层琶音冲刺。",
+      "genre": "Analogue synth / motorik",
+      "meter": "4/4",
+      "sampleRate": 44100,
+      "frames": 5140800,
+      "duration": 116.57142857142857,
+      "loopStartFrame": 302400,
+      "loopEndFrameExclusive": 5140800,
+      "loopStart": 6.857142857142857,
+      "loopEnd": 116.57142857142857,
+      "assets": {
+        "bed": "flight-test-bed.flac",
+        "melody": "flight-test-melody.flac",
+        "pulse": "flight-test-pulse.flac"
+      },
+      "preview": "flight-test-preview.mp3",
+      "explorationPulse": 0.65,
+      "sections": [
+        {
+          "bar": 1,
+          "name": "Ignition",
+          "energy": 0.85,
+          "time": 6.857142857142857
+        },
+        {
+          "bar": 9,
+          "name": "Test straight",
+          "energy": 1.1,
+          "time": 20.57142857142857
+        },
+        {
+          "bar": 17,
+          "name": "Acceleration",
+          "energy": 1,
+          "time": 34.285714285714285
+        },
+        {
+          "bar": 25,
+          "name": "Engine suspended",
+          "energy": 0.42,
+          "time": 47.99999999999999
+        },
+        {
+          "bar": 33,
+          "name": "Phoenix release",
+          "energy": 1.2,
+          "time": 61.71428571428571
+        },
+        {
+          "bar": 41,
+          "name": "Open rail",
+          "energy": 1.1,
+          "time": 75.42857142857143
+        },
+        {
+          "bar": 49,
+          "name": "Full throttle",
+          "energy": 1.25,
+          "time": 89.14285714285714
+        },
+        {
+          "bar": 57,
+          "name": "Banked return",
+          "energy": 0.9,
+          "time": 102.85714285714286
+        }
+      ],
+      "instruments": [
+        "crash",
+        "hat",
+        "kick",
+        "pad",
+        "seq",
+        "snare",
+        "synthlead",
+        "tom"
+      ],
+      "peakDbfs": -2.0474585936094023,
+      "rmsDbfs": -20.305796099801018,
+      "seamDelta": 0.0005441978573799133,
+      "adjacentDeltaP999": 0.13252471387386322
+    },
+    {
+      "id": "unanswered-light",
+      "title": "Unanswered Light",
+      "zh": "无人应答的光",
+      "region": "optics",
+      "bpm": 80,
+      "kind": "region",
+      "description": "五四拍的冷色FM信号、玻璃泛音与缓慢移动的音场；不使用风琴或常规鼓组。",
+      "genre": "5/4 spectral ambient",
+      "meter": "5/4",
+      "sampleRate": 44100,
+      "frames": 5622750,
+      "duration": 127.5,
+      "loopStartFrame": 330750,
+      "loopEndFrameExclusive": 5622750,
+      "loopStart": 7.5,
+      "loopEnd": 127.5,
+      "assets": {
+        "bed": "unanswered-light-bed.flac",
+        "melody": "unanswered-light-melody.flac",
+        "pulse": "unanswered-light-pulse.flac"
+      },
+      "preview": "unanswered-light-preview.mp3",
+      "explorationPulse": 0.12,
+      "sections": [
+        {
+          "bar": 1,
+          "name": "An unanswered signal",
+          "energy": 0.65,
+          "time": 7.5
+        },
+        {
+          "bar": 9,
+          "name": "The glass constellation",
+          "energy": 0.92,
+          "time": 37.5
+        },
+        {
+          "bar": 17,
+          "name": "Vacuum",
+          "energy": 0.4,
+          "time": 67.5
+        },
+        {
+          "bar": 25,
+          "name": "Signal returns",
+          "energy": 0.8,
+          "time": 97.5
+        }
+      ],
+      "instruments": [
+        "bell",
+        "fmglass",
+        "pad",
+        "seq",
+        "sub",
+        "tick"
+      ],
+      "peakDbfs": -2.451456599855014,
+      "rmsDbfs": -18.50000047315237,
+      "seamDelta": 0.00043874233961105347,
+      "adjacentDeltaP999": 0.09047982096672058
+    },
+    {
+      "id": "second-heart",
+      "title": "Second Heart",
+      "zh": "第二颗心脏",
+      "region": "circulation",
+      "bpm": 110,
+      "kind": "region",
+      "description": "半拍重鼓、失真贝斯与短促铜管；阀门的切分节奏构成新的心跳。",
+      "genre": "Industrial trip-hop",
+      "meter": "4/4",
+      "sampleRate": 44100,
+      "frames": 5003346,
+      "duration": 113.45455782312925,
+      "loopStartFrame": 384873,
+      "loopEndFrameExclusive": 5003346,
+      "loopStart": 8.727278911564627,
+      "loopEnd": 113.45455782312925,
+      "assets": {
+        "bed": "second-heart-bed.flac",
+        "melody": "second-heart-melody.flac",
+        "pulse": "second-heart-pulse.flac"
+      },
+      "preview": "second-heart-preview.mp3",
+      "explorationPulse": 0.65,
+      "sections": [
+        {
+          "bar": 1,
+          "name": "Pressure valves",
+          "energy": 0.9,
+          "time": 8.727278911564627
+        },
+        {
+          "bar": 9,
+          "name": "The pump room",
+          "energy": 1.15,
+          "time": 26.181824366110078
+        },
+        {
+          "bar": 17,
+          "name": "Pressure release",
+          "energy": 0.5,
+          "time": 43.63636982065553
+        },
+        {
+          "bar": 25,
+          "name": "Repressurise",
+          "energy": 1,
+          "time": 61.090915275200985
+        },
+        {
+          "bar": 33,
+          "name": "All pumps working",
+          "energy": 1.2,
+          "time": 78.54546072974644
+        },
+        {
+          "bar": 41,
+          "name": "Return valve",
+          "energy": 0.65,
+          "time": 96.00000618429189
+        }
+      ],
+      "instruments": [
+        "anvil",
+        "brass",
+        "hat",
+        "kick",
+        "rhodes",
+        "snare",
+        "sub",
+        "tom"
+      ],
+      "peakDbfs": -2.0474585936094023,
+      "rmsDbfs": -18.218963246629542,
+      "seamDelta": 0.003648035228252411,
+      "adjacentDeltaP999": 0.22941136360168457
+    },
+    {
+      "id": "those-before-us",
+      "title": "Those Before Us",
+      "zh": "先行者",
+      "region": "furnace",
+      "bpm": 64,
+      "kind": "region",
+      "description": "裸露的大提琴与中提琴缓慢对答；没有鼓组和风琴，留下走向终点的重量。",
+      "genre": "Low-string elegy",
+      "meter": "4/4",
+      "sampleRate": 44100,
+      "frames": 5622750,
+      "duration": 127.5,
+      "loopStartFrame": 330750,
+      "loopEndFrameExclusive": 5622750,
+      "loopStart": 7.5,
+      "loopEnd": 127.5,
+      "assets": {
+        "bed": "those-before-us-bed.flac",
+        "melody": "those-before-us-melody.flac",
+        "pulse": "those-before-us-pulse.flac"
+      },
+      "preview": "those-before-us-preview.mp3",
+      "explorationPulse": 0,
+      "sections": [
+        {
+          "bar": 1,
+          "name": "The abandoned carriers",
+          "energy": 0.65,
+          "time": 7.5
+        },
+        {
+          "bar": 9,
+          "name": "Names without voices",
+          "energy": 0.92,
+          "time": 37.5
+        },
+        {
+          "bar": 17,
+          "name": "An empty cradle",
+          "energy": 0.45,
+          "time": 67.5
+        },
+        {
+          "bar": 25,
+          "name": "Carrying their memory",
+          "energy": 0.85,
+          "time": 97.5
+        }
+      ],
+      "instruments": [
+        "cello",
+        "spiccato",
+        "strings"
+      ],
+      "peakDbfs": -2.84512476032798,
+      "rmsDbfs": -18.499999928644154,
+      "seamDelta": 0.0033351900056004524,
+      "adjacentDeltaP999": 0.05169549584388733
+    },
+    {
+      "id": "iron-vigil",
+      "title": "Iron Vigil",
+      "zh": "钢铁守夜",
+      "region": "foundry",
+      "bpm": 148,
+      "kind": "battle",
+      "description": "闷音动力和弦、重型破拍和铁砧冲击；低频停顿后连续推进，摆脱原来的轻巧古堡旋律。",
+      "genre": "Industrial metal / breakbeat",
+      "meter": "4/4",
+      "sampleRate": 44100,
+      "frames": 6007135,
+      "duration": 136.21621315192743,
+      "loopStartFrame": 286054,
+      "loopEndFrameExclusive": 6007135,
+      "loopStart": 6.486485260770975,
+      "loopEnd": 136.21621315192743,
+      "assets": {
+        "mix": "iron-vigil.flac"
+      },
+      "preview": "iron-vigil-preview.mp3",
+      "explorationPulse": 1,
+      "sections": [
+        {
+          "bar": 1,
+          "name": "Steel impact",
+          "energy": 1,
+          "time": 6.486485260770975
+        },
+        {
+          "bar": 9,
+          "name": "Closing jaws",
+          "energy": 1.12,
+          "time": 19.45945823374395
+        },
+        {
+          "bar": 17,
+          "name": "No retreat",
+          "energy": 1.2,
+          "time": 32.43243120671692
+        },
+        {
+          "bar": 25,
+          "name": "Crossfire",
+          "energy": 1.25,
+          "time": 45.405404179689896
+        },
+        {
+          "bar": 33,
+          "name": "Hydraulic weight",
+          "energy": 0.55,
+          "time": 58.37837715266287
+        },
+        {
+          "bar": 41,
+          "name": "Pressure rising",
+          "energy": 0.85,
+          "time": 71.35135012563585
+        },
+        {
+          "bar": 49,
+          "name": "Hammer charge",
+          "energy": 1.25,
+          "time": 84.32432309860882
+        },
+        {
+          "bar": 57,
+          "name": "Furnace surge",
+          "energy": 1.3,
+          "time": 97.2972960715818
+        },
+        {
+          "bar": 65,
+          "name": "Last resistance",
+          "energy": 1.15,
+          "time": 110.27026904455477
+        },
+        {
+          "bar": 73,
+          "name": "Steel return",
+          "energy": 1.1,
+          "time": 123.24324201752773
+        }
+      ],
+      "instruments": [
+        "anvil",
+        "brass",
+        "crash",
+        "guitar",
+        "hat",
+        "kick",
+        "slam",
+        "snare",
+        "sub",
+        "tom"
+      ],
+      "peakDbfs": -2.7546542776254617,
+      "rmsDbfs": -15.75012306329311,
+      "seamDelta": 0.001100420020520687,
+      "adjacentDeltaP999": 0.3681803345680237
+    },
+    {
+      "id": "mirror-hunt",
+      "title": "Mirror Hunt",
+      "zh": "镜中追猎",
+      "region": "optics",
+      "bpm": 140,
+      "kind": "battle",
+      "description": "七八拍追逐、半音擦弦和失谐金属；短暂抽空后突然合击，形成不稳定的恐怖感。",
+      "genre": "7/8 horror pursuit",
+      "meter": "7/8",
+      "sampleRate": 44100,
+      "frames": 5556600,
+      "duration": 126.0,
+      "loopStartFrame": 264600,
+      "loopEndFrameExclusive": 5556600,
+      "loopStart": 6.0,
+      "loopEnd": 126.0,
+      "assets": {
+        "mix": "mirror-hunt.flac"
+      },
+      "preview": "mirror-hunt-preview.mp3",
+      "explorationPulse": 1,
+      "sections": [
+        {
+          "bar": 1,
+          "name": "The hunter wakes",
+          "energy": 0.9,
+          "time": 6.0
+        },
+        {
+          "bar": 9,
+          "name": "Second shadow",
+          "energy": 1.05,
+          "time": 18.0
+        },
+        {
+          "bar": 17,
+          "name": "No reflection is safe",
+          "energy": 1.2,
+          "time": 30.0
+        },
+        {
+          "bar": 25,
+          "name": "Fracture",
+          "energy": 1.25,
+          "time": 42.0
+        },
+        {
+          "bar": 33,
+          "name": "The light goes out",
+          "energy": 0.42,
+          "time": 54.0
+        },
+        {
+          "bar": 41,
+          "name": "Footsteps return",
+          "energy": 0.78,
+          "time": 66.0
+        },
+        {
+          "bar": 49,
+          "name": "Pursuit resumes",
+          "energy": 1.18,
+          "time": 78.0
+        },
+        {
+          "bar": 57,
+          "name": "All mirrors awake",
+          "energy": 1.3,
+          "time": 90.0
+        },
+        {
+          "bar": 65,
+          "name": "Closing distance",
+          "energy": 1.15,
+          "time": 102.0
+        },
+        {
+          "bar": 73,
+          "name": "Unfinished pursuit",
+          "energy": 1,
+          "time": 114.0
+        }
+      ],
+      "instruments": [
+        "crash",
+        "metalbow",
+        "slam",
+        "snare",
+        "spiccato",
+        "sub",
+        "taiko",
+        "tick",
+        "tremolo"
+      ],
+      "peakDbfs": -2.55954966891923,
+      "rmsDbfs": -15.649356767896634,
+      "seamDelta": 0.03467719256877899,
+      "adjacentDeltaP999": 0.4148849546909332
+    },
+    {
+      "id": "last-keeper",
+      "title": "The Last Keeper",
+      "zh": "最后的守望者",
+      "region": "furnace",
+      "bpm": 96,
+      "kind": "battle",
+      "description": "低铜管、弦乐急奏、定音鼓与大鼓；由围城推进到悲剧慢段，再进入完整终战高潮。",
+      "genre": "Symphonic siege",
+      "meter": "4/4",
+      "sampleRate": 44100,
+      "frames": 7497000,
+      "duration": 170.0,
+      "loopStartFrame": 441000,
+      "loopEndFrameExclusive": 7497000,
+      "loopStart": 10.0,
+      "loopEnd": 170.0,
+      "assets": {
+        "mix": "last-keeper.flac"
+      },
+      "preview": "last-keeper-preview.mp3",
+      "explorationPulse": 1,
+      "sections": [
+        {
+          "bar": 1,
+          "name": "The last gate",
+          "energy": 0.9,
+          "time": 10.0
+        },
+        {
+          "bar": 9,
+          "name": "The siege advances",
+          "energy": 1,
+          "time": 30.0
+        },
+        {
+          "bar": 17,
+          "name": "A city at stake",
+          "energy": 1.18,
+          "time": 50.0
+        },
+        {
+          "bar": 25,
+          "name": "The cost of keeping watch",
+          "energy": 0.48,
+          "time": 70.0
+        },
+        {
+          "bar": 33,
+          "name": "Gathering resolve",
+          "energy": 0.75,
+          "time": 90.0
+        },
+        {
+          "bar": 41,
+          "name": "The living answer",
+          "energy": 1.28,
+          "time": 110.0
+        },
+        {
+          "bar": 49,
+          "name": "Final stand",
+          "energy": 1.3,
+          "time": 130.0
+        },
+        {
+          "bar": 57,
+          "name": "The gate still stands",
+          "energy": 1.12,
+          "time": 150.0
+        }
+      ],
+      "instruments": [
+        "brass",
+        "cello",
+        "crash",
+        "slam",
+        "snare",
+        "spiccato",
+        "strings",
+        "taiko",
+        "timpani"
+      ],
+      "peakDbfs": -2.2052321746378616,
+      "rmsDbfs": -15.713224198011975,
+      "seamDelta": 0.028396181762218475,
+      "adjacentDeltaP999": 0.29761430621147156
+    },
+    {
+      "id": "morning-without-us",
+      "title": "Morning Without Us",
+      "zh": "我们之后的清晨",
+      "region": "ending",
+      "bpm": 72,
+      "kind": "ending",
+      "description": "明亮的钢琴、尼龙拨弦与柔和弦乐；镜头结束后继续展开，最终自然收束。",
+      "genre": "Piano / chamber epilogue",
+      "meter": "4/4",
+      "sampleRate": 44100,
+      "frames": 4836300,
+      "duration": 109.66666666666667,
+      "loopStartFrame": null,
+      "loopEndFrameExclusive": null,
+      "loopStart": null,
+      "loopEnd": null,
+      "assets": {
+        "mix": "morning-without-us.flac"
+      },
+      "preview": "morning-without-us-preview.mp3",
+      "explorationPulse": 0,
+      "sections": [
+        {
+          "bar": 1,
+          "name": "The city wakes",
+          "energy": 0.65,
+          "time": 0.0
+        },
+        {
+          "bar": 9,
+          "name": "Morning through the windows",
+          "energy": 0.9,
+          "time": 26.666666666666668
+        },
+        {
+          "bar": 17,
+          "name": "The streets without us",
+          "energy": 0.55,
+          "time": 53.333333333333336
+        },
+        {
+          "bar": 25,
+          "name": "A finite horizon",
+          "energy": 0.65,
+          "time": 80.0
+        }
+      ],
+      "instruments": [
+        "bell",
+        "nylon",
+        "piano",
+        "pluckbass",
+        "strings"
+      ],
+      "peakDbfs": -2.0474585936094023,
+      "rmsDbfs": -19.915688208953412,
+      "seamDelta": 0,
+      "adjacentDeltaP999": 0.05749732255935669,
+      "cues": [
+        {
+          "time": 0,
+          "name": "Coupling"
+        },
+        {
+          "time": 9,
+          "name": "Rail"
+        },
+        {
+          "time": 15,
+          "name": "Garden"
+        },
+        {
+          "time": 20,
+          "name": "Awakening"
+        },
+        {
+          "time": 26,
+          "name": "Title"
+        },
+        {
+          "time": 109.66666666666667,
+          "name": "Silence"
+        }
+      ]
+    }
+  ]
+}

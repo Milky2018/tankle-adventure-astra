@@ -16,6 +16,7 @@ window.__profile={renderer,world,scene,camera,stats,gpu,frames:()=>frames,start:
  const results=[];
  // Measure real requestAnimationFrame work: 3 s warm-up, then 8 s per fixture.
  for(const [view,mode] of [['third','opening'],['overhead','opening'],['third','hub'],['third','carrier']]){
+  await page.evaluate(()=>localStorage.removeItem('furnace-born-v2-city'));
   await page.goto(`http://127.0.0.1:5174/?chapter=folded&view=${view}&test`);await page.waitForFunction(()=>window.__profile);
   const result=await page.evaluate(async({view,mode})=>{
    const q=__profile;const [x,y,z]=mode==='hub'?[0,0,27]:mode==='carrier'?[90,0,-18]:[0,-8,86];__game.scenario({player:{x,y,z,hp:100,invincible:1e9}});__game.look(Math.PI,.32);q.renderer.setPixelRatio(1.75);

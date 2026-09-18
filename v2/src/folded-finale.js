@@ -9,6 +9,6 @@ export function finaleState(seconds,completed=false){
 export function endingShot(seconds){
   if(seconds<9)return {id:'coupling',eye:[7,-49,9],at:[0,-54,-1]};
   if(seconds<15)return {id:'rail',eye:[8,12,25],at:[0,7,12]};
-  if(seconds<20)return {id:'garden',eye:[87,-2,-28],at:[81,-5.7,-35.3]};
+  if(seconds<20)return {id:'garden',eye:[85,-3,-30],at:[77,-7.4,-35.3]};
   return {id:'awakening',eye:[14,-3,86],at:[8,-7.5,79]};
 }

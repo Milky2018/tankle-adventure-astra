@@ -10,21 +10,23 @@ export const REGION_STYLE={
   circulation:{wall:0x707f78,frame:0x354c49,roof:0x566a65,accent:0xb08e72},
   furnace:{wall:0x69685d,frame:0x393e39,roof:0x595c53,accent:0xaa9170}
 };
-// [support, region, wall height, roof]. Loading apertures and test run-ups stay open overhead.
+// Courtyards, exposed banks and long inspection walks retain the open skyline.
+export const OPEN_ROOMS=new Set(['turntable','garden-bank','pump-terrace','rear-dock','ferry-cradle','bridge-underside','canal-landing','guardian-court','predecessor-gallery','reservoir-east-bank','reservoir-filter-bank','reservoir-pump-island','proving-impact','proving-observation','lens-west-gallery','lens-north-gallery','lens-east-gallery']);
+// [support, region, wall height, roof]. Enclosed halls keep Mortar headroom.
 export const ROOM_PLAN=[
-  ['garden-care','garden',6,false],['sorting-bay','testworks',7,false],
-  ['foundry-awakening','foundry',6,false],['foundry-west','foundry',5.5,false],
-  ['press-working-floor','foundry',6,false],['reclaim-sorting-bay','foundry',6,false],['prototype-court','foundry',7,false],['recycling-furnace','foundry',10,false],
-  ['turntable','transit',10,false],['hub-entry','transit',7,false],['loading','transit',7,false],['mortar-apron','transit',12,false],['training-gallery','transit',6,false],['freight','transit',7,false],
+  ['garden-care','garden',12,true],['sorting-bay','testworks',20,true],
+  ['foundry-awakening','foundry',12,true],['foundry-west','foundry',12,true],
+  ['press-working-floor','foundry',12,true],['reclaim-sorting-bay','foundry',12,true],['prototype-court','foundry',20,true],['recycling-furnace','foundry',20,true],
+  ['turntable','transit',10,false],['hub-entry','transit',12,true],['loading','transit',12,true],['mortar-apron','transit',12,true],['training-gallery','transit',12,true],['freight','transit',12,true],
   ['ferry-cradle','garden',5,false],['bridge-underside','garden',3.5,false],['canal-landing','garden',4,false],
   ['garden-bank','garden',5,false],['pump-terrace','garden',5,false],['rear-dock','garden',5,false],
-  ['common-benches','testworks',6,false],['carrier-landing','testworks',6,false],['phoenix-cradle','testworks',7,false],
-  ['calibration','optics',7,false],['mirror-service-gallery','optics',6,false],['guardian-court','optics',10,false],
-  ['circulation-yard','circulation',6,false],['circulation-rig','circulation',7,false],['pressure-release-court','circulation',6,false],
-  ['predecessor-gallery','furnace',7,false],['predecessor-mount','furnace',8,false],['predecessor-cooling','furnace',8,false],['predecessor-dock','furnace',8,false],['last-refuge','furnace',7,false],['keeper-court','furnace',12,false],['central-furnace','furnace',16,false]
+  ['common-benches','testworks',16,true],['carrier-landing','testworks',12,true],['phoenix-cradle','testworks',12,true],
+  ['calibration','optics',12,true],['mirror-service-gallery','optics',12,true],['guardian-court','optics',10,false],
+  ['circulation-yard','circulation',12,true],['circulation-rig','circulation',12,true],['pressure-release-court','circulation',12,true],
+  ['predecessor-gallery','furnace',7,false],['predecessor-mount','furnace',12,true],['predecessor-cooling','furnace',12,true],['predecessor-dock','furnace',12,true],['last-refuge','furnace',12,true],['keeper-court','furnace',20,true],['central-furnace','furnace',20,true]
 ];
 // Authored receiving bays frame the first route. Openings correspond to the
-// service ramp, local shutter and later engine return; no ceiling covers a fight.
+// service ramp, local shutter and later engine return.
 const roomWalls={
   'common-benches':[[76.1,-28.85,7.8,.8],[96.1,-28.85,3.9,.8],[68,-11.95,13.9,.8],[94.1,-11.95,5.9,.8]],
   'carrier-landing':[[84.1,-66.85,15.9,.8],[100.05,-66,.8,14],[72,-51.95,11.9,.8],[96.1,-51.95,3.9,.8]],
@@ -71,19 +73,24 @@ export function buildArchitecture(decks,lifts){
     if(lifts.some(l=>overlaps(s,l,.15)&&l.stops[0]<y+h&&l.stops.at(-1)+4>y))return;
     const key=[x,y,z,w,h,d].map(n=>n.toFixed(2)).join('/');if(seen.has(key))return;seen.add(key);solids.push(s);return s;
   }
-  for(const [id,region,h,roof]of [...ROOM_PLAN,...expansionRooms.map(r=>[r.id,r.region,r.region==='optics'?12:r.region==='furnace'?10:7,false])]){
+  for(const [id,region,h,roof]of [...ROOM_PLAN,...expansionRooms.map(r=>[r.id,r.region,12,!OPEN_ROOMS.has(r.id)])]){
     const f=decks.find(d=>d.id===id),room={...f,region,h,roof};rooms.push(room);
+    // Roof construction precedes the authored-wall branches: all hall types
+    // receive ceilings, while floor and lift intersections carve real openings.
+    if(roof)for(let x=f.x;x<f.x+f.w;x+=8)for(let z=f.z;z<f.z+f.d;z+=8){
+      add(room,'roof',x,f.y+h,z,Math.min(8,f.x+f.w-x),.55,Math.min(8,f.z+f.d-z));
+    }
     if(f.district){
       // Region silhouettes differ before ornament: garden retaining banks,
       // industrial half-walls, tall optical piers and solid furnace masonry.
-      const wallHeight={transit:5,garden:.8,testworks:7,optics:12,circulation:3,furnace:10}[region];
+      const wallHeight=roof?h:{transit:5,garden:.8,testworks:7,optics:12,circulation:3,furnace:10}[region];
       for(const side of ['west','east','north','south']){
         const along=side==='north'||side==='south',length=along?f.w:f.d;
         for(let t=0;t<length;t+=4){
           const x=along?f.x+t:side==='west'?f.x-.85:f.x+f.w+.05,z=along?(side==='north'?f.z-.85:f.z+f.d+.05):f.z+t;
           const w=along?Math.min(4,length-t):.8,d=along?.8:Math.min(4,length-t);
           const overlook={'lens-west-gallery':['east'],'lens-north-gallery':['south'],'lens-east-gallery':['west'],'proving-observation':['north','south'],'proving-impact':['south']}[f.id]?.includes(side);
-          const h=overlook?1.05:region==='transit'&&Math.floor(t/4)%4===1?2.5:wallHeight;
+          const h=!roof&&overlook?1.05:!roof&&region==='transit'&&Math.floor(t/4)%4===1?2.5:wallHeight;
           const base=add(room,'wall',x,f.y,z,w,h,d);
           if(base){
             add(room,'foundation',x,f.y-4,z,w,3.9,d);
@@ -96,16 +103,19 @@ export function buildArchitecture(decks,lifts){
       continue;
     }
     if(roomWalls[id]){
-      for(const [x,z,w,d]of roomWalls[id])if(add(room,'wall',x,f.y,z,w,h,d))add(room,'foundation',x,f.y-4,z,w,3.9,d);
+      for(const [x,z,w,d]of roomWalls[id])for(let t=0;t<Math.max(w,d);t+=4){
+        const across=w>d,span=Math.min(4,Math.max(w,d)-t),wx=x+(across?t:0),wz=z+(across?0:t),ww=across?span:w,wd=across?d:span;
+        if(add(room,'wall',wx,f.y,wz,ww,h,wd))add(room,'foundation',wx,f.y-4,wz,ww,3.9,wd);
+      }
       continue;
     }
     for(const side of ['west','east','north','south']){
       const along=side==='north'||side==='south',length=along?f.w:f.d;
-      for(let t=0;t<length;t+=12){
-        const span=Math.min(12,length-t),x=along?f.x+t:side==='west'?f.x-.85:f.x+f.w+.05,z=along?(side==='north'?f.z-.85:f.z+f.d+.05):f.z+t;
+      for(let t=0;t<length;t+=4){
+        const span=Math.min(4,length-t),x=along?f.x+t:side==='west'?f.x-.85:f.x+f.w+.05,z=along?(side==='north'?f.z-.85:f.z+f.d+.05):f.z+t;
         const w=along?span:.8,d=along?.8:span;
         // Broad inspection windows alternate with solid service bays.
-        const window=region==='garden'||Math.floor(t/12)%2===0;
+        const window=!roof&&(region==='garden'||Math.floor(t/12)%2===0);
         const base=add(room,'wall',x,f.y,z,w,window?2.6:h,d);
         if(window&&base){
           const garden=region==='garden',beam=garden?.3:2.4,pier=garden?.2:.65;
@@ -115,11 +125,7 @@ export function buildArchitecture(decks,lifts){
         if(base)add(room,'foundation',x,f.y-4,z,w,3.9,d);
       }
     }
-    if(roof)for(let x=f.x;x<f.x+f.w;x+=8)for(let z=f.z;z<f.z+f.d;z+=8){
-      // Long clerestory slots bring daylight in and leave sightlines across the city.
-      if(Math.floor((x-f.x)/8)%3===1)continue;
-      add(room,'roof',x,f.y+h,z,Math.min(8,f.x+f.w-x),.55,Math.min(8,f.z+f.d-z));
-    }
+
   }
   return {rooms,solids};
 }

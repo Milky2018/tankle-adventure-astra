@@ -1,3 +1,5 @@
+import {BOSS_ARENAS} from './folded-boss-arenas.js';
+import {steerSeeker} from './folded-bosses.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -16,14 +18,14 @@ function declaration(name){
 }
 function enemy(id,x,z,extra={}){return {id,x,y:0,z,hp:10,max:10,type:'turret',radius:1,aim:Math.PI,phase:'idle',parts:[],model:{},...extra};}
 function fixture(enemies,{walls=[],hives=[],controls=[]}={}){
- const p={x:0,y:0,z:20,hp:50,invincible:0},state={},shots=[],events=[];
+ const p={x:0,y:0,z:20,hp:50,invincible:0},state={combatArena:enemies.find(e=>BOSS_ARENAS.some(a=>a.id===e.id))?.id},shots=[],events=[];
  const world={enemies,hives,controls,lifts:[],signalRelease(){},cast(origin,dir,range,options={}){
   const ray=new T.Ray(origin,dir);let nearest=null;
   for(const wall of walls){const point=ray.intersectBox(wall,new T.Vector3());if(point){const distance=point.distanceTo(origin);if(distance<=range&&(!nearest||distance<nearest.distance))nearest={point,distance};}}
   if(options.targets!==false)for(const target of controls){const point=ray.intersectSphere(new T.Sphere(new T.Vector3(target.x,target.y,target.z),target.radius),new T.Vector3());if(point){const distance=point.distanceTo(origin);if(distance<=range&&(!nearest||distance<nearest.distance))nearest={point,distance,target};}}
   return nearest;
  }};
- const values={T,p,state,shots,world,BARRAGE,RAIL,MORTAR,clamp,damagePlayer,cityDamage,armorAbsorbs,refugeAt,refugeRayDistance,
+ const values={T,p,state,shots,world,BOSS_ARENAS,steerSeeker,bossArenas:{reset(){}},BARRAGE,RAIL,MORTAR,clamp,damagePlayer,cityDamage,armorAbsorbs,refugeAt,refugeRayDistance,
   scene:{remove(){}},mines:[],C:{orange:0,mint:0,yellow:0,lightYellow:0},SIGNAL:{magnet:0},
   projectile:()=>new T.Mesh(new T.SphereGeometry(.1),new T.MeshBasicMaterial()),ring:()=>new T.Mesh(),mat:()=>new T.MeshBasicMaterial(),
   burst(){},ripple:()=>new T.Mesh(),refugeImpact(){},rejectImpact(){},audio:{event(){}},alertSquad(){},save(){},enemyPan:()=>0,
@@ -76,4 +78,13 @@ test('lobbed shots leave their launcher and its parts before any friendly impact
  const f=fixture([owner]);f.shootEnemy(owner,0,null,new T.Vector3(0,.05,20));
  assert.equal(f.shots[0].owner,owner.id);f.step(.05);
  assert.equal(f.shots.length,1);assert.equal(owner.hp,10);assert.equal(owner.parts[0].hp,6);
+});
+
+test('destroying a battery cancels its unreleased second wave but not shells already in flight',()=>{
+ const boss=enemy('foundry',0,0,{type:'boss'}),part={x:0,y:1.5,z:0,hp:4};boss.parts=[part];
+ const f=fixture([boss]),target=new T.Vector3(0,1.2,20);
+ f.shootEnemy(boss,0,part,target,0,false,{sourcePart:part,speed:32});
+ f.shootEnemy(boss,0,part,target,.32,false,{sourcePart:part,speed:32});
+ part.hp=0;f.step(.016);
+ assert.equal(f.shots.length,1);assert.equal(f.shots[0].delay,0);assert.ok(f.shots[0].distance>0);
 });

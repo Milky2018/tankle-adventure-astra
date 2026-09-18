@@ -26,12 +26,13 @@ export function makeCityPresentation(scene,aperture){
   const depthMaterial=new T.MeshBasicMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});aperture.apply(depthMaterial,{depthOnly:true,radius:ARCHITECTURE_APERTURE});
   function material(region,part){
     const key=`${region}/${part}`;if(materials.has(key))return materials.get(key);
-    const m=new T.MeshToonMaterial({color:REGION_STYLE[region][part],shadowSide:T.FrontSide,map:part==='wall'?(['garden','furnace'].includes(region)?texture:panelTexture):null});aperture.apply(m,{radius:ARCHITECTURE_APERTURE});materials.set(key,m);return m;
+    // Ceilings use a baked ambient colour; avoid lighting each translucent roof layer.
+    const m=part==='roof'?new T.MeshBasicMaterial({color:new T.Color(REGION_STYLE[region].roof).multiplyScalar(1.4)}):new T.MeshToonMaterial({color:REGION_STYLE[region][part],shadowSide:T.FrontSide,map:part==='wall'?(['garden','furnace'].includes(region)?texture:panelTexture):null});aperture.apply(m,{radius:ARCHITECTURE_APERTURE});materials.set(key,m);return m;
   }
   for(const s of foldedArchitecture.solids){
     const part=['wall','foundation'].includes(s.kind)?'wall':s.kind==='roof'?'roof':'frame';
     const mesh=box(architecture,s.w,s.h,s.d,s.x+s.w/2,s.y+s.h/2,s.z+s.d/2,material(s.region,part),0);
-    mesh.name=s.id;
+    mesh.name=s.id;mesh.castShadow=mesh.receiveShadow=s.kind!=='roof';
     if(part==='wall'){
       const g=mesh.geometry.clone(),pos=g.attributes.position,uv=g.attributes.uv;
       for(let i=0;i<pos.count;i++)uv.setXY(i,(s.w>s.d?pos.getX(i)+s.x:pos.getZ(i)+s.z)/8,(pos.getY(i)+s.y)/4);
@@ -41,7 +42,7 @@ export function makeCityPresentation(scene,aperture){
     colliders.set(s,new T.Box3(new T.Vector3(s.x,s.y,s.z),new T.Vector3(s.x+s.w,s.y+s.h,s.z+s.d)));
     // Frames, drip caps and foundations give even a cut-away wall its construction.
     if(s.kind==='wall'||s.kind==='lintel')box(architecture,s.w+.12,.12,s.d+.12,s.x+s.w/2,s.y+s.h+.04,s.z+s.d/2,material(s.region,'frame'),0);
-    if(s.kind==='roof')box(architecture,.22,.45,s.d,s.x+.2,s.y-.2,s.z+s.d/2,material(s.region,'frame'),0);
+    if(s.kind==='roof'){const beam=box(architecture,.22,.45,s.d,s.x+.2,s.y-.2,s.z+s.d/2,material(s.region,'frame'),0);beam.castShadow=beam.receiveShadow=false;}
   }
   batchStatic(architecture,{preserveGeometry:true});batchStatic(depth,{preserveGeometry:true});
   for(const root of [architecture,depth]){root.updateWorldMatrix(true,true);root.traverse(o=>{o.matrixAutoUpdate=false;o.matrixWorldAutoUpdate=false;});}
@@ -49,6 +50,15 @@ export function makeCityPresentation(scene,aperture){
   const rock=mat(0x53615a),iron=mat(0x384c49),pale=mat(0xa8ada0),copper=mat(0xa98b69);
   // Separate construction vocabularies: trusses, inspection rings, and insulated ribs.
   for(const room of foldedArchitecture.rooms){
+    if(room.roof){
+      const light=mat(room.region==='garden'?0xc3d9bb:room.region==='optics'?0xc4dce0:0xe4ce9d,true);
+      for(let z=room.z+4;z<room.z+room.d;z+=12){
+        const x=room.x+room.w/2,y=room.y+room.h-.18;
+        if(!foldedArchitecture.solids.some(s=>s.room===room.id&&s.kind==='roof'&&x>=s.x&&x<=s.x+s.w&&z>=s.z&&z<=s.z+s.d))continue;
+        // Emissive fixtures provide a lighting source without per-room lights.
+        box(scenery,Math.min(7,room.w-2),.12,.6,x,y,z,light,0);
+      }
+    }
     if(room.region==='transit'&&room.roof)for(let z=room.z+3;z<room.z+room.d;z+=10){
       box(scenery,room.w,.35,.35,room.x+room.w/2,room.y+room.h-1,z,iron,0);
       for(let x=room.x+3;x<room.x+room.w;x+=6){const brace=box(scenery,6.2,.18,.18,x,room.y+room.h-2,z,pale,0);brace.rotation.z=(Math.floor(x/6)%2?1:-1)*.35;}

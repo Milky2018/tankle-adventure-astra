@@ -1,10 +1,12 @@
 import { clamp, OVERDRIVE_MAX_SPEED } from './mechanics.js';
+import { Soundtrack } from './soundtrack.js';
 
 export class FactoryAudio {
-  constructor(){this.ctx=null;this.volume=.55;this.music=true;this.sfx=true;this.nextBeat=0;this.beat=0;}
+  constructor(){this.ctx=null;this.volume=.55;this.music=true;this.sfx=true;}
   start(){
     if(!this.ctx){
-      this.ctx=new AudioContext();this.master=this.ctx.createGain();this.master.gain.value=this.volume*.4;this.master.connect(this.ctx.destination);
+      this.ctx=new AudioContext({sampleRate:44100});this.master=this.ctx.createGain();this.master.gain.value=this.volume*.4;this.master.connect(this.ctx.destination);
+      this.score=new Soundtrack(this.ctx,this.master);
       this.engine=this.ctx.createOscillator();this.engine.type='sawtooth';this.engine.frequency.value=43;
       this.engineFilter=this.ctx.createBiquadFilter();this.engineFilter.type='lowpass';this.engineFilter.frequency.value=250;
       this.engineGain=this.ctx.createGain();this.engineGain.gain.value=0;this.engine.connect(this.engineFilter);this.engineFilter.connect(this.engineGain);this.engineGain.connect(this.master);this.engine.start();
@@ -21,7 +23,9 @@ export class FactoryAudio {
     const s=this.ctx.createBufferSource(),g=this.ctx.createGain(),p=this.ctx.createStereoPanner(),f=this.ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=1500;s.buffer=buffer;g.gain.value=gain;p.pan.value=Math.max(-1,Math.min(1,pan));s.connect(f);f.connect(g);g.connect(p);p.connect(this.master);s.start();
   }
   event(name,pan=0){
-    if(!this.sfx||!this.ctx)return;
+    if(!this.ctx)return;
+    if(['warn','heat','unlock','boss-lock'].includes(name))this.duckUntil=this.ctx.currentTime+1.2;
+    if(!this.sfx)return;
     if(name==='laser'){this.tone(680,.16,'sine',.08,35,pan);this.tone(1360,.13,'triangle',.025,-80,pan);}
     if(name==='lever'){this.tone(155,.15,'triangle',.18,-75,pan);this.noise(.08,.15,pan);}
     if(name==='blocked'){this.tone(85,.13,'square',.1,-30,pan);}
@@ -37,6 +41,7 @@ export class FactoryAudio {
     if(name==='foundry-shot'){this.tone(58,.65,'sine',.75,-30,pan);this.tone(116,.22,'triangle',.25,-60,pan);this.noise(.35,.4,pan);}
     if(name==='crusher'){this.tone(48,.6,'sine',.13,-20,pan);this.noise(.28,.09,pan);}
     if(name==='clamp-warn'){this.tone(370,.7,'triangle',.16,390,pan);this.tone(1480,.09,'sine',.09,-400,pan);}
+    if(name==='boss-lock'){this.tone(95,.8,'sawtooth',.13,260,pan);this.tone(190,.7,'sine',.16,420,pan);}
     if(name==='press-warn'){this.tone(65,1.5,'sawtooth',.15,165,pan);this.tone(130,1.2,'sine',.2,330,pan);}
     if(name==='hit'){this.tone(280,.12,'square',.16,-200,pan);this.noise(.16,.3,pan);}
     if(name==='armor'){this.tone(980,.24,'sine',.32,-180,pan);this.tone(1760,.14,'sine',.17,-260,pan);this.tone(2630,.07,'triangle',.07,-350,pan);this.noise(.035,.12,pan);}
@@ -46,7 +51,6 @@ export class FactoryAudio {
     if(name==='ready'){this.tone(580,.12,'sine',.16);this.tone(860,.2,'sine',.08);}
     if(name==='repair'||name==='unlock'){[0,4,7,12,16].forEach((n,i)=>setTimeout(()=>this.tone(220*2**(n/12),.6,'sine',.22),i*115));}
     if(name==='couple'){this.noise(.35,.15);this.tone(65,6,'triangle',.09,-27);}
-    if(name==='ending'){[130.81,196,261.63,329.63].forEach(f=>this.tone(f,3.5,'sine',.13));}
     if(name==='death'){this.tone(160,1.3,'sawtooth',.3,-135);this.noise(.8,.4);}
     if(name==='ram'){this.tone(75,.22,'square',.3,-40,pan);this.noise(.18,.4,pan);}
   }
@@ -68,7 +72,7 @@ export class FactoryAudio {
     source('furnace',0,-56,-8,state.endingSeen?1.8:3.6,(g,pan)=>{this.tone(38,1.8,'sine',g,0,pan);this.noise(.9,g*.12,pan);});
     if(region==='furnace'&&!state.keeper)source('feed',0,-56,30,2.2,(g,pan)=>this.tone(63,.3,'triangle',g,-16,pan));
   }
-  update(time,p,combat,area,paused,moving=false){
+  update(time,p,combat,area,paused,moving=false,musicState={}){
     if(!this.ctx)return;const t=this.ctx.currentTime;
     const boost=clamp((p.speed-1)/(OVERDRIVE_MAX_SPEED-1),0,1),phoenixBoost=clamp((p.speed-OVERDRIVE_MAX_SPEED)/OVERDRIVE_MAX_SPEED,0,1);
     const coupling=p.endingTime>0&&p.endingTime<9;
@@ -77,16 +81,6 @@ export class FactoryAudio {
     this.engine.frequency.setTargetAtTime(coupling?65-Math.min(1,p.endingTime/6)*27:(p.afloat?48:65)+boost*100+phoenixBoost*85+p.heat*.2,t,.12);
     this.engineFilter.frequency.setTargetAtTime(250+boost*350+phoenixBoost*250,t,.12);
     this.engineGain.gain.setTargetAtTime(running?(coupling?.06*(1-Math.max(0,p.endingTime-6)/3):.075+boost*.105+phoenixBoost*.065):0,t,.1);
-    if(paused||p.hp<=0||!this.music){this.nextBeat=time;return;}
-    if(time<this.nextBeat)return;this.nextBeat=time+(combat?.32:area.startsWith('r7-')?3.2:area.startsWith('r4-')?2.8:area.startsWith('r3-')?2.3:area.startsWith('r2-')?1.8:1.15);
-    // Sparse, unresolved notes leave room for machinery; combat adds a restrained pulse.
-    const notes=p.overdrive?[0,7,14,10,7,3,12,7]:[0,7,10,7,2,0,7,3];
-    if(this.beat%2===0)this.tone(110*2**(notes[(this.beat/2)%notes.length]/12),combat?.65:2.6,'sine',.055);
-    if(this.beat%8===0){this.tone(area==='boss'?41.2:55,3.5,'sine',.09);this.tone(165,2.7,'sine',.025);}
-    if(combat){
-      if(this.beat%2===0)this.tone(58,.18,'triangle',.19,-30);
-      if(this.beat%4===2)this.noise(.055,.045);
-    }
-    this.beat++;
+    this.score.update({area,combat,paused,dead:p.hp<=0,enabled:this.music,overdrive:p.overdrive,endingTime:p.endingTime||0,duck:t<this.duckUntil,...musicState});
   }
 }

@@ -45,12 +45,13 @@ async page=>{
   }
   async function fight(id,x0,x1,z){
     const result=await page.evaluate(({id,x0,x1,z})=>{
-      const g=window.__game;let destination=x0;
+      const g=window.__game;let destination=x0,corner=0;const orbit=[[-39,136],[-23,136],[-23,123],[-39,123]];
       for(let i=0;i<3600;i++){
         const s=g.snapshot(),e=s.enemies.find(e=>e.id===id),p=s.player;if(!e.hp){g.setInput([]);return {hp:p.hp,enemy:e};}
         if(p.hp<=0)return {error:'died',p,e};
         if(Math.abs(p.x-destination)<.6)destination=destination===x0?x1:x0;
-        const dx=destination-p.x,dz=z-p.z,keys=Math.abs(dz)>1?dz>0?['KeyS','KeyA']:['KeyW','KeyD']:dx>0?['KeyS','KeyD']:['KeyW','KeyA'];
+        if(id==='prototype'&&Math.hypot(p.x-orbit[corner][0],p.z-orbit[corner][1])<.65)corner=(corner+1)%orbit.length;
+        const dx=(id==='prototype'?orbit[corner][0]:destination)-p.x,dz=(id==='prototype'?orbit[corner][1]:z)-p.z,keys=Math.abs(dz)>Math.abs(dx)?dz>0?['KeyS','KeyA']:['KeyW','KeyD']:dx>0?['KeyS','KeyD']:['KeyW','KeyA'];
         const t=e.parts.find(part=>part.hp>0)||{x:e.x,y:e.y+1.5,z:e.z};g.aimAt(t.x,t.z,t.y);if(id!=='foundry'||e.phase==='vent')keys.push('Mouse0');g.setInput(keys);g.step(1/30,false);
       }return {error:'fight timeout',s:g.snapshot()};
     },{id,x0,x1,z});if(result.error)throw Error(id+' '+JSON.stringify(result));return result;
@@ -178,7 +179,7 @@ async page=>{
     await shoot(40,-12,-38.6,'last-cage');await move(34,-18);await move(22,-18);await arrive(0);await move(22,-4);
     if((await page.evaluate(()=>__game.snapshot())).player.y!==0)throw Error('Final return cage failed');
     await move(22,-18);await arrive(-40);await move(34,-18);await move(34,-10);await expedition('hearth');await move(34,-10);await move(34,6);await move(34,68);await move(0,68);await move(0,52);
-    await choose('cannon');const keeperFight=await page.evaluate(()=>{
+    await choose('laser');const keeperFight=await page.evaluate(()=>{
       const g=window.__game;let corner=0;const orbit=[[-10,54],[-10,44],[10,44],[10,54]];
       for(let i=0;i<7200;i++){
         const s=g.snapshot(),e=s.enemies.find(e=>e.id==='keeper'),p=s.player;if(!e.hp){g.setInput([]);return {hp:p.hp,time:s.time};}if(p.hp<=0)return {error:'keeper death',s};
