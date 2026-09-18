@@ -4,11 +4,18 @@ async page=>{
   for(const id of ['proving','coolant']){
     await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>window.__runout);
     const result=await page.evaluate(async id=>{
-      const {expansionRoutes}=await import('/src/folded-expansion-layout.js'),route=expansionRoutes.find(r=>r.id===id),a=route.rooms[4],b=route.rooms[0],g=__game,ability=route.ability;
+      const {expansionRoutes}=await import('/src/folded-expansion-layout.js'),route=expansionRoutes.find(r=>r.id===id),pickup=route.path.find(p=>p[2]==='pickup'),exit=route.returns.find(p=>p[2]==='boost'),a={x:pickup[0],y:route.y,z:pickup[1]},b={x:exit[0],z:exit[1]},g=__game,ability=route.ability;
       // Begin at the real cradle with prior equipment, normal HP, and a cold engine.
       g.manual(true);g.scenario({player:{x:a.x,y:a.y,z:a.z,hp:50,invincible:0,overdrive:true,phoenix:id==='coolant',circulation:false,heat:0,overheated:false,speed:1,weapon:'cannon'},state:{[ability]:false,[id+'-return']:false}});g.step(.1,false);
       if(!g.snapshot().player[ability])throw Error('Cradle did not install '+ability);
-      const squad=__runout.world.enemies.filter(e=>e.id.startsWith(id+'-5-'));
+      const squad=__runout.world.enemies.filter(e=>e.id.startsWith(id+'-return-'));
+      for(const [x,z,action]of route.returns){
+        if(action==='boost')break;
+        for(let i=0;i<900;i++){
+          const p=g.snapshot().player,dx=x-p.x,dz=z-p.z;if(Math.hypot(dx,dz)<.3)break;
+          g.setInput(Math.abs(dx)>Math.abs(dz)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD']);g.step(1/60,false);
+        }
+      }
       g.setInput(['KeyW','KeyA','ShiftLeft']);
       for(let i=0;i<600&&g.snapshot().player.x>b.x+1;i++)g.step(1/60,false);
       g.setInput([]);g.step(0);

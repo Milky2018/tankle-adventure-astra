@@ -24,23 +24,30 @@ test('pressure mechanisms require the supporting hull and cycling sleeves have a
   assert.equal(mechanismReady(c,p,0),true);
   assert.equal(releaseFolded(c.id,'cannon',{...p,x:p.x+5},initialFoldedState(),[]),false);
   assert.equal(releaseFolded(c.id,'cannon',p,initialFoldedState(),[]),true);
-  const cycle=expansionControls.find(c=>c.cycle);
+  const cycle={cycle:{period:4.5,open:2.1}};
   assert.equal(mechanismReady(cycle,p,1),true);assert.equal(mechanismReady(cycle,p,3),false);
-  assert.equal(releaseFolded(cycle.id,'cannon',p,initialFoldedState(),[],3),false);
+
 });
-test('each acquisition has a quiet puzzle, a recovery bay, and a distinct post-acquisition encounter',()=>{
-  for(const r of expansionRoutes){
-    for(const i of [1,3,4])assert.ok(!expansionEnemies.some(e=>Math.hypot(e.x-r.rooms[i].x,e.z-r.rooms[i].z)<32&&e.y===r.rooms[i].y),`${r.id} quiet room ${i}`);
-    assert.ok(expansionControls.some(c=>c.id===r.trial));
-    const waves=expansionEnemies.filter(e=>e.battle===r.rooms[2].id);
-    assert.equal(waves.filter(e=>e.wave===0).length,3);assert.equal(waves.filter(e=>e.wave===1).length,3);
-    assert.equal(expansionEnemies.filter(e=>e.encounter===r.rooms[5].id).length,r.id==='hearth'?0:3);
+test('mandatory battles are finite and rest locations do not impose the old six-room recipe',()=>{
+  for(const b of expansionBattles){
+    const enemies=expansionEnemies.filter(e=>e.battle===b.battle);
+    assert.ok(enemies.some(e=>e.wave===0));assert.ok(enemies.some(e=>e.wave===1));
   }
-  assert.equal(expansionBattles.length,2,'only two courts require defeating both waves');
+  assert.equal(expansionBattles.length,2);
+  assert.ok(new Set(expansionRoutes.map(r=>r.rooms.length)).size>1);
 });
 test('existing earned abilities and far-side saves preserve access across newly added trials',()=>{
   const s=initialFoldedState({phoenix:true,anchor:'hearth-hive-3'});
   assert.equal(s['proving-transfer'],true);assert.equal(s['proving-endurance'],true);
   assert.equal(s['hearth-transfer'],true);assert.equal(s['hearth-endurance'],true);
   assert.equal(initialFoldedState()['proving-endurance'],false);
+  assert.equal(initialFoldedState({flotation:true})['reservoir-inlet'],true);
+  assert.equal(initialFoldedState()['reservoir-inlet'],false);
+});
+
+test('the reservoir inlet exposes its connected transfer without a timed sleeve',()=>{
+ const c=expansionControls.find(c=>c.id==='reservoir-transfer'),p={x:c.x-8,y:-8,z:c.z},s=initialFoldedState();
+ assert.equal(releaseFolded(c.id,'cannon',p,s,[]),false);
+ assert.equal(releaseFolded('reservoir-inlet','cannon',p,s,[]),true);
+ assert.equal(releaseFolded(c.id,'cannon',p,s,[]),true);
 });

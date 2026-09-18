@@ -558,12 +558,18 @@ function updateEnemies(dt){
         if(e.timer<=0){e.phase='vent';e.timer=spec.recovery;}
       }else if(e.timer<=0){e.phase='idle';e.timer=.6+(e.id.length%3)*.2;}
     }
-    if(active&&e.type==='skirmisher'&&['burst','vent'].includes(e.phase)&&Math.hypot(e.x-e.spawn.x,e.z-e.spawn.z)<18)moveEnemy(e,e.aim+(e.id.length%2?1:-1)*Math.PI/2,spec.speed*.5,dt);
+    if(active&&e.type==='skirmisher'&&['warn','burst','vent'].includes(e.phase)&&Math.hypot(e.x-e.spawn.x,e.z-e.spawn.z)<18)moveEnemy(e,Math.atan2(p.x-e.x,p.z-e.z)+(e.id.length%2?1:-1)*Math.PI/2,spec.speed,dt);
     if(Math.abs(p.y-e.y)<2&&Math.hypot(p.x-e.x,p.z-e.z)<e.radius+.8){
       if(time-e.ramAt>.5){
         e.ramAt=time;const damage=cityContact(p,e);
         if(damage){hitEnemy(e,damage,new T.Vector3(p.x,p.y,p.z),redContact(p)?'red':'ram');audio.event('ram');if(!redContact(p)&&p.speed<3.19)p.speed=1;}
-        else hurt(p.speed>=1.3&&e.type==='guard'?5:4);
+        else {
+          hurt(e.id==='prototype'&&e.phase==='charge'?14:p.speed>=1.3&&e.type==='guard'?5:4);
+          if(e.id==='prototype'&&e.phase==='charge'){
+            moveFolded(p,Math.sin(e.aim)*4,Math.cos(e.aim)*4,state,world.lifts);
+            e.phase='vent';e.timer=2.2;
+          }
+        }
       }
       // A surviving body stays solid between damage ticks; engine speed is not phasing.
       if(e.hp>0){const distance=Math.hypot(p.x-e.x,p.z-e.z),angle=distance>.001?Math.atan2(p.x-e.x,p.z-e.z):p.heading+Math.PI,overlap=e.radius+.81-distance;moveFolded(p,Math.sin(angle)*overlap,Math.cos(angle)*overlap,state,world.lifts);p.speed=1;}
@@ -667,16 +673,17 @@ function advance(dt){
 }
 
 function knownLayers(){return [...new Set(foldedDecks.filter(d=>discovered.has(d.id)).flatMap(d=>[d.y,d.y+(d.rise||0)]))].sort((a,b)=>a-b);}
+function playerMapLayer(){return knownLayers().reduce((a,b)=>Math.abs(b-p.y)<Math.abs(a-p.y)?b:a);}
 function changeLayer(delta){const known=knownLayers(),i=known.indexOf(chosenLayer);chosenLayer=known[clamp(i+delta,0,known.length-1)];drawMap(true);}
 let mapLinks=[];
 function drawMap(large=false){
   if(large)mapLinks=[];
   const canvas=large?$('region-map'):$('minimap'),ctx=canvas.getContext('2d');if(large){canvas.width=innerWidth;canvas.height=innerHeight;}
-  const w=canvas.width,h=canvas.height,known=foldedDecks.filter(d=>discovered.has(d.id)),layer=large?chosenLayer:Math.round(p.y/8)*8;
+  const w=canvas.width,h=canvas.height,known=foldedDecks.filter(d=>discovered.has(d.id)),playerLayer=playerMapLayer(),layer=large?chosenLayer:playerLayer;
   const onLayer=d=>layer>=Math.min(d.y,d.y+(d.rise||0))&&layer<=Math.max(d.y,d.y+(d.rise||0));
   const framed=large?known.filter(onLayer):known;
   const x0=Math.min(...framed.map(d=>d.x))-8,x1=Math.max(...framed.map(d=>d.x+d.w))+8,z0=Math.min(...framed.map(d=>d.z))-8,z1=Math.max(...framed.map(d=>d.z+d.d))+8;
-  const scale=large?Math.min((w-160)/(x1-x0),(h-100)/(z1-z0))/Math.SQRT2:3,ox=large?w/2-(x0+x1)/2*scale:w/2-p.x*scale,oz=large?h/2-(z0+z1)/2*scale:h/2-p.z*scale;
+  const scale=large?Math.min(w-160,h-100)/((x1-x0+z1-z0)/Math.SQRT2):3,ox=large?w/2-(x0+x1)/2*scale:w/2-p.x*scale,oz=large?h/2-(z0+z1)/2*scale:h/2-p.z*scale;
   ctx.clearRect(0,0,w,h);ctx.fillStyle='#102b2e';ctx.fillRect(0,0,w,h);
   // The minimap follows the driving camera; the full map keeps a stable orientation.
   ctx.save();ctx.translate(w/2,h/2);ctx.rotate(thirdPerson&&!large?follow.yaw+Math.PI:Math.PI/4);ctx.translate(-w/2,-h/2);
@@ -714,13 +721,13 @@ function drawMap(large=false){
   for(const q of world.pickups)if(!state[q.id]&&(!q.requires||state[q.requires])&&Math.abs(q.y-layer)<1&&seen(q.x,q.y,q.z))mapIcon(q.ability||q.id,q.x,q.z,'#ffe09a',18);
 
   for(const h of world.hives)if(known.some(d=>inRect(h.x,h.z,d)&&Math.abs(deckHeight(d,h.z)-h.y)<.5)){ctx.globalAlpha=h.y===layer?1:.2;ctx.strokeStyle='#b5ffe0';ctx.beginPath();ctx.arc(ox+h.x*scale,oz+h.z*scale,5,0,Math.PI*2);ctx.stroke();}
-  ctx.globalAlpha=1;ctx.fillStyle='#ffe19b';ctx.save();ctx.translate(ox+p.x*scale,oz+p.z*scale);ctx.rotate(-p.heading);ctx.beginPath();ctx.moveTo(0,7);ctx.lineTo(-4,-4);ctx.lineTo(4,-4);ctx.closePath();ctx.fill();ctx.restore();ctx.restore();
-  if(large){bars.replaceChildren();for(const y of knownLayers().reverse()){const b=document.createElement('button');b.className=`layer-bar${y===layer?' selected':''}${y===Math.round(p.y/8)*8?' player-layer':''}`;b.setAttribute('aria-label',`查看高度 ${y} 的楼层`);b.onclick=()=>{chosenLayer=y;drawMap(true);};bars.append(b);}layers.firstChild.disabled=layer===knownLayers().at(-1);layers.lastChild.disabled=layer===knownLayers()[0];}
+  if(!large||layer===playerLayer){ctx.globalAlpha=1;ctx.fillStyle='#ffe19b';ctx.save();ctx.translate(ox+p.x*scale,oz+p.z*scale);ctx.rotate(-p.heading);ctx.beginPath();ctx.moveTo(0,7);ctx.lineTo(-4,-4);ctx.lineTo(4,-4);ctx.closePath();ctx.fill();ctx.restore();}ctx.restore();
+  if(large){bars.replaceChildren();for(const y of knownLayers().reverse()){const b=document.createElement('button');b.className=`layer-bar${y===layer?' selected':''}${y===playerLayer?' player-layer':''}`;b.setAttribute('aria-label',`查看高度 ${y} 的楼层`);b.onclick=()=>{chosenLayer=y;drawMap(true);};bars.append(b);}layers.firstChild.disabled=layer===knownLayers().at(-1);layers.lastChild.disabled=layer===knownLayers()[0];}
 }
 function mapConnection(event){const bounds=$('region-map').getBoundingClientRect();return mapLinks.find(l=>Math.hypot(l.x-(event.clientX-bounds.left),l.y-(event.clientY-bounds.top))<18);}
 $('region-map').addEventListener('mousemove',event=>{$('region-map').style.cursor=mapConnection(event)?'pointer':'default';});
 $('region-map').addEventListener('click',event=>{const connection=mapConnection(event);if(connection){chosenLayer=connection.destination;drawMap(true);}});
-function setMap(value){mapOpen=value;keys.clear();if(value&&document.pointerLockElement)document.exitPointerLock();if(!value)captureMouse();$('region').hidden=!value;$('minimap-wrap').hidden=value;if(!value)minimapBounds=$('minimap-wrap').getBoundingClientRect();if(value){mapped=true;const known=knownLayers();chosenLayer=known.reduce((a,b)=>Math.abs(b-p.y)<Math.abs(a-p.y)?b:a);drawMap(true);}audio.update(time,p,false,'r2-transit',true);}
+function setMap(value){mapOpen=value;keys.clear();if(value&&document.pointerLockElement)document.exitPointerLock();if(!value)captureMouse();$('region').hidden=!value;$('minimap-wrap').hidden=value;if(!value)minimapBounds=$('minimap-wrap').getBoundingClientRect();if(value){mapped=true;chosenLayer=playerMapLayer();drawMap(true);}audio.update(time,p,false,'r2-transit',true);}
 function hud(){
   $('hud').classList.toggle('ending-active',!!p.endingTime);
   const boss=world.enemies.find(e=>e.hp>0&&(e.type==='boss'||e.guardian)&&e.readable&&Math.abs(p.y-e.y)<4&&Math.hypot(p.x-e.x,p.z-e.z)<30);$('boss-health').style.display=boss&&!p.endingTime?'flex':'none';if(boss)$('boss-health').querySelector('span').style.width=`${boss.hp/boss.max*100}%`;

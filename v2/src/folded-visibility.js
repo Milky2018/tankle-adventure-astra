@@ -24,13 +24,13 @@ export function cameraApertureOpacity(point,p,camera){
 }
 
 export function makeAperture(){
-  const player={value:new T.Vector3()},enabled={value:1},viewDirection={value:direction.clone()},camera={value:new T.Vector3()},mode={value:0};
+  const player={value:new T.Vector3()},enabled={value:1},viewDirection={value:direction.clone()},camera={value:new T.Vector3()},mode={value:0},combatFocus={value:0};
   function apply(material,{depthOnly=false,radius=13,cameraOnly=false}={}){
     if(material.userData.aperture)return;
     material.userData.aperture=true;material.transparent=!depthOnly;material.depthWrite=depthOnly;
     if(depthOnly)material.colorWrite=false;
     material.onBeforeCompile=shader=>{
-      shader.uniforms.apertureCamera=camera;shader.uniforms.apertureMode=mode;shader.uniforms.aperturePlayer=player;shader.uniforms.apertureEnabled=enabled;shader.uniforms.apertureDirection=viewDirection;
+      shader.uniforms.apertureCombatFocus=combatFocus;shader.uniforms.apertureCamera=camera;shader.uniforms.apertureMode=mode;shader.uniforms.aperturePlayer=player;shader.uniforms.apertureEnabled=enabled;shader.uniforms.apertureDirection=viewDirection;
       shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 apertureWorld;').replace('#include <project_vertex>',`#include <project_vertex>
         vec4 aperturePosition = vec4(transformed, 1.0);
         #ifdef USE_BATCHING
@@ -41,7 +41,7 @@ export function makeAperture(){
         #endif
         apertureWorld = (modelMatrix * aperturePosition).xyz;
       `);
-      shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nuniform vec3 apertureCamera;\nuniform float apertureMode;\nuniform vec3 aperturePlayer;\nuniform float apertureEnabled;\nuniform vec3 apertureDirection;\nvarying vec3 apertureWorld;');
+      shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nuniform float apertureCombatFocus;\nuniform vec3 apertureCamera;\nuniform float apertureMode;\nuniform vec3 aperturePlayer;\nuniform float apertureEnabled;\nuniform vec3 apertureDirection;\nvarying vec3 apertureWorld;');
       shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`
         vec3 apertureDelta = apertureWorld - aperturePlayer - vec3(0.0, 1.3, 0.0);
         float apertureAlong = dot(apertureDelta, apertureDirection);
@@ -55,11 +55,12 @@ export function makeAperture(){
         float cut = mix(${cameraOnly?'0.0':'apertureCut'},eyeCut,apertureMode);
         diffuseColor.a *= 1.0 - 0.84 * cut * apertureEnabled;
         ${depthOnly?'if (diffuseColor.a < 0.999) discard;':''}
+        ${depthOnly?'':'outgoingLight *= 1.0 - apertureCombatFocus * 0.6 * smoothstep(3.0, 8.0, abs(apertureWorld.y-aperturePlayer.y));'}
         ${depthOnly?'':'outgoingLight *= mix(1.0, 0.42, smoothstep(3.0, 12.0, abs(apertureWorld.y - aperturePlayer.y)) * apertureEnabled * (1.0-apertureMode));'}
         #include <opaque_fragment>
       `);
     };
-    material.customProgramCacheKey=()=> `folded-continuous-aperture-v7-${cameraOnly}-${radius}-${depthOnly?'depth':'color'}`;
+    material.customProgramCacheKey=()=> `folded-continuous-aperture-v8-${cameraOnly}-${radius}-${depthOnly?'depth':'color'}`;
   }
-  return {apply,setCamera:(p,c)=>{player.value.set(p.x,p.y,p.z);camera.value.copy(c);},setView:third=>{mode.value=third?1:0;},update:(p,d=direction)=>{player.value.set(p.x,p.y,p.z);viewDirection.value.copy(d);},enable:value=>{enabled.value=value?1:0;}};
+  return {apply,setCamera:(p,c)=>{player.value.set(p.x,p.y,p.z);camera.value.copy(c);},setView:third=>{mode.value=third?1:0;},update:(p,d=direction,focus=0)=>{combatFocus.value=focus;player.value.set(p.x,p.y,p.z);viewDirection.value.copy(d);},enable:value=>{enabled.value=value?1:0;}};
 }

@@ -59,45 +59,39 @@ async page=>{
     const route=await page.evaluate(async id=>(await import('/src/folded-expansion-layout.js')).expansionRoutes.find(r=>r.id===id),id);
     expeditionMoving=true;
     for(const [x,z]of route.approach)await move(x,z);
-    const entry=await page.evaluate(async id=>(await import('/src/folded-expansion-layout.js')).expansionHives.find(h=>h.id===id+'-hive-0'),id);
-    await move(entry.x,entry.z);await use();
-    for(const [i,r]of route.rooms.slice(0,5).entries()){
-      await move(r.x,r.z);
-      if(i===1){const c=await page.evaluate(async id=>(await import('/src/folded-expansion-layout.js')).expansionControls.find(c=>c.id===id),route.trial);await shoot(c.x,c.z,c.y,c.id,c.surface==='top'?'mortar':'cannon');}
-      if(i===2&&['proving','hearth'].includes(id)){
-        await choose('mortar');
-        const battle=await page.evaluate(({id,r})=>{
-          const g=__game,start=g.snapshot().time,orbit=[[r.x-8,r.z-7],[r.x-8,r.z+10],[r.x+9,r.z+10],[r.x+9,r.z-7]];let corner=0;
-          for(let i=0;i<5400;i++){
-            const s=g.snapshot(),p=s.player;if(s.state[id+'-endurance']){g.setInput([]);return {seconds:s.time-start,hp:p.hp};}
-            if(p.hp<=0)return {error:'battle death',p};
-            if(Math.hypot(p.x-orbit[corner][0],p.z-orbit[corner][1])<.6)corner=(corner+1)%4;
-            const dx=orbit[corner][0]-p.x,dz=orbit[corner][1]-p.z,keys=Math.abs(dx)>Math.abs(dz)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD'];
-            const enemies=s.enemies.filter(e=>e.id.startsWith(id+'-2-')&&e.hp>0&&e.readable).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z));
-            if(enemies.length){const e=enemies[0];g.aimAt(e.x,e.z,e.y+.2);keys.push('Mouse0');}
-            g.setInput(keys);g.step(1/30,false);
-          }return {error:'battle timeout',s:g.snapshot()};
-        },{id,r});if(battle.error)throw Error(JSON.stringify(battle));await record(id+'-two-waves');
+    async function action(name,x,z){
+      if(!name||name==='boost')return;
+      if(name==='repair'){
+        const h=await page.evaluate(async ({id,x,z})=>(await import('/src/folded-expansion-layout.js')).expansionHives.filter(h=>h.id.startsWith(id+'-')).sort((a,b)=>Math.hypot(a.x-x,a.z-z)-Math.hypot(b.x-x,b.z-z))[0],{id,x,z});
+        await move(h.x,z);await move(h.x,h.z);await use();await move(h.x,z);await move(x,z);return;
       }
-      if(i===3){await move(r.x-23,r.z);await move(r.x-23,r.z-23);await use();await move(r.x-23,r.z);await move(r.x,r.z);}
+      if(name==='pickup'){await use();return;}
+      if(name==='float'){await page.keyboard.press('f');return;}
+      if(name==='battle'){
+        await choose('mortar');
+        const result=await page.evaluate(({id,x,z})=>{
+          const g=__game,orbit=id==='proving'?[[210,-280],[216,-280],[216,-260],[210,-260]]:[[x-8,z-10],[x-8,z+12],[x+2,z+12],[x+2,z-10]];let corner=0;
+          for(let i=0;i<7200;i++){
+            const s=g.snapshot(),p=s.player;if(s.state[id+'-endurance']){g.setInput([]);return {hp:p.hp};}if(p.hp<=0)return {error:'wave death',p};
+            if(Math.hypot(p.x-orbit[corner][0],p.z-orbit[corner][1])<.7)corner=(corner+1)%orbit.length;
+            const dx=orbit[corner][0]-p.x,dz=orbit[corner][1]-p.z,keys=Math.abs(dx)>Math.abs(dz)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD'];
+            const e=s.enemies.filter(e=>e.id.startsWith(id+'-endurance-')&&e.hp>0&&e.readable).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];
+            if(e){g.aimAt(e.x,e.z,e.y+.2);keys.push('Mouse0');}g.setInput(keys);g.step(1/30,false);
+          }return {error:'wave timeout',s:g.snapshot()};
+        },{id,x,z});if(result.error)throw Error(JSON.stringify(result));await record(id+'-waves');return;
+      }
+      const c=await page.evaluate(async name=>(await import('/src/folded-expansion-layout.js')).expansionControls.find(c=>c.id===name),name);
+      if(c.kind==='magnet'){
+        await page.evaluate(c=>{__game.aimAt(c.x,c.z,c.y);__game.setInput(['Mouse2']);__game.step(1.2);__game.setInput([]);},c);
+      }else{const [cx,cy,cz]=c.via||[c.x,c.y,c.z];await shoot(cx,cz,cy,c.id,c.kind==='laser'?'laser':c.surface==='top'?'mortar':'cannon');}
+      if(!(await page.evaluate(()=>__game.snapshot())).state[name])throw Error('District mechanism '+name);
     }
-    await use();
-    if(route.ability&&!(await page.evaluate(()=>__game.snapshot())).player[route.ability])throw Error('Missing expanded module '+id);
-    if(!route.ability){await move(route.rooms[4].x+8,route.rooms[4].z);await shoot(route.rooms[4].x,route.rooms[4].z,route.rooms[4].y+1.3,'core-feed','laser');await move(route.rooms[4].x,route.rooms[4].z);}
-    const returnControl=await page.evaluate(async id=>(await import('/src/folded-expansion-layout.js')).expansionControls.find(c=>c.id===id+'-return'),id);
-    const r=route.rooms[5];await move(r.x,r.z);
-    if(returnControl){
-      await move(returnControl.x+Math.sign(r.x-returnControl.x)*10,returnControl.z+Math.sign(r.z-returnControl.z)*10);
-      if(returnControl.kind==='magnet'){
-        await page.evaluate(c=>{__game.aimAt(c.x,c.z,c.y);__game.setInput(['Mouse2']);__game.step(1.2);__game.setInput([]);},returnControl);
-      }else await shoot(returnControl.x,returnControl.z,returnControl.y,returnControl.id,returnControl.kind==='laser'?'laser':'cannon');
-    }
-    if(id==='reservoir')await page.keyboard.press('f');
-    await move(route.rooms[0].x,route.rooms[0].z,['proving','coolant'].includes(id));
-    if(id==='reservoir')await page.keyboard.press('f');
-    for(const [x,z]of [...route.approach].reverse())await move(x,z);
+    for(const [x,z,name]of route.path){await move(x,z);await action(name,x,z);}
+    if(route.ability&&!(await page.evaluate(()=>__game.snapshot())).player[route.ability])throw Error('Missing module '+id);
+    for(const [x,z,name]of route.returns){await move(x,z,name==='boost');await action(name,x,z);}
     expeditionMoving=false;await record('district-'+id);
   }
+
   await move(-40,86);await move(-40,49);await shoot(-35,44,-14.5,'relay-west');
   await move(-57,52);await move(-57,76);await page.keyboard.press('e');await move(-57,118);await shoot(-65,114,-14.5,'relay-east');
   await move(-57,128);await move(-43,132);const prototype=await fight('prototype',-43,-20,132);

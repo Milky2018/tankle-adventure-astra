@@ -263,3 +263,12 @@ test('the relocated freight ramps do not allow boarding the carrier behind the M
     assert.ok(p.x<72,`ramp reached the carrier at ${p.x},${p.y},${p.z}`);
   }
 });
+
+test('Prototype front armour rewards flanking and recovery without a damage quota',()=>{
+ const e={id:'prototype',type:'elite',hp:9,x:0,z:0,aim:0,phase:'warn'};
+ assert.equal(cityDamage(e,1,{x:0,z:8}),.4);
+ assert.equal(cityDamage(e,4,{x:0,z:-8}),4);
+ e.phase='vent';assert.equal(cityDamage(e,5,{x:0,z:8}),5);
+ assert.equal(cityDamage(e,9,{x:0,z:8}),9);
+ e.phase='charge';assert.equal(cityDamage(e,20,{x:0,z:8},'red'),9);
+});

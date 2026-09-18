@@ -136,7 +136,7 @@ export const cityPickups=[
   {id:'laser',ability:'laser',x:228,y:24,z:-20},{id:'circulation',ability:'circulation',x:222,y:-24,z:117}
 ];
 export const cityEnemies=[
-  {id:'foundry-west-scout',x:-23,y:-8,z:85,hp:1,type:'scout'},
+  {id:'foundry-west-scout',x:-37,y:-8,z:85,hp:1,type:'scout'},
   {id:'press-gunner',x:-32,y:-16,z:42,hp:2,type:'turret',encounter:'press-relay'},
   {id:'press-scout',x:-43,y:-16,z:46,hp:1,type:'scout',encounter:'press-relay'},
   {id:'reclaim-scout',x:-66,y:-16,z:104,hp:3,type:'welder',encounter:'prototype-approach'},
@@ -184,10 +184,10 @@ export const cityMirrors=[
   {id:'inner-turn',x:254,y:-22,z:124,n:[q,0,q],size:4},
   {id:'calibration',x:216,y:26,z:-4,n:[-q,-.15,q],size:6},
   {id:'return-index',x:232,y:29.39411255,z:-3.64,n:[q,0,-q],rotated:[.684061579,.145111374,.71484435],index:'mirror-index',size:4},
-  {id:'guardian-east-a',x:222,y:18,z:50,n:[q,0,-q],size:6},
-  {id:'guardian-east-b',x:222,y:18,z:84,n:[.361,0,.933],size:7},
-  {id:'guardian-west-a',x:182,y:18,z:50,n:[-q,0,-q],size:6},
-  {id:'guardian-west-b',x:182,y:18,z:84,n:[-.361,0,.933],size:7},
+  {id:'guardian-east-a',x:214,y:18,z:54,n:[q,0,-q],size:6},
+  {id:'guardian-east-b',x:214,y:18,z:72,n:[.4718579,0,.8816746],size:7},
+  {id:'guardian-west-a',x:190,y:18,z:54,n:[-q,0,-q],size:6},
+  {id:'guardian-west-b',x:190,y:18,z:72,n:[-.4718579,0,.8816746],size:7},
   {id:'keeper-mirror',x:22,y:-54,z:18,n:[q,0,-q],size:6}
 ];
 export const cityFlags=['pressure-thermal','inner-thermal','bridge-crane','inner-optics','mirror-index','dock-cover','bench-cover','rig-cover','yard-cover','overdrive','magnetModule','mortarModule','laser','circulation','relay-west','relay-east','relays','prototype','overdrive-return','foundry','press-return','ballast','ratchet','loading-return','freight-return','optics-outer','emitter-cage','gallery','garden-optical','yard-optical','guardian','pump','rig','pressure-return','last-cage','keeper','signal','maintenance','endingSeen','inner-transit'];

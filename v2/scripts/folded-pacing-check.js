@@ -7,8 +7,14 @@ async page=>{
     const {expansionRoutes,expansionControls}=await import('/src/folded-expansion-layout.js');
     const g=__game,results=[];g.manual(true);
     for(const route of expansionRoutes){
-      const c=expansionControls.find(c=>c.id===route.trial),r=route.rooms[1];
+      const c=expansionControls.find(c=>c.id===route.trial),point=route.path.find(p=>p[2]===route.trial),r={x:point[0],y:route.y,z:point[1]};
       g.scenario({player:{x:r.x,y:r.y,z:r.z,hp:50,invincible:0,mortar:true,heat:0,overheated:false,weapon:c.surface?'mortar':'cannon'},state:{[c.id]:false}});
+      if(c.requires){
+        const inlet=expansionControls.find(t=>t.id===c.requires);g.scenario({state:{[c.requires]:false}});
+        g.aimAt(c.x,c.z,c.y);g.setInput(['Mouse0']);g.step(1.2,false);g.setInput([]);if(g.snapshot().state[c.id])throw Error('Covered downstream target accepted fire');
+        g.scenario({player:{heat:0,overheated:false}});
+        for(let i=0;i<180&&!g.snapshot().state[inlet.id];i++){g.aimAt(inlet.x,inlet.z,inlet.y);g.setInput(['Mouse0']);g.step(1/60,false);}g.setInput([]);g.scenario({player:{heat:0,overheated:false}});
+      }
       if(c.pressure){
         g.scenario({player:{x:r.x-5}});g.aimAt(c.x,c.z,c.y);g.setInput(['Mouse0']);g.step(1.2,false);g.setInput([]);
         if(g.snapshot().state[c.id])throw Error('Pressure plate accepted an empty floor '+c.id);
@@ -23,7 +29,7 @@ async page=>{
   await page.screenshot({path:'v2/output/playwright/overhaul/pacing-trial.png'});
   const waves=await page.evaluate(async()=>{
     const {expansionRoutes}=await import('/src/folded-expansion-layout.js');
-    const g=__game,a=__pacing,r=expansionRoutes.find(r=>r.id==='proving').rooms[2],group=a.world.enemies.filter(e=>e.battle===r.id);
+    const g=__game,a=__pacing,route=expansionRoutes.find(r=>r.id==='proving'),point=route.path.find(p=>p[2]==='battle'),r={x:point[0],y:route.y,z:point[1]},group=a.world.enemies.filter(e=>e.battle==='proving-endurance');
     g.scenario({player:{x:r.x,y:r.y,z:r.z,hp:50,invincible:1e9},state:{'proving-endurance':false}});
     const reserve=group.filter(e=>e.wave);if(reserve.some(e=>e.awake))throw Error('Reserves started awake');
     for(const e of group.filter(e=>!e.wave))a.hitEnemy(e,100,new a.T.Vector3(r.x,r.y,r.z),'mortar');

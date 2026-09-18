@@ -1,4 +1,5 @@
-import {expansionRooms,expansionCurrents,expansionDecks,expansionHeat} from './folded-expansion-layout.js';
+import {makeDistrictMachinery} from './folded-district-machinery.js';
+import {expansionCurrents,expansionDecks,expansionHeat} from './folded-expansion-layout.js';
 import * as T from 'three';
 import {box,cylinder,ring,mat,batchStatic} from './world.js';
 import {REGION_STYLE,regionAt} from './folded-architecture.js';
@@ -64,35 +65,9 @@ export function makeCityPresentation(scene,aperture){
   for(let x=-440;x<580;x+=32)box(scenery,32,90,12,x+16,-28,-346,rock,0);
   for(let z=-340;z<264;z+=32)box(scenery,12,90,32,-434,-28,z+16,rock,0);
   box(scenery,1040,3,660,70,-75,-40,rock,0);
-  for(const r of expansionRooms){
-    const x=r.x+r.w/2,z=r.z-2,y=r.y;
-    if(r.region==='transit'){
-      // Suspended cargo rails end in grounded gantry legs.
-      for(const side of [-1,1])box(scenery,1,12,1,x+side*24,y+6,z,iron,0);
-      box(scenery,50,1,2,x,y+12,z,copper,0);
-      for(const side of [-1,1])box(scenery,6,4,4,x+side*18,y+2,z-3,pale,.15);
-    }else if(r.region==='garden'){
-      for(let dx=-24;dx<=24;dx+=8){
-        box(scenery,5,.8,3,x+dx,y+.4,z,rock,0);
-        for(let j=0;j<3;j++){const leaf=box(scenery,.35,2+j,1,x+dx+j-1,y+1.5,z,mat(0x648a53),0);leaf.rotation.z=(j-1)*.3;}
-      }
-    }else if(r.region==='testworks'){
-      for(const side of [-1,1]){
-        box(scenery,9,5,3,x+side*20,y+2.5,z,iron,0);
-        for(let h=1;h<5;h++)box(scenery,8,.12,.15,x+side*20,y+h,z+1.55,pale,0);
-      }
-      box(scenery,30,.12,2,x,y+.1,z,copper,0);
-    }else if(r.region==='optics'){
-      for(const side of [-1,1]){box(scenery,2,17,3,x+side*24,y+8.5,z,pale,0);box(scenery,.22,13,.2,x+side*24,y+8,z+1.6,mat(0xe2cf8b,true),0);}
-      ring(scenery,8,.5,x,y+12,z,copper).rotation.x=0;
-      for(const side of [-1,1])box(scenery,.5,12,.5,x+side*7,y+6,z,iron,0);
-    }else if(r.region==='circulation'){
-      for(const dx of [-21,0,21]){cylinder(scenery,5,10,x+dx,y+5,z-4,copper,12);for(const h of [1,5,9])ring(scenery,5.15,.25,x+dx,y+h,z-4,iron);}
-    }else{
-      for(const side of [-1,1]){box(scenery,5,18,5,x+side*25,y+9,z,rock,0);box(scenery,.25,12,.2,x+side*25,y+7,z+2.6,mat(0xd58d51,true),0);}
-      for(const dx of [-9,0,9])box(scenery,4,2,4,x+dx,y+1,z,copper,.2);
-    }
-  }
+  // District machines occupy authored work positions, rather than the same
+  // decorative strip behind every room. Their bounds are in the level layout.
+  makeDistrictMachinery(scenery);
   for(const q of expansionHeat)for(let x=q.x+4;x<q.x+q.w;x+=8){
     box(scenery,5,.08,8,x,q.y+.07,q.z+q.d/2,iron,0);
     for(const z of [-2,0,2])box(scenery,4,.04,.22,x,q.y+.13,q.z+q.d/2+z,mat(0xdb7941,true),0);

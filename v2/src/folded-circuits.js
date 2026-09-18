@@ -4,7 +4,7 @@ export function circuitLinks(controls,solids,lifts,mirrors=[]){
   const links=[];
   for(const c of controls){
     const ids=c.id==='relay-east'?['relay-east','relays']:[c.id];
-    const endpoints=[...solids.filter(s=>ids.includes(s.id)&&!s.permanent),...lifts.filter(l=>ids.includes(l.lock||l.id)),...mirrors.filter(m=>m.index===c.id)];
+    const endpoints=[...solids.filter(s=>ids.includes(s.id)&&!s.permanent),...lifts.filter(l=>ids.includes(l.lock||l.id)),...mirrors.filter(m=>m.index===c.id),...controls.filter(t=>t.requires===c.id).map(t=>({...t,y:t.ground??t.y-1.3}))];
     if(c.id==='signal')endpoints.push({id:'signal-dish',x:204,y:40,z:146});
     if(c.id==='rail-repair')endpoints.push({id:'cargo-rail',x:-18,y:0,z:25});
     if(c.id==='maintenance')endpoints.push({id:'tender',x:110,y:-24,z:31});

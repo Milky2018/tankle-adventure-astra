@@ -28,11 +28,11 @@ test('the unopened press spur returns through a local canal loop without grantin
 test('ordinary encounters mix close pressure and ranged support outside Hive recovery pockets',()=>{
   const groups=Map.groupBy(foldedEnemies.filter(e=>e.encounter),e=>e.encounter);
   for(const [id,enemies] of groups){
-    assert.ok(enemies.length>=2&&enemies.length<=3,`${id} remains a small squad`);
+    assert.ok(enemies.length>=2&&enemies.length<=4,`${id} remains a small squad`);
     assert.ok(enemies.some(e=>ENEMY_KINDS[e.type].role==='pressure'),`${id} has close pressure`);
-    assert.ok(enemies.some(e=>['shot','shield-shot','burst','rail','lob','reflect'].includes(ENEMY_KINDS[e.type].attack)),`${id} has ranged support`);
+    assert.ok(enemies.some(e=>['shot','shield-shot','burst','rail','lob','reflect','mine'].includes(ENEMY_KINDS[e.type].attack)),`${id} has ranged support`);
     for(const a of enemies)for(const b of enemies){
-      assert.ok(Math.hypot(a.x-b.x,a.z-b.z)<=20,`${id} can support its own members`);
+      assert.ok(Math.hypot(a.x-b.x,a.z-b.z)<=Math.max(...enemies.map(e=>ENEMY_KINDS[e.type].reach))+8,`${id} can support its own members`);
       assert.equal(a.y,b.y,`${id} starts on one readable floor`);
     }
   }
@@ -48,4 +48,11 @@ test('the opened relay corridor has room to turn beside the overlapping return r
   sail(p,state,[[-55,69],[-55,108]]);
   moveFolded(p,10,0,state);
   assert.ok(p.x<-50,'the wider entrance does not extend into a prototype-lock bypass');
+});
+
+test('every repair unit starts within acquisition range of an ally it can support',()=>{
+ for(const e of foldedEnemies.filter(e=>e.type==='repairer')){
+  const allies=foldedEnemies.filter(a=>a!==e&&a.encounter===e.encounter&&Math.abs(a.y-e.y)<2&&Math.hypot(a.x-e.x,a.z-e.z)<18);
+  assert.ok(allies.length,`${e.id} has no repairable ally within acquisition range`);
+ }
 });

@@ -142,6 +142,7 @@ export function initialFoldedState(saved={}){
     if(state[ability]||saved.anchor===`${district}-hive-3`)state[`${district}-transfer`]=true;
     if(['proving','hearth'].includes(district)&&(state[ability]||saved.anchor===`${district}-hive-3`))state[`${district}-endurance`]=true;
   }
+  if(state['reservoir-transfer'])state['reservoir-inlet']=true;
   state.sorter=saved.sorter===true;
   state['maintenance-started']=saved['maintenance-started']===true;
   state.sidePuzzles=saved.sidePuzzles||{};
@@ -156,7 +157,7 @@ export function initialFoldedState(saved={}){
 export function releaseFolded(id,kind,p,state,lifts,time=0){
   if(state[id])return false;
   const c=foldedControls.find(c=>c.id===id);if(!c)return false;
-  if(!mechanismReady(c,p,time))return false;
+  if(!mechanismReady(c,p,time,state))return false;
   if(c.kind==='laser'&&kind!=='laser'||['use','dock'].includes(c.kind)&&kind!=='use')return false;
   if(id==='press-return'&&!state.foundry)return false;
   if(id==='pump'&&(p.pumpPressure||0)<.8)return false;

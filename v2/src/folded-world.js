@@ -4,7 +4,7 @@ import {magnetPullable} from './folded-combat.js';
 import {REFUGE_RADIUS} from './folded-refuges.js';
 import {SORTER_REACH} from './folded-attacks.js';
 import {mechanismReady} from './folded-pacing.js';
-import {expansionBattles} from './folded-expansion-layout.js';
+import {expansionBattles,expansionMirrors} from './folded-expansion-layout.js';
 import {circuitLinks,circuitColor} from './folded-circuits.js';
 import {routeSigns,gateAbility} from './folded-guidance.js';
 import {makeCityPresentation} from './folded-presentation.js';
@@ -49,6 +49,9 @@ export function makeFoldedWorld(scene,state){
     if(!floorMaterials.has(key))floorMaterials.set(key,d.water?new T.MeshPhongMaterial({color:0x397d9d,specular:0xa6dce8,shininess:65}):mat(key));
     const mesh=box(floorMeshes,d.w,.65,Math.hypot(d.d,d.rise||0),d.x+d.w/2,d.y+(d.rise||0)/2-.325-(d.recess||0),d.z+d.d/2,floorMaterials.get(key),0);
     aperture.apply(mesh.material);mesh.userData.aperture=true;
+    // The opaque depth pass handles other floors. Draw translucent floor color
+    // before ground fixtures, whose merged centers cannot sort against each tile.
+    mesh.renderOrder=-2;
     mesh.name=`folded-floor:${d.id}`;if(d.rise)mesh.rotation.x=-Math.atan2(d.rise,d.d);
     {
       mesh.geometry=mesh.geometry.clone();const pos=mesh.geometry.attributes.position,uv=mesh.geometry.attributes.uv;
@@ -169,6 +172,12 @@ export function makeFoldedWorld(scene,state){
       ring(root,1,.16,0,.03,0,C.metal);
       lamp=cylinder(moving,.8,.18,0,.02,0,mat(SIGNAL.ready,true),16);
       for(const x of [-.45,.45])box(moving,.12,.04,1.1,x,.13,0,C.dark,0);
+    }else if(c.rotor){
+      ring(root,1.25,.15,0,0,.2,C.metal);
+      lamp=box(moving,.8,.8,.25,0,0,.4,mat(SIGNAL.ready,true),0);
+      for(const x of [-.85,.85])box(moving,.85,.28,.35,x,0,.4,C.metal,0);
+      box(moving,.28,1.7,.35,0,0,.4,C.metal,0);
+      for(const y of [-1,1])box(root,.35,.6,.4,0,y*1.35,.3,c.id.startsWith('reservoir')?0x89c9bf:C.lightYellow,0);
     }else if(c.kind==='magnet'){
       box(root,1.7,.32,.55,0,-.6,0,C.metal);
       for(const x of [-.68,.68]){box(root,.36,1.4,.55,x,0,0,SIGNAL.magnet);box(root,.38,.35,.58,x,.55,0,0xa9dcff);}
@@ -204,7 +213,9 @@ export function makeFoldedWorld(scene,state){
     const casing=new T.Group();root.add(casing);
     for(const child of [...root.children])if(child!==moving&&child!==lamp&&child!==casing)casing.add(child);
     batchStatic(casing);
-    const cover=['brake','pump'].includes(c.id)||c.pressure||c.cycle?box(root,1.2,1.2,.12,0,0,.64,C.dark,0):null;
+    const cover=['brake','pump'].includes(c.id)||c.pressure||c.cycle||c.requires?box(root,1.2,1.2,.12,0,0,.64,C.dark,0):null;
+    const weight=c.counterweight?box(root,2,2,1,0,3,-.7,C.metal):null;
+    if(weight){for(const x of [-1.4,1.4])box(root,.18,5,.18,x,1.5,-.7,C.dark,0);box(root,3,.3,1,0,4,-.7,C.metal,0);}
     let plate=null,plateFeed=null;
     if(c.pressure){
       const q=c.pressure,base=new T.Group();base.position.set(q.x,q.y,q.z);scene.add(base);
@@ -214,7 +225,7 @@ export function makeFoldedWorld(scene,state){
       plateFeed=box(base,.16,.08,length,delta.x/2,.13,delta.z/2,mat(SIGNAL.ready,true),0);plateFeed.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),delta.normalize());
       floorDetails.push({root:base,x:q.x,y:q.y,z:q.z,radius:length+3});
     }
-    const control={...c,root,lamp,moving,cover,plate,plateFeed,radius:.95,flash:0,engaged:state[c.id]?1:0};controls.push(control);return control;
+    const control={...c,root,lamp,moving,cover,weight,plate,plateFeed,radius:.95,flash:0,engaged:state[c.id]?1:0};controls.push(control);return control;
   }
   for(const c of foldedControls)makeControl(c);
   const controlFeeds=[],circuitLampGeometry=new T.BoxGeometry(.25,.13,.25);
@@ -302,6 +313,10 @@ export function makeFoldedWorld(scene,state){
   }
   for(const e of foldedEnemies){
     const model=foldedEnemyModel(e.id==='sorter'?'sorter':e.type);scene.add(model.root);model.root.position.set(e.x,e.y,e.z);
+    if(e.id==='prototype'){
+      model.frontArmor=box(model.body,2.4,1.3,.35,0,1.2,1.35,C.metal);
+      box(model.body,1.1,.65,.15,0,1.2,1.2,mat(C.orange,true));
+    }
     if(magnetPullable(e)){for(const side of [-1,1])box(model.body,.2,.38,1,side*.75,1.1,0,mat(SIGNAL.magnet,true),0);}
     if(e.magneticShield&&model.frontArmor){model.frontArmor.material=mat(SIGNAL.magnet);for(const x of [-.7,.7])box(model.frontArmor,.3,.55,.12,x,0,.34,mat(0xa9dcff,true));}
     const materials=prepareEnemyMaterials(model);
@@ -418,7 +433,7 @@ export function makeFoldedWorld(scene,state){
   const mirrorPaint=mirrorCanvas.getContext('2d'),sheen=mirrorPaint.createLinearGradient(0,128,128,0);
   for(const [stop,color]of [[0,'#90a69f'],[.38,'#dce5d8'],[.43,'#fff7dd'],[.53,'#fff7dd'],[.58,'#a3b9b0'],[1,'#e5ebd9']])sheen.addColorStop(stop,color);
   mirrorPaint.fillStyle=sheen;mirrorPaint.fillRect(0,0,128,128);const mirrorTexture=new T.CanvasTexture(mirrorCanvas);mirrorTexture.colorSpace=T.SRGBColorSpace;
-  for(const d of cityMirrors){
+  for(const d of [...cityMirrors,...expansionMirrors]){
     const normal=new T.Vector3(...(d.index&&state[d.index]?d.rotated:d.n)).normalize(),root=new T.Group();root.position.set(d.x,d.y,d.z);root.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),normal);scene.add(root);
     // The physical plane reflects on both sides; no opaque backing may conceal it.
     for(const y of [-1.65,1.65])box(root,d.size+.5,.3,.35,0,y,0,C.dark,0);
@@ -640,21 +655,23 @@ export function makeFoldedWorld(scene,state){
   function update(dt,time,p,camera=null){
     for(const id of Object.keys(state))if(state[id]===true&&previousSignals[id]!==true){signalRelease(id,time);previousSignals[id]=true;}
     if(camera&&!thirdPerson)camera.getWorldDirection(sightDirection).negate();
-    Object.assign(viewPlayer,{x:p.x,y:p.y,z:p.z});aperture.update(p,sightDirection);
+    Object.assign(viewPlayer,{x:p.x,y:p.y,z:p.z});aperture.update(p,sightDirection,enemies.some(e=>e.guardian&&e.hp>0&&Math.abs(p.y-e.y)<3)?T.MathUtils.clamp((30-Math.hypot(p.x-202,p.z-64))/8,0,1):0);
     presentation.sight(p,sightDirection);presentation.update(time,p,state);
     for(const s of surfaces)s.opacity=thirdPerson?1:apertureOpacity(s.mesh.position,p,sightDirection);
     for(const w of walls){w.open=T.MathUtils.damp(w.open,activeSolid(w,state)?0:1,9,dt);w.mesh.position.y=w.y+w.h/2-w.open*(w.h+.5);w.mesh.visible=!w.invisible&&w.open<.999;w.mesh.updateMatrixWorld();}
     for(const sign of signs)sign.emblem.visible=!state[sign.until];
     for(const c of controls){
       c.flash=Math.max(0,c.flash-dt);
-      const aligned=state[c.id]||(c.id==='pump'?p.pumpPressure>=.8:c.id!=='brake'||Math.abs(lifts.find(l=>l.id==='carrier').y-16)<.15)&&mechanismReady(c,p,time),engaged=!!state[c.id];
+      const aligned=state[c.id]||(c.id==='pump'?p.pumpPressure>=.8:c.id!=='brake'||Math.abs(lifts.find(l=>l.id==='carrier').y-16)<.15)&&mechanismReady(c,p,time,state),engaged=!!state[c.id];
       c.ready=aligned;
       c.engaged=T.MathUtils.damp(c.engaged,engaged?1:0,8,dt);
       c.lamp.scale.setScalar(!engaged&&Math.abs(c.y-p.y-1.3)<4&&Math.hypot(c.x-p.x,c.z-p.z)<22?1+Math.sin(time*3)*.06:1);
       c.lamp.material.color.setHex(!aligned?C.dark:c.flash?C.lightYellow:engaged?SIGNAL.open:c.kind==='magnet'?SIGNAL.magnet:SIGNAL.ready);
       if(c.cover)c.cover.position.y=T.MathUtils.damp(c.cover.position.y,aligned?1.4:0,12,dt);
       if(c.plate){c.plate.position.y=T.MathUtils.damp(c.plate.position.y,aligned?.14:.3,12,dt);c.plate.material.color.setHex(aligned?SIGNAL.open:SIGNAL.ready);c.plateFeed.material.color.setHex(aligned?SIGNAL.open:SIGNAL.ready);}
-      if(c.kind==='magnet'){c.moving.position.y=c.engaged*.55;if(state[c.id])c.moving.position.z=T.MathUtils.damp(c.moving.position.z,0,8,dt);}
+      if(c.weight)c.weight.position.y=3-c.engaged*3.4;
+      if(c.rotor)c.moving.rotation.z=-Math.PI/4+c.engaged*Math.PI/4;
+      else if(c.kind==='magnet'){c.moving.position.y=c.engaged*.55;if(state[c.id])c.moving.position.z=T.MathUtils.damp(c.moving.position.z,0,8,dt);}
       else if(c.kind==='laser'||c.kind==='use')c.moving.rotation.z=c.engaged*Math.PI*.55;
       else if(c.surface==='top')c.moving.position.y=-c.engaged*.4;
       else c.moving.position.z=-c.engaged*.3-(c.flash?Math.sin(c.flash*24)*.08:0);
@@ -711,6 +728,7 @@ export function makeFoldedWorld(scene,state){
     pumpPiston.scale.y=.4+pressure*.6;
     pumpFeed.forEach((lamp,i)=>lamp.material.color.setHex(pressure>i/pumpFeed.length?SIGNAL.open:SIGNAL.ready));
     for(const e of enemies){
+      if(e.id==='prototype')e.model.frontArmor.position.y=T.MathUtils.damp(e.model.frontArmor.position.y,e.phase==='vent'?2.7:1.2,12,dt);
       for(const part of e.parts){if(part.shutter)part.shutter.position.y=T.MathUtils.damp(part.shutter.position.y,e.phase==='vent'?3.2:1.7,10,dt);part.lamp.material.color.setHex(part.hp?C.orange:C.dark);part.root.visible=e.hp>0;}
       if(e.coreModel){
         const open=e.hp>0&&e.parts.every(part=>part.hp<=0)&&(e.id!=='foundry'||e.phase==='vent');
