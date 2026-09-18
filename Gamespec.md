@@ -165,7 +165,7 @@ An active Hive is a **safe refuge** on its own floor:
 - Holding a weapon does not remove protection. Magnet may operate machinery, but the refuge cannot be used to attack enemies outside it.
 - Mortar's preview shows interception at the boundary. Leaving restores normal reach and vulnerability. Protection does not extend to a different floor.
 
-At zero HP, tracks stop, the turret drops, headlights extinguish and smoke rises. Music stops; machinery remains audible. After a brief held view, a Hive-shaped mechanical iris closes, then opens around the reconstructed Tank. The sequence lasts about three seconds and can be skipped. Reconstruction restores HP, clears Heat and retracts Flotation.
+At zero HP, tracks stop, the turret drops, headlights extinguish and smoke rises. Music stops immediately and discards the defeated encounter’s musical continuation; machinery remains audible. Reconstruction starts the current refuge region’s exploration music, rather than resuming the previous Boss cue. After a brief held view, a Hive-shaped mechanical iris closes, then opens around the reconstructed Tank. The sequence lasts about three seconds and can be skipped. Reconstruction restores HP, clears Heat and retracts Flotation.
 
 | Persists through rest, death and reload | Resets with an encounter |
 | --- | --- |
@@ -623,8 +623,10 @@ Boss attack sequences override ordinary cadence. Readable commitment and exposed
 | Ordinary enemy projectile | 8 |
 | Skirmisher projectile | 5 |
 | Sniper shot | 14 |
-| Foundry / Optical Guardian heavy projectile | 15 |
-| Keeper projectile | 9 |
+| Boss fan projectile | 9 |
+| Boss battery projectile | 12 |
+| Boss homing missile | 16 |
+| Boss aimed barrage, direct hit or blast | 18 |
 | Enemy Mortar blast | 10 |
 | Mine explosion | 9 |
 | Welder flame contact | 6 |
@@ -634,7 +636,7 @@ Boss attack sequences override ordinary cadence. Readable commitment and exposed
 | Failed accelerating ram into a guard | 6 |
 | Prototype committed charge | 18 |
 
-An enemy Mortar's direct impact uses its launcher's projectile damage. The Tank's consecutive-hit protection prevents direct impact and explosion from charging damage twice for the same impact. Continuous combat attacks respect that protection too; their values are not damage per frame.
+An ordinary enemy Mortar's direct impact uses its launcher's projectile damage; its blast deals 10. A Boss barrage uses its 18-point payload for both direct impact and blast. The Tank's consecutive-hit protection prevents direct impact and explosion from charging damage twice for the same impact. Continuous combat attacks respect that protection too; their values are not damage per frame.
 
 Enemy projectiles stop at the first physical body and can hit other enemies for one Cannon-equivalent damage before armour. Enemy Mortar blasts deal three to other machines, excluding the launcher. Friendly fire does not operate switches.
 

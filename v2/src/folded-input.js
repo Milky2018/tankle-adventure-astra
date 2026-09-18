@@ -19,6 +19,7 @@ export function installFoldedInput({ canvas, settings, keys, pointer, follow, st
       !status.thirdPerson ||
       status.paused ||
       status.mapOpen ||
+      status.dead ||
       status.endingTime ||
       status.endingVisible ||
       pointerLockFailed ||
@@ -75,7 +76,8 @@ export function installFoldedInput({ canvas, settings, keys, pointer, follow, st
       !status.paused &&
       !status.mapOpen &&
       !status.endingVisible &&
-      !status.endingTime
+      !status.endingTime &&
+      !status.dead
     )
       actions.pause();
   });
@@ -85,7 +87,8 @@ export function installFoldedInput({ canvas, settings, keys, pointer, follow, st
       (document.pointerLockElement === canvas || orbiting) &&
       !status.paused &&
       !status.mapOpen &&
-      !status.endingTime
+      !status.endingTime &&
+      !status.dead
     ) {
       follow.turn(event.movementX, event.movementY);
       if (event.movementX || event.movementY) looked = true;
@@ -102,6 +105,7 @@ export function installFoldedInput({ canvas, settings, keys, pointer, follow, st
   });
   canvas.addEventListener('mousedown', (event) => {
     event.preventDefault();
+    if (status.dead) return;
     if (status.thirdPerson && event.button === 1 && document.pointerLockElement !== canvas) {
       orbiting = true;
       pointerOver = true;

@@ -1,3 +1,4 @@
+import { createPlayerDeath, DEATH_HOLD } from './folded-death.js';
 import { createFoldedEnemies } from './folded-ai.js';
 import { createEnemyView } from './folded-enemy-view.js';
 import { installFoldedInput } from './folded-input.js';
@@ -289,6 +290,7 @@ let manual = import.meta.env.DEV && params.has('test') && params.has('manual'),
   repairAt = -10,
   wakeAt = -1,
   magnetSoundAt = -10;
+const deathView = createPlayerDeath({ model, scene, hullMaterials, project, burst, ripple });
 const combatEvents = {
   alertSquad,
   save,
@@ -302,6 +304,8 @@ const combatEvents = {
     deathAt = at;
     keys.clear();
     bossArenas.reset();
+    deathView.begin();
+    audio.update(time, p, false, '', false);
   },
 };
 const { hurt, castWeapon, hitEnemy, impact, shootEnemy, updateShots } = createFoldedCombat({
@@ -813,6 +817,10 @@ function respawn() {
   repairAt = time;
   world.pulseHive(h.id, 'respawn');
   audio.event('repair');
+  world.update(0, time, p, camera);
+  updateAim();
+  deathView.reconstruct();
+  updateMusic();
 }
 function alertSquad(...args) {
   return enemies.alertSquad(...args);
@@ -1071,9 +1079,16 @@ function advance(dt) {
   time += dt;
   if (deathAt >= 0) {
     laserBeam.visible = laserGuide.visible = laserEndpoint.visible = false;
-    if (time - deathAt > 2.5) respawn();
+    mortarGuide.visible = magneticBeam.visible = false;
+    world.update(dt, time, p, camera);
+    updateSparks(dt);
+    updateWaves(dt);
+    deathView.update(time - deathAt);
+    updateMusic();
+    if (time - deathAt >= DEATH_HOLD) respawn();
     return;
   }
+  deathView.reveal(dt);
   if (p.endingTime) {
     p.endingTime = Math.min(ENDING_DURATION, p.endingTime + dt);
     updateEnding(dt);
@@ -1193,32 +1208,12 @@ function advance(dt) {
   }
   flotation.update(p.deployed, time, moving);
   model.radiator.material.color.setHex(p.overheated ? C.red : C.orange);
-  for (let i = sparks.length - 1; i >= 0; i--) {
-    const s = sparks[i];
-    s.age += dt;
-    s.velocity.y -= dt * 14;
-    s.mesh.position.addScaledVector(s.velocity, dt);
-    if (s.age > 0.4) {
-      scene.remove(s.mesh);
-      s.mesh.material.dispose();
-      sparks.splice(i, 1);
-    }
-  }
+  updateSparks(dt);
   if (p.afloat && moving && Math.hypot(p.x - oldX, p.z - oldZ) > 0.01 && time - wakeAt > 0.18) {
     ripple(new T.Vector3(p.x, p.y, p.z), 2.6, 0xd9f3e6, 1.1, 0.28);
     wakeAt = time;
   }
-  for (let i = waves.length - 1; i >= 0; i--) {
-    const w = waves[i];
-    w.age += dt;
-    w.mesh.scale.setScalar(w.radius * Math.min(1, w.age / (w.life * 0.4)));
-    w.mesh.material.opacity = w.opacity * Math.max(0, 1 - w.age / w.life);
-    if (w.age >= w.life) {
-      scene.remove(w.mesh);
-      w.mesh.material.dispose();
-      waves.splice(i, 1);
-    }
-  }
+  updateWaves(dt);
   const pickup = target();
   if (pickup?.kind === 'pickup' && Math.hypot(pickup.x - p.x, pickup.z - p.z) < 2.6) interact();
   const support = foldedSupport(p.x, p.z, p.y, p.deployed, world.lifts);
@@ -1250,6 +1245,36 @@ function advance(dt) {
     learned = true;
   }
   if (learned) save();
+  updateMusic(moving);
+}
+
+function updateSparks(dt) {
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const s = sparks[i];
+    s.age += dt;
+    s.velocity.y -= dt * 14;
+    s.mesh.position.addScaledVector(s.velocity, dt);
+    if (s.age > 0.4) {
+      scene.remove(s.mesh);
+      s.mesh.material.dispose();
+      sparks.splice(i, 1);
+    }
+  }
+}
+function updateWaves(dt) {
+  for (let i = waves.length - 1; i >= 0; i--) {
+    const w = waves[i];
+    w.age += dt;
+    w.mesh.scale.setScalar(w.radius * Math.min(1, w.age / (w.life * 0.4)));
+    w.mesh.material.opacity = w.opacity * Math.max(0, 1 - w.age / w.life);
+    if (w.age >= w.life) {
+      scene.remove(w.mesh);
+      w.mesh.material.dispose();
+      waves.splice(i, 1);
+    }
+  }
+}
+function updateMusic(moving = false) {
   const region = world.presentation.region,
     area = {
       foundry: 'r1-foundry',
@@ -1260,14 +1285,17 @@ function advance(dt) {
       circulation: 'r6-circulation',
       furnace: 'r7-furnace',
     }[region];
-  const musicThreats = world.enemies.filter(
-    (e) =>
-      e.hp > 0 &&
-      e.awake &&
-      Math.abs(e.y - p.y) < 5 &&
-      (e.alertUntil > time || e.phase !== 'idle') &&
-      Math.hypot(e.x - p.x, e.z - p.z) < (e.id === 'keeper' ? 94 : 48),
-  );
+  const musicThreats =
+    p.hp <= 0
+      ? []
+      : world.enemies.filter(
+          (e) =>
+            e.hp > 0 &&
+            e.awake &&
+            Math.abs(e.y - p.y) < 5 &&
+            (e.alertUntil > time || e.phase !== 'idle') &&
+            Math.hypot(e.x - p.x, e.z - p.z) < (e.id === 'keeper' ? 94 : 48),
+        );
   const musicBoss = musicThreats.find((e) =>
     ['keeper', 'guardian', 'foundry', 'prototype', 'sorter'].includes(e.id),
   );
@@ -1489,6 +1517,10 @@ function input(code, repeat = false) {
     return;
   }
   if (paused || p.endingTime) return;
+  if (deathAt >= 0) {
+    if (code === bindings.skip && !repeat) respawn();
+    return;
+  }
   if (code === bindings.map && !repeat) {
     setMap(!mapOpen);
     return;
@@ -1498,10 +1530,6 @@ function input(code, repeat = false) {
     setCameraView(thirdPerson ? 'overhead' : 'third');
     savePrefs();
     if (thirdPerson) captureMouse();
-    return;
-  }
-  if (code === bindings.skip && deathAt >= 0) {
-    respawn();
     return;
   }
   keys.add(code);
@@ -1533,6 +1561,9 @@ const controls = installFoldedInput({
     },
     get mapOpen() {
       return mapOpen;
+    },
+    get dead() {
+      return p.hp <= 0;
     },
     get endingTime() {
       return p.endingTime;
@@ -1821,6 +1852,7 @@ if (import.meta.env.DEV && params.has('test')) {
       castWeapon,
       layMine,
       beginBossAttack,
+      hurt,
       resetEnemies,
       clearShots,
       respawn,

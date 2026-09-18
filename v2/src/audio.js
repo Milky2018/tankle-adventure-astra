@@ -55,7 +55,7 @@ export class FactoryAudio {
     if(name==='ram'){this.tone(75,.22,'square',.3,-40,pan);this.noise(.18,.4,pan);}
   }
   environment(time,p,region,state,yaw){
-    if(!this.ctx||!this.sfx||p.hp<=0)return;
+    if(!this.ctx||!this.sfx)return;
     this.environmentBeats??={};
     const source=(key,x,y,z,period,sound)=>{
       const distance=Math.hypot(p.x-x,(p.y-y)*1.5,p.z-z);if(distance>48)return;

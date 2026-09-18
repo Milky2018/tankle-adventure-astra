@@ -72,8 +72,10 @@ export class Soundtrack {
     this.state=state;const now=this.ctx.currentTime;
     const blocked=state.paused||state.dead||!state.enabled;
     this.enabled=state.enabled;
+    // Death is a new journey attempt, not a resumable pause.
+    if(state.dead){this.saved=null;this.battleUntil=0;this.combatUntil=0;this.battleTrack=null;this.candidate=null;this.retryAt=0;}
     if(blocked){
-      if(!this.paused){this.serial++;this.loading=null;if(this.current){this.saved={data:this.current,offset:this.position(this.current)};this.stop(this.current);this.current=null;}for(const voice of this.retiring)for(const source of voice.sources)source.stop(now+.025);}
+      if(!this.paused){this.serial++;this.loading=null;if(this.current){if(!state.dead)this.saved={data:this.current,offset:this.position(this.current)};this.stop(this.current);this.current=null;}for(const voice of this.retiring)for(const source of voice.sources)source.stop(now+.025);}
       this.paused=true;return;
     }
     this.paused=false;

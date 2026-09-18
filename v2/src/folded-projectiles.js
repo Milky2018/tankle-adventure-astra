@@ -9,7 +9,7 @@ import { clamp, damagePlayer } from './mechanics.js';
 import { foldedSupport } from './folded-layout.js';
 import { C, ring, mat } from './world.js';
 import { SIGNAL } from './folded-visibility.js';
-import { CANNON, HOSTILE_DAMAGE, hostileShotDamage } from './folded-weapons.js';
+import { CANNON, HOSTILE_DAMAGE, hostileShotDamage, hostileBlastDamage } from './folded-weapons.js';
 
 // Combat uses the same world queries in the game and in renderer-free tests.
 // The clock is supplied by the simulation; presentation and progression remain
@@ -117,7 +117,7 @@ export function createFoldedCombat({
             { targets: false },
           )
         )
-          hurt(HOSTILE_DAMAGE.barrage);
+          hurt(shot.blastDamage ?? HOSTILE_DAMAGE.barrage);
         for (const e of world.enemies)
           if (e.hp > 0 && e.id !== shot.owner) {
             for (const target of [e, ...e.parts.filter((part) => part.hp > 0)]) {
@@ -259,7 +259,8 @@ export function createFoldedCombat({
       arc: lob || e.type === 'artillery' ? BARRAGE.height : MORTAR.height,
       range: e.id === 'keeper' ? 94 : e.type === 'sniper' ? RAIL.range : 55,
       mineOwner: e.type === 'miner' ? e.id : null,
-      damage: hostileShotDamage(e),
+      damage: hostileShotDamage(e, lob ? 'barrage' : options.homing ? 'seekers' : e.attack),
+      blastDamage: mortar ? hostileBlastDamage(e) : null,
       speed:
         e.id === 'keeper'
           ? Math.max(15, origin.distanceTo(target) / 2.5)

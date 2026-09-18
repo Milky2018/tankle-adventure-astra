@@ -8,6 +8,7 @@ The current game boots through `src/entry.js` and `src/folded.js`. The latter cr
 | --- | --- |
 | `folded-ai.js` | Enemy decisions, movement, attack phases, squad alerts and combat reset |
 | `folded-enemy-rules.js` | Enemy archetype values and squad healing selection |
+| `folded-death.js` | Player wreck animation, smoke and the death/reconstruction iris |
 | `folded-enemy-view.js` | Enemy warning geometry, deployment, collapse, animation and camera readability |
 | `folded-profiler.js` | Development-only CPU/GPU sampling and query cleanup |
 | `folded-projectiles.js` | Damage application, armour, sanctuary interception, shell flight, hostile launch and direct/blast friendly fire |

@@ -220,3 +220,38 @@ test('destroying a battery cancels its unreleased second wave but not shells alr
   assert.equal(f.shots[0].delay, 0);
   assert.ok(f.shots[0].distance > 0);
 });
+
+test('boss attack shapes carry distinct damage through direct and blast impacts', () => {
+  for (const [attack, damage] of [
+    ['fan', 9],
+    ['batteries', 12],
+    ['seekers', 16],
+    ['barrage', 18],
+  ]) {
+    const boss = enemy('keeper', 0, 0, { type: 'boss', attack });
+    const f = fixture([boss]);
+    f.shootEnemy(
+      boss,
+      0,
+      attack === 'seekers' ? new T.Vector3(boss.x, 1.2, boss.z) : null,
+      new T.Vector3(f.p.x, attack === 'barrage' ? 0 : 1.2, f.p.z),
+      0,
+      attack === 'barrage',
+      { homing: attack === 'seekers' },
+    );
+    const shot = f.shots[0];
+    boss.attack = 'batteries'; // In-flight payloads do not change with the next pattern.
+    assert.equal(shot.damage, damage, attack);
+    if (attack === 'barrage') {
+      f.impact({ point: new T.Vector3(f.p.x, 0, f.p.z) }, shot);
+      assert.equal(f.p.hp, 50 - damage, 'nearby blast uses the same barrage payload');
+      const direct = fixture([boss]);
+      direct.shootEnemy(boss, 0, null, new T.Vector3(direct.p.x, 0, direct.p.z), 0, true);
+      for (let i = 0; i < 180; i++) direct.step(1 / 60);
+      assert.equal(direct.p.hp, 50 - damage, 'direct impact and blast cannot charge twice');
+    } else {
+      for (let i = 0; i < 180; i++) f.step(1 / 60);
+      assert.equal(f.p.hp, 50 - damage, attack);
+    }
+  }
+});

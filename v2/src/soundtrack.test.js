@@ -81,3 +81,35 @@ test('the revised suite has eleven musical identities and one organ arrangement'
  assert.equal(ending.cues.at(-1).time,ending.duration);
  assert.ok(ending.cues.some(c=>c.time===26&&c.name==='Title'));
 });
+
+test('death discards boss hold, combat intensity and playback position before respawn',async()=>{
+ const {music,ctx,state}=fixture();
+ music.update({...state,boss:'guardian',combat:true});await tick();
+ ctx.currentTime=.5;music.update({...state,dead:true});
+ assert.equal(music.current,null);
+ ctx.currentTime=1;music.update({...state,area:'r2-transit'});await tick();
+ assert.equal(music.current?.track.id,'platform-zero');
+ assert.equal(music.current?.offset,0);
+ assert.equal(music.current.gains.pulse.gain.value,music.current.track.explorationPulse);
+ music.dispose();
+});
+
+test('death while paused cannot resume the saved musical position',async()=>{
+ const {music,ctx,state}=fixture();music.update({...state,combat:true});await tick();
+ ctx.currentTime=12;music.update({...state,paused:true});assert.ok(music.saved);
+ music.update({...state,paused:true,dead:true});assert.equal(music.saved,null);
+ ctx.currentTime=13;music.update(state);await tick();
+ assert.equal(music.current.offset,0);
+ assert.equal(music.current.gains.pulse.gain.value,music.current.track.explorationPulse);
+ music.dispose();
+});
+
+test('an unfinished boss download stays silent after death',async()=>{
+ let release;const gate=new Promise(resolve=>release=resolve);
+ const {music,sources,state}=fixture(async url=>({ok:true,json:async()=>manifest,arrayBuffer:async()=>{await gate;return new ArrayBuffer(0);}}));
+ music.update({...state,boss:'guardian'});await tick();
+ music.update({...state,dead:true});release();await tick();
+ assert.equal(music.current,null);assert.equal(sources.length,0);
+ music.update({...state,area:'r2-transit'});await tick();
+ assert.equal(music.current.track.id,'platform-zero');music.dispose();
+});

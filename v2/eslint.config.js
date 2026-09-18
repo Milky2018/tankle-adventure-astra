@@ -6,6 +6,7 @@ export default [
   {
     files: [
       'src/folded.js',
+      'src/folded-death.js',
       'src/folded-profiler.js',
       'src/folded-ai.js',
       'src/folded-enemy-rules.js',
