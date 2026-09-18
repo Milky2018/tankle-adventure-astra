@@ -1,3 +1,4 @@
+import {makeFinalMachinery} from './folded-final-machinery.js';
 import {makeDistrictMachinery} from './folded-district-machinery.js';
 import {expansionCurrents,expansionDecks,expansionHeat} from './folded-expansion-layout.js';
 import * as T from 'three';
@@ -148,19 +149,22 @@ export function makeCityPresentation(scene,aperture){
   box(repairer,2,.6,2,0,.4,0,iron,.2);const repairArm=box(repairer,.18,1.7,.18,.8,1.3,0,pale,0),eye=box(repairer,.6,.2,.1,0,1,1,mat(0xbcbca4,true),0);
   const brokenRail=box(moving,.25,.3,5,-18,.5,25,pale,0);
   const pumpFans=[];
-  for(const [x,y,z]of [[67,-3.5,-37],[83,-3.5,-37],[216,-20,138],[236,-20,138]]){
+  for(const [x,y,z]of [[67,-3.5,-35.6],[83,-3.5,-35.6],[216,-20,138],[236,-20,138]]){
     const root=new T.Group();root.position.set(x,y,z);moving.add(root);
+    if(y===-3.5)box(scenery,4.6,4.6,.3,x,y,z-.25,iron,.15);
     ring(root,1.8,.3,0,0,0,iron).rotation.x=0;
     const rotor=new T.Group();root.add(rotor);for(let i=0;i<4;i++){const vane=box(rotor,.45,2.9,.2,0,0,0,pale,0);vane.rotation.z=i*Math.PI/4;}pumpFans.push(rotor);
   }
   box(scenery,13,.4,1.2,77,-7.8,-35.3,rock,0);
   for(const x of [67,83])box(scenery,.3,.3,2.1,x,-5.2,-36,iron,0);
   const waterFlow=box(moving,12,.08,.6,77,-7.56,-35.3,mat(0xa8b7a0,true),0);
+  const waterRipples=Array.from({length:5},()=>box(moving,.12,.025,.48,77,-7.5,-35.3,mat(0xe2ecda,true),0));
   const opticalPulse=box(moving,.18,.18,22,204,48,162,mat(0xe3d1a5,true),0);opticalPulse.visible=false;
   const pipeFlow=[];
   for(const x of [142,146,150])for(let y=-24;y<=24;y+=8){const m=ring(moving,.73,.08,x,y,-42,mat(0x9aaf96,true));pipeFlow.push(m);}
   const oldEye=box(moving,.4,.15,.15,146,-37.8,-5.2,mat(0x8c8873,true),0);
   const endingSprout=box(moving,.3,.8,.3,50,-7.4,29.5,mat(0x95aa75),0);
+  const finale=makeFinalMachinery(scenery,moving);
   // Static scenery is batched; the small working mechanisms keep their own transforms.
   const visualMaterials=new Set(materials.values()),sceneryMaterials=new Set();
   for(const root of [scenery,moving])root.traverse(m=>{if(m.isMesh){m.castShadow=false;m.receiveShadow=true;aperture.apply(m.material);m.material.depthWrite=true;sceneryMaterials.add(m.material);visualMaterials.add(m.material);}});
@@ -170,18 +174,18 @@ export function makeCityPresentation(scene,aperture){
   function update(time,p,state){
     frameRegion=expansionDecks.find(d=>d.region&&Math.abs(d.y-p.y)<.5&&p.x>=d.x&&p.x<=d.x+d.w&&p.z>=d.z&&p.z<=d.z+d.d)?.region||regionAt(p,foldedArchitecture.rooms);
     for(const {m,c,n}of currents){const along=(n*8+time*4)%Math.max(c.w,c.d);m.position.x=c.current.x?c.x+(c.current.x>0?along:c.w-along):c.x+c.w/2+Math.sin(n)*4;m.position.z=c.current.z?c.z+along:c.z+c.d/2;m.rotation.y=c.current.x?Math.PI/2:0;}
-    const cycle=p.endingTime?7:time%18,travel=cycle<6?cycle/6:cycle<11?1:(18-cycle)/7;
+    const cycle=p.endingTime?4+Math.max(0,p.endingTime-9)/3:time%18,travel=cycle<6?cycle/6:cycle<11?1:(18-cycle)/7;
     carrier.position.set(0,7,-22+travel*40);
     jaws.forEach((m,i)=>m.position.x=(i?1:-1)*(cycle>6&&cycle<11?2.1:1.6));
-    cargo.visible=!!state.endingSeen;
+    cargo.visible=!!state.endingSeen&&!!state['rail-repair'];
     const repaired=state['rail-repair'];
     repairArm.rotation.z=-.45+Math.sin(time*(repaired?1.4:2.4))*(repaired?.35:.65);
     eye.material.color.setHex(repaired?0xc5c9ac:0x827f6c);brokenRail.rotation.x=repaired?0:.22;
     pumpFans.forEach((m,i)=>m.rotation.z=time*(state[i<2?'pump':'rig']?2: .22+.08*Math.sin(time*.7+i)));
     hot.color.setHex(state.foundry?0xc77b44:0xffaf62);
-    waterFlow.visible=!!state.pump||!!p.endingTime;waterFlow.scale.x=.85+Math.sin(time*2)*.05;
-    const signalPhase=p.endingTime?Math.max(0,p.endingTime-4.8)*2:time%9;
-    opticalPulse.visible=!!(state.signal||p.endingTime)&&signalPhase<.65;opticalPulse.scale.z=.8+signalPhase*.4;
+    waterFlow.visible=!!state.pump;waterFlow.scale.x=.85+Math.sin(time*2)*.05;waterRipples.forEach((m,i)=>{m.visible=!!state.pump;m.position.x=71+(i*2.4+time*2)%12;});
+    const signalPhase=time%9;
+    opticalPulse.visible=!!state.signal&&signalPhase<.65;opticalPulse.scale.z=.8+signalPhase*.4;
     for(let i=0;i<pipeFlow.length;i++){const m=pipeFlow[i],active=state.circulation||state.endingSeen||state.pump&&m.position.y===-8;m.visible=!!active;m.material.color.setHex((time*2+i)%4<1?0xb7c4a3:0x748d80);}
     oldEye.material.color.setHex(state.endingSeen?0xcac5a1:0x575749);endingSprout.visible=!!state.pump;
     carrier.visible=true;
@@ -196,7 +200,7 @@ export function makeCityPresentation(scene,aperture){
     }return hit;
   }
   const viewCamera=new T.Vector3(),viewPlayer=new T.Vector3(),viewDirection=new T.Vector3();
-  return {update,cast,bounds,carrier,pumpFans,get region(){return frameRegion;},
+  return {update,cast,bounds,carrier,pumpFans,finale,get region(){return frameRegion;},
     setCamera(c){viewCamera.copy(c);},setView(value){third=value;depth.visible=true;for(const m of visualMaterials){m.transparent=true;m.depthWrite=sceneryMaterials.has(m);m.needsUpdate=true;}},
     sight(p,d){viewPlayer.set(p.x,p.y,p.z);viewDirection.copy(d);}
   };

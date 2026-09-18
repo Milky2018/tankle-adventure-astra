@@ -8,9 +8,9 @@ import {initialFoldedState,deckHeight} from './folded-layout.js';
 const cool=(p,seconds)=>{for(let i=0;i<seconds*120;i++)updateHeat(p,1/120,(i+1)/120,false,false);};
 
 test('overheat recovery returns control with a usable heat reserve while ordinary cooling continues',()=>{
- const p={...newPlayer(),heat:100,overheated:true,lastHeat:0};cool(p,1.7);
+ const p={...newPlayer(),heat:100,overheated:true,lastHeat:0};cool(p,2.2);
  assert.equal(p.overheated,false);assert.ok(p.heat>10&&p.heat<=30);
- assert.equal(shootHeat(p,1.7),true);
+ assert.equal(shootHeat(p,2.2),true);
 });
 
 test('mastered thermal conveyors carry both enemies and the player toward their exit after reload',()=>{

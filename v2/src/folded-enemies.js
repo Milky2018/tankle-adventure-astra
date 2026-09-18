@@ -32,18 +32,18 @@ export function animateEnemy(enemy,time,dt,active){
 
 // Distinct machines require distinct decisions, not just different health pools.
 export const ENEMY_KINDS={
-  scout:{role:'pressure',speed:4.5,reach:11,warn:1.1,recovery:2.2,attack:'charge'},
-  turret:{role:'ranged',speed:0,reach:27,warn:1.2,recovery:2.2,attack:'shot'},
-  guard:{role:'pressure',speed:2.8,reach:12,warn:1.5,recovery:2.2,attack:'shield-shot'},
-  skirmisher:{role:'pressure',speed:5,reach:18,warn:.8,recovery:2,attack:'burst'},
-  sniper:{role:'ranged',speed:1.8,reach:86,warn:2.2,recovery:3.2,attack:'rail'},
-  artillery:{role:'ranged',speed:1.5,reach:55,warn:1.4,recovery:4.2,attack:'lob'},
-  miner:{role:'pressure',speed:3.6,reach:13,warn:.8,recovery:3,attack:'mine'},
-  welder:{role:'pressure',speed:3,reach:8,warn:1.4,recovery:2.6,attack:'sweep'},
-  repairer:{role:'support',speed:3.4,reach:10,warn:1,recovery:3,attack:'repair'},
-  reflector:{role:'ranged',speed:2.2,reach:16,warn:1.6,recovery:2.8,attack:'reflect'},
-  elite:{role:'pressure',speed:3.2,reach:20,warn:1.5,recovery:2.2,attack:'charge'},
-  boss:{role:'ranged',speed:0,reach:27,warn:1.4,recovery:3.2,attack:'shot'}
+  scout:{role:'pressure',speed:5.6,reach:11,warn:1.1,recovery:1.5,attack:'charge'},
+  turret:{role:'ranged',speed:0,reach:27,warn:1.2,recovery:1.5,attack:'shot'},
+  guard:{role:'pressure',speed:3.8,reach:12,warn:1.5,recovery:1.6,attack:'shield-shot'},
+  skirmisher:{role:'pressure',speed:6.2,reach:18,warn:.8,recovery:1.4,attack:'burst'},
+  sniper:{role:'ranged',speed:2.8,reach:86,warn:2.2,recovery:2.2,attack:'rail'},
+  artillery:{role:'ranged',speed:2.5,reach:55,warn:1.4,recovery:2.8,attack:'lob'},
+  miner:{role:'pressure',speed:4.6,reach:13,warn:.8,recovery:2.1,attack:'mine'},
+  welder:{role:'pressure',speed:4.2,reach:8,warn:1.4,recovery:1.8,attack:'sweep'},
+  repairer:{role:'support',speed:4.5,reach:10,warn:1,recovery:2,attack:'repair'},
+  reflector:{role:'ranged',speed:3.2,reach:16,warn:1.6,recovery:1.9,attack:'reflect'},
+  elite:{role:'pressure',speed:4.2,reach:20,warn:1.5,recovery:1.6,attack:'charge'},
+  boss:{role:'ranged',speed:0,reach:27,warn:1.4,recovery:2.4,attack:'shot'}
 };
 
 export function woundedAlly(enemy,enemies){

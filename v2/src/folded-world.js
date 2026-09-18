@@ -1,3 +1,4 @@
+import {groundPatches} from './folded-ground.js';
 import {makeSidePuzzles} from './folded-side-puzzles.js';
 import {architectureIndex,REGION_STYLE} from './folded-architecture.js';
 import {magnetPullable} from './folded-combat.js';
@@ -21,7 +22,7 @@ export function makeFoldedWorld(scene,state){
   const sidePuzzles=makeSidePuzzles(scene,state);
   const aperture=makeAperture(),viewPlayer={x:0,y:0,z:0};
   const presentation=makeCityPresentation(scene,aperture);
-  let thirdPerson=false;
+  let thirdPerson=false,supportPatches=[];
   const fixed=new T.Group();scene.add(fixed);
   const surfaces=[],walls=[],controls=[],hives=[],pickups=[],lifts=[],enemies=[],pillars=[],floorDetails=[],mirrors=[],belts=[];
   const raycaster=new T.Raycaster();
@@ -41,14 +42,14 @@ export function makeFoldedWorld(scene,state){
     const pieces=[];for(let x=d.x;x<d.x+d.w;x+=12)for(let z=d.z;z<d.z+d.d;z+=12)pieces.push({...d,x,z,w:Math.min(12,d.x+d.w-x),d:Math.min(12,d.z+d.d-z)});
     return pieces;
   });
-  const floorDepthMaterial=new T.MeshBasicMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});aperture.apply(floorDepthMaterial,{depthOnly:true});
+  const floorDepthMaterial=new T.MeshBasicMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});aperture.apply(floorDepthMaterial,{depthOnly:true,terrain:true});
   const floorDepthBatches=new T.Group(),floorMeshes=new T.Group(),floorBatches=new T.Group(),floorMaterials=new Map();
   scene.add(floorMeshes,floorBatches,floorDepthBatches);
   for(const d of patches){
     const key=d.water?'water':palette(d);
     if(!floorMaterials.has(key))floorMaterials.set(key,d.water?new T.MeshPhongMaterial({color:0x397d9d,specular:0xa6dce8,shininess:65}):mat(key));
     const mesh=box(floorMeshes,d.w,.65,Math.hypot(d.d,d.rise||0),d.x+d.w/2,d.y+(d.rise||0)/2-.325-(d.recess||0),d.z+d.d/2,floorMaterials.get(key),0);
-    aperture.apply(mesh.material);mesh.userData.aperture=true;
+    aperture.apply(mesh.material,{terrain:true});mesh.userData.aperture=true;mesh.userData.supportSurface=true;
     // The opaque depth pass handles other floors. Draw translucent floor color
     // before ground fixtures, whose merged centers cannot sort against each tile.
     mesh.renderOrder=-2;
@@ -101,7 +102,7 @@ export function makeFoldedWorld(scene,state){
         }
         for(let z=s.z+2;z<s.z+s.d;z+=4){const seam=box(s.trim,s.w-.8,.045,.16,s.x+s.w/2,deckHeight(s,z)+.045,z,0xb5b99a,0);seam.rotation.x=pitch;}
       }
-      s.trim.traverse(m=>{if(m.isMesh){if(!trimMaterials.has(m.material)){const material=m.material.clone();aperture.apply(material);trimMaterials.set(m.material,material);}m.material=trimMaterials.get(m.material);}});
+      s.trim.traverse(m=>{if(m.isMesh){if(!trimMaterials.has(m.material)){const material=m.material.clone();aperture.apply(material,{terrain:true});trimMaterials.set(m.material,material);}m.material=trimMaterials.get(m.material);}});
       for(const mesh of s.trim.children)floorTrimBatches.add(mesh.clone());
       batchStatic(s.trim);
     }
@@ -324,7 +325,7 @@ export function makeFoldedWorld(scene,state){
     const warning=new T.Line(warningGeometry,new T.LineBasicMaterial({color:e.type==='sniper'?0xff263c:C.orange,transparent:true,opacity:.95}));scene.add(warning);warning.visible=false;warning.frustumCulled=false;
     if(e.type==='boss')model.root.scale.setScalar(1.8);
     const charge=['scout','elite'].includes(e.type)?chargeWarning(e.type):null;if(charge)scene.add(charge.root);
-    const zone=e.id==='sorter'?new T.LineLoop(new T.BufferGeometry().setFromPoints([new T.Vector3(),...Array.from({length:25},(_,i)=>{const a=-.9+i*1.8/24;return new T.Vector3(Math.sin(a)*SORTER_REACH,0,Math.cos(a)*SORTER_REACH);})]),new T.LineBasicMaterial({color:C.lightYellow,transparent:true,opacity:.8})):ring(scene,e.type==='artillery'?4:3,.1,e.x,e.y+.1,e.z,mat(C.orange,true));
+    const zone=e.id==='sorter'?new T.LineLoop(new T.BufferGeometry().setFromPoints([new T.Vector3(),...Array.from({length:25},(_,i)=>{const a=-.9+i*1.8/24;return new T.Vector3(Math.sin(a)*SORTER_REACH,0,Math.cos(a)*SORTER_REACH);})]),new T.LineBasicMaterial({color:C.lightYellow,transparent:true,opacity:.8})):ring(scene,e.type==='artillery'||e.id==='keeper'?4:3,.1,e.x,e.y+.1,e.z,mat(C.orange,true));
     if(e.id==='sorter')scene.add(zone);zone.visible=false;
     const flame=e.type==='welder'||e.id==='keeper'?new T.Mesh(new T.ConeGeometry(1,1,10,1,true),new T.MeshBasicMaterial({color:C.orange,transparent:true,opacity:.32,depthWrite:false,side:T.DoubleSide})):null;
     if(flame){scene.add(flame);flame.visible=false;}
@@ -333,7 +334,7 @@ export function makeFoldedWorld(scene,state){
     if(batteryWarning){scene.add(batteryWarning);batteryWarning.visible=false;batteryWarning.frustumCulled=false;}
     const deployment=e.wave?ring(scene,2,.1,e.x,e.y+.09,e.z,mat(SIGNAL.ready,true)):null;
     if(deployment)floorDetails.push({root:deployment,x:e.x,y:e.y,z:e.z,radius:2.2});
-    const enemy={deployment,batteryWarning,charge,zone,flame,supportBeam,spawn:{x:e.x,y:e.y,z:e.z},...e,hp:e.persistent&&state[e.id]?0:e.hp,max:e.hp,model,materials,warning,phase:'idle',timer:e.startup??1.5,aim:Math.PI/2,flash:0,armor:0,ramAt:-10,shieldPull:0,shieldRemoved:false,radius:e.type==='boss'?3.2:e.guardian?2.4:e.type==='guard'?1.75:1.35};
+    const enemy={deployment,batteryWarning,charge,zone,flame,supportBeam,spawn:{x:e.x,y:e.y,z:e.z},...e,hp:e.persistent&&state[e.id]?0:e.hp,max:e.hp,model,materials,warning,phase:'idle',timer:e.startup??1,aim:Math.PI/2,flash:0,armor:0,ramAt:-10,shieldPull:0,shieldRemoved:false,radius:e.type==='boss'?3.2:e.guardian?2.4:e.type==='guard'?1.75:1.35};
     enemy.parts=(e.parts||[]).map((hp,i)=>{
       const root=new T.Group();root.position.set(e.x+(i?4:-4),e.y,e.z);scene.add(root);
       box(root,2.4,1.6,2.8,0,.8,0,C.dark);const lamp=box(root,1.5,1.1,1.8,0,1.7,0,mat(C.orange,true));
@@ -628,9 +629,9 @@ export function makeFoldedWorld(scene,state){
   const surfaceGrid=architectureIndex(surfaces),wallGrid=architectureIndex(walls);
   function cast(origin,direction,distance,{targets=true,aiming=false,extras=[],terrainOnly=false}={}){
     raycaster.set(origin,direction);raycaster.far=distance;
-    if(terrainOnly)return raycaster.intersectObjects([...[...surfaceGrid.ray(origin,direction,distance)].map(s=>s.mesh),...lifts.map(l=>l.mesh)],false).find(h=>h.face.normal.y>.5&&(!aiming||(thirdPerson?cameraApertureOpacity(h.point,viewPlayer,viewCamera)>APERTURE_AIM_THRESHOLD:!h.object.userData.aperture||apertureOpacity(h.point,viewPlayer,sightDirection)>APERTURE_AIM_THRESHOLD)))||null;
+    if(terrainOnly)return raycaster.intersectObjects([...[...surfaceGrid.ray(origin,direction,distance)].map(s=>s.mesh),...lifts.map(l=>l.mesh)],false).find(h=>h.face.normal.y>.5&&(!aiming||(thirdPerson?cameraApertureOpacity(h.point,viewPlayer,viewCamera,h.object.userData.supportSurface?supportPatches:[])>APERTURE_AIM_THRESHOLD:!h.object.userData.aperture||apertureOpacity(h.point,viewPlayer,sightDirection,13,supportPatches)>APERTURE_AIM_THRESHOLD)))||null;
     const meshes=[...[...surfaceGrid.ray(origin,direction,distance)].map(s=>s.mesh),...[...wallGrid.ray(origin,direction,distance)].filter(w=>activeSolid(w,state)&&(!aiming||w.opacity>.4)).map(w=>w.mesh),...lifts.filter(l=>!aiming||!l.root.userData.cutaway).map(l=>l.mesh),...mirrors.filter(m=>!aiming||!m.root.userData.cutaway).map(m=>m.mesh)];
-    let hit=raycaster.intersectObjects(meshes,false).find(h=>!aiming||(thirdPerson?cameraApertureOpacity(h.point,viewPlayer,viewCamera)>APERTURE_AIM_THRESHOLD:!(h.object.userData.aperture||h.object.userData.massAperture)||apertureOpacity(h.point,viewPlayer,sightDirection,h.object.userData.massAperture?STRUCTURE_APERTURE_RADIUS:13)>APERTURE_AIM_THRESHOLD))||null;if(hit?.object.userData.mirror)hit.mirror=hit.object.userData.mirror;
+    let hit=raycaster.intersectObjects(meshes,false).find(h=>!aiming||(thirdPerson?cameraApertureOpacity(h.point,viewPlayer,viewCamera,h.object.userData.supportSurface?supportPatches:[])>APERTURE_AIM_THRESHOLD:!(h.object.userData.aperture||h.object.userData.massAperture)||apertureOpacity(h.point,viewPlayer,sightDirection,h.object.userData.massAperture?STRUCTURE_APERTURE_RADIUS:13,h.object.userData.supportSurface?supportPatches:[])>APERTURE_AIM_THRESHOLD))||null;if(hit?.object.userData.mirror)hit.mirror=hit.object.userData.mirror;
     const puzzleHit=sidePuzzles.cast(raycaster,targets);if(puzzleHit&&(!hit||puzzleHit.distance<hit.distance)&&(!aiming||!(puzzleHit.target?.root?.userData.cutaway)&&(thirdPerson?cameraApertureOpacity(puzzleHit.point,viewPlayer,viewCamera):apertureOpacity(puzzleHit.point,viewPlayer,sightDirection))>APERTURE_AIM_THRESHOLD))hit=puzzleHit;
     const structure=presentation.cast(origin,direction,distance,aiming);if(structure&&(!hit||structure.distance<hit.distance))hit=structure;
     if(targets)for(const t of [...controls.filter(c=>!['use','dock'].includes(c.kind)&&!state[c.id]),...enemies.filter(e=>e.hp>0),...enemies.filter(e=>e.hp>0).flatMap(e=>e.parts.filter(p=>p.hp>0)),...extras.filter(t=>!t.disarmed)]){
@@ -653,11 +654,12 @@ export function makeFoldedWorld(scene,state){
   }
   const previousSignals={...state};
   function update(dt,time,p,camera=null){
+    aperture.enable(!p.endingTime);supportPatches=groundPatches(p,lifts);aperture.support(supportPatches);
     for(const id of Object.keys(state))if(state[id]===true&&previousSignals[id]!==true){signalRelease(id,time);previousSignals[id]=true;}
     if(camera&&!thirdPerson)camera.getWorldDirection(sightDirection).negate();
     Object.assign(viewPlayer,{x:p.x,y:p.y,z:p.z});aperture.update(p,sightDirection,enemies.some(e=>e.guardian&&e.hp>0&&Math.abs(p.y-e.y)<3)?T.MathUtils.clamp((30-Math.hypot(p.x-202,p.z-64))/8,0,1):0);
     presentation.sight(p,sightDirection);presentation.update(time,p,state);
-    for(const s of surfaces)s.opacity=thirdPerson?1:apertureOpacity(s.mesh.position,p,sightDirection);
+    for(const s of surfaces)s.opacity=thirdPerson?1:apertureOpacity(s.mesh.position,p,sightDirection,13,supportPatches);
     for(const w of walls){w.open=T.MathUtils.damp(w.open,activeSolid(w,state)?0:1,9,dt);w.mesh.position.y=w.y+w.h/2-w.open*(w.h+.5);w.mesh.visible=!w.invisible&&w.open<.999;w.mesh.updateMatrixWorld();}
     for(const sign of signs)sign.emblem.visible=!state[sign.until];
     for(const c of controls){
@@ -699,7 +701,7 @@ export function makeFoldedWorld(scene,state){
     const matrix=new T.Matrix4(),rollerSpin=new T.Quaternion(),rollerAxis=new T.Vector3(0,1,0);
     for(const b of belts){
       if(Math.hypot(p.x-b.x-b.w/2,p.z-b.z-b.d/2)>80+b.length/2)continue;
-      const part=b.id.includes('feed-')?(b.id.endsWith('left')?0:1):null,owner=b.id.startsWith('foundry')?'foundry':'keeper',working=part===null||enemies.find(e=>e.id===owner).parts[part].hp>0;
+      const part=b.id.includes('feed-')?(b.id.endsWith('left')?0:1):null,owner=enemies.find(e=>e.id===(b.id.startsWith('foundry')?'foundry':'keeper')),working=part===null||owner.hp>0&&owner.parts[part].hp>0;
       if(working)b.phase+=dt*(b.release&&state[b.release]?-4:Math.hypot(b.vx,b.vz)*Math.sign(b.vx||b.vz))*b.stretch;
       for(const segment of b.segments){
         const {mesh,count,travel}=segment;
@@ -736,13 +738,16 @@ export function makeFoldedWorld(scene,state){
         e.coreModel.shutters.forEach((shutter,i)=>shutter.position.x=T.MathUtils.damp(shutter.position.x,(i?1:-1)*(open?1:.325),10,dt));
       }
     }
-    const glow=p.endingTime?Math.min(1,p.endingTime/7):.08;firebox.material.color.setRGB(.4+glow*.6,.15+glow*.65,.04+glow*.3);
+    const renewal=presentation.finale.update(dt,time,p,state,enemies.find(e=>e.id==='keeper'));
+    const keeper=enemies.find(e=>e.id==='keeper');
+    const flare=Math.max(0,...presentation.finale.feeds.filter(f=>keeper.hp>0&&keeper.parts[f.index].hp>0).flatMap(f=>f.scraps.map(s=>Math.pow(Math.max(0,1-(f.phase+s.offset)%26/3),2))));
+    const glow=renewal.power||.035+flare*.2;firebox.material.color.setRGB(.4+glow*.6,.15+glow*.65,.04+glow*.3);
     clamps.forEach((m,i)=>m.position.x=(i?1:-1)*(3-Math.min(1,p.dockHold/2||0)*1.3));
     ram.position.y=state.foundry?T.MathUtils.damp(ram.position.y,10.5,3,dt):8+Math.sin(time*.75)*2.5;
-    tenderLamp.material.color.setHex(state.maintenance||p.endingTime?C.mint:C.dark);tender.position.set(...sidePuzzles.delivery.position);tender.rotation.y=sidePuzzles.delivery.heading;Object.assign(tenderDetail,{x:tender.position.x,y:tender.position.y,z:tender.position.z});
+    tenderLamp.material.color.setHex(state.maintenance?C.mint:C.dark);tender.position.set(...sidePuzzles.delivery.position);tender.rotation.y=sidePuzzles.delivery.heading;Object.assign(tenderDetail,{x:tender.position.x,y:tender.position.y,z:tender.position.z});
     for(const {lamp,y}of pipeLights)lamp.material.color.setHex(p.endingTime||state.pump&&y===-8||state['pressure-return']&&y===-24?C.mint:C.orange);
-    const signalPhase=p.endingTime?Math.max(0,p.endingTime-4.8)*2:time%9;
-    bowl.rotation.y=state.signal||p.endingTime?signalPhase<.65?0:signalPhase<1.5?(signalPhase-.65)/.85*.35:signalPhase<7.5?.35:(9-signalPhase)/1.5*.35:0;
+    const signalPhase=time%9;
+    bowl.rotation.y=state.signal?signalPhase<.65?0:signalPhase<1.5?(signalPhase-.65)/.85*.35:signalPhase<7.5?.35:(9-signalPhase)/1.5*.35:0;
     wheel.rotation.z=Math.sin(time*.08)*.06;
     waterTexture.offset.x=time*.015;
     updateOcclusion(dt,p);

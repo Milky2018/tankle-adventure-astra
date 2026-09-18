@@ -103,7 +103,7 @@ for(const plan of districtPlans){
  for(const [cid,x,z,kind,extra={}]of r.controls)expansionControls.push({id:cid,x,y:y+(extra.height||1.3),z,kind,...extra});
  for(const [gid,x,z,w,d,extra={}]of r.gates)expansionSolids.push({id:gid,x,y,z,w,d,h:3.5,...extra});
  for(const [i,[x,z,w,d]]of r.cover.entries())expansionSolids.push({id:`${id}-cover-${i}`,x,y,z,w,d,h:2.6,permanent:true,theme:region});
- for(const [i,[type,x,z,encounter,wave=0]]of r.enemies.entries())expansionEnemies.push({id:`${id}-${encounter}-${type}-${i}`,type,hp:hp[type],x,y,z,encounter:`${id}-${encounter}${wave?'-reserve':''}`,startup:1.2+(i%3)*.4,...(encounter==='endurance'?{battle:`${id}-endurance`,wave}:{}),...(type==='guard'?{magneticShield:true}:{})});
+ for(const [i,[type,x,z,encounter,wave=0]]of r.enemies.entries())expansionEnemies.push({id:`${id}-${encounter}-${type}-${i}`,type,hp:Math.ceil(hp[type]*({proving:1.25,lens:1.5,coolant:1.5,hearth:1.75}[id]||1)),x,y,z,encounter:`${id}-${encounter}${wave?'-reserve':''}`,startup:1.2+(i%3)*.4,...(encounter==='endurance'?{battle:`${id}-endurance`,wave}:{}),...(type==='guard'?{magneticShield:true}:{})});
  for(const [kind,x,z]of r.props){
   expansionProps.push({kind,x,y,z,region,district:id});
   if(kind==='gantry')for(const side of [-7,7])expansionSolids.push({id:`${id}-gantry-${side}`,x:x+side-.3,y,z:z-.4,w:.6,d:.8,h:9,permanent:true,invisible:true});

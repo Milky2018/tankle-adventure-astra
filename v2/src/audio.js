@@ -45,6 +45,7 @@ export class FactoryAudio {
     if(name==='heat'){this.noise(.8,.3);this.tone(430,.6,'triangle',.24,-330);}
     if(name==='ready'){this.tone(580,.12,'sine',.16);this.tone(860,.2,'sine',.08);}
     if(name==='repair'||name==='unlock'){[0,4,7,12,16].forEach((n,i)=>setTimeout(()=>this.tone(220*2**(n/12),.6,'sine',.22),i*115));}
+    if(name==='couple'){this.noise(.35,.15);this.tone(65,6,'triangle',.09,-27);}
     if(name==='ending'){[130.81,196,261.63,329.63].forEach(f=>this.tone(f,3.5,'sine',.13));}
     if(name==='death'){this.tone(160,1.3,'sawtooth',.3,-135);this.noise(.8,.4);}
     if(name==='ram'){this.tone(75,.22,'square',.3,-40,pan);this.noise(.18,.4,pan);}
@@ -70,11 +71,12 @@ export class FactoryAudio {
   update(time,p,combat,area,paused,moving=false){
     if(!this.ctx)return;const t=this.ctx.currentTime;
     const boost=clamp((p.speed-1)/(OVERDRIVE_MAX_SPEED-1),0,1),phoenixBoost=clamp((p.speed-OVERDRIVE_MAX_SPEED)/OVERDRIVE_MAX_SPEED,0,1);
-    const running=this.sfx&&!paused&&p.hp>0&&(moving||boost>0);
+    const coupling=p.endingTime>0&&p.endingTime<9;
+    const running=this.sfx&&!paused&&p.hp>0&&(coupling||moving||boost>0);
     this.master.gain.setTargetAtTime(this.volume*.4,t,.15);
-    this.engine.frequency.setTargetAtTime((p.afloat?48:65)+boost*100+phoenixBoost*85+p.heat*.2,t,.12);
+    this.engine.frequency.setTargetAtTime(coupling?65-Math.min(1,p.endingTime/6)*27:(p.afloat?48:65)+boost*100+phoenixBoost*85+p.heat*.2,t,.12);
     this.engineFilter.frequency.setTargetAtTime(250+boost*350+phoenixBoost*250,t,.12);
-    this.engineGain.gain.setTargetAtTime(running?.075+boost*.105+phoenixBoost*.065:0,t,.1);
+    this.engineGain.gain.setTargetAtTime(running?(coupling?.06*(1-Math.max(0,p.endingTime-6)/3):.075+boost*.105+phoenixBoost*.065):0,t,.1);
     if(paused||p.hp<=0||!this.music){this.nextBeat=time;return;}
     if(time<this.nextBeat)return;this.nextBeat=time+(combat?.32:area.startsWith('r7-')?3.2:area.startsWith('r4-')?2.8:area.startsWith('r3-')?2.3:area.startsWith('r2-')?1.8:1.15);
     // Sparse, unresolved notes leave room for machinery; combat adds a restrained pulse.

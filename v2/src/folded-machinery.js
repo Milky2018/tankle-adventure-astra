@@ -7,7 +7,7 @@ export function conveyorVelocity(body,enemies=[],state={}){
   if(!belt)return {x:0,z:0};
   if(belt.id.includes('feed-')){
     const owner=enemies.find(e=>e.id===(belt.id.startsWith('foundry')?'foundry':'keeper'));
-    if(owner?.parts[belt.id.endsWith('left')?0:1]?.hp===0)return {x:0,z:0};
+    if(owner?.hp===0||owner?.parts[belt.id.endsWith('left')?0:1]?.hp===0)return {x:0,z:0};
   }
   if(belt.release&&state[belt.release])return {x:0,z:-4};
   return {x:belt.vx,z:belt.vz};

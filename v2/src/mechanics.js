@@ -35,7 +35,7 @@ export function updateHeat(p, dt, time, boost, moving) {
     // The shared engine budget continues during deceleration, including an overheat coast.
     p.heat = Math.min(100, p.heat + 15 * dt);
     p.lastHeat = time;
-  } else if (time - p.lastHeat >= 0.25) {
+  } else if (time - p.lastHeat >= 0.75) {
     p.heat = Math.max(0, p.heat - 50 * dt);
     if (p.heat <= 30) p.overheated = false;
   }

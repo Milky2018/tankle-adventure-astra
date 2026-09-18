@@ -174,7 +174,8 @@ async page=>{
       }return {error:'keeper timeout',s:g.snapshot()};
     });if(keeperFight.error)throw Error(JSON.stringify(keeperFight));await move(0,8);await move(0,0);await settle();await page.keyboard.down('e');await page.evaluate(()=>__game.step(2.2));await page.keyboard.up('e');
 
-  await page.evaluate(()=>__game.step(8));const end=await page.evaluate(()=>__game.snapshot());
+  await page.evaluate(()=>__game.step(27));const end=await page.evaluate(()=>__game.snapshot());
+  if(!await page.getByRole('heading',{name:'Mission Accomplished'}).isVisible())throw Error('Completion screen missing');
   if(!end.state.endingSeen||!end.state['inner-optics']||!end.state.load||!end.player.mortar)throw Error('Missing progression milestone');
   if(approach==='water'&&(!end.player.flotation||!end.player.magnet))throw Error('Water acquisitions missing');
   if(approach==='dry'&&(end.player.flotation||end.player.magnet))throw Error('Dry run unexpectedly granted water equipment');
@@ -185,5 +186,5 @@ async page=>{
   await page.evaluate(run=>sessionStorage.setItem('completed-journey-'+run.approach+'-'+run.first,JSON.stringify(run)),run);
  }
  if(errors.length)throw Error(JSON.stringify(errors));return {runs,errors};
- })();}finally{await page.unroute('**/src/folded.js*');}
+ })();}finally{if(!page.isClosed())await page.unroute('**/src/folded.js*');}
 }
