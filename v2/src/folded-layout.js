@@ -1,7 +1,9 @@
+import {explorationBattles,explorationControls,explorationFlags,explorationPickups,explorationSolids,explorationEnemies} from './folded-exploration-layout.js';
+import {UPGRADE_IDS} from './folded-upgrades.js';
 import {arenaGates,bossReserves} from './folded-boss-arenas.js';
 import {transportSolids} from './folded-transport.js';
 import {sideDecks,sideGates,sideObstacles,sideEnemies} from './folded-side-layout.js';
-import {expansionDecks,expansionSolids,expansionControls,expansionHives,expansionEnemies,expansionPickups,expansionFlags} from './folded-expansion-layout.js';
+import {expansionBattles,expansionDecks,expansionSolids,expansionControls,expansionHives,expansionEnemies,expansionPickups,expansionFlags} from './folded-expansion-layout.js';
 import {cityDecks,cityLifts,citySolids,cityControls,cityHives,cityPickups,cityEnemies,cityFlags} from './folded-city-layout.js';
 import {inRect,deckHeight} from './hoist-layout.js';
 import {phoenixReady,redContact,clamp} from './mechanics.js';
@@ -57,7 +59,7 @@ export const foldedSolids=[
   {id:'upper-cover',x:94,z:-58,w:3,d:3,y:8,h:2,permanent:true},
   {id:'gangway-casing',x:84.4,z:28,w:.5,d:6,y:-8,h:3,permanent:true},
   {id:'dock-cover',x:78,z:13,w:3,d:3,y:-8,h:2,magnetic:true},
-  ...citySolids,...expansionSolids,...sideGates,...transportSolids,...arenaGates
+  ...explorationSolids,...citySolids,...expansionSolids,...sideGates,...transportSolids,...arenaGates
 ];
 export const foldedControls=[
   {id:'rail-repair',x:-18,y:1.4,z:23,kind:'magnet'},
@@ -69,7 +71,7 @@ export const foldedControls=[
   {id:'cage',x:22,y:25.4,z:8,kind:'shot'},
   {id:'dock-cover',x:79.5,y:-5.6,z:14.5,kind:'magnet',ground:-8},
   {id:'bench-cover',x:78.5,y:2.4,z:-23,kind:'magnet',ground:0},
-  ...cityControls,...expansionControls
+  ...cityControls,...expansionControls,...explorationControls
 ];
 export const foldedHives=[
   {id:'turntable',x:0,y:0,z:27,heading:Math.PI},{id:'garden-entry',x:-27,y:-8,z:-7,heading:-Math.PI/2},{id:'loading-entry',x:12,y:0,z:-34},{id:'bank',x:56,y:-8,z:20,heading:Math.PI/2},
@@ -77,7 +79,7 @@ export const foldedHives=[
   ...cityHives,...expansionHives
 ];
 export const foldedPickups=[
-  ...cityPickups.filter(p=>!expansionPickups.some(q=>q.id===p.id)),...expansionPickups
+  ...explorationPickups,...cityPickups.filter(p=>!expansionPickups.some(q=>q.id===p.id)),...expansionPickups
 ];
 export const foldedEnemies=[
   {id:'bank-gunner',x:31,y:-16,z:-18,hp:2,type:'turret',encounter:'garden-bank'},
@@ -85,11 +87,11 @@ export const foldedEnemies=[
   {id:'dock-gunner',x:89,y:-8,z:17,hp:3,type:'artillery',encounter:'rear-dock'},
   {id:'dock-scout',x:87,y:-8,z:25,hp:2,type:'skirmisher',encounter:'rear-dock'},
   {id:'bench-guard',magneticShield:true,x:73,y:0,z:-24,hp:3,type:'guard',encounter:'test-benches'},
-  {id:'bench-scout',x:75,y:0,z:-18,hp:3,type:'welder',encounter:'test-benches'},
+  {id:'bench-scout',x:74,y:0,z:-20,hp:3,type:'welder',encounter:'test-benches'},
   {id:'upper-gunner',x:96,y:8,z:-61,hp:2,type:'sniper',encounter:'carrier-brake'},
   {id:'upper-scout',x:88,y:8,z:-63,hp:2,type:'miner',encounter:'carrier-brake'},
   {id:'track-scout',x:148,y:16,z:-86,hp:2,type:'scout'},
-  ...cityEnemies,...expansionEnemies,...sideEnemies,...bossReserves
+  ...explorationEnemies,...cityEnemies,...expansionEnemies,...sideEnemies,...bossReserves
 ];
 
 export const foldedArchitecture=buildArchitecture(foldedDecks,foldedLiftDefs);
@@ -142,7 +144,7 @@ export function initialFoldedState(saved={}){
     obstacles:sideObstacles.map(body=>({...body})),
     solids:foldedSolids.map(body=>({...body})),
   },enumerable:false});
-  for(const id of ['magnet','freight','gangway','load','brake','cage','launch','optics','pressure','flotation','phoenix','rail-repair',...cityFlags,...expansionFlags])state[id]=saved[id]===true;
+  for(const id of ['magnet','freight','gangway','load','brake','cage','launch','optics','pressure','flotation','phoenix','rail-repair',...cityFlags,...expansionFlags,...explorationFlags,...UPGRADE_IDS])state[id]=saved[id]===true;
   if(state['pressure-return'])state['pressure-thermal']=true;
   if(state['inner-transit'])state['inner-thermal']=true;
   if(state.keeper||state.endingSeen)state['core-feed']=true;
@@ -155,6 +157,7 @@ export function initialFoldedState(saved={}){
   state['maintenance-started']=saved['maintenance-started']===true;
   state.sidePuzzles=saved.sidePuzzles||{};
   state['rail-crossing']=!!(saved.sidePuzzles?.rail?.solved||saved.sidePuzzles?.rail?.secured);
+  for(const p of explorationPickups)if(p.requires&&state[p.id])state[p.requires]=true;
   state.anchor=foldedHives.some(h=>h.id===saved.anchor)?saved.anchor:'turntable';
   // The old lower Hive was reachable before the workshop shutter opened.
   if(state.anchor==='lower-foundry'&&!state['relay-west'])state.anchor='awakening';
@@ -179,3 +182,5 @@ export function releaseFolded(id,kind,p,state,lifts,time=0){
 }
 
 export {inRect,deckHeight};
+
+export const foldedBattles=[...expansionBattles,...explorationBattles];

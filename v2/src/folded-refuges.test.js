@@ -21,8 +21,8 @@ test('all active save points reserve enemy-free spawn surroundings, including pe
   for(const h of foldedHives){
     const state=initialFoldedState(h.requires?{[h.requires]:true}:{});
     for(const e of foldedEnemies){
-      if(e.persistent&&state[e.id])continue;
-      assert.equal(refugeAt(e,[h],state,REFUGE_CLEARANCE),undefined,`${e.id} crowds ${h.id}`);
+      if(e.persistent&&state[e.id]||e.reserveFor&&state[e.reserveFor])continue;
+      assert.equal(refugeAt(e,[h],state,REFUGE_CLEARANCE+(e.type==='boss'?3.2:e.guardian?2.4:e.type==='guard'?1.75:1.35)),undefined,`${e.id} crowds ${h.id}`);
     }
   }
 });

@@ -1,3 +1,5 @@
+import { applyUpgrades, weaponDamage } from './folded-upgrades.js';
+import { predictMortar } from './folded-ballistics.js';
 import { createFoldedPreferences, mountFoldedSettings, keyGlyph } from './folded-settings.js';
 import { createFoldedEffects } from './folded-effects.js';
 import { createPlayerDeath, DEATH_HOLD } from './folded-death.js';
@@ -11,12 +13,11 @@ import { CANNON, LASER } from './folded-weapons.js';
 import { createBossArenas } from './folded-boss-arenas.js';
 import { traceFoldedLaser } from './folded-laser.js';
 import { createGroundPose, groundPatches, groundAim } from './folded-ground.js';
-import { refugeAt, refugeRayDistance, REFUGE_CLEARANCE } from './folded-refuges.js';
+import { refugeAt, REFUGE_CLEARANCE } from './folded-refuges.js';
 import { createEncounterPacing } from './folded-pacing.js';
-import { expansionHeat } from './folded-expansion-layout.js';
 import { FollowCamera, cameraMovement } from './folded-camera.js';
 import { magnetPullable } from './folded-combat.js';
-import { moveWithConveyor, stepLifts } from './folded-machinery.js';
+import { moveWithConveyor, stepLifts, applyFloorHeat } from './folded-machinery.js';
 import { SIGNAL } from './folded-visibility.js';
 import * as T from 'three';
 import './style.css';
@@ -27,7 +28,7 @@ import { flotationAssembly } from './gardens.js';
 import { toggleFlotation, FLOTATION, MORTAR, mortarTarget } from './abilities.js';
 import {
   newPlayer,
-  MAX_HP,
+  playerMaxHp,
   BASE_SPEED,
   shootHeat,
   updateHeat,
@@ -43,7 +44,6 @@ import {
   releaseFolded,
   foldedSupport,
   moveFolded,
-  inRect,
   deckHeight,
 } from './folded-layout.js';
 import { makeFoldedWorld } from './folded-world.js';
@@ -75,6 +75,8 @@ const p = Object.assign(newPlayer(), {
   circulation: state.circulation,
   y: 0,
 });
+applyUpgrades(p, state);
+p.hp = playerMaxHp(p);
 Object.assign(
   p,
   foldedHives.find((h) => h.id === state.anchor),
@@ -192,7 +194,7 @@ scene.add(laserEndpoint);
 laserEndpoint.visible = false;
 laserEndpoint.renderOrder = 4;
 const mortarGuide = new T.Line(
-  new T.BufferGeometry().setAttribute('position', new T.BufferAttribute(new Float32Array(75), 3)),
+  new T.BufferGeometry().setAttribute('position', new T.BufferAttribute(new Float32Array(99), 3)),
   new T.LineDashedMaterial({
     color: 0xffe4a9,
     transparent: true,
@@ -204,6 +206,21 @@ const mortarGuide = new T.Line(
 scene.add(mortarGuide);
 mortarGuide.visible = false;
 mortarGuide.frustumCulled = false;
+const mortarLanding = new T.Mesh(
+  new T.RingGeometry(MORTAR.radius - 0.09, MORTAR.radius, 64),
+  new T.MeshBasicMaterial({
+    color: 0xffe4a9,
+    transparent: true,
+    opacity: 0.75,
+    depthTest: false,
+    depthWrite: false,
+    side: T.DoubleSide,
+  }),
+);
+mortarLanding.rotation.x = -Math.PI / 2;
+mortarLanding.renderOrder = 5;
+mortarLanding.visible = false;
+scene.add(mortarLanding);
 const magneticBeam = new T.Group();
 scene.add(magneticBeam);
 magneticBeam.visible = false;
@@ -369,7 +386,6 @@ const enemies = createFoldedEnemies({
   bossArenas,
   combat: { hurt, hitEnemy, shootEnemy },
   audio,
-  enemyPan,
   save,
   view: createEnemyView({ world, project, getCamera: () => camera, burst }),
 });
@@ -380,9 +396,9 @@ function save() {
   saves.save(state);
 }
 let rejectedAt = -10;
-function rejectImpact(kind) {
+function rejectImpact(kind, position) {
   if (kind !== 'laser' || time - rejectedAt > 0.12) {
-    audio.event('armor');
+    audio.event('armor', position ? { position } : 0);
     rejectedAt = time;
   }
 }
@@ -485,41 +501,46 @@ function updateAim() {
     const t = mortarTarget(p.x, p.z, aim.x, aim.z);
     aim.x = t.x;
     aim.z = t.z;
-    // A range-clamped target must land on the selected floor, never an unseen lower one.
-    if (distance > MORTAR.range) aim.y = p.y;
+    // Resolve clamped XZ against support rather than floating at hull height.
+    if (distance > MORTAR.range) {
+      const floor = world.cast(
+        new T.Vector3(aim.x, Math.max(p.y, aim.y) + 0.45, aim.z),
+        new T.Vector3(0, -1, 0),
+        80,
+        { terrainOnly: true },
+      );
+      aim.y = floor?.point.y ?? p.y;
+    }
   } else aim.copy(groundAim(weaponOrigin(), aim, model.root.quaternion).target);
   const turretAim = groundAim(weaponOrigin(), aim, model.root.quaternion);
   model.turret.rotation.y = turretAim.yaw;
   model.barrel.rotation.x = p.weapon === 'mortar' ? -0.4 : -turretAim.pitch;
   p.aim = Math.atan2(aim.x - p.x, aim.z - p.z);
   mortarGuide.visible = p.weapon === 'mortar' && p.hp > 0 && !p.endingTime;
+  mortarLanding.visible = mortarGuide.visible;
   if (mortarGuide.visible) {
-    const position = mortarGuide.geometry.attributes.position,
-      origin = weaponOrigin(),
-      previous = origin.clone(),
-      next = new T.Vector3(),
-      segment = new T.Vector3();
-    let count = 25;
-    for (let i = 0; i < 25; i++) {
-      const t = i / 24;
-      next.copy(origin).lerp(aim, t);
-      next.y += 4 * MORTAR.height * t * (1 - t);
-      segment.subVectors(next, previous);
-      const length = segment.length(),
-        boundary = i
-          ? refugeRayDistance(previous, segment.normalize(), length, world.hives, state)
-          : Infinity;
-      if (Number.isFinite(boundary)) {
-        next.copy(previous).addScaledVector(segment, boundary);
-        count = i + 1;
-      }
-      position.setXYZ(i, next.x, next.y, next.z);
-      previous.copy(next);
-      if (count !== 25) break;
-    }
-    mortarGuide.geometry.setDrawRange(0, count);
+    const predicted = predictMortar(weaponOrigin(), aim, (start, dir, range) =>
+      castWeapon(start, dir, range, { extras: mines }),
+    );
+    const position = mortarGuide.geometry.attributes.position;
+    predicted.points.forEach((q, i) => position.setXYZ(i, q.x, q.y, q.z));
+    mortarGuide.geometry.setDrawRange(0, predicted.points.length);
     position.needsUpdate = true;
     mortarGuide.computeLineDistances();
+    const floor = world.cast(
+      predicted.point.clone().add(new T.Vector3(0, 0.15, 0)),
+      new T.Vector3(0, -1, 0),
+      80,
+      { terrainOnly: true },
+    );
+    mortarLanding.visible = !!floor;
+    if (floor) {
+      mortarLanding.position.copy(floor.point).add(new T.Vector3(0, 0.07, 0));
+      const normal = floor.face.normal.clone().transformDirection(floor.object.matrixWorld);
+      mortarLanding.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), normal);
+    }
+    mortarLanding.material.color.setHex(predicted.obstructed ? 0xffad62 : 0xffe4a9);
+    mortarLanding.userData.prediction = predicted.point.toArray();
   }
 }
 function updateLaser(dt) {
@@ -562,7 +583,13 @@ function updateLaser(dt) {
       const t = hit.target;
       if (t.kind === 'mine') detonateMine(t);
       else if (t.enemy || t.model)
-        hitEnemy(t.enemy || t, LASER.damage * dt, start, 'laser', t.enemy ? t : null);
+        hitEnemy(
+          t.enemy || t,
+          weaponDamage(p, 'laser', LASER.damage) * dt,
+          start,
+          'laser',
+          t.enemy ? t : null,
+        );
       else setState(t.id, 'laser');
     }
   }
@@ -581,7 +608,7 @@ function updateLaser(dt) {
         b = points[i * 2 + 1],
         delta = b.clone().sub(a);
       core.position.copy(a).addScaledVector(delta, 0.5);
-      core.scale.y = delta.length();
+      core.scale.set(p.laserUpgrade ? 1.8 : 1, delta.length(), p.laserUpgrade ? 1.8 : 1);
       core.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), delta.normalize());
     }
   }
@@ -616,7 +643,14 @@ function fire() {
   const origin = weaponOrigin(),
     dir = aim.clone().sub(origin).normalize();
   const mesh = projectile(origin, dir, mortar);
+  const upgraded = !!p[`${p.weapon}Upgrade`];
+  if (upgraded) {
+    mesh.scale.multiplyScalar(1.3);
+    mesh.material.color.setHex(0xffffff);
+  }
   shots.push({
+    damage: weaponDamage(p, p.weapon, mortar ? MORTAR.damage : CANNON.damage),
+    upgraded,
     origin: origin.clone(),
     position: origin.clone(),
     dir,
@@ -631,10 +665,6 @@ function fire() {
   recoil = 0.38;
   fired = true;
   return true;
-}
-function enemyPan(e) {
-  const yaw = thirdPerson ? follow.yaw : Math.PI * 1.25;
-  return clamp((-(e.x - p.x) * Math.cos(yaw) + (e.z - p.z) * Math.sin(yaw)) / 18, -1, 1);
 }
 function target() {
   const pickup = world.pickups.find(
@@ -671,14 +701,23 @@ function interact() {
   const t = target();
   if (!t || p.hp <= 0) return false;
   if (t.kind === 'pickup') {
-    state[t.id] = p[t.ability || t.id] = true;
-    abilityHud.acquire(t.ability || t.id, time);
+    state[t.id] = true;
+    if (t.upgrade) {
+      const oldMax = playerMaxHp(p);
+      applyUpgrades(p, state);
+      p.hp = Math.min(playerMaxHp(p), p.hp + playerMaxHp(p) - oldMax);
+      abilityHud.acquireUpgrade(t.upgrade, time);
+      ripple(new T.Vector3(p.x, p.y, p.z), 3, C.lightYellow, 0.9, 0.7);
+    } else {
+      p[t.ability || t.id] = true;
+      abilityHud.acquire(t.ability || t.id, time);
+    }
     audio.event('unlock');
     save();
   }
   if (t.kind === 'hive') {
     state.anchor = t.id;
-    p.hp = MAX_HP;
+    p.hp = playerMaxHp(p);
     p.heat = 0;
     p.overheated = false;
     p.speed = 1;
@@ -723,7 +762,7 @@ function respawn() {
   world.setThirdPerson(thirdPerson);
   const h = foldedHives.find((h) => h.id === state.anchor);
   Object.assign(p, h, {
-    hp: MAX_HP,
+    hp: playerMaxHp(p),
     heat: 0,
     overheated: false,
     deployed: false,
@@ -906,7 +945,7 @@ function updateMagnet(dt) {
     r.material.color.setHex(p.overheated ? C.red : SIGNAL.magnet);
   }
   if (time - magnetSoundAt > 0.7) {
-    audio.event(p.overheated ? 'blocked' : 'magnet');
+    audio.event(p.overheated ? 'blocked' : c ? 'magnet-pull' : 'magnet');
     magnetSoundAt = time;
   }
   if (p.overheated) return;
@@ -919,7 +958,7 @@ function updateMagnet(dt) {
     const body = { x: c.x, y: c.y, z: c.z, speed: 1 };
     if (length > c.radius + 1.4)
       moveFolded(body, -dir.x * 5 * dt, -dir.z * 5 * dt, state, world.lifts);
-    if (!refugeAt(body, world.hives, state, REFUGE_CLEARANCE)) {
+    if (!refugeAt(body, world.hives, state, REFUGE_CLEARANCE + c.radius)) {
       c.x = body.x;
       c.y = body.y;
       c.z = body.z;
@@ -932,7 +971,7 @@ function updateMagnet(dt) {
     if (c.shieldPull >= 1) {
       c.shieldRemoved = true;
       c.stunnedUntil = time + 2.2;
-      audio.event('armor');
+      audio.event('armor', { position: c });
       effects.pullShield(c, origin);
     }
   } else if (c.kind === 'mine') {
@@ -1009,7 +1048,7 @@ function advance(dt) {
   time += dt;
   if (deathAt >= 0) {
     laserBeam.visible = laserGuide.visible = laserEndpoint.visible = false;
-    mortarGuide.visible = magneticBeam.visible = false;
+    mortarGuide.visible = mortarLanding.visible = magneticBeam.visible = false;
     world.update(dt, time, p, camera);
     updateSparks(dt);
     updateWaves(dt);
@@ -1050,6 +1089,7 @@ function advance(dt) {
       laserEndpoint.visible =
       magneticBeam.visible =
       mortarGuide.visible =
+      mortarLanding.visible =
         false;
     clearShots();
     audio.event('couple');
@@ -1071,12 +1111,7 @@ function advance(dt) {
   const moving = !!(move.x || move.z),
     wasOverheated = p.overheated;
   updateHeat(p, dt, time, keys.has(bindings.overdrive), moving);
-  const hotFloor = expansionHeat.find((q) => Math.abs(q.y - p.y) < 0.5 && inRect(p.x, p.z, q));
-  if (hotFloor && !refugeAt(p, world.hives, state)) {
-    p.heat = Math.min(100, p.heat + hotFloor.heat * dt);
-    p.lastHeat = time;
-    if (p.heat >= 100) p.overheated = true;
-  }
+  if (!refugeAt(p, world.hives, state)) applyFloorHeat(p, dt, time, state);
   if (wasOverheated && !p.overheated) audio.event('ready');
   const breakable = foldedSolids.filter(
       (s) => s.red || s.phoenix || ['launch', 'optics', 'pressure'].includes(s.id),
@@ -1229,6 +1264,7 @@ function hud() {
   const boss = world.enemies.find((e) => e.hp > 0 && e.id === state.combatArena);
   $('boss-health').style.display = boss && !p.endingTime ? 'flex' : 'none';
   if (boss) $('boss-health').querySelector('span').style.width = `${(boss.hp / boss.max) * 100}%`;
+  while (hp.children.length < playerMaxHp(p) / 5) hp.append(document.createElement('i'));
   [...hp.children].forEach(
     (e, i) => (e.className = p.hp <= i * 5 ? 'empty' : p.hp < (i + 1) * 5 ? 'half' : ''),
   );
@@ -1547,6 +1583,7 @@ if (import.meta.env.DEV && params.has('test')) {
       laserBeam,
       magneticBeam,
       mortarGuide,
+      mortarLanding,
       abilityHud,
       ending,
       bossArenas,

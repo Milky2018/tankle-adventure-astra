@@ -83,3 +83,15 @@ Node and scripted browser checks establish rules, routes and controlled interact
 See [architecture](docs/architecture.md) for module ownership, state lifetimes and historical code boundaries. [IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md) records dated investigations and validation limits. Implementation and test details do not belong in `Gamespec.md`.
 
 Enemy decisions run through `createFoldedEnemies` with an explicit visual adapter. Its attack, healing and arena-reset tests do not construct Three.js models.
+
+## Sound-effect comparison
+
+See [sound-effect auditions](scripts/SOUND_EFFECTS.md) to regenerate the old/new previews from the actual Web Audio implementations. The local audition page is served at `/output/audio/sfx-comparison/index.html`; its audio files remain in ignored output and are not shipped with the game.
+
+Optional discovery, equipment persistence, real upgraded weapon hits and both-view Mortar landing checks:
+
+```bash
+npm run test:browser -- exploration secret-trials secret-optics save-safety
+```
+
+`secret-trials` exercises the optional two-wave stores fight with real damage, both-view reflected cabinet release, the Mortar tray, denied premature pickups, save/reload and input-driven equipment detours. The warning-specific audition is `/output/audio/warning-comparison/index.html`; see the sound-effect notes for its snapshot baseline.

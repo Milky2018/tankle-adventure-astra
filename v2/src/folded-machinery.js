@@ -1,6 +1,13 @@
-import {expansionCurrents,expansionBelts} from './folded-expansion-layout.js';
+import {expansionCurrents,expansionBelts,expansionHeat} from './folded-expansion-layout.js';
 import {cityBelts} from './folded-city-layout.js';
 import {inRect,deckHeight,moveFolded,foldedSupport} from './folded-layout.js';
+
+export function applyFloorHeat(player,dt,time,state){
+  const floor=[...expansionHeat,...cityBelts.filter(b=>b.heat)].find(q=>inRect(player.x,player.z,q)&&Math.abs(deckHeight(q,player.z)-player.y)<.5&&(!q.release||!state[q.release]));
+  if(!floor)return;
+  player.heat=Math.min(100,player.heat+floor.heat*dt);player.lastHeat=time;
+  if(player.heat>=100)player.overheated=true;
+}
 
 export function conveyorVelocity(body,enemies=[],state={}){
   const belt=[...cityBelts,...expansionBelts].find(b=>inRect(body.x,body.z,b)&&Math.abs(deckHeight(b,body.z)-body.y)<.5);

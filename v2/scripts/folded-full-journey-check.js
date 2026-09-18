@@ -33,7 +33,7 @@ async page=>{
         const alongX=Math.abs(dx)>Math.abs(dz),keys=(detour?!alongX:alongX)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD'];if(boost)keys.push('ShiftLeft');
         const e=s.enemies.find(e=>e.hp>0&&e.readable&&Math.abs(e.y-p.y)<3&&Math.hypot(e.x-p.x,e.z-p.z)<24);
         if(e&&!boost){const t=e.parts.find(part=>part.hp>0)||{x:e.x,z:e.z,y:e.y+1.5};g.aimAt(t.x,t.z,t.y);keys.push('Mouse0');}
-        g.setInput(keys);g.step(Math.hypot(dx,dz)<2?1/120:1/30,false);if(g.snapshot().player.hp<=0)return {error:'died',at:g.snapshot().player};
+        g.setInput(keys);g.step(Math.hypot(dx,dz)<2?1/120:1/30,false);if(g.snapshot().player.hp<=0)return {error:'died',at:g.snapshot().player,lifts:g.debug.world.lifts.map(l=>({id:l.id,y:l.y,destination:l.destination,wait:l.wait})),near:g.snapshot().enemies.filter(e=>e.hp>0&&Math.hypot(e.x-x,e.z-z)<100)};
       }return {error:'stuck',at:g.snapshot().player};
     },{x,z,boost});if(result.error)throw Error(JSON.stringify({target:[x,z],...result}));legs.push(result);
   }

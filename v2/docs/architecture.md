@@ -14,6 +14,10 @@ The current game boots through `src/entry.js` and `src/folded.js`. The latter cr
 | `folded-projectiles.js` | Damage application, armour, sanctuary interception, shell flight, hostile launch and direct/blast friendly fire |
 | `folded-combat.js` | Armour and contact-damage rules |
 | `folded-weapons.js` | Current city Cannon/Laser values and hostile projectile damage |
+| `folded-ballistics.js` | Shared mortar flight position and read-only obstruction prediction |
+| `folded-upgrades.js` | Saved discovery IDs, derived equipment bonuses and weapon damage scaling |
+| `folded-exploration-layout.js` | Optional finds, collision-backed workshop infill and local patrols |
+| `folded-materials.js` | Cached seamless surface colour and normal maps |
 | `folded-laser.js` | Read-only trajectory shared by preview and live Laser |
 | `folded-settings.js` | Preference defaults and persistence, control rebinding, quality/audio settings and camera-tuning UI |
 | `folded-effects.js` | Spark/shield-fragment motion, blast rings and projectile visuals with scene-local material cleanup |
@@ -27,7 +31,9 @@ The current game boots through `src/entry.js` and `src/folded.js`. The latter cr
 | `folded-bosses.js`, `folded-boss-arenas.js`, `folded-pacing.js` | Boss patterns, arena seals and encounter scheduling |
 | `mechanics.js`, `abilities.js` | Shared heat, movement and ability rules |
 | `folded-hud.js`, `folded-interface.js`, `folded-ending.js` | Ability/threat presentation, menu structure and completion screen |
-| `audio.js`, `soundtrack.js` | Mechanical effects, regional cues and musical playback |
+| `audio.js` | Audio lifecycle, spatial listener, regional machinery cadence and music state |
+| `sound-effects.js` | Layered SFX recipes, bounded voice and audio-node lifetime, positional attenuation and continuous engine |
+| `soundtrack.js` | Musical track selection, transitions and playback |
 
 `createFoldedCombat` accepts the session clock, world queries and shared projectile lists. Its effects adapter plays audio and creates visuals; its events adapter handles progression, death and machinery. Renderer-free tests and the live game call this same interface. Do not copy function bodies into a test or recover them by parsing source text.
 
@@ -44,6 +50,8 @@ Input receives live status getters so rebinding, camera changes and pause transi
 - Boss arena state is also transient. Persistent progression is saved as existing flags, anchor, discoveries and serialized side-puzzle state.
 - Meshes, materials, input state and camera state belong to the running session. They are not serialized as campaign progress.
 - The campaign key remains `furnace-born-v2-city`; previews use `furnace-born-v2-folded-<route>`; settings use `furnace-born-v2-settings`.
+
+Equipment bonuses are reconstructed from discovery flags rather than saved multipliers. Collecting an armour pack fills the new capacity once; repair and reconstruction use the derived maximum. Player shells snapshot their upgraded damage at launch; continuous Laser uses the current equipment state.
 
 Saved machinery progress is reconstructed by its owning puzzle module. Moving a carrier must not mutate imported layout definitions and change the next session's starting geometry.
 

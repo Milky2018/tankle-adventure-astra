@@ -18,13 +18,23 @@ export function createAbilityHud(tools,acquired,keyGlyph){
   tools.classList.add('ability-tray');tools.replaceChildren();tools.hidden=false;
   acquired.classList.add('ability-acquired');acquired.replaceChildren();
   const groups=new Map(),cards=new Map();
-  let latest=null,until=0,bindings={},lastWeapon=null;
+  let latest=null,until=0,bindings={},lastWeapon=null,upgradeLatest=null;
+  const cooler=document.createElement('div');cooler.className='ability-card cooling-module';cooler.setAttribute('role','img');cooler.setAttribute('aria-label','Cooling efficiency +25%');
+  const fan='M24 20c-16-18-26 7-5 7M28 24c18-16-7-26-7-5M24 28c16 18 26-7 5-7M20 24c-18 16 7 26 7 5M24 20a4 4 0 1 1 0 8 4 4 0 0 1 0-8';
+  cooler.innerHTML=svg(`<path d="${fan}"/>`);
+  function acquireUpgrade(kind,time){
+    upgradeLatest=kind;latest=null;until=time+6;
+    const icon=kind==='armor'?'M10 6h28v24L24 43 10 30zM24 15v16M16 23h16':kind==='cooling'?fan:abilityIcon(kind);
+    acquired.dataset.ability='upgrade';acquired.setAttribute('aria-label',kind+' upgrade');
+    acquired.innerHTML=`<div class="ability-reveal">${svg(`<path d="${icon}"/>`)}<strong>${kind==='armor'?'+1':kind==='cooling'?'+25%':'+50%'}</strong></div>`;
+  }
   for(const def of definitions){
     if(!groups.has(def.group)){const group=document.createElement('section');group.className='ability-group';tools.append(group);groups.set(def.group,group);}
     const card=document.createElement('div');card.className='ability-card';card.id=`${def.id}-tool`;card.dataset.ability=def.id;card.setAttribute('role','img');card.setAttribute('aria-label',def.label);
     card.innerHTML=svg(`<path d="${def.icon}"/>`)+(def.upgrade?'<span class="ability-upgrade" aria-hidden="true">'+svg('<path d="M18 15h-4a9 9 0 0 0 0 18h7M30 15h4a9 9 0 0 1 0 18h-7M17 24h14"/>')+'</span>':'')+'<kbd></kbd>';
     groups.get(def.group).append(card);cards.set(def.id,card);
   }
+  groups.get('engines').append(cooler);
   function updateBindings(next){
     bindings=next;
     for(const def of definitions)keyGlyph(cards.get(def.id).querySelector('kbd'),bindings[def.group==='weapons'?(def.id===lastWeapon?'fire':'weapon'):def.action]);
@@ -34,7 +44,7 @@ export function createAbilityHud(tools,acquired,keyGlyph){
     }
   }
   function acquire(id,time){
-    const def=definitions.find(d=>d.id===id);latest=id;until=time+8;
+    const def=definitions.find(d=>d.id===id);latest=id;upgradeLatest=null;until=time+8;
     acquired.dataset.ability=id;acquired.setAttribute('role','img');acquired.setAttribute('aria-label',def.label);
     acquired.innerHTML=`<div class="ability-reveal">${svg(`<path d="${def.icon}"/>`)}<div class="ability-input"><kbd></kbd>${def.group==='weapons'?'<span aria-hidden="true">→</span><kbd></kbd>':''}</div></div>${svg(def.demo,'0 0 180 56')}`;
     updateBindings(bindings);
@@ -45,14 +55,16 @@ export function createAbilityHud(tools,acquired,keyGlyph){
       const card=cards.get(def.id),owned=def.id==='cannon'||!!p[def.id];card.hidden=!owned;
       const selected=def.group==='weapons'&&p.weapon===def.id;
       const active=selected||def.id==='magnet'&&!!magnetic||def.id==='flotation'&&p.deployed||def.id==='overdrive'&&p.speed>1.01||def.id==='phoenix'&&p.speed>=3.19||def.id==='circulation'&&p.overheated;
+      card.classList.toggle('reinforced',!!p[`${def.id}Upgrade`]);
       card.classList.toggle('selected',selected);card.classList.toggle('active',!!active);
       card.classList.toggle('new-ability',def.id===latest&&time<until);
       card.classList.toggle('hot',owned&&p.overheated&&(def.group==='weapons'||def.id==='circulation'));
     }
+    cooler.hidden=!p.coolingUpgrade;
     for(const group of groups.values())group.hidden=[...group.children].every(card=>card.hidden);
-    acquired.style.display=latest&&time<until&&!p.endingTime?'flex':'none';
+    acquired.style.display=(latest||upgradeLatest)&&time<until&&!p.endingTime?'flex':'none';
   }
-  return {acquire,update,updateBindings};
+  return {acquire,acquireUpgrade,update,updateBindings};
 }
 
 // Only committed attacks outside the view get a directional warning. This never

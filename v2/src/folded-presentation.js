@@ -1,3 +1,4 @@
+import {cityMaterials} from './folded-materials.js';
 import {makeFinalMachinery} from './folded-final-machinery.js';
 import {makeDistrictMachinery,makeWorkingDistricts} from './folded-district-machinery.js';
 import {expansionCurrents,expansionDecks,expansionHeat} from './folded-expansion-layout.js';
@@ -11,14 +12,7 @@ export function makeCityPresentation(scene,aperture){
   const architecture=new T.Group(),depth=new T.Group(),scenery=new T.Group();
   architecture.name='city-architecture';depth.name='city-architecture-depth';scenery.name='city-history';scene.add(architecture,depth,scenery);
   const materials=new Map(),colliders=new Map(),point=new T.Vector3(),ray=new T.Ray();let third=false;
-  const concrete=document.createElement('canvas');concrete.width=concrete.height=128;
-  const ctx=concrete.getContext('2d');ctx.fillStyle='#dadbd4';ctx.fillRect(0,0,128,128);
-  ctx.fillStyle='#c1c6bf';for(let row=0;row<4;row++){ctx.fillRect(0,row*32,128,1);for(let x=(row%2)*32;x<128;x+=64)ctx.fillRect(x,row*32,1,32);}
-  for(let n=0;n<180;n++){ctx.fillStyle=n%2?'#d1d4cd':'#e1e2da';ctx.fillRect((n*47)%128,(n*73)%128,1,2);}
-  const texture=new T.CanvasTexture(concrete);texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.colorSpace=T.SRGBColorSpace;
-  const metal=document.createElement('canvas');metal.width=metal.height=128;const paint=metal.getContext('2d');paint.fillStyle='#dbded6';paint.fillRect(0,0,128,128);paint.fillStyle='#afb9b3';
-  for(let x=0;x<128;x+=32){paint.fillRect(x,0,2,128);for(const y of [5,123])paint.fillRect(x+5,y,2,2);}paint.fillRect(0,64,128,1);
-  const panelTexture=new T.CanvasTexture(metal);panelTexture.wrapS=panelTexture.wrapT=T.RepeatWrapping;panelTexture.colorSpace=T.SRGBColorSpace;
+  const surfaces=cityMaterials();
   const sky=document.createElement('canvas');sky.width=512;sky.height=256;const skyPaint=sky.getContext('2d'),skyGradient=skyPaint.createLinearGradient(0,0,0,256);
   for(const [stop,color]of [[0,'#263e4a'],[.4,'#718d91'],[.52,'#bac5b5'],[.66,'#5c7876'],[1,'#243e43']])skyGradient.addColorStop(stop,color);
   skyPaint.fillStyle=skyGradient;skyPaint.fillRect(0,0,512,256);const skyTexture=new T.CanvasTexture(sky);skyTexture.mapping=T.EquirectangularReflectionMapping;skyTexture.colorSpace=T.SRGBColorSpace;scene.background=skyTexture;
@@ -27,7 +21,7 @@ export function makeCityPresentation(scene,aperture){
   function material(region,part){
     const key=`${region}/${part}`;if(materials.has(key))return materials.get(key);
     // Ceilings use a baked ambient colour; avoid lighting each translucent roof layer.
-    const m=part==='roof'?new T.MeshBasicMaterial({color:new T.Color(REGION_STYLE[region].roof).multiplyScalar(1.4)}):new T.MeshToonMaterial({color:REGION_STYLE[region][part],shadowSide:T.FrontSide,map:part==='wall'?(['garden','furnace'].includes(region)?texture:panelTexture):null});aperture.apply(m,{radius:ARCHITECTURE_APERTURE});materials.set(key,m);return m;
+    const m=part==='roof'?new T.MeshBasicMaterial({color:new T.Color(REGION_STYLE[region].roof).multiplyScalar(1.4)}):new T.MeshToonMaterial({color:REGION_STYLE[region][part],shadowSide:T.FrontSide,...(part==='wall'?surfaces[['garden','furnace'].includes(region)?'concrete':'panel']:{})});aperture.apply(m,{radius:ARCHITECTURE_APERTURE});materials.set(key,m);return m;
   }
   for(const s of foldedArchitecture.solids){
     const part=['wall','foundation'].includes(s.kind)?'wall':s.kind==='roof'?'roof':'frame';

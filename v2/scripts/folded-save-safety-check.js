@@ -37,7 +37,7 @@ async page=>{
     // A clear slice of the room isolates pursuit and charge from wall collisions.
     g.scenario({player:{x:h.x+7,y:h.y,z:h.z,hp:50,invincible:0}});
     const scout=a.world.enemies.find(e=>e.type==='scout');
-    Object.assign(scout,{x:h.x+15.05,y:h.y,z:h.z,hp:2,phase:'charge',timer:.7,aim:-Math.PI/2});
+    Object.assign(scout,{x:h.x+19.5,y:h.y,z:h.z,hp:2,phase:'charge',timer:.7,aim:-Math.PI/2});
     scout.spawn={...scout.spawn,x:scout.x,y:scout.y,z:scout.z};
     for(let i=0;i<60;i++)a.moveEnemy(scout,-Math.PI/2,4.5,1/60);
     const pursuitDistance=Math.hypot(scout.x-h.x,scout.z-h.z);
@@ -55,6 +55,6 @@ async page=>{
     g.respawn();g.step(0);
     return {runs,projectileHp,incomingStopped,mortarHp,markersCleared,mineHp,pursuitDistance,chargeDistance,outsideHp,outboundBlocked:!!outbound?.refuge,disengaged};
   });
-  if(result.runs.some(r=>r.hp!==50||r.nearest<15)||result.projectileHp!==50||!result.incomingStopped||result.mortarHp!==50||!result.markersCleared||result.mineHp!==50||result.pursuitDistance<15||result.chargeDistance<15||result.outsideHp!==36||!result.outboundBlocked||!result.disengaged||errors.length)throw Error(JSON.stringify({...result,errors}));
+  if(result.runs.some(r=>r.hp!==50||r.nearest<19.35)||result.projectileHp!==50||!result.incomingStopped||result.mortarHp!==50||!result.markersCleared||result.mineHp!==50||result.pursuitDistance<19.35||result.chargeDistance<19.35||result.outsideHp!==36||!result.outboundBlocked||!result.disengaged||errors.length)throw Error(JSON.stringify({...result,errors}));
   return {...result,errors};
 }

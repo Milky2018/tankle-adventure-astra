@@ -31,12 +31,12 @@ The game combines direct movement and independent aim, a shared Heat budget, abi
 - **Abilities are physical actions.** Every acquisition supports exploration and combat. Gates communicate a material, force, surface or firing problem instead of an inventory check. Valid alternative solutions remain valid when the physical rules allow them.
 - **Combat requires decisions.** Threat combinations change where the Tank moves, what it attacks first and when it spends Heat. Difficulty comes from readable pressure and spatial choices, not uniform HP inflation or hidden damage quotas.
 - **Returns change the journey.** A nearby door, bridge, lift or express rail reveals a recognized place from another side and removes a real detour. The hub is a landmark, not a mandatory stop after each reward.
-- **The world communicates without prose.** Shape, motion, sound, impact feedback, symbols and unlabelled instruments explain it. Menus and the completion screen may use text; gameplay, machinery, maps and the combat HUD do not use dialogue, instructions, names or numerical labels. Input glyphs are permitted.
+- **The world communicates without prose.** Shape, motion, sound, impact feedback, symbols and unlabelled instruments explain it. Menus and the completion screen may use text; gameplay, machinery, maps and the combat HUD do not use dialogue, instructions, names or numerical labels. Input glyphs and brief numerical equipment-improvement readouts are permitted.
 - **The Tank remains expressive.** Exaggerated industrial forms, headlights, antenna motion and mechanical timing supply personality without dialogue or realistic military styling.
 
 ### Current scope
 
-The connected journey contains seven regions, eight abilities including the starting Cannon, ten ordinary enemy archetypes, the Prototype and four Boss encounters, permanent regional shortcuts, optional restoration scenes, and one voluntary ending. The Empty Hoist is machinery distributed through these regions, not an eighth region. Main progress never depends on completing all optional repairs or collecting the optional Magnet and Flotation modules.
+The connected journey contains seven regions, eight abilities including the starting Cannon, ten ordinary enemy archetypes, the Prototype and four Boss encounters, permanent regional shortcuts, optional restoration scenes, nine dispersed equipment discoveries, and one voluntary ending. The Empty Hoist is machinery distributed through these regions, not an eighth region. Main progress never depends on completing all optional repairs or collecting the optional Magnet and Flotation modules.
 
 There is no ammunition economy, currency, experience, corpse retrieval, field healing, limited equipment loadout or mandatory restoration percentage. Acquired abilities remain available. Ordinary movement remains available during Overheat. Hazards do not bounce or teleport the Tank to safety.
 
@@ -127,14 +127,15 @@ Visible surfaces and aiming agree. A translucent foreground must not cause aim t
 
 | Rule | Current value |
 | --- | ---: |
-| Starting and maximum HP | 50 |
+| Starting HP / base maximum | 50 |
+| Maximum after five optional armour packs | 75 |
 | Protection after a direct hit | 0.6 s |
 | Player damage radius | 0.8 world units, inset from the hull |
 | Enemy body and weak-point hit allowance | 15% larger radius than the underlying target |
 
 Damage volumes and solid-body collision serve different purposes. Forgiving edge hits do not bypass armour; a surviving enemy remains a physical obstacle. Direct and repeated contact damage respect the protection interval. Furnace channels are a separate environmental hazard, described under combat.
 
-HP is restored at Repair Hives or through reconstruction, not by field healing. Low HP changes lights, exhaust, motion accents and HUD colour without weakening control responsiveness.
+HP is restored at Repair Hives or through reconstruction. An armour discovery adds and fills its new 5-HP segment once; it is not a repeatable field-healing supply. Low HP changes lights, exhaust, motion accents and HUD colour without weakening control responsiveness.
 
 ### Shared Heat
 
@@ -144,7 +145,8 @@ HP is restored at Repair Hives or through reconstruction, not by field healing. 
 | Overheat begins | 100 |
 | Overheat releases | At or below 30 |
 | Delay after all Heat generation ends | 0.75 s |
-| Cooling rate | 50 Heat/s |
+| Base cooling rate | 50 Heat/s |
+| Cooling with the optional filter upgrade | 62.5 Heat/s |
 | Boost Heat, including acceleration and deceleration | 15 Heat/s |
 
 Weapons and tools add their own costs, listed with each ability. Shooting and boost costs accumulate together. Cooling starts only after Heat-generating actions have stopped and the speed multiplier has returned to normal. A cold Tank can fire four consecutive Cannon shots safely; the fifth reaches Overheat.
@@ -159,7 +161,7 @@ A Repair Hive opens as the Tank approaches. Activation unfolds articulated tools
 
 An active Hive is a **safe refuge** on its own floor:
 
-- Its surroundings reserve a 15-unit enemy-free radius. Patrols, pursuit, charges and drifting mines cannot enter.
+- Its surroundings reserve an 18-unit enemy-free radius measured to the enemy body edge. Initial posts and returning reinforcements respect the same boundary as patrols, pursuit, charges, magnetic pulls and drifting mines.
 - Entering the inner 5-unit maintenance area ends pursuit. Mobile attackers return toward their posts.
 - A thin mint floor ring marks protection. Incoming and outgoing fire dissipate at the boundary with visible sparks and a short blocked sound; explosion and contact damage cannot reach the protected Tank.
 - Holding a weapon does not remove protection. Magnet may operate machinery, but the refuge cannot be used to attack enemies outside it.
@@ -209,7 +211,7 @@ Cannon remains useful after later weapons: moving targets can evade a delayed Mo
 
 | Parameter | Value |
 | --- | ---: |
-| Normal speed | 7 units/s |
+| Normal speed | 9.8 units/s |
 | Maximum multiplier | 1.6× |
 | Acceleration from 1.0× to 1.6× | 0.5 s |
 | Multiplier acceleration | 1.2/s |
@@ -275,11 +277,13 @@ The landing point is fixed at launch. A visible arc clears low cover but strikes
 
 The common turntable cradle makes this first extra weapon difficult to miss. Its safe first target is a yellow upper pressure tray above an open-topped screen. A descending shot or nearby blast presses it; a level or rising shot from underneath does not. The freight battery then uses the same low-cover geometry in combat, and the shared Testworks load requires another overhead application before Phoenix.
 
+A ground ring marks the estimated landing and blast radius while aiming, alongside the curved flight guide. A premature collision with machinery or a ceiling shortens the guide and turns the landing ring amber. The forecast follows the current obstruction rather than promising a hit beyond a wall; it does not lock onto moving enemies.
+
 Mortar rewards predicting a committed enemy or cluster. Its delay, range and actual overhead clearance prevent it from replacing every direct or reflected shot. It does not home or pass through a roof simply because the cursor is beyond it.
 
 ### Phoenix Engine
 
-Phoenix raises the same grounded engine to **3.2×** speed while retaining Overdrive's **1.2 multiplier/s acceleration**. From normal moving speed, maximum takes about **1.83 seconds** and a straight run-up of about **26.95 units**. Maximum world speed is **22.4 units/s**. Release deceleration retains the existing slope, approximately **1.71 multipliers/s**. Shared engine Heat is unchanged.
+Phoenix raises the same grounded engine to **3.2×** speed while retaining Overdrive's **1.2 multiplier/s acceleration**. From normal moving speed, maximum takes about **1.83 seconds** and a straight run-up of about **37.73 units**. Maximum world speed is **31.36 units/s**. Release deceleration retains the existing slope, approximately **1.71 multipliers/s**. Shared engine Heat is unchanged. Short entrance shutters leave at least 40 units of usable straight approach from a normal moving start; the faster base travel must not force a precise last-moment impact.
 
 A distinct exhaust, hull state, speed gauge and engine register announce full-speed readiness. At maximum, eligible barricades break and ordinary enemies die immediately, including frontal guards and mirror inspectors. Breaking an ordinary body or obstacle preserves momentum. Intact major structures remain solid, and a blocked hull loses speed.
 
@@ -407,6 +411,32 @@ Later travel should offer changed access, a new view or an efficient return. It 
 
 Exploration rewards include useful routes, restored individual machinery, recognizable places and predecessor scenes. Empty locked pockets and routine currency filler do not satisfy that role. No permanent HP or Heat-capacity collectible is currently part of the required design.
 
+### Optional equipment discoveries
+
+Nine one-time discoveries are spread across the existing journey. They reward inspecting a working space's unused side, taking a gallery, revisiting a bank or noticing a maintenance recess. They are never needed by the critical route or ending. They do not appear on the map merely because a whole room has been discovered. A small warm glint and the equipment's silhouette reward a local view; there is no global collectible arrow.
+
+| Reward | Location and discovery | Effect |
+| --- | --- | --- |
+| Armour pack 1 | Behind the Foundry sorting drive, beyond its working face | Add one 5-HP hull segment |
+| Cannon reinforcement | Rail-shop stores behind the racks: defeat a shield carrier and flanker, then a finite lobber/scout reserve after a four-second deployment pause. Their power cable releases the reward cabinet; retreat remains possible | Cannon damage 1 → 1.5 |
+| Armour pack 2 | Drydock maintenance recess, behind a filter housing | Add one 5-HP hull segment |
+| Cooling filter | Rear of the reservoir pump island, reached by the inspection branch or water | Cooling 50 → 62.5 Heat/s |
+| Armour pack 3 | Receiving test bed's far side, off the Testworks through route | Add one 5-HP hull segment |
+| Mortar reinforcement | An inspection cabinet on the observation gallery edge, powered by landing a lob on an upward-facing target tray. Its cable leads to the cabinet; the through walk stays open | Mortar damage 3 → 4.5 |
+| Armour pack 4 | Outer collimator inspection corner, around its low screen | Add one 5-HP hull segment |
+| Laser reinforcement | Behind the separator service pumps: a broad fixed mirror sends light sideways into the front face of a recessed collector, powering the cabinet. Its opaque back cannot receive light. The reflected aiming guide previews the connection | Laser damage 4.5 → 6.75 HP/s |
+| Armour pack 5 | Predecessor cooling bay, behind the service bench | Add one 5-HP hull segment |
+
+Armour raises the maximum from ten to fifteen segments and fills only the added segment at pickup. Repairs and reconstruction fill the earned maximum. Upgrades persist through rest, death and reload and cannot be collected repeatedly. Cooling retains the 0.75-second delay, Overheat thresholds and all Heat costs. Weapon upgrades preserve firing rate, range and blast radius.
+
+Acquisition briefly pairs an armour/fan/weapon pictogram with its numerical improvement. Added hull segments, a permanent fan badge and a gold reinforcement mark on the relevant weapon card keep the result visible. Reinforced Cannon and Mortar rounds are brighter and larger; the reinforced Mortar adds an inner blast ring, and Laser has a thicker energy core. The ordinary weapon appearances remain unchanged.
+
+### Filling spaces with purpose
+
+Stores, filters, stators, polishing benches, spare jackets and tool benches occupy the unused edges of the rail shop, dispatch hall, reservoir banks, recoil room, observation walk, lens galleries, separator and predecessor bay. They shelter optional finds or provide usable cover, while leaving the through route and both camera views clear. Different workshops retain different machine forms; a repeated crate grid is not the composition rule.
+
+The old service spur pairs a long-range sniper with a flanker around a compressor and stores. The upper freight return pairs a sniper with a mine layer. Rail-shop patrols protect an optional equipment detour rather than blocking the main acquisition. Quiet intervals remain around maintenance and the final story approach; filling space does not mean placing enemies in every room.
+
 ## 6. The folded mechanical city
 
 ### Site and section
@@ -485,6 +515,8 @@ Both views share readable world lighting. Interior paths, undersides and machine
 
 ### A shared physical language
 
+Door frames and the map do not display the ability required to pass a barrier. The player sees the obstruction itself: moving water, a reachable blue grip, a screened tray, a framed mirror or a braced shutter. A failed shot produces material-specific feedback, and cables show what an operated mechanism changed. Nearby safe examples establish these relationships before combat combines them. Discovered gates show only open/closed state; unknown routes do not advertise their solution.
+
 | Affordance | Meaning and response |
 | --- | --- |
 | Recessed impact paddle or bullseye, spring and travel slot | Cannon-operable mechanism; recoil, sparks, sound and connected motion on impact |
@@ -493,7 +525,7 @@ Both views share readable world lighting. Interior paths, undersides and machine
 | Framed mirror and lens-like receiver | Optical route; contact flare and outgoing beam show the reflection |
 | Horizontal upper pressure tray behind a screen | A descending impact can press it; shots from below strike protected structure |
 | Sprung striped plate | Hull weight maintains an action; leaving releases it |
-| Flame-marked momentum shutter | Requires a supported full-speed Phoenix run-up |
+| Reinforced braced shutter, dented wrecks and clear approach | Momentum can break the weakened structure; the supported run-up is visible |
 | Heated load-bearing fasteners | Red contact releases a thermal barrier with steam and visible separation |
 | Mint repair ring | Safe maintenance area and weapon boundary |
 
@@ -507,12 +539,12 @@ Conveyor motion is a physical world-direction force applied to the Tank, enemies
 
 | Conveyor purpose | Speed |
 | --- | ---: |
-| Ordinary opposing traversal | 7.15 units/s |
+| Ordinary opposing traversal | 9.95 units/s |
 | Foundry and Keeper feed lanes | 3.2 units/s |
 
 Ordinary walking loses ground against an opposing lane; Overdrive makes progress without a prolonged crawl. The first Foundry barrier is visible before the engine is acquired. Its short return belt demonstrates the new capability safely. Ordinary optional loading lanes have a supported cooling and combat bay between stretches.
 
-Belts have dark beds, side frames, end rollers and moving transverse treads with regular warm marks. Movement follows the real direction and slope. Destroying a drive stops its belt for every body and leaves its tread surface in place. Thermal-contact lanes use the Circulation rules rather than faster conveyor tuning to exclude the earlier engine.
+Belts have dark beds, side frames, end rollers and moving transverse treads with regular warm marks. Movement follows the real direction and slope. Destroying a drive stops its belt for every body and leaves its tread surface in place. Thermal-contact lanes use the Circulation rules rather than faster conveyor tuning to exclude the earlier engine. Orange heating rails on the pressure and inner returns add 28 Heat/s while occupied, like the coolant runout. This makes red contact arrive naturally during traversal, without idling against a shutter. Releasing the lane disables its heaters and carries returning travellers onward.
 
 ### Automatic lifts and freight carriers
 
@@ -811,7 +843,7 @@ The compact upper-right map shows nearby discovered geometry, relevant visible t
 
 The full map pauses play. Nearby exits can be revealed without revealing an entire unexplored route; unknown areas remain incomplete. Floors are real separate layers. The current-position arrow is shown at full presence only on the Tank's actual floor, while the floor selector identifies where the Tank is when another layer is inspected.
 
-Discovered lift connections allow inspecting the other known landing, without revealing unknown floors. Gates distinguish closed and opened states. Receivers, circuits, uncollected modules and Repair Hives use recognizable pictograms and a graphical legend. Maps share the HUD's restrained material language and do not add prose room names or numeric floor labels to explain poor world composition.
+Discovered lift connections allow inspecting the other known landing, without revealing unknown floors. Gates distinguish closed and opened states. Receivers, circuits, encountered main ability modules and Repair Hives use recognizable pictograms and a graphical legend. Maps share the HUD's restrained material language and do not add prose room names or numeric floor labels to explain poor world composition.
 
 ## 12. Art, sound and music
 
@@ -827,11 +859,21 @@ Impact rings, broad projectiles, sparks, smoke and debris give weight while pres
 
 Regional materials, enclosure, landmarks and machinery are specified with each [regional journey](#9-regional-journeys), rather than being colour swaps over a repeated layout.
 
+Walls use restrained panel seams, rivets, worn paint and fine mineral grain; detail must stay subordinate to interactive colour. Water has broad, soft moving ripples and restrained highlights rather than repeated bright strokes. These surfaces retain the regional palette and remain readable under both cameras.
+
+### Background direction — proposal for discussion
+
+The proposed background retains the horseshoe excavation rather than turning supported routes into floating islands. Above it, overcast cloud layers leave a narrow warm opening. Broken viaducts, crane silhouettes and furnace stacks establish distant landmarks; below the routes, sediment, shallow dark water, foundations and descending pipes explain what holds the city up. Distant scenery suggests a larger lost civilization without promising playable destinations.
+
+The upper city sees cool daylight and remote industrial silhouettes; the gardens add moisture and reflected light; the deeper works progressively lose sky and take their light from machinery and the furnace. The ending may warm the same established landmarks. Foreground threats remain the strongest moving contrast. This direction awaits discussion before replacing the current background.
+
 ### Mechanical sound and ambience
 
 Movement produces a continuous engine and running-gear voice. Acceleration becomes louder and higher in pitch, with an audible distinction at sustained Phoenix speed. Stopping and cooling settle naturally. Overheat, renewed availability and red Circulation each have a clear state cue.
 
-Armour ricochets, successful damage, empty magnetic scanning, attached traction, switch operation, travelling power, lift arrival and Repair Hive reconstruction sound different. Sniper locks, incoming artillery and off-screen relevant threats carry positional warnings. Critical warnings remain intelligible above music and machinery.
+The Cannon combines a sharp discharge, a sustained low body and a brief mechanical return. Mortar has a deeper launch; Laser has a restrained continuous energy texture. Physical impacts have slight timbral variation without obscuring their identity.
+
+Armour ricochets, successful damage, damage to the Tank, empty magnetic scanning, attached traction, switch operation, travelling power, lift arrival and Repair Hive reconstruction sound different. Repair settles into a short restorative phrase; acquiring or unlocking something has a brighter resolving cue. Enemy launches and impacts carry direction and distance, with distant reports quieter and duller. Sniper locks, incoming artillery and off-screen relevant threats carry positional warnings. Critical warnings remain intelligible above music and machinery. Alerts use an electronic vocabulary distinct from weapon reports: a rising recognition chirp for a new threat, accelerating pulses followed by a held tone for Boss lock, three even pulses for clamps, a slower alternating pair for the press and three high/low pairs for Overheat. Rejected actions use a brief double buzz. These signals have stable pitches and soft note edges, without explosive noise, sub-bass drops or metallic impact layers.
 
 Ambient rhythm reflects purpose: Foundry clatter, hollow transit movement, water and distant freight, engine tests, optical resonance, uneven circulation, then the Hearth's low pressure. There are no vocals, spoken announcements or intelligible broadcasts. After the Keeper falls, the score leaves silence for the final approach. Quiet stretches make restoration and final coupling audible; constant drone and combat noise must not erase them.
 

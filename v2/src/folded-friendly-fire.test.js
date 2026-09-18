@@ -25,7 +25,8 @@ function fixture(enemies, { walls = [], hives = [], controls = [] } = {}) {
   const p = { x: 0, y: 0, z: 20, hp: 50, invincible: 0 },
     state = { combatArena: enemies.find((e) => BOSS_ARENAS.some((a) => a.id === e.id))?.id },
     shots = [],
-    events = [];
+    events = [],
+    sounds = [];
   const world = {
     enemies,
     hives,
@@ -73,7 +74,7 @@ function fixture(enemies, { walls = [], hives = [], controls = [] } = {}) {
       ripple: () => new T.Mesh(),
       refugeImpact() {},
       rejectImpact() {},
-      audio: { event() {} },
+      audio: { event: (...args) => sounds.push(args) },
     },
     events: {
       alertSquad() {},
@@ -89,7 +90,7 @@ function fixture(enemies, { walls = [], hives = [], controls = [] } = {}) {
     time += dt;
     api.updateShots(dt);
   };
-  return { ...api, p, shots, events, world };
+  return { ...api, p, shots, events, sounds, world };
 }
 function fireThrough(f, shooter) {
   f.shootEnemy(shooter, 0, null, new T.Vector3(f.p.x, 1.2, f.p.z));
@@ -254,4 +255,18 @@ test('boss attack shapes carry distinct damage through direct and blast impacts'
       assert.equal(f.p.hp, 50 - damage, attack);
     }
   }
+});
+
+test('combat emits different player/enemy hit sounds and positioned enemy launches', () => {
+  const shooter = enemy('test-sniper', 5, 0, { type: 'sniper' });
+  const target = enemy('test-target', 5, 10);
+  const f = fixture([shooter, target]);
+  f.shootEnemy(shooter, 0, null, new T.Vector3(0, 1.2, 20));
+  assert.equal(f.sounds[0][0], 'rail-shot');
+  assert.equal(f.sounds[0][1].position, shooter);
+  f.hurt(1);
+  assert.equal(f.sounds.at(-1)[0], 'hurt');
+  f.hitEnemy(target, 1, new T.Vector3(5, 1.2, 9), 'cannon');
+  assert.equal(f.sounds.at(-1)[0], 'hit');
+  assert.equal(f.sounds.at(-1)[1].position, target);
 });

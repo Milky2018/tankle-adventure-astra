@@ -1,86 +1,132 @@
 import { clamp, OVERDRIVE_MAX_SPEED } from './mechanics.js';
+import { SoundEffects, MechanicalEngine, spatialSound } from './sound-effects.js';
 import { Soundtrack } from './soundtrack.js';
 
 export class FactoryAudio {
-  constructor(){this.ctx=null;this.volume=.55;this.music=true;this.sfx=true;}
-  start(){
-    if(!this.ctx){
-      this.ctx=new AudioContext({sampleRate:44100});this.master=this.ctx.createGain();this.master.gain.value=this.volume*.4;this.master.connect(this.ctx.destination);
-      this.score=new Soundtrack(this.ctx,this.master);
-      this.engine=this.ctx.createOscillator();this.engine.type='sawtooth';this.engine.frequency.value=43;
-      this.engineFilter=this.ctx.createBiquadFilter();this.engineFilter.type='lowpass';this.engineFilter.frequency.value=250;
-      this.engineGain=this.ctx.createGain();this.engineGain.gain.value=0;this.engine.connect(this.engineFilter);this.engineFilter.connect(this.engineGain);this.engineGain.connect(this.master);this.engine.start();
+  constructor() {
+    this.ctx = null;
+    this.volume = 0.55;
+    this.music = true;
+    this.sfx = true;
+  }
+  start() {
+    if (!this.ctx) {
+      this.ctx = new AudioContext({ sampleRate: 44100 });
+      this.master = this.ctx.createGain();
+      this.master.gain.value = this.volume * 0.4;
+      this.master.connect(this.ctx.destination);
+      this.score = new Soundtrack(this.ctx, this.master);
+      this.effects = new SoundEffects(this.ctx, this.master);
+      this.drive = new MechanicalEngine(this.ctx, this.effects.output, this.effects.noiseBuffer);
     }
-    if(this.ctx.state==='suspended')this.ctx.resume();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
   }
-  tone(freq,duration=.15,type='sine',gain=.2,slide=0,pan=0){
-    if(!this.ctx)return;const t=this.ctx.currentTime,o=this.ctx.createOscillator(),g=this.ctx.createGain(),p=this.ctx.createStereoPanner();
-    o.type=type;o.frequency.setValueAtTime(freq,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(20,freq+slide),t+duration);
-    g.gain.setValueAtTime(gain,t);g.gain.exponentialRampToValueAtTime(.0001,t+duration);p.pan.value=Math.max(-1,Math.min(1,pan));o.connect(g);g.connect(p);p.connect(this.master);o.start(t);o.stop(t+duration+.03);
+  tone(freq, duration = 0.15, type = 'sine', gain = 0.2, slide = 0, pan = 0) {
+    this.effects?.tone(freq, duration, type, gain, slide, pan);
   }
-  noise(duration=.2,gain=.2,pan=0){
-    if(!this.ctx)return;const buffer=this.ctx.createBuffer(1,this.ctx.sampleRate*duration,this.ctx.sampleRate),d=buffer.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
-    const s=this.ctx.createBufferSource(),g=this.ctx.createGain(),p=this.ctx.createStereoPanner(),f=this.ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=1500;s.buffer=buffer;g.gain.value=gain;p.pan.value=Math.max(-1,Math.min(1,pan));s.connect(f);f.connect(g);g.connect(p);p.connect(this.master);s.start();
+  noise(duration = 0.2, gain = 0.2, pan = 0) {
+    this.effects?.noise(duration, gain, pan);
   }
-  event(name,pan=0){
-    if(!this.ctx)return;
-    if(['warn','heat','unlock','boss-lock'].includes(name))this.duckUntil=this.ctx.currentTime+1.2;
-    if(!this.sfx)return;
-    if(name==='laser'){this.tone(680,.16,'sine',.08,35,pan);this.tone(1360,.13,'triangle',.025,-80,pan);}
-    if(name==='lever'){this.tone(155,.15,'triangle',.18,-75,pan);this.noise(.08,.15,pan);}
-    if(name==='blocked'){this.tone(85,.13,'square',.1,-30,pan);}
-    if(name==='flotation'){this.noise(.4,.15,pan);this.tone(160,.35,'triangle',.16,160,pan);}
-    if(name==='fuse'){this.noise(.65,.2,pan);this.tone(240,.8,'sawtooth',.13,440,pan);}
-    if(name==='crate'){this.noise(.25,.4,pan);this.tone(90,.15,'triangle',.2,-55,pan);}
-    if(name==='vent'){this.noise(.65,.14,pan);this.tone(290,.4,'sine',.1,-160,pan);}
-    if(name==='mortar'){this.tone(95,.45,'sine',.7,-65,pan);this.noise(.23,.4,pan);this.tone(550,.75,'sine',.08,-380,pan);}
-    if(name==='magnet'){this.tone(130,.8,'triangle',.22,110,pan);this.tone(260,.6,'sine',.1,220,pan);}
-    if(name==='shot'){this.tone(145,.2,'triangle',.65,-110,pan);this.noise(.12,.45,pan);}
-    if(name==='welder-shot'){this.tone(720,.16,'triangle',.22,-590,pan);this.noise(.07,.18,pan);}
-    if(name==='guard-shot'){this.tone(110,.3,'triangle',.5,-75,pan);this.noise(.2,.35,pan);}
-    if(name==='foundry-shot'){this.tone(58,.65,'sine',.75,-30,pan);this.tone(116,.22,'triangle',.25,-60,pan);this.noise(.35,.4,pan);}
-    if(name==='crusher'){this.tone(48,.6,'sine',.13,-20,pan);this.noise(.28,.09,pan);}
-    if(name==='clamp-warn'){this.tone(370,.7,'triangle',.16,390,pan);this.tone(1480,.09,'sine',.09,-400,pan);}
-    if(name==='boss-lock'){this.tone(95,.8,'sawtooth',.13,260,pan);this.tone(190,.7,'sine',.16,420,pan);}
-    if(name==='press-warn'){this.tone(65,1.5,'sawtooth',.15,165,pan);this.tone(130,1.2,'sine',.2,330,pan);}
-    if(name==='hit'){this.tone(280,.12,'square',.16,-200,pan);this.noise(.16,.3,pan);}
-    if(name==='armor'){this.tone(980,.24,'sine',.32,-180,pan);this.tone(1760,.14,'sine',.17,-260,pan);this.tone(2630,.07,'triangle',.07,-350,pan);this.noise(.035,.12,pan);}
-    if(name==='explode'){this.tone(85,.6,'sine',.8,-60,pan);this.noise(.6,.65,pan);}
-    if(name==='warn'){this.tone(280,.45,'sawtooth',.12,420,pan);this.tone(425,.3,'sine',.1,250,pan);}
-    if(name==='heat'){this.noise(.8,.3);this.tone(430,.6,'triangle',.24,-330);}
-    if(name==='ready'){this.tone(580,.12,'sine',.16);this.tone(860,.2,'sine',.08);}
-    if(name==='repair'||name==='unlock'){[0,4,7,12,16].forEach((n,i)=>setTimeout(()=>this.tone(220*2**(n/12),.6,'sine',.22),i*115));}
-    if(name==='couple'){this.noise(.35,.15);this.tone(65,6,'triangle',.09,-27);}
-    if(name==='death'){this.tone(160,1.3,'sawtooth',.3,-135);this.noise(.8,.4);}
-    if(name==='ram'){this.tone(75,.22,'square',.3,-40,pan);this.noise(.18,.4,pan);}
+  event(name, location = 0) {
+    if (!this.ctx) return;
+    if (['warn', 'heat', 'unlock', 'boss-lock', 'hurt'].includes(name))
+      this.duckUntil = this.ctx.currentTime + 1.2;
+    if (!this.sfx) return;
+    const spatial =
+      typeof location === 'number'
+        ? { pan: location }
+        : location.position && this.listener
+          ? spatialSound(location.position, this.listener)
+          : {};
+    // Active threat cues stay legible at range; launch/impact sounds keep full falloff.
+    if (['warn', 'boss-lock', 'clamp-warn', 'press-warn'].includes(name) && spatial.gain > 0)
+      spatial.gain = Math.max(0.6, spatial.gain);
+    this.effects?.play(name, spatial);
   }
-  environment(time,p,region,state,yaw){
-    if(!this.ctx||!this.sfx)return;
-    this.environmentBeats??={};
-    const source=(key,x,y,z,period,sound)=>{
-      const distance=Math.hypot(p.x-x,(p.y-y)*1.5,p.z-z);if(distance>48)return;
-      const beat=Math.floor(time/period);if(this.environmentBeats[key]===beat)return;this.environmentBeats[key]=beat;
-      const gain=Math.max(0,1-distance/48)*.045,pan=Math.max(-1,Math.min(1,(-(x-p.x)*Math.cos(yaw)+(z-p.z)*Math.sin(yaw))/24));sound(gain,pan,beat);
+  environment(time, p, region, state, yaw) {
+    this.listener = { x: p.x, y: p.y || 0, z: p.z, yaw };
+    if (!this.ctx || !this.sfx) return;
+    this.environmentBeats ??= {};
+    const source = (key, x, y, z, period, sound) => {
+      const distance = Math.hypot(p.x - x, (p.y - y) * 1.5, p.z - z);
+      if (distance > 48) return;
+      const beat = Math.floor(time / period);
+      if (this.environmentBeats[key] === beat) return;
+      this.environmentBeats[key] = beat;
+      const gain = Math.max(0, 1 - distance / 48) * 0.045,
+        pan = Math.max(
+          -1,
+          Math.min(1, (-(x - p.x) * Math.cos(yaw) + (z - p.z) * Math.sin(yaw)) / 24),
+        );
+      sound(gain, pan, beat);
     };
-    if(!state.foundry)source('press',-46,-8,40,Math.PI/.75,(g,pan)=>{this.tone(48,.6,'triangle',g,-20,pan);this.noise(.13,g*.5,pan);});
-    source('carrier',0,5,10,3,(g,pan,n)=>{this.tone(n%6===2?310:82,.65,'triangle',g*.6,-12,pan);this.noise(.1,g*.3,pan);});
-    source('garden-pump',75,-8,-28,state.pump?1.4:3.7,(g,pan,n)=>{this.tone(state.pump?73:61+n%2*9,.9,'sine',g,0,pan);if(!state.pump)this.noise(.06,g*.25,pan);});
-    source('drip',44,-16,5,2.7,(g,pan,n)=>this.tone(740+n%3*120,.24,'sine',g*.3,-290,pan));
-    source('test-rig',80,16,-87,3.2,(g,pan)=>{this.tone(97,.7,'triangle',g*.5,15,pan);this.tone(196,.8,'sine',g*.2,0,pan);});
-    source('signal',204,40,146,9,(g,pan)=>{if(state.signal){this.tone(660,.6,'sine',g*.7,0,pan);this.tone(990,.8,'sine',g*.2,0,pan);}});
-    source('circulation',226,-24,130,state.rig?1.2:2.9,(g,pan,n)=>{this.tone(state.rig?58:52+n%2*13,.9,'sine',g,0,pan);if(!state.rig)this.noise(.2,g*.25,pan);});
-    source('furnace',0,-56,-8,state.endingSeen?1.8:3.6,(g,pan)=>{this.tone(38,1.8,'sine',g,0,pan);this.noise(.9,g*.12,pan);});
-    if(region==='furnace'&&!state.keeper)source('feed',0,-56,30,2.2,(g,pan)=>this.tone(63,.3,'triangle',g,-16,pan));
+    if (!state.foundry)
+      source('press', -46, -8, 40, Math.PI / 0.75, (g, pan) => {
+        this.tone(48, 0.6, 'triangle', g, -20, pan);
+        this.noise(0.13, g * 0.5, pan);
+      });
+    source('carrier', 0, 5, 10, 3, (g, pan, n) => {
+      this.tone(n % 6 === 2 ? 310 : 82, 0.65, 'triangle', g * 0.6, -12, pan);
+      this.noise(0.1, g * 0.3, pan);
+    });
+    source('garden-pump', 75, -8, -28, state.pump ? 1.4 : 3.7, (g, pan, n) => {
+      this.tone(state.pump ? 73 : 61 + (n % 2) * 9, 0.9, 'sine', g, 0, pan);
+      if (!state.pump) this.noise(0.06, g * 0.25, pan);
+    });
+    source('drip', 44, -16, 5, 2.7, (g, pan, n) =>
+      this.tone(740 + (n % 3) * 120, 0.24, 'sine', g * 0.3, -290, pan),
+    );
+    source('test-rig', 80, 16, -87, 3.2, (g, pan) => {
+      this.tone(97, 0.7, 'triangle', g * 0.5, 15, pan);
+      this.tone(196, 0.8, 'sine', g * 0.2, 0, pan);
+    });
+    source('signal', 204, 40, 146, 9, (g, pan) => {
+      if (state.signal) {
+        this.tone(660, 0.6, 'sine', g * 0.7, 0, pan);
+        this.tone(990, 0.8, 'sine', g * 0.2, 0, pan);
+      }
+    });
+    source('circulation', 226, -24, 130, state.rig ? 1.2 : 2.9, (g, pan, n) => {
+      this.tone(state.rig ? 58 : 52 + (n % 2) * 13, 0.9, 'sine', g, 0, pan);
+      if (!state.rig) this.noise(0.2, g * 0.25, pan);
+    });
+    source('furnace', 0, -56, -8, state.endingSeen ? 1.8 : 3.6, (g, pan) => {
+      this.tone(38, 1.8, 'sine', g, 0, pan);
+      this.noise(0.9, g * 0.12, pan);
+    });
+    if (region === 'furnace' && !state.keeper)
+      source('feed', 0, -56, 30, 2.2, (g, pan) => this.tone(63, 0.3, 'triangle', g, -16, pan));
   }
-  update(time,p,combat,area,paused,moving=false,musicState={}){
-    if(!this.ctx)return;const t=this.ctx.currentTime;
-    const boost=clamp((p.speed-1)/(OVERDRIVE_MAX_SPEED-1),0,1),phoenixBoost=clamp((p.speed-OVERDRIVE_MAX_SPEED)/OVERDRIVE_MAX_SPEED,0,1);
-    const coupling=p.endingTime>0&&p.endingTime<9;
-    const running=this.sfx&&!paused&&p.hp>0&&(coupling||moving||boost>0);
-    this.master.gain.setTargetAtTime(this.volume*.4,t,.15);
-    this.engine.frequency.setTargetAtTime(coupling?65-Math.min(1,p.endingTime/6)*27:(p.afloat?48:65)+boost*100+phoenixBoost*85+p.heat*.2,t,.12);
-    this.engineFilter.frequency.setTargetAtTime(250+boost*350+phoenixBoost*250,t,.12);
-    this.engineGain.gain.setTargetAtTime(running?(coupling?.06*(1-Math.max(0,p.endingTime-6)/3):.075+boost*.105+phoenixBoost*.065):0,t,.1);
-    this.score.update({area,combat,paused,dead:p.hp<=0,enabled:this.music,overdrive:p.overdrive,endingTime:p.endingTime||0,duck:t<this.duckUntil,...musicState});
+  update(time, p, combat, area, paused, moving = false, musicState = {}) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const boost = clamp((p.speed - 1) / (OVERDRIVE_MAX_SPEED - 1), 0, 1),
+      phoenixBoost = clamp((p.speed - OVERDRIVE_MAX_SPEED) / OVERDRIVE_MAX_SPEED, 0, 1);
+    const coupling = p.endingTime > 0 && p.endingTime < 9;
+    const running = this.sfx && !paused && p.hp > 0 && (coupling || moving || boost > 0);
+    this.master.gain.setTargetAtTime(this.volume * 0.4, t, 0.15);
+    this.effects.setEnabled(this.sfx && !paused);
+    this.drive.update(
+      coupling
+        ? 65 - Math.min(1, p.endingTime / 6) * 27
+        : (p.afloat ? 48 : 65) + boost * 100 + phoenixBoost * 85 + p.heat * 0.2,
+      250 + boost * 350 + phoenixBoost * 250,
+      running
+        ? coupling
+          ? 0.06 * (1 - Math.max(0, p.endingTime - 6) / 3)
+          : 0.075 + boost * 0.105 + phoenixBoost * 0.065
+        : 0,
+    );
+    this.score.update({
+      area,
+      combat,
+      paused,
+      dead: p.hp <= 0,
+      enabled: this.music,
+      overdrive: p.overdrive,
+      endingTime: p.endingTime || 0,
+      duck: t < this.duckUntil,
+      ...musicState,
+    });
   }
 }

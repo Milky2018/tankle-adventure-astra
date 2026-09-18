@@ -5,10 +5,9 @@ import { bossPattern, bossBarrage } from './folded-bosses.js';
 import { barrageTargets, RAIL, SORTER_REACH } from './folded-attacks.js';
 import { refugeAt, REFUGE_CLEARANCE } from './folded-refuges.js';
 import { canTelegraph } from './folded-pacing.js';
-import { expansionBattles } from './folded-expansion-layout.js';
 import { cityContact } from './folded-combat.js';
 import { moveWithConveyor } from './folded-machinery.js';
-import { moveFolded } from './folded-layout.js';
+import { foldedBattles, moveFolded } from './folded-layout.js';
 import { redContact } from './mechanics.js';
 
 // Decisions and collision queries do not depend on enemy meshes. The view
@@ -24,7 +23,6 @@ export function createFoldedEnemies({
   bossArenas,
   combat: { hurt, hitEnemy, shootEnemy },
   audio,
-  enemyPan,
   save,
   view,
 }) {
@@ -73,7 +71,7 @@ export function createFoldedEnemies({
         state,
         world.lifts,
       );
-      if (refugeAt(body, world.hives, state, REFUGE_CLEARANCE)) continue;
+      if (refugeAt(body, world.hives, state, REFUGE_CLEARANCE + e.radius)) continue;
       if (Math.hypot(body.x - e.x, body.z - e.z) < Math.abs(speed * dt) * 0.3) continue;
       if (
         world.enemies.some(
@@ -117,7 +115,7 @@ export function createFoldedEnemies({
         : null,
     );
     e.sweepSign = (e.sweepSign || 1) * -1;
-    audio.event('boss-lock', enemyPan(e));
+    audio.event('boss-lock', { position: e });
   }
   function launchBossPattern(e) {
     const pattern = e.pattern;
@@ -177,12 +175,12 @@ export function createFoldedEnemies({
         if (e.attack === 'sweep') {
           e.phase = 'sweep';
           e.timer = 1.8;
-          audio.event('vent', enemyPan(e));
+          audio.event('vent', { position: e });
         } else {
           launchBossPattern(e);
           e.phase = 'vent';
           e.timer = e.pattern.recovery;
-          audio.event('vent', enemyPan(e));
+          audio.event('vent', { position: e });
         }
       }
     } else if (e.phase === 'sweep') {
@@ -233,7 +231,7 @@ export function createFoldedEnemies({
       if (e.phase === 'sweep') {
         if (obstruction?.object?.userData.sortingCover) {
           view.impact(obstruction.point, 'lightYellow', 10);
-          audio.event('armor', enemyPan(e));
+          audio.event('armor', { position: e });
           e.phase = 'vent';
           e.timer = 1.5;
           e.sweepRight = !e.sweepRight;
@@ -269,7 +267,7 @@ export function createFoldedEnemies({
           e.phase = 'vent';
           e.timer = 1.5;
           e.sweepRight = !e.sweepRight;
-          audio.event('vent', enemyPan(e));
+          audio.event('vent', { position: e });
         }
       }
     } else if (e.phase === 'vent') {
@@ -292,7 +290,7 @@ export function createFoldedEnemies({
       }
     }
     encounterPacing.update(dt, p, resting, now());
-    for (const battle of expansionBattles)
+    for (const battle of foldedBattles)
       if (
         !state[battle.id] &&
         world.enemies.filter((e) => e.battle === battle.battle).every((e) => e.hp <= 0)
@@ -306,7 +304,8 @@ export function createFoldedEnemies({
       view.clearWarnings(e);
       const beforeDrift = { x: e.x, y: e.y, z: e.z };
       moveWithConveyor(e, 0, 0, dt, state, world.lifts, world.enemies);
-      if (refugeAt(e, world.hives, state, REFUGE_CLEARANCE)) Object.assign(e, beforeDrift);
+      if (refugeAt(e, world.hives, state, REFUGE_CLEARANCE + e.radius))
+        Object.assign(e, beforeDrift);
       view.deployment(e, now());
       if (!e.hp) {
         view.collapse(e, now());
@@ -421,7 +420,7 @@ export function createFoldedEnemies({
               e.lock.x = e.x + (e.lock.x - e.x) * fraction;
               e.lock.z = e.z + (e.lock.z - e.z) * fraction;
             }
-            audio.event('warn', enemyPan(e));
+            audio.event('warn', { position: e });
           }
         } else if (e.phase === 'warn') {
           if (e.type === 'sniper' && e.timer > RAIL.lockTime && clearSight) {
@@ -475,7 +474,7 @@ export function createFoldedEnemies({
             state,
             world.lifts,
           );
-          if (!refugeAt(body, world.hives, state, REFUGE_CLEARANCE)) {
+          if (!refugeAt(body, world.hives, state, REFUGE_CLEARANCE + e.radius)) {
             e.x = body.x;
             e.z = body.z;
             e.y = body.y;
@@ -484,7 +483,7 @@ export function createFoldedEnemies({
           if (e.timer <= 0 || struckWall) {
             if (e.id === 'prototype' && struckWall) {
               view.impact(new T.Vector3(e.x, e.y + 1, e.z), 'orange', 10);
-              audio.event('armor', enemyPan(e));
+              audio.event('armor', { position: e });
             }
             if (e.id === 'prototype' && !struckWall && e.hp / e.max < 0.55 && !e.chain) {
               e.chain = true;
@@ -492,7 +491,7 @@ export function createFoldedEnemies({
               e.timer = 0.85;
               e.aim = Math.atan2(p.x - e.x, p.z - e.z);
               e.lock = new T.Vector3(p.x, p.y + 1.2, p.z);
-              audio.event('warn', enemyPan(e));
+              audio.event('warn', { position: e });
             } else {
               e.chain = false;
               e.phase = 'vent';

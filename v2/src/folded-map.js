@@ -1,5 +1,4 @@
 import { foldedDecks, foldedArchitecture, inRect, deckHeight } from './folded-layout.js';
-import { gateAbility } from './folded-guidance.js';
 import { abilityIcon } from './folded-hud.js';
 import { clamp } from './mechanics.js';
 
@@ -134,10 +133,10 @@ export function createFoldedMap({ player: p, world, state, discovered, heading }
       }
     }
     ctx.globalAlpha = 1;
-    const markedGates = new Set();
     for (const wall of world.walls)
       if (
         !wall.permanent &&
+        !wall.hidden &&
         seen(wall.x + wall.w / 2, wall.y, wall.z + wall.d / 2) &&
         Math.abs(wall.y - layer) < 5
       ) {
@@ -152,16 +151,6 @@ export function createFoldedMap({ player: p, world, state, discovered, heading }
           ctx.lineTo(ox + (wall.x + wall.w / 2) * scale, oz + (wall.z + wall.d) * scale);
         }
         ctx.stroke();
-        const ability = gateAbility(wall);
-        if (ability && !state[wall.id] && !markedGates.has(wall.id)) {
-          mapIcon(
-            ability,
-            wall.x + wall.w / 2,
-            wall.z + wall.d / 2,
-            ability === 'magnet' ? '#82bdff' : '#ffe4a9',
-          );
-          markedGates.add(wall.id);
-        }
       }
     for (const l of world.lifts)
       if (l.stops.includes(layer) && l.stops.some((y) => seen(l.x + l.w / 2, y, l.z + l.d / 2))) {
@@ -206,6 +195,7 @@ export function createFoldedMap({ player: p, world, state, discovered, heading }
       }
     for (const q of world.pickups)
       if (
+        !q.hidden &&
         !state[q.id] &&
         (!q.requires || state[q.requires]) &&
         Math.abs(q.y - layer) < 1 &&

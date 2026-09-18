@@ -1,5 +1,5 @@
 export const REFUGE_RADIUS=5;
-export const REFUGE_CLEARANCE=15;
+export const REFUGE_CLEARANCE=18;
 
 export function refugeAt(point,hives,state,radius=REFUGE_RADIUS){
   return hives.find(h=>(!h.requires||state[h.requires])&&point.y>=h.y-.75&&point.y<h.y+4&&Math.hypot(point.x-h.x,point.z-h.z)<=radius);

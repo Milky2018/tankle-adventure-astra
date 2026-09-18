@@ -6,6 +6,12 @@ export default [
   {
     files: [
       'src/folded.js',
+      'src/folded-upgrades.js',
+      'src/folded-ballistics.js',
+      'src/folded-exploration-layout.js',
+      'src/folded-materials.js',
+      'src/audio.js',
+      'src/sound-effects.js',
       'src/folded-death.js',
       'src/folded-settings.js',
       'src/folded-effects.js',

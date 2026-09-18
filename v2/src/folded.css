@@ -86,3 +86,11 @@
 #look-hint kbd.mouse-key{transform:scale(1.25);margin:0 3px}#look-hint kbd.mouse-key::before{background:#ffd477}
 
 #ending-skip{position:fixed;right:28px;bottom:24px;z-index:35;padding:8px 18px;color:#eadcbb;background:#142725c9;border:1px solid #a99b7359;border-radius:5px;font:inherit;font-size:12px;cursor:pointer}#ending-skip:hover,#ending-skip:focus-visible{border-color:#eadcbb;background:#29433e}#ending-skip[hidden]{display:none}
+
+/* Installed optional equipment remains legible after the discovery reveal. */
+.ability-card.reinforced { border-color: #f2d08a; box-shadow: inset 0 -3px #f2d08a; }
+.ability-card.reinforced::after { content: '◆'; position: absolute; right: 4px; top: 1px; color: #ffe3a5; font-size: 10px; }
+.ability-acquired[data-ability="upgrade"] strong { font-size: 24px; color: #ffe3a5; font-variant-numeric: tabular-nums; }
+.cooling-module { color: #d7edc5; }
+
+.folded-ui #acquired[data-ability="upgrade"] .ability-reveal { border: 0; padding: 0; min-width: 58px; }

@@ -142,6 +142,7 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
       prefs.volume = audio.volume = Number($('volume').value);
       prefs.music = audio.music = $('music').checked;
       prefs.sfx = audio.sfx = $('sfx').checked;
+      if (!audio.sfx) audio.effects?.setEnabled(false);
       audio.master?.gain.setTargetAtTime(audio.volume * 0.4, audio.ctx.currentTime, 0.15);
       if (audio.score?.state) audio.score.update({ ...audio.score.state, enabled: audio.music });
       preferences.save();

@@ -1,3 +1,4 @@
+import { mortarPosition } from './folded-ballistics.js';
 import * as T from 'three';
 import { BOSS_ARENAS } from './folded-boss-arenas.js';
 import { steerSeeker } from './folded-bosses.js';
@@ -5,7 +6,7 @@ import { cityDamage, armorAbsorbs } from './folded-combat.js';
 import { refugeAt, refugeRayDistance } from './folded-refuges.js';
 import { BARRAGE, RAIL } from './folded-attacks.js';
 import { MORTAR } from './abilities.js';
-import { clamp, damagePlayer } from './mechanics.js';
+import { damagePlayer } from './mechanics.js';
 import { foldedSupport } from './folded-layout.js';
 import { C, ring, mat } from './world.js';
 import { SIGNAL } from './folded-visibility.js';
@@ -31,7 +32,7 @@ export function createFoldedCombat({
     const time = now();
     if (!refugeAt(p, world.hives, state) && damagePlayer(p, amount, time)) {
       events.hurt(time);
-      audio.event('hit');
+      audio.event('hurt');
       if (p.hp <= 0) {
         events.death(time);
         audio.event('death');
@@ -52,7 +53,7 @@ export function createFoldedCombat({
       e.armor = 0.2;
       if (time - (e.arenaRejectAt ?? -Infinity) > 0.15) {
         e.arenaRejectAt = time;
-        rejectImpact(kind);
+        rejectImpact(kind, e);
         burst(new T.Vector3(e.x, e.y + 1.5, e.z), C.lightYellow, 5);
       }
       return;
@@ -63,19 +64,19 @@ export function createFoldedCombat({
       dealt = cityDamage(e, damage, origin, kind, part);
     if (armored) {
       e.armor = 0.2;
-      rejectImpact(kind);
+      rejectImpact(kind, e);
       if (kind !== 'laser' || time - (e.sparkAt || 0) > 0.12) {
         burst(new T.Vector3(e.x, e.y + 1.5, e.z), C.lightYellow, 6);
         e.sparkAt = time;
       }
-    } else if (kind !== 'laser') audio.event('hit');
+    } else if (kind !== 'laser') audio.event('hit', { position: e });
     e.hp = Math.max(0, e.hp - dealt);
     e.flash = 0.14;
     if (dealt > 0 && kind === 'mortar' && !e.persistent) e.stunnedUntil = time + 0.6;
     if (!e.hp) {
       e.deadAt = time;
       e.warning.visible = false;
-      audio.event('explode');
+      audio.event('explode', { position: e });
       burst(new T.Vector3(e.x, e.y + 1, e.z), C.orange, 14);
       if (e.persistent) {
         state[e.id] = true;
@@ -93,7 +94,7 @@ export function createFoldedCombat({
     }
     if (hit.blockedTarget && !shot.mortar) {
       burst(hit.point, 0xf5f1d7, 7);
-      audio.event('armor');
+      audio.event('armor', { position: hit.point });
       return;
     }
     burst(hit.point, shot.hostile ? C.orange : C.yellow);
@@ -105,7 +106,7 @@ export function createFoldedCombat({
       }
       if (shot.mortar) {
         ripple(hit.point, BARRAGE.radius, C.orange, 0.6, 0.8);
-        audio.event('explode');
+        audio.event('explode', { position: hit.point });
         const delta = new T.Vector3(p.x, p.y + 1, p.z).sub(hit.point),
           distance = delta.length();
         if (
@@ -155,8 +156,9 @@ export function createFoldedCombat({
       return;
     }
     if (shot.mortar) {
-      audio.event('explode');
+      audio.event('explode', { position: hit.point });
       ripple(hit.point, MORTAR.radius, C.lightYellow, 0.5, 0.8);
+      if (shot.upgraded) ripple(hit.point, MORTAR.radius * 0.8, 0xffffff, 0.35, 0.9);
       for (const e of world.enemies)
         if (
           e.hp > 0 &&
@@ -173,7 +175,7 @@ export function createFoldedCombat({
               { targets: false },
             )
           )
-            hitEnemy(e, MORTAR.damage, shot.origin, 'mortar');
+            hitEnemy(e, shot.damage ?? MORTAR.damage, shot.origin, 'mortar');
         }
       for (const e of world.enemies)
         if (e.hp > 0)
@@ -187,7 +189,7 @@ export function createFoldedCombat({
                   targets: false,
                 })
               )
-                hitEnemy(e, MORTAR.damage, shot.origin, 'mortar', part);
+                hitEnemy(e, shot.damage ?? MORTAR.damage, shot.origin, 'mortar', part);
             }
       for (const c of world.controls)
         if (new T.Vector3(c.x, c.y, c.z).distanceTo(hit.point) < 2) {
@@ -205,7 +207,7 @@ export function createFoldedCombat({
       else if (hit.target.enemy || hit.target.model)
         hitEnemy(
           hit.target.enemy || hit.target,
-          CANNON.damage,
+          shot.damage ?? CANNON.damage,
           shot.origin,
           'cannon',
           hit.target.enemy ? hit.target : null,
@@ -283,11 +285,16 @@ export function createFoldedCombat({
       audio.event(
         mortar
           ? 'mortar'
-          : e.type === 'boss'
-            ? 'foundry-shot'
-            : e.guardian
-              ? 'guard-shot'
-              : 'welder-shot',
+          : options.homing
+            ? 'seeker-shot'
+            : e.type === 'sniper'
+              ? 'rail-shot'
+              : e.type === 'boss'
+                ? 'foundry-shot'
+                : e.guardian
+                  ? 'guard-shot'
+                  : 'welder-shot',
+        { position: e },
       );
   }
   function updateShots(dt) {
@@ -314,9 +321,13 @@ export function createFoldedCombat({
       s.mesh.visible = true;
       if (s.homing) steerSeeker(s, p, dt);
       if (s.mortar) {
-        const t = clamp(s.age / (s.duration || MORTAR.duration), 0, 1);
-        next = s.origin.clone().lerp(s.target, t);
-        next.y += 4 * (s.arc || MORTAR.height) * t * (1 - t);
+        next = mortarPosition(
+          s.origin,
+          s.target,
+          s.age,
+          s.duration || MORTAR.duration,
+          s.arc || MORTAR.height,
+        );
       } else
         next = s.position
           .clone()

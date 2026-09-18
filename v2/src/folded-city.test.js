@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {applyFloorHeat} from './folded-machinery.js';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
 import {initialFoldedState,moveFolded,foldedSupport,foldedBlocked,foldedDecks,foldedEnemies,foldedPickups,foldedLiftDefs,foldedHives,releaseFolded,inRect,deckHeight} from './folded-layout.js';
 import {cameraMovement} from './folded-camera.js';
@@ -12,7 +13,7 @@ function travel(p,state,points,{boost=false,lifts=[]}={}){
     let stuck=0;
     for(let i=0;i<15000;i++){
       const dx=x-p.x,dz=z-p.z;if(Math.hypot(dx,dz)<.23)break;
-      const ox=p.x,oz=p.z;updateHeat(p,1/60,(p.clock||0)+1/60,boost,true);p.clock=(p.clock||0)+1/60;
+      const ox=p.x,oz=p.z;updateHeat(p,1/60,(p.clock||0)+1/60,boost,true);p.clock=(p.clock||0)+1/60;applyFloorHeat(p,1/60,p.clock,state);
       const b=cityBelts.find(b=>inRect(p.x,p.z,b)&&Math.abs(deckHeight(b,p.z)-p.y)<.5);
       const step=BASE_SPEED*p.speed/60,ax=Math.abs(dx)>Math.abs(dz)?Math.sign(dx)*Math.min(step,Math.abs(dx)):0,az=Math.abs(dx)<=Math.abs(dz)?Math.sign(dz)*Math.min(step,Math.abs(dz)):0;
       moveFolded(p,ax+(b?.vx||0)/60,az+(b?.vz||0)/60,state,lifts);
@@ -100,7 +101,7 @@ test('Mortar opens the outer ring and its inside return without giving the emitt
   assert.equal(p.y,0);assert.ok(releaseFolded('freight-return','cannon',p,s,[]));
   travel(p,s,[[70,-18],[70,-34],[59,-34],[59,-106],[76,-106]]);
   for(let i=0;i<300;i++){updateHeat(p,1/60,i/60,true,true);moveFolded(p,BASE_SPEED*p.speed/60,0,s);}
-  assert.ok(p.x<88,'the Phoenix lock is visible near the entrance, before the long span');
+  assert.ok(p.x<104,'the Phoenix lock is visible near the entrance, before the long span');
   assert.equal(s['optics-outer'],false);
   travel(p,s,[[59,-106]]);p.phoenix=true;p.heat=0;p.overheated=false;
   travel(p,s,[[206,-106]],{boost:true});
@@ -149,7 +150,7 @@ test('the ordinary Phoenix heat budget cannot cross either sustained belt even w
   for(const [x,z,y,end]of [[211,128,-24,28],[266,128,-24,16]]){
     const p=player(x,y,z,{overdrive:true,phoenix:true}),s=initialFoldedState({'inner-optics':true});let farthest=z;
     for(let i=0;i<60*90;i++){
-      updateHeat(p,1/60,i/60,!p.overheated,true);
+      updateHeat(p,1/60,i/60,!p.overheated,true);applyFloorHeat(p,1/60,i/60,s);
       const b=cityBelts.find(b=>inRect(p.x,p.z,b)&&Math.abs(deckHeight(b,p.z)-p.y)<.5);
       moveFolded(p,0,(-BASE_SPEED*p.speed+(b?.vz||0))/60,s);farthest=Math.min(farthest,p.z);
     }
@@ -231,9 +232,9 @@ test('overlapping ramp landings work in both directions and do not admit the hul
 test('the early industrial spur exposes its Phoenix lock before the long approach',()=>{
   const s=initialFoldedState(),p=player(30,0,4,{overdrive:true});
   for(let i=0;i<600;i++){updateHeat(p,1/60,i/60,true,true);moveFolded(p,BASE_SPEED*p.speed/60,0,s);}
-  assert.ok(p.x<62);assert.equal(s.pressure,false);
+  assert.ok(p.x<76);assert.equal(s.pressure,false);
   travel(p,s,[[30,4]]);p.phoenix=true;p.heat=0;p.overheated=false;
-  travel(p,s,[[76,4]],{boost:true});assert.equal(s.pressure,true);
+  travel(p,s,[[88,4]],{boost:true});assert.equal(s.pressure,true);
 });
 
 

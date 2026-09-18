@@ -31,12 +31,17 @@ test('refactoring preserves player, ability, enemy and boss balance from 0.1.0',
       PLAYER_HURT_RADIUS,
       ENEMY_HURT_SCALE,
     },
-    baseline.player,
+    { ...baseline.player, BASE_SPEED: Number((baseline.player.BASE_SPEED * 1.4).toFixed(1)) },
   );
   assert.deepEqual(MORTAR, baseline.mortar);
   assert.deepEqual(FLOTATION, baseline.flotation);
   assert.deepEqual(ENEMY_KINDS, baseline.enemies);
-  assert.deepEqual(Object.fromEntries(foldedEnemies.map((e) => [e.id, e.hp])), baseline.health);
+  assert.deepEqual(
+    Object.fromEntries(
+      foldedEnemies.filter((e) => e.id in baseline.health).map((e) => [e.id, e.hp]),
+    ),
+    baseline.health,
+  );
   const bosses = foldedEnemies
     .filter((e) => e.persistent)
     .map((e) => ({ ...e, max: e.hp, attackCycle: 1, parts: [] }));

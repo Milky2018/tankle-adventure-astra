@@ -101,7 +101,6 @@ function fixture(enemies, player = {}) {
       },
     },
     audio: { event() {} },
-    enemyPan: () => 0,
     save() {},
   });
   function step(dt = 0.1) {

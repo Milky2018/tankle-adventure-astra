@@ -1,5 +1,6 @@
 export const MAX_HP = 50;
-export const BASE_SPEED = 7;
+export const playerMaxHp = p => MAX_HP + 5 * (p.armorPacks || 0);
+export const BASE_SPEED = 9.8;
 export const OVERDRIVE_MAX_SPEED = 1.6;
 export const PHOENIX_MAX_SPEED = 3.2;
 export const phoenixReady = p => p.phoenix && !p.deployed && p.speed >= PHOENIX_MAX_SPEED - .01;
@@ -36,7 +37,7 @@ export function updateHeat(p, dt, time, boost, moving) {
     p.heat = Math.min(100, p.heat + 15 * dt);
     p.lastHeat = time;
   } else if (time - p.lastHeat >= 0.75) {
-    p.heat = Math.max(0, p.heat - 50 * dt);
+    p.heat = Math.max(0, p.heat - 50 * (p.coolingUpgrade ? 1.25 : 1) * dt);
     if (p.heat <= 30) p.overheated = false;
   }
   if (p.heat >= 100) p.overheated = true;

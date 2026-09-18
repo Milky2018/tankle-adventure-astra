@@ -29,7 +29,7 @@ const routes={
   controls:[['arsenal-transfer',-145,-24,'shot',{counterweight:true}],['arsenal-return',-110,-54,'magnet']],
   gates:[['arsenal-transfer',-142,-35,12,1],['arsenal-return',-101,-60,1,12]],
   cover:[[-123,-10,4,5],[-93,18,4,10],[-152,-48,3,6]],
-  enemies:[['sniper',-134,-5,'dispatch'],['guard',-113,9,'dispatch'],['skirmisher',-80,1,'dispatch'],['artillery',-143,-46,'assembly'],['scout',-125,-45,'assembly'],['guard',-66,-20,'return']],
+  enemies:[['sniper',-134,-5,'dispatch'],['guard',-113,9,'dispatch'],['skirmisher',-80,1,'dispatch'],['artillery',-143,-42,'assembly'],['scout',-125,-45,'assembly'],['guard',-66,-20,'return']],
   props:[['gantry',-124,-8],['assembly',-151,-58],['rack',-143,24],['rack',-97,-58]],
  },
  reservoir:{
@@ -40,7 +40,7 @@ const routes={
   controls:[['reservoir-inlet',-72,100,'shot',{rotor:true}],['reservoir-transfer',-104,108,'shot',{rotor:true,requires:'reservoir-inlet'}]],
   gates:[['reservoir-transfer',-131,104,1,18],['reservoir-inlet',-110,102,12,1]],
   cover:[[-84,72,3,3],[-97,117,3,5],[-149,117,3,5]],
-  enemies:[['sniper',-159,105,'banks'],['guard',-77,95,'banks'],['sniper',-142,113,'filter'],['skirmisher',-115,111,'filter']],
+  enemies:[['sniper',-159,107,'banks'],['guard',-77,95,'banks'],['sniper',-142,113,'filter'],['skirmisher',-115,111,'filter']],
   props:[['pump',-123,78],['sluice',-107,118],['wreck',-167,60],['planter',-169,74],['planter',-72,114]],
  },
  proving:{
@@ -73,7 +73,7 @@ const routes={
   controls:[['coolant-transfer',287,184,'shot',{counterweight:true}]],
   gates:[['coolant-transfer',316,176,1,20],['coolant-transfer',334,158,1,12],['coolant-return',324,100,1,12,{red:true}]],
   cover:[[283,150,5,3],[299,177,3,5],[342,188,3,7]],
-  enemies:[['welder',293,163,'separator'],['artillery',348,185,'separator'],['miner',325,188,'separator'],['guard',311,106,'return'],['welder',297,106,'return']],
+  enemies:[['welder',293,163,'separator'],['artillery',348,185,'separator'],['miner',325,188,'separator'],['guard',311,106,'return'],['welder',300,103,'return']],
   props:[['separator',326,153],['boiler',352,173],['jacket',379,114]],
  },
  hearth:{
@@ -137,5 +137,5 @@ expansionMirrors.push({id:'lens-first-reflection',x:324,y:26,z:-14,n:[Math.SQRT1
 expansionBelts.push({id:'dispatch-line',x:-138,z:-4,w:70,d:8,y:8,vx:3.2,vz:0});
 // Single demonstration opponents are not coordinated squads.
 for(const e of expansionEnemies)if(expansionEnemies.filter(other=>other.encounter===e.encounter).length===1)delete e.encounter;
-expansionEnemies.push({id:'spillway-turret',type:'turret',hp:3,x:-76,y:-8,z:40,encounter:'spillway'}, {id:'spillway-guard',type:'guard',magneticShield:true,hp:3,x:-94,y:-8,z:42,encounter:'spillway'});
+expansionEnemies.push({id:'spillway-turret',type:'turret',hp:3,x:-75,y:-8,z:38,encounter:'spillway'}, {id:'spillway-guard',type:'guard',magneticShield:true,hp:3,x:-94,y:-8,z:42,encounter:'spillway'});
 export const expansionFlags=[...new Set([...expansionSolids.filter(s=>!s.permanent).map(s=>s.id),...expansionControls.map(c=>c.id)])];
