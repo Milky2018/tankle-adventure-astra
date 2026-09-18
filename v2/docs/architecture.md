@@ -1,6 +1,6 @@
 # Code ownership
 
-The current game boots through `src/entry.js` and `src/folded.js`. The latter creates the session, wires game actions and advances systems in their existing order. It still owns session orchestration, player ability presentation, transient effects and settings presentation.
+The current game boots through `src/entry.js` and `src/folded.js`. The latter creates the session, wires game actions and advances systems in their existing order. It owns session orchestration and player ability coordination. Settings UI and transient effects have dedicated owners; camera preview callbacks stay here because they must refresh world visibility and aim without advancing simulation.
 
 ## Current modules
 
@@ -15,6 +15,8 @@ The current game boots through `src/entry.js` and `src/folded.js`. The latter cr
 | `folded-combat.js` | Armour and contact-damage rules |
 | `folded-weapons.js` | Current city Cannon/Laser values and hostile projectile damage |
 | `folded-laser.js` | Read-only trajectory shared by preview and live Laser |
+| `folded-settings.js` | Preference defaults and persistence, control rebinding, quality/audio settings and camera-tuning UI |
+| `folded-effects.js` | Spark/shield-fragment motion, blast rings and projectile visuals with scene-local material cleanup |
 | `folded-input.js` | Keyboard/mouse listeners, pointer capture, raw-input fallback, held mouse chords |
 | `folded-camera.js`, `folded-ground.js` | Camera pose, terrain pose and height-aware aim |
 | `folded-map.js` | Discovered-layer drawing, floor selection and lift-link picking |
@@ -31,6 +33,10 @@ The current game boots through `src/entry.js` and `src/folded.js`. The latter cr
 
 Input receives live status getters so rebinding, camera changes and pause transitions take effect immediately. Pointer motion only changes camera intent; scene queries remain in simulation, with an immediate refresh when firing between frames. Map layer selection never changes player height or aim.
 
+`createFoldedPreferences` uses the existing settings storage adapter. Its binding table and per-view camera objects retain identity across resets so input, HUD and preview consumers cannot hold stale replacements. Rebinding an occupied key swaps the previous binding; camera reset affects only the selected view. `mountFoldedSettings` owns the listening state and DOM, while the session retains pause, restart and camera-selection policy.
+
+`createFoldedEffects` owns sparks, pulled shield fragments and blast rings. Its separate spark/wave updates deliberately retain their positions in the live/death update order. Expiration releases per-effect materials, not the shared primitive geometry. Projectile flight remains in combat; projectile appearance remains in effects. `waves` is exposed for the existing development diagnostics, not serialized game state.
+
 ## State lifetimes
 
 - Authored layout exports describe starting geometry and enemy placement.
@@ -44,6 +50,12 @@ Saved machinery progress is reconstructed by its owning puzzle module. Moving a 
 `createFoldedEnemies` accepts the session clock, combat actions, arena/pacing controllers and an enemy-view adapter. Decisions use world collision queries; the adapter owns meshes and camera readability. Warning and animation calls remain at their original positions in the update, including the warning frame immediately before a shot. Renderer-free tests exercise the same factory with model-free enemy records.
 
 Live enemy records still contain visual handles used by world construction, damage and rendering. The AI no longer accesses them, but this is not a complete entity-storage migration. Keeping these records compatible avoids changing damage, map, save and diagnostic consumers in the same refactor.
+
+## Cleanup scope
+
+The planned coordinator extractions (combat, input, map, saves, enemy AI/view, diagnostic profiling and settings) are complete. Transient effects were also separated. The coordinator intentionally retains session sequencing, player ability actions, camera/aim synchronization and progression callbacks.
+
+Live enemy model handles and the shared historical model builders remain explicit coupling. Removing them requires a separate world/entity representation change; they are not unfinished steps of this behaviour-preserving extraction. Do not replace them with an event bus or a new entity framework solely to make the entry file shorter.
 
 ## Historical code
 

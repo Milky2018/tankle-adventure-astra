@@ -70,6 +70,8 @@ npm run test:browser -- full-journey
 npm run test:browser -- production
 ```
 
+For the settings extraction, `npm run test:browser -- ui settings-state camera-settings` checks the actual UI, occupied-key/mouse swaps, reset/cancel behaviour, audio/quality reload and paused camera preview.
+
 The default suite covers crossfire, reflected Laser, map connections, save safety, side puzzles, automatic lifts, camera settings and mouse scheduling. Checks run sequentially in dedicated browser profiles and close those profiles after success or failure. Logs go to ignored `output/playwright/regression/`. The runner detects callback errors even when the CLI returns exit code zero.
 
 The development-only `?test&manual` interface suspends automatic simulation before the first animation frame. `window.__game` provides input, scenario setup, snapshots and explicit stepping. Advanced checks use `__game.debug`; neither interface is included in production builds. Rendering/performance probes also use this interface and the development-only profiler; they no longer rewrite served source files.

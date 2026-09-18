@@ -1,3 +1,5 @@
+import { createFoldedPreferences, mountFoldedSettings, keyGlyph } from './folded-settings.js';
+import { createFoldedEffects } from './folded-effects.js';
 import { createPlayerDeath, DEATH_HOLD } from './folded-death.js';
 import { createFoldedEnemies } from './folded-ai.js';
 import { createEnemyView } from './folded-enemy-view.js';
@@ -25,7 +27,6 @@ import { flotationAssembly } from './gardens.js';
 import { toggleFlotation, FLOTATION, MORTAR, mortarTarget } from './abilities.js';
 import {
   newPlayer,
-  DEFAULT_BINDINGS,
   MAX_HP,
   BASE_SPEED,
   shootHeat,
@@ -60,10 +61,10 @@ const $ = (id) => document.getElementById(id),
   preview = freight || garden || route === 'foundry';
 const interfaceView = mountFoldedInterface();
 const saves = createFoldedSave(route);
-const state = saves.load(),
-  prefs = saves.loadSettings();
-const FOLDED_BINDINGS = { ...DEFAULT_BINDINGS, camera: 'KeyC' };
-let bindings = { ...FOLDED_BINDINGS, ...prefs.bindings };
+const state = saves.load();
+const preferences = createFoldedPreferences(saves.loadSettings(), saves.saveSettings);
+const prefs = preferences.values,
+  bindings = prefs.bindings;
 const p = Object.assign(newPlayer(), {
   overdrive: freight || garden || state.overdrive,
   magnet: garden || state.magnetModule,
@@ -94,30 +95,7 @@ const overheadCamera = new T.OrthographicCamera(-30, 30, 17, -17, 0.1, 160),
   follow = new FollowCamera(innerWidth / innerHeight, p.heading),
   focus = new T.Vector3(p.x, p.y, p.z),
   offset = new T.Vector3(28, 39.6, 28);
-const cameraFields = {
-  third: [
-    ['pitch', '俯仰角', -30, 54, 1, (0.32 * 180) / Math.PI, '°'],
-    ['distance', '跟随距离', 6, 20, 0.5, 12, ''],
-    ['height', '镜头高度', 0, 5, 0.1, 1.6, ''],
-    ['shoulder', '左右偏移', -3, 3, 0.1, 1.2, ''],
-    ['sensitivity', '鼠标灵敏度', 0.25, 3, 0.05, 1, '×'],
-  ],
-  overhead: [
-    ['angle', '俯视角度', 30, 70, 1, (Math.atan2(39.6, Math.hypot(28, 28)) * 180) / Math.PI, '°'],
-    ['scale', '视野范围', 12, 28, 0.5, 17, ''],
-  ],
-};
-const cameraSettings = Object.fromEntries(
-  Object.entries(cameraFields).map(([view, fields]) => [
-    view,
-    Object.fromEntries(
-      fields.map(([key, , min, max, , fallback]) => {
-        const saved = prefs.cameraSettings?.[view]?.[key];
-        return [key, Number.isFinite(saved) ? clamp(saved, min, max) : fallback];
-      }),
-    ),
-  ]),
-);
+const cameraSettings = prefs.cameraSettings;
 follow.pitch = (cameraSettings.third.pitch * Math.PI) / 180;
 follow.boom = cameraSettings.third.distance;
 follow.height = cameraSettings.third.height;
@@ -263,20 +241,16 @@ const keys = new Set(),
   picker = new T.Raycaster(),
   aim = new T.Vector3(p.x, p.y + 2, p.z - 10);
 const shots = [],
-  sparks = [],
-  waves = [],
   mines = [],
   discovered = new Set(state.discovered);
-const projectileGeometry = new T.SphereGeometry(0.23, 10, 6),
-  blastGeometry = new T.RingGeometry(0.78, 1, 40);
+const effects = createFoldedEffects(scene);
+const { burst, ripple, projectile, updateSparks, updateWaves } = effects;
 let time = 0,
   frames = 0,
   paused = false,
   mapOpen = false,
   deathAt = -1,
   hitAt = -10,
-  rebind = null,
-  resetArmed = false,
   last = performance.now(),
   mapAt = -1,
   moved = false,
@@ -548,16 +522,6 @@ function updateAim() {
     mortarGuide.computeLineDistances();
   }
 }
-function burst(pos, color = C.yellow, count = 8) {
-  for (let i = 0; i < count; i++) {
-    const mesh = box(scene, 0.13, 0.13, 0.38, pos.x, pos.y, pos.z, mat(color, true), 0);
-    sparks.push({
-      mesh,
-      velocity: new T.Vector3(Math.sin(i * 2.4) * 5, 2 + (i % 3), Math.cos(i * 2.4) * 5),
-      age: 0,
-    });
-  }
-}
 function updateLaser(dt) {
   laserBeam.visible = laserGuide.visible = laserEndpoint.visible = false;
   if (p.weapon !== 'laser' || !p.laser || p.hp <= 0 || p.endingTime) return;
@@ -624,25 +588,6 @@ function updateLaser(dt) {
   fired = true;
 }
 
-function ripple(point, radius, color, life, opacity) {
-  const mesh = new T.Mesh(
-    blastGeometry,
-    new T.MeshBasicMaterial({
-      color,
-      transparent: true,
-      opacity,
-      depthWrite: false,
-      side: T.DoubleSide,
-    }),
-  );
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.position.copy(point);
-  mesh.position.y += 0.08;
-  scene.add(mesh);
-  waves.push({ mesh, age: 0, radius, life, opacity });
-  return mesh;
-}
-
 let refugeImpactAt = -10;
 function refugeImpact(point, origin) {
   if (time - refugeImpactAt < 0.3) return;
@@ -654,16 +599,6 @@ function refugeImpact(point, origin) {
   audio.event('blocked');
 }
 
-function projectile(origin, dir, mortar = false, hostile = false, heavy = false) {
-  const material = mat(hostile ? 0xff783e : 0xfff1b0, true),
-    mesh = new T.Mesh(projectileGeometry, material);
-  mesh.scale.setScalar(mortar ? 2 : heavy ? 2.4 : hostile ? 1.65 : 1.3);
-  if (!mortar) box(mesh, 0.4, 0.4, 2.2, 0, 0, -0.5, material, 0.1).castShadow = false;
-  mesh.position.copy(origin);
-  mesh.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), dir);
-  scene.add(mesh);
-  return mesh;
-}
 function fire() {
   if (p.weapon === 'laser') return false;
   const mortar = p.weapon === 'mortar';
@@ -765,7 +700,7 @@ function resetEnemies(...args) {
   return enemies.resetEnemies(...args);
 }
 function clearShots() {
-  for (const s of [...shots, ...waves]) {
+  for (const s of shots) {
     scene.remove(s.mesh);
     s.mesh.material.dispose();
     if (s.marker) {
@@ -775,7 +710,7 @@ function clearShots() {
     }
   }
   shots.length = 0;
-  waves.length = 0;
+  effects.clearWaves();
   for (const m of mines) {
     scene.remove(m.root);
     m.lamp.material.dispose();
@@ -998,12 +933,7 @@ function updateMagnet(dt) {
       c.shieldRemoved = true;
       c.stunnedUntil = time + 2.2;
       audio.event('armor');
-      const fragment = box(scene, 1.8, 1.2, 0.25, c.x, c.y + 1.5, c.z, mat(SIGNAL.magnet));
-      sparks.push({
-        mesh: fragment,
-        velocity: origin.clone().sub(fragment.position).normalize().multiplyScalar(18),
-        age: 0,
-      });
+      effects.pullShield(c, origin);
     }
   } else if (c.kind === 'mine') {
     c.pull = (c.pull || 0) + dt;
@@ -1248,32 +1178,6 @@ function advance(dt) {
   updateMusic(moving);
 }
 
-function updateSparks(dt) {
-  for (let i = sparks.length - 1; i >= 0; i--) {
-    const s = sparks[i];
-    s.age += dt;
-    s.velocity.y -= dt * 14;
-    s.mesh.position.addScaledVector(s.velocity, dt);
-    if (s.age > 0.4) {
-      scene.remove(s.mesh);
-      s.mesh.material.dispose();
-      sparks.splice(i, 1);
-    }
-  }
-}
-function updateWaves(dt) {
-  for (let i = waves.length - 1; i >= 0; i--) {
-    const w = waves[i];
-    w.age += dt;
-    w.mesh.scale.setScalar(w.radius * Math.min(1, w.age / (w.life * 0.4)));
-    w.mesh.material.opacity = w.opacity * Math.max(0, 1 - w.age / w.life);
-    if (w.age >= w.life) {
-      scene.remove(w.mesh);
-      w.mesh.material.dispose();
-      waves.splice(i, 1);
-    }
-  }
-}
 function updateMusic(moving = false) {
   const region = world.presentation.region,
     area = {
@@ -1402,54 +1306,7 @@ function hud() {
     mapAt = time;
   }
 }
-function keyGlyph(el, code) {
-  el.classList.toggle('mouse-key', code.startsWith('Mouse'));
-  el.dataset.button = code;
-  el.textContent = code.startsWith('Mouse') ? '' : code.replace('Key', '').replace('Left', '');
-}
-function renderBindings() {
-  $('bindings').replaceChildren();
-  const labels = {
-    up: '前进',
-    left: '向左',
-    down: '后退',
-    right: '向右',
-    fire: '射击',
-    magnet: '磁力牵引',
-    weapon: '切换武器',
-    camera: '切换视角',
-    flotation: '浮航',
-    overdrive: '加速',
-    map: '地图',
-    repair: '使用 / 修复',
-    skip: '跳过',
-    pause: '暂停',
-  };
-  for (const action of Object.keys(FOLDED_BINDINGS)) {
-    const label = document.createElement('span'),
-      b = document.createElement('button');
-    label.textContent = labels[action];
-    b.setAttribute('aria-label', `${labels[action]}：${bindings[action]}`);
-    b.classList.toggle('binding-listening', rebind === action);
-    b.textContent =
-      rebind === action
-        ? '按下新按键…'
-        : bindings[action]
-            .replace(/^Key/, '')
-            .replace('ShiftLeft', '左 Shift')
-            .replace('ShiftRight', '右 Shift')
-            .replace('Mouse0', '鼠标左键')
-            .replace('Mouse1', '鼠标中键')
-            .replace('Mouse2', '鼠标右键')
-            .replace('Space', '空格')
-            .replace('Escape', 'Esc');
-    b.onclick = () => {
-      rebind = action;
-      renderBindings();
-      $('bindings').querySelector('.binding-listening').focus();
-    };
-    $('bindings').append(label, b);
-  }
+function updateBindingGlyphs() {
   const glyph = $('glyphs');
   keyGlyph(glyph.children[0], bindings.up);
   [bindings.left, bindings.down, bindings.right].forEach((b, i) =>
@@ -1461,49 +1318,21 @@ function renderBindings() {
   keyGlyph(cameraToggle.querySelector('kbd'), bindings.camera);
   interfaceView.bindings(bindings, keyGlyph);
 }
-function savePrefs() {
-  saves.saveSettings({
-    ...prefs,
-    bindings,
-    volume: audio.volume,
-    music: audio.music,
-    sfx: audio.sfx,
-    quality: $('quality').value,
-    cameraView: thirdPerson ? 'third' : 'overhead',
-    cameraSettings,
-  });
-}
 function setPause(value) {
   if (ending.visible) return;
   $('resume').textContent = p.endingTime ? '继续播放' : '继续游戏';
   paused = value;
-  if (!value) closeCameraTuning();
   keys.clear();
   controls.stopOrbit();
   if (value && document.pointerLockElement) document.exitPointerLock();
-  $('settings').hidden = !value;
-  rebind = null;
-  resetArmed = false;
-  $('reset-confirm').hidden = true;
-  renderBindings();
+  settings.setPaused(value);
   if (value) interfaceView.open();
   else $('game').focus();
   audio.update(time, p, false, 'r2-transit', true);
 }
 function input(code, repeat = false) {
   audio.start();
-  if (rebind) {
-    const actionIndex = Object.keys(FOLDED_BINDINGS).indexOf(rebind),
-      old = bindings[rebind];
-    for (const action of Object.keys(bindings))
-      if (action !== rebind && bindings[action] === code) bindings[action] = old;
-    bindings[rebind] = code;
-    rebind = null;
-    renderBindings();
-    $('bindings').querySelectorAll('button')[actionIndex].focus();
-    savePrefs();
-    return;
-  }
+  if (settings.acceptBinding(code)) return;
   if (p.endingTime && !paused && !repeat && (code === bindings.pause || code === bindings.skip)) {
     if (p.endingTime >= 0.75) completeEnding();
     return;
@@ -1528,7 +1357,7 @@ function input(code, repeat = false) {
   if (mapOpen) return;
   if (code === bindings.camera && !repeat) {
     setCameraView(thirdPerson ? 'overhead' : 'third');
-    savePrefs();
+    preferences.save();
     if (thirdPerson) captureMouse();
     return;
   }
@@ -1572,7 +1401,7 @@ const controls = installFoldedInput({
       return ending.visible;
     },
     get rebind() {
-      return rebind;
+      return settings.rebind;
     },
     get bindings() {
       return bindings;
@@ -1584,8 +1413,7 @@ const controls = installFoldedInput({
     updateCamera: (...args) => updateCamera(...args),
     updateAim: () => updateAim(),
     captureUnavailable() {
-      cameraNote.textContent =
-        '第三人称：按住鼠标中键拖动视角，WASD 移动；左键射击，右键磁力牵引。';
+      settings.captureUnavailable();
     },
   },
 });
@@ -1598,156 +1426,49 @@ $('resume').onclick = () => {
   if (!p.endingTime) captureMouse();
 };
 document.querySelector('.close-map').onclick = () => setMap(false);
-$('new-game').onclick = () => {
-  if (!resetArmed) {
-    resetArmed = true;
-    $('reset-confirm').hidden = false;
-    return;
-  }
-  saves.reset();
-  location.reload();
-};
-$('reset-bindings').onclick = () => {
-  bindings = { ...FOLDED_BINDINGS };
-  renderBindings();
-  savePrefs();
-};
-$('fullscreen').onclick = () =>
-  document.fullscreenElement
-    ? document.exitFullscreen()
-    : document.documentElement.requestFullscreen();
-$('volume').value = audio.volume;
-$('music').checked = audio.music;
-$('sfx').checked = audio.sfx;
-for (const id of ['volume', 'music', 'sfx'])
-  $(id).onchange = () => {
-    audio.volume = Number($('volume').value);
-    audio.music = $('music').checked;
-    audio.sfx = $('sfx').checked;
-    audio.master?.gain.setTargetAtTime(audio.volume * 0.4, audio.ctx.currentTime, 0.15);
-    if (audio.score?.state) audio.score.update({ ...audio.score.state, enabled: audio.music });
-    savePrefs();
-  };
-function quality() {
-  const low = $('quality').value === 'low';
-  renderer.setPixelRatio(low ? 1 : Math.min(devicePixelRatio, 1.75));
-  renderer.shadowMap.enabled = !low;
-}
-$('quality').value = prefs.quality || 'high';
-$('quality').onchange = () => {
-  quality();
-  savePrefs();
-};
-quality();
-const viewLabel = document.createElement('label');
-viewLabel.textContent = '视角';
-const viewSelect = document.createElement('select');
-viewSelect.id = 'camera-view';
-viewSelect.setAttribute('aria-label', '视角');
-viewSelect.innerHTML =
-  '<option value="third">第三人称</option><option value="overhead">俯视</option>';
-viewLabel.append(viewSelect);
-$('quality').parentElement.after(viewLabel);
-const cameraNote = document.createElement('p');
-cameraNote.className = 'binding-note';
-cameraNote.textContent = '第三人称：点击画面后移动鼠标转动视角，WASD 移动；Esc 释放鼠标。';
-viewLabel.after(cameraNote);
-const cameraTuning = document.createElement('section');
-cameraTuning.id = 'camera-tuning';
-cameraTuning.hidden = true;
-cameraTuning.setAttribute('aria-label', '镜头调整');
-$('settings').append(cameraTuning);
-const tuneButton = document.createElement('button');
-tuneButton.textContent = '调整镜头';
-cameraNote.after(tuneButton);
-function closeCameraTuning() {
-  const wasOpen = !cameraTuning.hidden;
-  cameraTuning.hidden = true;
-  $('settings').classList.remove('camera-tuning');
-  if (wasOpen) tuneButton.focus();
-}
-function previewCamera() {
-  follow.boom = cameraSettings.third.distance;
-  follow.height = cameraSettings.third.height;
-  follow.shoulder = cameraSettings.third.shoulder;
-  follow.sensitivity = cameraSettings.third.sensitivity;
-  updateOverheadAngle();
-  resize();
-  updateCamera(1);
-  world.update(0, time, p, camera);
-  updateAim();
-  renderer.render(scene, camera);
-  savePrefs();
-}
-function openCameraTuning() {
-  const view = thirdPerson ? 'third' : 'overhead';
-  cameraTuning.replaceChildren();
-  cameraTuning.hidden = false;
-  $('settings').classList.add('camera-tuning');
-  const heading = document.createElement('h2');
-  heading.textContent = thirdPerson ? '第三人称镜头' : '俯视镜头';
-  cameraTuning.append(heading);
-  const note = document.createElement('p');
-  note.className = 'binding-note';
-  note.textContent = thirdPerson
-    ? '拖动滑块实时预览。游戏已暂停；遮挡物会半透明化，跟随距离保持不变。俯仰角作为下次进入游戏的起始角度，游玩时仍可用鼠标转动。'
-    : '拖动滑块实时预览。视野范围越大，能看到的区域越广。';
-  cameraTuning.append(note);
-  for (const [key, title, min, max, step, , suffix] of cameraFields[view]) {
-    const label = document.createElement('label'),
-      name = document.createElement('span'),
-      output = document.createElement('output'),
-      slider = document.createElement('input');
-    name.textContent = title;
-    slider.type = 'range';
-    slider.id = `camera-${view}-${key}`;
-    slider.min = min;
-    slider.max = max;
-    slider.step = step;
-    slider.setAttribute('aria-label', title);
-    const value =
-      thirdPerson && key === 'pitch' ? (follow.pitch * 180) / Math.PI : cameraSettings[view][key];
-    slider.value = clamp(value, min, max);
-    output.textContent = `${Number(value.toFixed(1))}${suffix}`;
-    output.htmlFor = slider.id;
-    label.append(name, output, slider);
-    cameraTuning.append(label);
-    slider.oninput = () => {
-      const value = Number(slider.value);
-      cameraSettings[view][key] = value;
-      output.textContent = `${value}${suffix}`;
-      if (view === 'third' && key === 'pitch') follow.pitch = (value * Math.PI) / 180;
-      previewCamera();
-    };
-  }
-  const reset = document.createElement('button');
-  reset.textContent = '恢复此视角默认';
-  reset.onclick = () => {
-    for (const [key, , , , , value] of cameraFields[view]) cameraSettings[view][key] = value;
-    if (thirdPerson) follow.pitch = (cameraSettings.third.pitch * Math.PI) / 180;
-    previewCamera();
-    openCameraTuning();
-  };
-  const back = document.createElement('button');
-  back.textContent = '返回设置';
-  back.onclick = closeCameraTuning;
-  const resume = document.createElement('button');
-  resume.textContent = '继续游戏';
-  resume.onclick = () => {
-    setPause(false);
-    captureMouse();
-  };
-  cameraTuning.append(reset, back, resume);
-  cameraTuning.querySelector('input').focus();
-}
-tuneButton.onclick = openCameraTuning;
+const settings = mountFoldedSettings({
+  preferences,
+  audio,
+  renderer,
+  camera: {
+    get pitch() {
+      return follow.pitch;
+    },
+    set pitch(value) {
+      follow.pitch = value;
+    },
+    select: setCameraView,
+    preview() {
+      follow.boom = cameraSettings.third.distance;
+      follow.height = cameraSettings.third.height;
+      follow.shoulder = cameraSettings.third.shoulder;
+      follow.sensitivity = cameraSettings.third.sensitivity;
+      updateOverheadAngle();
+      resize();
+      updateCamera(1);
+      world.update(0, time, p, camera);
+      updateAim();
+      renderer.render(scene, camera);
+    },
+  },
+  actions: {
+    bindingsChanged: updateBindingGlyphs,
+    resume() {
+      setPause(false);
+      if (!p.endingTime) captureMouse();
+    },
+    restart() {
+      saves.reset();
+      location.reload();
+    },
+  },
+});
 function setCameraView(value) {
   thirdPerson = value !== 'overhead';
   camera = thirdPerson ? follow.camera : overheadCamera;
   world.setThirdPerson(thirdPerson);
-  viewSelect.value = thirdPerson ? 'third' : 'overhead';
+  settings.setView(thirdPerson ? 'third' : 'overhead');
   document.body.classList.toggle('third-person', thirdPerson);
-  cameraNote.hidden = !thirdPerson;
   if (!thirdPerson && document.pointerLockElement) document.exitPointerLock();
   focus.set(p.x, p.y, p.z);
   pointer.set(0, 0);
@@ -1757,10 +1478,6 @@ function setCameraView(value) {
   updateAim();
   renderer.render(scene, camera);
 }
-viewSelect.onchange = () => {
-  setCameraView(viewSelect.value);
-  savePrefs();
-};
 function resize() {
   const size = cameraSettings.overhead.scale,
     w = (size * innerWidth) / innerHeight;
@@ -1780,7 +1497,6 @@ updatePlayerPose(1, true);
 setCameraView(thirdPerson ? 'third' : 'overhead');
 addEventListener('resize', resize);
 resize();
-renderBindings();
 updateCamera(1);
 world.update(1, 0, p, camera);
 advance(1 / 60);
@@ -1824,7 +1540,7 @@ if (import.meta.env.DEV && params.has('test')) {
       aim,
       shots,
       mines,
-      waves,
+      waves: effects.waves,
       audio,
       laserGuide,
       laserEndpoint,
