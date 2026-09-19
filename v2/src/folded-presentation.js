@@ -1,3 +1,4 @@
+import {makeCityBackdrop} from './folded-backdrop.js';
 import {cityMaterials} from './folded-materials.js';
 import {makeFinalMachinery} from './folded-final-machinery.js';
 import {makeDistrictMachinery,makeWorkingDistricts} from './folded-district-machinery.js';
@@ -5,7 +6,7 @@ import {expansionCurrents,expansionDecks,expansionHeat} from './folded-expansion
 import * as T from 'three';
 import {box,cylinder,ring,mat,batchStatic} from './world.js';
 import {REGION_STYLE,regionAt} from './folded-architecture.js';
-import {foldedArchitecture,architectureGrid} from './folded-layout.js';
+import {foldedArchitecture,architectureGrid,foldedDecks,foldedLiftDefs} from './folded-layout.js';
 import {cameraApertureOpacity,apertureOpacity,APERTURE_AIM_THRESHOLD,STRUCTURE_APERTURE_RADIUS as ARCHITECTURE_APERTURE} from './folded-visibility.js';
 
 export function makeCityPresentation(scene,aperture){
@@ -13,9 +14,7 @@ export function makeCityPresentation(scene,aperture){
   architecture.name='city-architecture';depth.name='city-architecture-depth';scenery.name='city-history';scene.add(architecture,depth,scenery);
   const materials=new Map(),colliders=new Map(),point=new T.Vector3(),ray=new T.Ray();let third=false;
   const surfaces=cityMaterials();
-  const sky=document.createElement('canvas');sky.width=512;sky.height=256;const skyPaint=sky.getContext('2d'),skyGradient=skyPaint.createLinearGradient(0,0,0,256);
-  for(const [stop,color]of [[0,'#263e4a'],[.4,'#718d91'],[.52,'#bac5b5'],[.66,'#5c7876'],[1,'#243e43']])skyGradient.addColorStop(stop,color);
-  skyPaint.fillStyle=skyGradient;skyPaint.fillRect(0,0,512,256);const skyTexture=new T.CanvasTexture(sky);skyTexture.mapping=T.EquirectangularReflectionMapping;skyTexture.colorSpace=T.SRGBColorSpace;scene.background=skyTexture;
+  const backdrop=makeCityBackdrop(scene,aperture,foldedDecks,foldedLiftDefs);
   // Keep the independently batched color pass in front of its depth prepass.
   const depthMaterial=new T.MeshBasicMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});aperture.apply(depthMaterial,{depthOnly:true,radius:ARCHITECTURE_APERTURE});
   function material(region,part){
@@ -65,11 +64,6 @@ export function makeCityPresentation(scene,aperture){
   const hot=mat(0xffaf62,true);box(scenery,8,3.4,.12,-4,-5,34.05,hot,0);
   for(const x of [-8,-6,-4,-2,0])box(scenery,.22,3.8,.25,x,-5,34.2,iron,0);
   for(const [x,y,z]of [[-4,-3,38],[0,-49,-8]]){const glow=new T.PointLight(0xffa55b,32,27,2);glow.position.set(x,y,z);scene.add(glow);}
-  // The enlarged districts remain inside a single excavation, with no old cliff
-  // walls crossing their approaches.
-  for(let x=-216;x<420;x+=32)box(scenery,32,90,12,x+16,-28,-226,rock,0);
-  for(let z=-220;z<224;z+=32)box(scenery,12,90,32,-218,-28,z+16,rock,0);
-  box(scenery,660,3,460,100,-75,0,rock,0);
   // District machines occupy authored work positions, rather than the same
   // decorative strip behind every room. Their bounds are in the level layout.
   makeDistrictMachinery(scenery);
@@ -177,7 +171,7 @@ export function makeCityPresentation(scene,aperture){
   const bounds=()=>({solids:colliders.size,rooms:foldedArchitecture.rooms.length});
   let frameRegion='foundry';
   function update(time,p,state){
-    districts.update(time,state);
+    districts.update(time,state);backdrop.update(time,p,state);
     frameRegion=expansionDecks.find(d=>d.region&&Math.abs(d.y-p.y)<.5&&p.x>=d.x&&p.x<=d.x+d.w&&p.z>=d.z&&p.z<=d.z+d.d)?.region||regionAt(p,foldedArchitecture.rooms);
     for(const {m,c,n}of currents){const along=(n*8+time*4)%Math.max(c.w,c.d);m.position.x=c.current.x?c.x+(c.current.x>0?along:c.w-along):c.x+c.w/2+Math.sin(n)*4;m.position.z=c.current.z?c.z+(c.current.z>0?along:c.d-along):c.z+c.d/2;m.rotation.y=c.current.x?Math.PI/2:0;}
     const cycle=p.endingTime?4+Math.max(0,p.endingTime-9)/3:time%18,travel=cycle<6?cycle/6:cycle<11?1:(18-cycle)/7;
@@ -206,8 +200,8 @@ export function makeCityPresentation(scene,aperture){
     }return hit;
   }
   const viewCamera=new T.Vector3(),viewPlayer=new T.Vector3(),viewDirection=new T.Vector3();
-  return {update,cast,bounds,carrier,pumpFans,finale,get region(){return frameRegion;},
-    setCamera(c){viewCamera.copy(c);},setView(value){third=value;depth.visible=true;for(const m of visualMaterials){m.transparent=true;m.depthWrite=sceneryMaterials.has(m);m.needsUpdate=true;}},
+  return {update,cast,bounds,carrier,pumpFans,finale,backdrop,get region(){return frameRegion;},
+    setCamera(c){viewCamera.copy(c);},setView(value){third=value;backdrop.setView(value);depth.visible=true;for(const m of visualMaterials){m.transparent=true;m.depthWrite=sceneryMaterials.has(m);m.needsUpdate=true;}},
     sight(p,d){viewPlayer.set(p.x,p.y,p.z);viewDirection.copy(d);}
   };
 }

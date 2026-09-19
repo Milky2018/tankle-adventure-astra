@@ -241,3 +241,14 @@ test('arena release cancels owned hazards and reset preserves persistent deaths'
   assert.equal(reserve.hp, 0);
   assert.equal(e.phase, 'idle');
 });
+
+test('a sheltered sniper repositions and attacks without leaving its authored post', () => {
+  const e = enemy('sniper', { z: 26, patrol: { x: -2, z: 24, w: 4, d: 4 } });
+  const f = fixture([e]);
+  for (let i = 0; i < 240; i++) {
+    f.step(0.05);
+    assert.ok(e.x >= -2 && e.x <= 2 && e.z >= 24 && e.z <= 28);
+  }
+  assert.ok(e.z < 25.9);
+  assert.ok(f.fired.length > 0);
+});

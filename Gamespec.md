@@ -409,23 +409,25 @@ A useful shortcut removes at least half of the initial detour between the same l
 
 Later travel should offer changed access, a new view or an efficient return. It must not repeatedly demand the same puzzle, full encounter gauntlet or series of cooling stops. The express junction provides several exits, but direct garden/optical/circulation connections prevent it becoming another mandatory hub.
 
-Exploration rewards include useful routes, restored individual machinery, recognizable places and predecessor scenes. Empty locked pockets and routine currency filler do not satisfy that role. No permanent HP or Heat-capacity collectible is currently part of the required design.
+Exploration rewards include useful routes, restored individual machinery, recognizable places and predecessor scenes. Empty locked pockets and routine currency filler do not satisfy that role. Optional hull and equipment upgrades are detailed below; none is required for the ending, and Heat capacity stays fixed.
 
 ### Optional equipment discoveries
 
-Nine one-time discoveries are spread across the existing journey. They reward inspecting a working space's unused side, taking a gallery, revisiting a bank or noticing a maintenance recess. They are never needed by the critical route or ending. They do not appear on the map merely because a whole room has been discovered. A small warm glint and the equipment's silhouette reward a local view; there is no global collectible arrow.
+Nine one-time discoveries are spread across the journey. Small inspection spaces may extend a local route where the discovery needs room, without stretching the entire map. They reward inspecting a working space's unused side, taking a gallery, revisiting a bank or noticing a maintenance recess. They are never needed by the critical route or ending. They do not appear on the map merely because a whole room has been discovered. A small warm glint and the equipment's silhouette reward a local view; there is no global collectible arrow.
 
 | Reward | Location and discovery | Effect |
 | --- | --- | --- |
 | Armour pack 1 | Behind the Foundry sorting drive, beyond its working face | Add one 5-HP hull segment |
-| Cannon reinforcement | Rail-shop stores behind the racks: defeat a shield carrier and flanker, then a finite lobber/scout reserve after a four-second deployment pause. Their power cable releases the reward cabinet; retreat remains possible | Cannon damage 1 → 1.5 |
-| Armour pack 2 | Drydock maintenance recess, behind a filter housing | Add one 5-HP hull segment |
+| Cannon reinforcement | Rail-shop stores: a shield carrier pressures the aisle while a sniper repositions beneath a protective inspection canopy. A finite lobber, charger and mine-layer reserve follows after four seconds. The canopy favours direct fire; racks divide sight lines, artillery dislodges cover and mines interrupt repeated loops. Entry or provocation starts the optional fight; its cable releases the reward cabinet, and retreat remains possible | Cannon damage 1 → 1.5 |
+| Armour pack 2 | A dry inspection island visible from the reservoir bank, surrounded by water. Flotation allows a later visit and a clear return | Add one 5-HP hull segment |
 | Cooling filter | Rear of the reservoir pump island, reached by the inspection branch or water | Cooling 50 → 62.5 Heat/s |
-| Armour pack 3 | Receiving test bed's far side, off the Testworks through route | Add one 5-HP hull segment |
-| Mortar reinforcement | An inspection cabinet on the observation gallery edge, powered by landing a lob on an upward-facing target tray. Its cable leads to the cabinet; the through walk stays open | Mortar damage 3 → 4.5 |
-| Armour pack 4 | Outer collimator inspection corner, around its low screen | Add one 5-HP hull segment |
-| Laser reinforcement | Behind the separator service pumps: a broad fixed mirror sends light sideways into the front face of a recessed collector, powering the cabinet. Its opaque back cannot receive light. The reflected aiming guide previews the connection | Laser damage 4.5 → 6.75 HP/s |
+| Armour pack 3 | A narrow impact-test store off the Testworks return. Its visible shutter and long run-up invite a Phoenix-speed revisit; breaking it leaves a permanent opening | Add one 5-HP hull segment |
+| Mortar reinforcement | A small enclosed inspection annex beside the observation gallery. Lob over its entrance shutter into the visible counterweight tray; the connected shutter retracts so the Tank can drive inside and retrieve the reinforcement. The through gallery remains open | Mortar damage 3 → 4.5 |
+| Armour pack 4 | A blue magnetic drawer behind the outer collimator screen. Its exposed handle and short cable invite a Magnet revisit; opening it makes the armour reachable | Add one 5-HP hull segment |
+| Laser reinforcement | Behind the separator service pumps: a low light window exposes a broad fixed mirror inside an L-shaped optical housing. An internal partition blocks direct lines to the recessed collector; reflected light travels through the side slot and powers the cabinet. The casing cannot be entered by the Tank, and the mirror tolerates off-centre aim. The reflected aiming guide previews the connection | Laser damage 4.5 → 6.75 HP/s |
 | Armour pack 5 | Predecessor cooling bay, behind the service bench | Add one 5-HP hull segment |
+
+Keep a mixture of easy local finds, visible-but-unreachable rewards, ability revisits and a finite combat reward. Hidden reinforcement hardware should advertise an unusual machine or accessible side route, without a map marker revealing the item or a written ability answer. Avoid hiding every reward behind a prop.
 
 Armour raises the maximum from ten to fifteen segments and fills only the added segment at pickup. Repairs and reconstruction fill the earned maximum. Upgrades persist through rest, death and reload and cannot be collected repeatedly. Cooling retains the 0.75-second delay, Overheat thresholds and all Heat costs. Weapon upgrades preserve firing rate, range and blast radius.
 
@@ -694,11 +696,13 @@ Projectile warnings last at least 0.85 seconds, lock before release and show bot
 | Recycling Foundry / Overseer | Four HP per side battery and six in the core, fourteen total. Alternating batteries release staggered fans and aimed ground barrages. One finite pair of light reserves enters below 60% health | Use cover and side routes, then exploit open drive windows. Destroying a battery cancels its unreleased volley and stops its associated machinery, creating a flank. Ordinary Overdrive is not a Boss ram solution |
 | Optical Guardian | Forty-eight HP; armour protects front, sides and roof. Tracks between attacks, then holds its facing through warning, attack and recovery. Five-lane fast fans alternate with paired seeking shells whose turning is limited and ends before impact | Dodge the committed attack and use the stable recovery to find a reflected rear shot through broad mirrors and a clearly exposed rear aperture. Red contact is an alternative. No per-window quota. Victory restores the optional outward array |
 | Sorter | An optional roof machine that moves rail cover and alternates a committed arm sweep with ground barrages. Hiding behind cargo invites a barrage | Read the pale-to-red-to-dark sweep warning and use its cover interaction to interrupt the arm and expose the drive. Magnet adds control of rail cover, but ordinary movement and Cannon remain viable. No ability reward or express-route requirement |
-| Final Keeper | Two nine-HP feed assemblies and a thirty-HP core, forty-eight total. Alternates batteries, seeking pairs, barrages and an exposed-core sweep. Below 40% health, tighter fans overlap a delayed ground strike | Destroy feeds to stop their local belts and open flanks. Both destroyed feeds leave the core continuously vulnerable, including during its attacks. Reserve pairs become eligible at 65% and 32%; no more than two reserves may be alive or deploying |
+| Final Keeper | Two nine-HP feed assemblies and a sixty-six-HP core, eighty-four total. Alternates batteries, seeking pairs, barrages and an exposed-core sweep. Below 40% health, tighter fans overlap a delayed ground strike | Destroy feeds to stop their local belts and open flanks. Both destroyed feeds leave the core continuously vulnerable, including during its attacks. Reserve pairs become eligible at 65% and 32%; no more than two reserves may be alive or deploying |
+
+A successful Keeper fight targets roughly 20–40 seconds with ordinary or fully reinforced weapons. Additional endurance belongs to the core; feed assemblies remain quick to dismantle. This is a pacing target, not a forced timer or per-phase damage quota.
 
 The Keeper counters repeated fire from behind cover with a warned indirect attack acquired from sight or incoming fire, never from unknown movement through walls. Mortar remains useful, but staying behind one crate and holding fire must not solve the whole fight. Reflected fire, relocating under pressure and red ramming offer distinct approaches.
 
-A full-speed red impact's damage can pass from a destroyed feed assembly into the core; it is not discarded at a component boundary. Two such clean impacts can defeat the Keeper. Cold Phoenix contact remains ineffective against Boss armour. The strength of an earned ability must not be erased by a hidden phase cap.
+A full-speed red impact's damage can pass from a destroyed feed assembly into the core; it is not discarded at a component boundary. Four such clean impacts can defeat the Keeper. Cold Phoenix contact remains ineffective against Boss armour. The strength of an earned ability must not be erased by a hidden phase cap.
 
 ## 9. Regional journeys
 
@@ -861,11 +865,11 @@ Regional materials, enclosure, landmarks and machinery are specified with each [
 
 Walls use restrained panel seams, rivets, worn paint and fine mineral grain; detail must stay subordinate to interactive colour. Water has broad, soft moving ripples and restrained highlights rather than repeated bright strokes. These surfaces retain the regional palette and remain readable under both cameras.
 
-### Background direction — proposal for discussion
+### Mechanical basin, sky and horizon
 
-The proposed background retains the horseshoe excavation rather than turning supported routes into floating islands. Above it, overcast cloud layers leave a narrow warm opening. Broken viaducts, crane silhouettes and furnace stacks establish distant landmarks; below the routes, sediment, shallow dark water, foundations and descending pipes explain what holds the city up. Distant scenery suggests a larger lost civilization without promising playable destinations.
+The city occupies a horseshoe excavation, with supported routes rising from the mechanical basin. Above it, overcast cloud layers leave a narrow warm opening. Broken viaducts, crane silhouettes and furnace stacks establish distant landmarks; below the routes, sediment, shallow dark water, foundations and descending pipes explain what holds the city up. Distant scenery suggests a larger lost civilization without promising playable destinations.
 
-The upper city sees cool daylight and remote industrial silhouettes; the gardens add moisture and reflected light; the deeper works progressively lose sky and take their light from machinery and the furnace. The ending may warm the same established landmarks. Foreground threats remain the strongest moving contrast. This direction awaits discussion before replacing the current background.
+The upper city sees cool daylight and remote industrial silhouettes; the gardens add moisture and reflected light; the deeper works progressively lose sky and take their light from machinery and the furnace. The ending gently warms the same established foundations and landmarks. Foreground threats remain the strongest moving contrast. Background haze stays subdued and continuous through both camera views; structural supports must leave lower routes, sight lines and lift shafts readable.
 
 ### Mechanical sound and ambience
 

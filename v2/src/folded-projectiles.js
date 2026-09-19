@@ -97,6 +97,14 @@ export function createFoldedCombat({
       audio.event('armor', { position: hit.point });
       return;
     }
+    // Start visibility rays outside the impacted face. Offsetting into a wall
+    // skips its back face and lets explosions pass through single-sided meshes.
+    const blastOrigin = hit.point.clone();
+    if (shot.mortar && hit.face && hit.object)
+      blastOrigin.addScaledVector(
+        hit.face.normal.clone().transformDirection(hit.object.matrixWorld),
+        0.05,
+      );
     burst(hit.point, shot.hostile ? C.orange : C.yellow);
     if (shot.hostile) {
       if (shot.mineOwner) {
@@ -107,32 +115,26 @@ export function createFoldedCombat({
       if (shot.mortar) {
         ripple(hit.point, BARRAGE.radius, C.orange, 0.6, 0.8);
         audio.event('explode', { position: hit.point });
-        const delta = new T.Vector3(p.x, p.y + 1, p.z).sub(hit.point),
+        const delta = new T.Vector3(p.x, p.y + 1, p.z).sub(blastOrigin),
           distance = delta.length();
         if (
           distance < BARRAGE.radius &&
-          !world.cast(
-            hit.point.clone().add(new T.Vector3(0, 0.15, 0)),
-            delta.normalize(),
-            Math.max(0, distance - 0.8),
-            { targets: false },
-          )
+          !world.cast(blastOrigin, delta.normalize(), Math.max(0, distance - 0.8), {
+            targets: false,
+          })
         )
           hurt(shot.blastDamage ?? HOSTILE_DAMAGE.barrage);
         for (const e of world.enemies)
           if (e.hp > 0 && e.id !== shot.owner) {
             for (const target of [e, ...e.parts.filter((part) => part.hp > 0)]) {
               const center = new T.Vector3(target.x, target.y + (target.model ? 1.5 : 0), target.z),
-                path = center.sub(hit.point),
+                path = center.sub(blastOrigin),
                 length = path.length();
               if (
                 length < BARRAGE.radius + (target === e ? e.radius : 0) &&
-                !world.cast(
-                  hit.point.clone().addScaledVector(path.clone().normalize(), 0.05),
-                  path.normalize(),
-                  Math.max(0, length - 0.2),
-                  { targets: false },
-                )
+                !world.cast(blastOrigin, path.normalize(), Math.max(0, length - 0.2), {
+                  targets: false,
+                })
               )
                 hitEnemy(
                   e,
@@ -165,15 +167,12 @@ export function createFoldedCombat({
           new T.Vector3(e.x, e.y + 1.5, e.z).distanceTo(hit.point) < MORTAR.radius + e.radius
         ) {
           const center = new T.Vector3(e.x, e.y + 1.5, e.z),
-            path = center.clone().sub(hit.point),
+            path = center.clone().sub(blastOrigin),
             length = path.length();
           if (
-            !world.cast(
-              hit.point.clone().addScaledVector(path.clone().normalize(), 0.05),
-              path.normalize(),
-              Math.max(0, length - 0.2),
-              { targets: false },
-            )
+            !world.cast(blastOrigin, path.normalize(), Math.max(0, length - 0.2), {
+              targets: false,
+            })
           )
             hitEnemy(e, shot.damage ?? MORTAR.damage, shot.origin, 'mortar');
         }
@@ -181,11 +180,11 @@ export function createFoldedCombat({
         if (e.hp > 0)
           for (const part of e.parts)
             if (part.hp > 0) {
-              const to = new T.Vector3(part.x, part.y, part.z).sub(hit.point),
+              const to = new T.Vector3(part.x, part.y, part.z).sub(blastOrigin),
                 distance = to.length();
               if (
                 distance < MORTAR.radius &&
-                !world.cast(hit.point, to.normalize(), Math.max(0, distance - 0.2), {
+                !world.cast(blastOrigin, to.normalize(), Math.max(0, distance - 0.2), {
                   targets: false,
                 })
               )
@@ -193,10 +192,10 @@ export function createFoldedCombat({
             }
       for (const c of world.controls)
         if (new T.Vector3(c.x, c.y, c.z).distanceTo(hit.point) < 2) {
-          const to = new T.Vector3(c.x, c.y, c.z).sub(hit.point),
+          const to = new T.Vector3(c.x, c.y, c.z).sub(blastOrigin),
             length = to.length();
           if (
-            !world.cast(hit.point, to.normalize(), Math.max(0, length - 0.2), { targets: false })
+            !world.cast(blastOrigin, to.normalize(), Math.max(0, length - 0.2), { targets: false })
           ) {
             c.flash = 0.2;
             setState(c.id, 'mortar');

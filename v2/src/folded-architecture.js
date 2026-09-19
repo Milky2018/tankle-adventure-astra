@@ -1,3 +1,4 @@
+import {explorationRooms} from './folded-exploration-layout.js';
 import {expansionRooms} from './folded-expansion-layout.js';
 // Room envelopes follow existing supporting floors. Open connections are carved
 // from actual neighboring floors and lift shafts, not inventory checks.
@@ -73,7 +74,7 @@ export function buildArchitecture(decks,lifts){
     if(lifts.some(l=>overlaps(s,l,.15)&&l.stops[0]<y+h&&l.stops.at(-1)+4>y))return;
     const key=[x,y,z,w,h,d].map(n=>n.toFixed(2)).join('/');if(seen.has(key))return;seen.add(key);solids.push(s);return s;
   }
-  for(const [id,region,h,roof]of [...ROOM_PLAN,...expansionRooms.map(r=>[r.id,r.region,12,!OPEN_ROOMS.has(r.id)])]){
+  for(const [id,region,h,roof]of [...ROOM_PLAN,...[...expansionRooms,...explorationRooms].map(r=>[r.id,r.region,12,!OPEN_ROOMS.has(r.id)])]){
     const f=decks.find(d=>d.id===id),room={...f,region,h,roof};rooms.push(room);
     // Roof construction precedes the authored-wall branches: all hall types
     // receive ceilings, while floor and lift intersections carve real openings.

@@ -10,6 +10,7 @@ export default [
       'src/folded-ballistics.js',
       'src/folded-exploration-layout.js',
       'src/folded-materials.js',
+      'src/folded-backdrop.js',
       'src/audio.js',
       'src/sound-effects.js',
       'src/folded-death.js',

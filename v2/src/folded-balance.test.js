@@ -21,7 +21,7 @@ const baseline = JSON.parse(
   readFileSync(new URL('../test-fixtures/balance-0.1.0.json', import.meta.url), 'utf8'),
 );
 
-test('refactoring preserves player, ability, enemy and boss balance from 0.1.0', () => {
+test('balance preserves the baseline apart from explicitly authored travel and Keeper changes', () => {
   assert.deepEqual(
     {
       MAX_HP,
@@ -40,7 +40,7 @@ test('refactoring preserves player, ability, enemy and boss balance from 0.1.0',
     Object.fromEntries(
       foldedEnemies.filter((e) => e.id in baseline.health).map((e) => [e.id, e.hp]),
     ),
-    baseline.health,
+    { ...baseline.health, keeper: 84 },
   );
   const bosses = foldedEnemies
     .filter((e) => e.persistent)
@@ -64,4 +64,11 @@ test('extracted weapon values retain the 0.1.0 direct-fire and laser contracts',
   ]) {
     assert.equal(hostileShotDamage(enemy), damage);
   }
+});
+
+test('Keeper endurance retains destructible feeds and an uncapped core', () => {
+  const keeper = foldedEnemies.find((e) => e.id === 'keeper');
+  assert.deepEqual(keeper.parts, [9, 9]);
+  assert.equal(keeper.core, 66);
+  assert.equal(keeper.hp, keeper.core + keeper.parts.reduce((a, b) => a + b, 0));
 });

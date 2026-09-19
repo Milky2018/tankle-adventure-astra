@@ -71,6 +71,15 @@ export function createFoldedEnemies({
         state,
         world.lifts,
       );
+      // A sentry can reposition within its shelter without abandoning that firing post.
+      if (
+        e.patrol &&
+        (body.x < e.patrol.x ||
+          body.x > e.patrol.x + e.patrol.w ||
+          body.z < e.patrol.z ||
+          body.z > e.patrol.z + e.patrol.d)
+      )
+        continue;
       if (refugeAt(body, world.hives, state, REFUGE_CLEARANCE + e.radius)) continue;
       if (Math.hypot(body.x - e.x, body.z - e.z) < Math.abs(speed * dt) * 0.3) continue;
       if (

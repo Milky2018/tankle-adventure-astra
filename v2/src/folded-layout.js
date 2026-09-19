@@ -1,4 +1,4 @@
-import {explorationBattles,explorationControls,explorationFlags,explorationPickups,explorationSolids,explorationEnemies} from './folded-exploration-layout.js';
+import {explorationDecks,explorationBattles,explorationControls,explorationFlags,explorationPickups,explorationSolids,explorationEnemies} from './folded-exploration-layout.js';
 import {UPGRADE_IDS} from './folded-upgrades.js';
 import {arenaGates,bossReserves} from './folded-boss-arenas.js';
 import {transportSolids} from './folded-transport.js';
@@ -36,7 +36,7 @@ export const foldedDecks=[
   deck('roof-walk',29,-32,6,30,24),deck('cage-landing',16,-2,22,16,24),
   deck('observatory-outlook',172,-36,24,12,24),
   deck('circulation-outlook',156,-22,12,22,24),
-  ...cityDecks,...expansionDecks,...sideDecks
+  ...cityDecks,...expansionDecks,...sideDecks,...explorationDecks
 ];
 export const foldedLiftDefs=[
   {id:'carrier',x:72,z:-78,w:12,d:12,stops:[8,16],lock:'load'},

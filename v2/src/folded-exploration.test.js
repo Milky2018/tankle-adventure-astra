@@ -33,24 +33,24 @@ test('finds, defenders and added machinery stand on supported, unblocked surface
     assert.equal(foldedBlocked(p.x, p.y, p.z, state), undefined, p.id);
   }
   for (const s of explorationSolids) for (const [x,z] of [[s.x+.1,s.z+.1],[s.x+s.w-.1,s.z+s.d-.1]])
-    assert.ok(foldedSupport(x,z,s.y),s.id);
+    assert.ok(foldedSupport(x,z,s.ground??s.y),s.id);
 });
 
 const paths = {
   'armor-foundry': {start:[-56,-16,114],points:[[-67,114]]},
   'cannon-coil': {start:[-136,8,-54],points:[[-162,-54],[-162,-66],[-180,-66],[-190,-76],[-190,-92],[-187,-92]]},
-  'armor-reservoir': {start:[-164,-8,88],points:[[-164,100],[-169,99]]},
+  'armor-reservoir': {start:[-164,-8,88],points:[[-154,92],[-145,92]],deployed:true},
   'cooling-filter': {start:[-104,-8,114],points:[[-104,98],[-122,98],[-122,90],[-123,84]]},
-  'armor-proving': {start:[77,16,-124],points:[[91,-124],[91,-139]]},
-  'mortar-charge': {start:[112,16,-176],points:[[106,-176],[106,-146],[192,-146],[195,-142]]},
+  'armor-proving': {start:[188,16,-124],points:[[240,-124]]},
+  'mortar-charge': {start:[112,16,-176],points:[[106,-176],[106,-146],[161,-146],[161,-134],[165,-134]]},
   'armor-lens': {start:[271,24,-88],points:[[275,-88],[275,-94],[269,-94]]},
-  'laser-focus': {start:[360,-24,186],points:[[361,190],[360,194],[356,194]]},
+  'laser-focus': {start:[350,-24,186],points:[[350,193],[348,193]]},
   'armor-hearth': {start:[146,-40,6],points:[[155,6],[155,-8],[150,-8]]},
 };
 for (const q of explorationPickups) test(`${q.id} can be approached and left through a physical detour`, () => {
   const route = paths[q.id], state = initialFoldedState();
   for (const wall of foldedSolids) if (!wall.permanent) state[wall.id] = true;
-  const p = {x:route.start[0],y:route.start[1],z:route.start[2],speed:1,deployed:false};
+  const p = {x:route.start[0],y:route.start[1],z:route.start[2],speed:1,deployed:!!route.deployed};
   function walk(x,z) {
     for(let i=0;i<3000&&Math.hypot(p.x-x,p.z-z)>.1;i++){
       const dx=x-p.x,dz=z-p.z,d=Math.hypot(dx,dz);
@@ -97,5 +97,15 @@ test('the separator corner also admits the horizontal approach before the turn',
     assert.ok(p.x>359.9,`blocked horizontal approach at ${p.x},${p.z}`);
     for(let i=0;i<260;i++)moveFolded(p,0,-.1,state);
     assert.ok(p.z<160.5,`blocked turn at ${p.x},${p.z}`);
+  }
+});
+
+test('optional mechanisms and their circuit origins are grounded on their actual floor', async () => {
+  const {explorationControls}=await import('./folded-exploration-layout.js');
+  for(const c of explorationControls) {
+    const ground=c.ground??c.y-1.3;
+    const floor=foldedSupport(c.x,c.z,ground);
+    assert.ok(floor,`Floating mechanism base: ${c.id}`);
+    assert.ok(Math.abs(floor.height-ground)<.01,c.id);
   }
 });

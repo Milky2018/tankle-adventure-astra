@@ -270,3 +270,24 @@ test('combat emits different player/enemy hit sounds and positioned enemy launch
   assert.equal(f.sounds.at(-1)[0], 'hit');
   assert.equal(f.sounds.at(-1)[1].position, target);
 });
+
+test('a blast on a rendered canopy cannot damage a Tank through its underside', () => {
+  const target = enemy('sheltered', 0, 0);
+  const f = fixture([target]);
+  const roof = new T.Mesh(new T.BoxGeometry(10, 0.45, 10), new T.MeshBasicMaterial());
+  roof.position.set(0, 4.625, 0);
+  roof.updateMatrixWorld();
+  const ray = new T.Raycaster();
+  f.world.cast = (origin, direction, distance) => {
+    ray.set(origin, direction);
+    ray.far = distance;
+    return ray.intersectObject(roof, false)[0] || null;
+  };
+  const hit = f.world.cast(new T.Vector3(0, 10, 0), new T.Vector3(0, -1, 0), 10);
+  for (const hostile of [false, true]) {
+    f.impact(hit, { mortar: true, hostile, damage: 3, origin: new T.Vector3(0, 2, -10) });
+    assert.equal(target.hp, 10, `Blast crosses the canopy; hostile=${hostile}`);
+  }
+  roof.geometry.dispose();
+  roof.material.dispose();
+});

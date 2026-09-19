@@ -51,3 +51,12 @@ test('the reservoir inlet exposes its connected transfer without a timed sleeve'
  assert.equal(releaseFolded('reservoir-inlet','cannon',p,s,[]),true);
  assert.equal(releaseFolded(c.id,'cannon',p,s,[]),true);
 });
+
+test('optional sentries stay dormant on the through route but wake on entry or provocation',()=>{
+  const first={battle:'store',wave:0,hp:3,x:0,y:8,z:0,spawn:{x:0,y:8,z:0},activation:{x:0,y:8,z:0,radius:17}},second={...first},reserve={...first,wave:1};
+  const pacing=createEncounterPacing([first,second,reserve]);
+  pacing.update(10,{x:30,y:8,z:0},false);assert.equal(first.awake,false);
+  pacing.update(10,{x:0,y:0,z:0},false);assert.equal(first.awake,false);
+  pacing.update(.1,{x:16,y:8,z:0},false);assert.equal(first.awake,true);assert.equal(second.awake,true);assert.equal(reserve.awake,false);
+  pacing.reset();pacing.wake(first);assert.equal(first.awake,true);assert.equal(second.awake,true);assert.equal(reserve.awake,false);
+});

@@ -169,7 +169,7 @@ export const cityEnemies=[
   {id:'gallery-repairer',x:223,y:16,z:28,hp:4,type:'repairer',encounter:'optical-releases'},
   {id:'yard-repairer',x:230,y:-8,z:50,hp:4,type:'repairer',encounter:'rig-approach'},
   {id:'rig-shield',x:230,y:-24,z:128,hp:5,type:'guard',magneticShield:true,encounter:'circulation-cradle'},
-  {id:'keeper',x:0,y:-56,z:32,hp:48,type:'boss',parts:[9,9],core:30,persistent:true}
+  {id:'keeper',x:0,y:-56,z:32,hp:84,type:'boss',parts:[9,9],core:66,persistent:true}
 ];
 export const cityBelts=[
   {id:'press-crossing',x:-44,z:47,w:22,d:5,y:-16,vx:2.4,vz:0},

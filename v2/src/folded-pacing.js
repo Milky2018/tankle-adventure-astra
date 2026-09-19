@@ -19,13 +19,16 @@ export function canTelegraph(enemy,enemies){
 export function createEncounterPacing(enemies){
   const battles=Map.groupBy(enemies.filter(e=>e.battle),e=>e.battle);
   const timers=new Map();
-  function reset(){timers.clear();for(const e of enemies)e.awake=!e.wave;}
+  function reset(){timers.clear();for(const e of enemies)e.awake=!e.wave&&!e.activation;}
   function wake(enemy){
-    if(!enemy.wave)return;
+    if(!enemy.battle)return;
     for(const e of battles.get(enemy.battle)||[])if(e.wave===enemy.wave)e.awake=true;
   }
   function update(dt,player,resting,time=0){
     for(const [id,group] of battles){
+      const activation=group[0].activation;
+      if(activation && Math.abs(player.y-activation.y)<2 && Math.hypot(player.x-activation.x,player.z-activation.z)<activation.radius)
+        for(const e of group.filter(e=>!e.wave))e.awake=true;
       const reserve=group.filter(e=>e.wave&&e.hp>0&&!e.awake);
       if(!reserve.length)continue;
       const first=group.find(e=>!e.wave),near=Math.abs(player.y-first.y)<3&&Math.hypot(player.x-first.spawn.x,player.z-first.spawn.z)<55;

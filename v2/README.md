@@ -91,7 +91,7 @@ See [sound-effect auditions](scripts/SOUND_EFFECTS.md) to regenerate the old/new
 Optional discovery, equipment persistence, real upgraded weapon hits and both-view Mortar landing checks:
 
 ```bash
-npm run test:browser -- exploration secret-trials secret-optics save-safety
+npm run test:browser -- exploration secret-trials secret-optics secret-access secret-cover upgrade-balance backdrop save-safety
 ```
 
-`secret-trials` exercises the optional two-wave stores fight with real damage, both-view reflected cabinet release, the Mortar tray, denied premature pickups, save/reload and input-driven equipment detours. The warning-specific audition is `/output/audio/warning-comparison/index.html`; see the sound-effect notes for its snapshot baseline.
+`secret-trials` compares the old Mortar orbit with a mixed-weapon response to the optional stores fight, then checks both-view reflected cabinet release, the Mortar annex, denied premature pickups, save/reload and input-driven detours. `secret-optics` surveys direct collector approaches and off-centre reflection. `secret-access` exercises Flotation, Phoenix and Magnet access; `secret-cover` checks physical canopy protection and its open firing lane. `backdrop` captures seven views, checks bounded draw overhead and repeated camera-switch resources. `upgrade-balance` compares ordinary/full equipment using controlled Keeper arena entries and identical input policies, with a 20–40-second mobile-Laser target; it is not a full-collection journey or a blind-player difficulty test. The warning-specific audition is `/output/audio/warning-comparison/index.html`; see the sound-effect notes for its snapshot baseline.

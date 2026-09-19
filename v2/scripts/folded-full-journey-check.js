@@ -177,14 +177,14 @@ async page=>{
     await move(234,13);await move(234,18);await use();await move(234,13);await move(254,13);await move(254,120);await move(254,132);await shoot(254,124,-22,"inner-optics","laser");await record("optical-and-thermal-convergence");await move(266,132);await move(266,120);await move(266,6,true);await move(44,6,true);await move(44,-10);await use();
     await shoot(40,-12,-38.6,'last-cage');await move(34,-18);await move(22,-18);await arrive(0);await move(22,-4);
     if((await page.evaluate(()=>__game.snapshot())).player.y!==0)throw Error('Final return cage failed');
-    await move(22,-18);await arrive(-40);await move(34,-18);await move(34,-10);await expedition('hearth');await move(34,-10);await move(34,6);await move(34,68);await move(0,68);await move(0,52);
+    await move(22,-18);await arrive(-40);await move(34,-18);await move(34,-10);await expedition('hearth');await move(34,-10);await move(44,-10);await use();await record('last-refuge-repaired');await move(34,-10);await move(34,6);await move(34,68);await move(0,68);await move(0,52);
     await choose('laser');const keeperFight=await page.evaluate(()=>{
-      const g=window.__game;let corner=0;const orbit=[[-10,54],[-10,44],[10,44],[10,54]];
+      const g=window.__game,start=g.snapshot();let corner=0;const orbit=[[-10,54],[-10,44],[10,44],[10,54]];
       for(let i=0;i<7200;i++){
-        const s=g.snapshot(),e=s.enemies.find(e=>e.id==='keeper'),p=s.player;if(!e.hp){g.setInput([]);return {hp:p.hp,time:s.time};}if(p.hp<=0)return {error:'keeper death',s};
+        const s=g.snapshot(),e=s.enemies.find(e=>e.id==='keeper'),p=s.player;if(!e.hp){g.setInput([]);return {hp:p.hp,time:s.time,seconds:s.time-start.time,entryHp:start.player.hp};}if(p.hp<=0)return {error:'keeper death',seconds:s.time-start.time,entryHp:start.player.hp,s};
         if(Math.hypot(p.x-orbit[corner][0],p.z-orbit[corner][1])<.6)corner=(corner+1)%orbit.length;const dx=orbit[corner][0]-p.x,dz=orbit[corner][1]-p.z;const keys=Math.abs(dx)>Math.abs(dz)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD'];const t=e.parts.find(t=>t.hp>0)||{x:e.x,y:e.y+1.5,z:e.z};g.aimAt(t.x,t.z,t.y);keys.push('Mouse0');g.setInput(keys);g.step(1/30,false);
       }return {error:'keeper timeout',s:g.snapshot()};
-    });if(keeperFight.error)throw Error(JSON.stringify(keeperFight));await move(0,8);await move(0,0);await settle();await page.keyboard.down('e');await page.evaluate(()=>__game.step(2.2));await page.keyboard.up('e');
+    });if(keeperFight.error)throw Error(JSON.stringify(keeperFight));milestones.push({label:'keeper-defeated',...keeperFight});await move(0,8);await move(0,0);await settle();await page.keyboard.down('e');await page.evaluate(()=>__game.step(2.2));await page.keyboard.up('e');
 
   await page.evaluate(()=>__game.step(27));const end=await page.evaluate(()=>__game.snapshot());
   if(!await page.getByRole('heading',{name:'Mission Accomplished'}).isVisible())throw Error('Completion screen missing');

@@ -5,7 +5,7 @@ async page=>{
  await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');});await page.reload();await page.waitForFunction(()=>window.__game?.debug);await page.evaluate(()=>{__game.manual(true);__game.step(.1);});await page.screenshot({path:'v2/output/playwright/finale/opening.png'});
  const fight=await page.evaluate(()=>{
   const g=__game,a=__game.debug;
-  g.scenario({state:{overdrive:true,prototype:true,foundry:true,mortarModule:true,phoenix:true,laser:true,circulation:true,load:true,brake:true,'bridge-crane':true,'core-feed':true,keeper:false,endingSeen:false,pump:false,signal:false,'rail-repair':false},player:{x:0,y:-56,z:56,hp:50,heat:0,overheated:false,overdrive:true,mortar:true,laser:true,phoenix:true,circulation:true,magnet:false,flotation:false,weapon:'cannon'}});
+  g.scenario({state:{overdrive:true,prototype:true,foundry:true,mortarModule:true,phoenix:true,laser:true,circulation:true,load:true,brake:true,'bridge-crane':true,'core-feed':true,keeper:false,endingSeen:false,pump:false,signal:false,'rail-repair':false},player:{x:0,y:-56,z:56,hp:50,heat:0,overheated:false,overdrive:true,mortar:true,laser:true,phoenix:true,circulation:true,magnet:false,flotation:false,weapon:'laser'}});
   a.resetEnemies();a.clearShots();const e=a.world.enemies.find(e=>e.id==='keeper'),start=g.snapshot().time,phases=new Set(),stops=[];let corner=0;
   const orbit=[[-9,51],[-9,40],[9,40],[9,51]];
   for(let i=0;i<7200&&e.hp>0&&a.p.hp>0;i++){
