@@ -50,7 +50,7 @@ async page => {
   const mortar=await page.evaluate(()=>{
     const g=__game,a=g.debug;g.setInput([]);a.clearShots();
     g.scenario({player:{x:161,y:20,z:-146,hp:25,weapon:'mortar',mortar:true,heat:0,lastShot:-100,invincible:1e9},enemies:Object.fromEntries(a.world.enemies.map(e=>[e.id,0]))});
-    for(let i=0;i<240&&!a.state['mortar-cache'];i++){g.aimAt(155.5,-134.5,25.4);g.setInput(['Mouse0']);g.step(1/60,false);}g.setInput([]);
+    for(let i=0;i<240&&!a.state['mortar-cache'];i++){g.aimAt(155.5,-134.5,22.7);g.setInput(['Mouse0']);g.step(1/60,false);}g.setInput([]);
     if(!a.state['mortar-cache'])throw Error('Mortar tray unreachable '+JSON.stringify({aim:a.aim,prediction:a.mortarLanding.userData.prediction}));
     return {open:a.state['mortar-cache'],collected:!!a.state['mortar-charge']};
   });

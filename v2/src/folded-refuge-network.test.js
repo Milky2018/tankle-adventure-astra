@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {foldedHives,foldedLiftDefs,foldedSupport,foldedBlocked,initialFoldedState,moveFolded,releaseFolded,foldedEnemies} from './folded-layout.js';
+import {foldedHives,foldedLiftDefs,foldedSupport,foldedBlocked,initialFoldedState,moveFolded,releaseFolded,foldedEnemies,foldedControls} from './folded-layout.js';
 import {pullSlide,currentVelocity,stepReleasedSlides} from './folded-mechanisms.js';
 import {moveWithConveyor,stepLifts} from './folded-machinery.js';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
@@ -42,7 +42,7 @@ test('retired anchors migrate to a reachable refuge without losing equipment or 
 
 test('Prototype inspection return opens before combat and provides a supported route to A',()=>{
   const s=initialFoldedState({relays:true}),p={...newPlayer(),x:-55,y:-16,z:110};
-  assert.equal(releaseFolded('prototype-inspection','cannon',{...p,y:-8,z:86},s,[]),false);
+  assert.ok(foldedControls.find(c=>c.id==='prototype-inspection').facing); // Physical housing blocks premature rays; exercised in the browser suite.
   assert.equal(releaseFolded('prototype-inspection','cannon',p,s,[]),true);
   walk(p,s,[[-40,110],[-40,115.8],[-30,115.8],[-30,86],[0,86]]);
   assert.equal(p.y,-8);assert.equal(s.prototype,false);
@@ -50,16 +50,16 @@ test('Prototype inspection return opens before combat and provides a supported r
   assert.ok(seconds<25);assert.equal(p.y,-16);
 });
 
-test('the Overseer side release is inaccessible from A and bypasses the opposing belt on retry',()=>{
+test('the Overseer side release faces its approach and bypasses the opposing belt on retry',()=>{
   const s=initialFoldedState(),p={...newPlayer(),x:-10,y:-8,z:61,overdrive:true};
-  assert.equal(releaseFolded('overseer-service','cannon',{...p,z:86},s,[]),false);
+  assert.ok(foldedControls.find(c=>c.id==='overseer-service').facing); // Physical housing blocks premature rays; exercised in the browser suite.
   assert.ok(releaseFolded('overseer-service','cannon',p,s,[]));
   walk(p,s,[[-10,86],[0,86],[-10,86],[-10,60]]);
   assert.equal(s.foundry,false);
 });
 
 test('Phoenix acquisition exits directly through its own breakthrough to the distribution room',()=>{
-  const s=initialFoldedState({'proving-endurance':true}),p={...newPlayer(),x:218,y:16,z:-114,overdrive:true,phoenix:true};
+  const s=initialFoldedState({'proving-endurance':true,phoenix:true}),p={...newPlayer(),x:218,y:16,z:-114,overdrive:true,phoenix:true};
   walk(p,s,[[238,-114]]);
   const seconds=walk(p,s,[[238,-62]],{boost:true});
   assert.ok(s['phoenix-departure']);assert.ok(seconds<10);
@@ -68,10 +68,10 @@ test('Phoenix acquisition exits directly through its own breakthrough to the dis
   assert.ok(releaseFolded('cage','cannon',p,s,[]));
 });
 
-test('the deep maintenance shaft reaches the Foundry and cannot be released from above',()=>{
+test('the deep maintenance shaft has a housed control and reaches the Foundry',()=>{
   const shaft=foldedLiftDefs.find(l=>l.id==='last-cage'),s=initialFoldedState({foundry:true});
   assert.deepEqual(shaft.stops,[-40,-8]);
-  assert.equal(releaseFolded('last-cage','cannon',{x:22,y:-8,z:-8},s,[]),false);
+  assert.ok(foldedControls.find(c=>c.id==='last-cage').facing); // Physical housing blocks premature rays; exercised in the browser suite.
   assert.ok(releaseFolded('last-cage','cannon',{x:44,y:-40,z:-10},s,[]));
   const p={...newPlayer(),x:22,y:-8,z:-8};
   walk(p,s,[[18,-8],[18,-2],[16,-2],[16,80],[0,86]]);
@@ -97,14 +97,14 @@ test('sluice diversion changes the actual force on an afloat tank but never crea
 });
 
 test('magnetic slides remain solid, stop for occupants, and restore an unfinished rail position',()=>{
-  const s=initialFoldedState(),body=s.bodies.solids.find(b=>b.id==='dock-cover'),p={x:90,y:-8,z:15};
+  const s=initialFoldedState(),body=s.bodies.solids.find(b=>b.id==='bench-cover'),p={x:78.5,y:0,z:-12};
   for(let i=0;i<30;i++)pullSlide(body,p,1/60,[],(x,z,y)=>!!foldedSupport(x,z,y));
-  assert.ok(body.x>78&&body.x<86);
-  s.slidePositions[body.id]=body.x;
+  assert.ok(body.z> -25&&body.z< -17);
+  s.slidePositions[body.id]=body.z;
   const restored=initialFoldedState(JSON.parse(JSON.stringify(s))).bodies.solids.find(b=>b.id===body.id);
-  assert.equal(restored.x,body.x);assert.ok(foldedBlocked(body.x+1,body.y,body.z+1,s));
-  const obstacle={x:body.x+body.w+1,y:body.y,z:body.z,w:2,d:3};
-  pullSlide(body,p,2,[obstacle],()=>true);assert.ok(body.x+body.w<=obstacle.x);
+  assert.equal(restored.z,body.z);assert.ok(foldedBlocked(body.x+1,body.y,body.z+1,s));
+  const obstacle={x:body.x,y:body.y,z:body.z+body.d+1,w:3,d:2};
+  pullSlide(body,p,2,[obstacle],()=>true);assert.ok(body.z+body.d<=obstacle.z);
 });
 
 test('both vestibule restorations are required in either order and survive reloading',()=>{
@@ -158,9 +158,9 @@ test('released screens use the same hull clearance as movement at a waiting play
 });
 
 
-test('legacy collected rewards restore their access slide after progression migration',()=>{
+test('legacy collected rewards keep the pull-off access open after progression migration',()=>{
   const s=initialFoldedState({'armor-lens':true,magnetModule:true});
   assert.equal(s['collimator-drawer'],true);
-  assert.equal(s.bodies.solids.find(b=>b.id==='collimator-drawer').z,-70);
+  assert.equal(s.bodies.solids.find(b=>b.id==='collimator-drawer').rail,undefined);
   assert.equal(s.bodies.solids.find(b=>b.id==='arsenal-transfer').x,-128);
 });

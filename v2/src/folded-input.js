@@ -88,15 +88,14 @@ export function installFoldedInput({ canvas, settings, keys, pointer, follow, st
       !status.paused &&
       !status.mapOpen &&
       !status.endingTime &&
-      !status.dead &&
-      !status.stunned
+      !status.dead
     ) {
       follow.turn(event.movementX, event.movementY);
       if (event.movementX || event.movementY) looked = true;
     }
   });
   canvas.addEventListener('pointermove', (event) => {
-    if (!status.thirdPerson && !status.stunned) {
+    if (!status.thirdPerson) {
       pointer.set((event.clientX / innerWidth) * 2 - 1, 1 - (event.clientY / innerHeight) * 2);
       pointerOver = true;
     }

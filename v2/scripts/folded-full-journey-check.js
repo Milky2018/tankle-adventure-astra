@@ -8,6 +8,8 @@ async page=>{
   const legs=[],milestones=[];
   async function choose(weapon){
     for(let i=0;i<3;i++){
+      // Manual stepping must allow the real hit recovery to finish before Q.
+      await page.evaluate(()=>{const g=__game,s=g.snapshot();if(s.player.hurtUntil>s.time){g.setInput([]);g.step(s.player.hurtUntil-s.time+1/60,false);}});
       if((await page.evaluate(()=>__game.snapshot())).player.weapon===weapon)return;
       await page.keyboard.press('q');
     }
@@ -93,7 +95,7 @@ async page=>{
       const c=await page.evaluate(async name=>(await import('/src/folded-layout.js')).foldedControls.find(c=>c.id===name),name);
       if(c.slide){
         await move(-106,-54);
-        const opened=await page.evaluate(()=>{const g=__game,b=g.debug.state.bodies.solids.find(b=>b.id==='arsenal-return');for(let i=0;i<900&&!g.snapshot().state['arsenal-return'];i++){const p=g.snapshot().player,c=g.debug.world.controls.find(c=>c.id==='arsenal-return');g.aimAt(c.x,c.z,c.y);const keys=['Mouse2'];if(p.z< -29&&p.z-b.z-b.d/2<9)keys.push('KeyS','KeyA');g.setInput(keys);g.step(1/60,false);}g.setInput([]);return g.snapshot().state['arsenal-return'];});
+        const opened=await page.evaluate(()=>{const g=__game;for(let i=0;i<900&&!g.snapshot().state['arsenal-return'];i++){const c=g.debug.world.controls.find(c=>c.id==='arsenal-return');g.aimAt(c.x,c.z,c.y);const keys=['Mouse2'];g.setInput(keys);g.step(1/60,false);}g.setInput([]);return g.snapshot().state['arsenal-return'];});
         if(!opened)throw Error('Magnetic workshop return did not open');
         await move(-106,-54);await move(x,z);
       }else if(c.kind==='magnet'){

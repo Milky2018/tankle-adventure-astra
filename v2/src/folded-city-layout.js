@@ -112,14 +112,14 @@ export const citySolids=[
 ];
 export const cityControls=[
   control('relay-west',-35,-14.5,44),control('relay-east',-65,-14.5,114),
-  control('press-return',-70,-14.6,50),control('ballast',-29,1.3,27),
+  control('press-return',-70,-14.6,50,'shot',{requires:'foundry',facing:[-1,0,0]}),control('ballast',-29,1.3,27),
   control('bridge-crane',0,6.8,-24,'shot',{ground:5,surface:'top'}),control('inner-optics',126,26,-16,'laser',{ground:24,normal:[0,0,-1]}),
-  control('loading-return',32,-6.7,-58),control('freight-return',70,1.3,-34),
-  control('emitter-cage',63,25.4,-86),control('gallery',228,26,-4,'laser',{ground:24,normal:[-1,0,0]}),
+  control('loading-return',32,-6.7,-58,'shot',{facing:[1,0,0]}),control('freight-return',70,1.3,-34,'shot',{facing:[1,0,0]}),
+  control('emitter-cage',63,25.4,-86,'shot',{facing:[1,0,0]}),control('gallery',228,26,-4,'laser',{ground:24,normal:[-1,0,0]}),
   control('mirror-index',238,25.3,-4),control('garden-optical',232,26,-9.5,'laser',{ground:24,normal:[0,0,1]}),control('yard-optical',228,18,38,'laser',{ground:16}),
-  control('pump',58,-5.5,-4,'shot',{ground:-8}),control('rig',242,-21,96,'shot',{ground:-23}),
-  control('rig-cover',229.5,-21.6,108.5,'magnet',{ground:-24}),control('yard-cover',221.5,-5.6,44,'magnet',{ground:-8}),
-  control('pressure-return',218,-14.6,18),control('last-cage',40,-38.6,-12),
+  control('pump',58,-5.5,-4,'shot',{ground:-8,facing:[0,0,1]}),control('rig',242,-21,96,'shot',{ground:-23}),
+  control('rig-cover',226.9,-22.6,108.5,'magnet',{ground:-24,yaw:-Math.PI/2}),control('yard-cover',217.9,-6.6,44,'magnet',{ground:-8,yaw:-Math.PI/2}),
+  control('pressure-return',218,-14.6,18),control('last-cage',40,-38.6,-12,'shot',{facing:[1,0,0]}),
   control('signal',198,41.3,146,'use'),control('maintenance',110,-22.1,30,'shot'),
   control('dock',0,-54.6,0,'dock')
 ];

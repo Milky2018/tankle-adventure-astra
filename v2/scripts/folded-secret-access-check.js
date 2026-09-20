@@ -22,20 +22,20 @@ async page=>{
     if(!a.state['impact-store']||a.state['armor-proving'])throw Error('Phoenix spur should open without immediately awarding armour '+JSON.stringify(a.p));
     const impact={speed:a.p.speed,heat:a.p.heat,x:a.p.x};
     g.scenario({state:{'collimator-drawer':false,'armor-lens':false},player:{x:363,y:32,z:-80,magnet:true,weapon:'cannon',speed:1,heat:0,overheated:false}});
-    const slide=a.state.bodies.solids.find(b=>b.id==='collimator-drawer');
+    const gate=a.state.bodies.solids.find(b=>b.id==='collimator-drawer');
     for(let i=0;i<900&&!a.state['collimator-drawer'];i++){
       const c=a.world.controls.find(c=>c.id==='collimator-drawer');g.aimAt(c.x,c.z,c.y);
-      const keys=['Mouse2'];if(a.p.z< -54&&a.p.z-slide.z-slide.d/2<9)keys.push('KeyS','KeyA');
+      const keys=['Mouse2'];
       g.setInput(keys);g.step(1/60,false);
     }
     g.setInput([]);
-    if(!a.state['collimator-drawer']||Math.abs(slide.z+70)>.01)throw Error('Mezzanine magnetic slide failed '+JSON.stringify({slide,p:a.p}));
+    if(!a.state['collimator-drawer']||gate.rail)throw Error('Mezzanine lock failed '+JSON.stringify({gate,p:a.p}));
     a.setCameraView('third');a.clearShots();
     g.scenario({state:{'mortar-cache':false},player:{x:161,y:20,z:-146,mortar:true,weapon:'mortar',heat:0,lastShot:-100}});
     let yaw=Math.atan2(155.5-161,-134.5+146),pitch=0;
-    for(let i=0;i<24;i++){g.look(yaw,pitch);g.step(1/60);const q=g.project(155.5,-134.5,25.4);yaw-=(q.x/innerWidth*2-1)*Math.tan(Math.PI/6)*(innerWidth/innerHeight)*.8;pitch+=(q.y/innerHeight*2-1)*Math.tan(Math.PI/6)*.8;}
+    for(let i=0;i<24;i++){g.look(yaw,pitch);g.step(1/60);const q=g.project(155.5,-134.5,22.7);yaw-=(q.x/innerWidth*2-1)*Math.tan(Math.PI/6)*(innerWidth/innerHeight)*.8;pitch+=(q.y/innerHeight*2-1)*Math.tan(Math.PI/6)*.8;}
     g.look(yaw,pitch);g.setInput(['Mouse0']);g.step(3);g.setInput([]);
-    if(!a.state['mortar-cache'])throw Error('Third-person cabinet side window unreachable '+JSON.stringify({aim:a.aim,landing:a.mortarLanding.userData.prediction}));
+    if(!a.state['mortar-cache'])throw Error('Third-person horizontal cabinet tray unreachable '+JSON.stringify({aim:a.aim,landing:a.mortarLanding.userData.prediction}));
     return {island,impact,magneticDrawer:true,thirdPersonMortar:true};
   });
   return results;

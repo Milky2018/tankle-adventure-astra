@@ -112,3 +112,43 @@ export function createFoldedEffects(scene) {
     },
   };
 }
+
+export function createPhoenixExhaust(body) {
+  const root = new T.Group();
+  root.name = 'phoenix-exhaust';
+  body.add(root);
+  root.visible = false;
+  const geometry = new T.ConeGeometry(1, 1, 12).translate(0, 0.5, 0);
+  geometry.rotateX(-Math.PI / 2);
+  const outer = new T.MeshBasicMaterial({
+    color: 0xffe99c,
+    transparent: true,
+    opacity: 0.65,
+    depthWrite: false,
+  });
+  const inner = new T.MeshBasicMaterial({
+    color: 0xfff9db,
+    transparent: true,
+    opacity: 0.9,
+    depthWrite: false,
+  });
+  const jets = [-0.72, 0.72].map((x) => {
+    const jet = new T.Mesh(geometry, outer);
+    jet.position.set(x, 1.05, -1.4);
+    const core = new T.Mesh(geometry, inner);
+    core.scale.set(0.5, 0.5, 0.65);
+    jet.add(core);
+    root.add(jet);
+    return jet;
+  });
+  return {
+    root,
+    update(active, time) {
+      root.visible = active;
+      for (const [i, jet] of jets.entries()) {
+        const pulse = 1 + 0.09 * Math.sin(time * 31 + i * 2);
+        jet.scale.set(0.4 * pulse, 0.3 * pulse, 3.2 * pulse);
+      }
+    },
+  };
+}

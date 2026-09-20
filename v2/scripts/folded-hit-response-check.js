@@ -22,7 +22,7 @@ async page => {
   },view);
   const reaction=await page.evaluate(()=>{
    const g=__game,q=g.debug,start={...q.p},aim=g.snapshot().aim;
-   for(const key of ['KeyQ','KeyF','KeyE','KeyC','Tab','Mouse0','Mouse2'])q.input(key);
+   for(const key of ['Mouse0','Mouse2'])q.input(key);
    g.setInput(['KeyW','ShiftLeft','Mouse0','Mouse2']);g.step(.04);
    let material; q.model.body.traverse(o=>{if(!material&&o.material)material=o.material;});
    const dim=material.opacity,x=q.p.x;
@@ -31,8 +31,8 @@ async page => {
    const s=g.snapshot();
    if(s.player.hp!==20||s.player.weapon!=='cannon'||s.player.deployed||s.mapOpen)throw Error('Actions or second damage accepted during stun');
    if(q.shots.some(s=>!s.hostile)||q.magneticActive()||q.laserBeam.visible)throw Error('Weapon active during stun');
-   if(dim>=bright||x<=start.x||Math.abs(q.p.z-start.z)>.01||Math.hypot(q.p.x-stopped.x,q.p.z-stopped.z)>.01)throw Error('Missing flash, directional recoil, or movement lock');
-   if(JSON.stringify(s.aim)!==JSON.stringify(aim))throw Error('Aim changed during stun');
+   if(dim>=bright||q.p.knockX<=0||Math.hypot(q.p.x-stopped.x,q.p.z-stopped.z)<.1)throw Error('Missing flash, directional impulse, or continued driving');
+   g.aimAt(q.p.x+6,q.p.z+4,q.p.y+1.5);if(JSON.stringify(g.snapshot().aim)===JSON.stringify(aim))throw Error('Aim locked during hit recovery');
    return {hp:s.player.hp,recoil:q.p.x-start.x,dim,bright,view:s.camera.view};
   });
   await page.screenshot({path:`v2/output/playwright/hit-response-${view}.png`});

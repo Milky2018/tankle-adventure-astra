@@ -192,10 +192,14 @@ export function createFoldedCombat({
                 hitEnemy(e, shot.damage ?? MORTAR.damage, shot.origin, 'mortar', part);
             }
       for (const c of world.controls)
-        if (new T.Vector3(c.x, c.y, c.z).distanceTo(hit.point) < 2) {
+        if (
+          new T.Vector3(c.x, c.y, c.z).distanceTo(hit.point) < 2 &&
+          (c.surface !== 'top' || blastOrigin.y >= c.y - 0.01)
+        ) {
           const to = new T.Vector3(c.x, c.y, c.z).sub(blastOrigin),
             length = to.length();
           if (
+            length < 0.0001 ||
             !world.cast(blastOrigin, to.normalize(), Math.max(0, length - 0.2), { targets: false })
           ) {
             c.flash = 0.2;

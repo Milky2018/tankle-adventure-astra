@@ -15,15 +15,17 @@ test('cooling waits 0.75 seconds and preserves thirty-heat recovery',()=>{
 test('stationary Overdrive produces neither acceleration nor heat',()=>{
  const p=newPlayer();p.overdrive=true;tick(p,0,2,true,false);assert.equal(p.speed,1);assert.equal(p.heat,0);
 });
-test('acceleration, release heat and re-engagement preserve the shared budget',()=>{
+test('boost release cools independently of speed but shooting retains its delay',()=>{
  const p=newPlayer();p.overdrive=true;
  tick(p,0,.25,true,true);assert(Math.abs(p.speed-1.3)<1e-6);assert(Math.abs(p.heat-3.75)<1e-6);
  tick(p,.25,.25,true,true);assert.equal(p.speed,1.6);assert(Math.abs(p.heat-7.5)<1e-6);
  assert(shootHeat(p,.5));assert(Math.abs(p.heat-27.5)<1e-6);
- tick(p,.5,.1,false,true);assert(p.speed>1&&p.speed<1.6);assert(Math.abs(p.heat-29)<1e-6);
+ tick(p,.5,.1,false,true);assert(p.speed>1&&p.speed<1.6);assert(Math.abs(p.heat-27.5)<1e-6);
  const speed=p.speed;tick(p,.6,.1,true,true);assert(p.speed>speed);
- tick(p,.7,.35,false,false);assert.equal(p.speed,1);
- const heat=p.heat;tick(p,1.05,.15);assert.equal(p.heat,heat);tick(p,1.2,.5);assert.equal(p.heat,heat);tick(p,1.7,.3);assert(p.heat<heat);
+ const heat=p.heat;tick(p,.7,.1,false,true);assert.equal(p.heat,heat);
+ tick(p,.8,.46);assert(p.heat<heat);
+ assert(shootHeat(p,1.3));const afterShot=p.heat;tick(p,1.3,.74);assert.equal(p.heat,afterShot);
+ tick(p,2.04,.1);assert(p.heat<afterShot);
 });
 test('screen-relative movement is normalized and preserves orthogonal axes',()=>{
  const up=screenMovement(0,-1),right=screenMovement(1,0),diagonal=screenMovement(1,-1);assert(Math.abs(Math.hypot(diagonal.x,diagonal.z)-1)<1e-9);assert(Math.abs(up.x*right.x+up.z*right.z)<1e-9);assert(up.x<0&&up.z<0);assert(right.x>0&&right.z<0);
@@ -45,4 +47,11 @@ test('continuous stationary Mortar fire accumulates heat and enters overheat',()
   if(shootHeat(p,time,35,1.05)){shots++;if(p.overheated)overheats++;}
  }
  assert.ok(shots>10);assert.ok(overheats>=2);
+});
+
+test('releasing Boost immediately cools while Phoenix still coasts at high speed',()=>{
+ const p={...newPlayer(),overdrive:true,phoenix:true};
+ tick(p,0,2,true,true);const heat=p.heat;
+ updateHeat(p,1/60,2+1/60,false,true);
+ assert.ok(p.speed>3);assert.ok(Math.abs(p.heat-(heat-50/60))<1e-8);
 });

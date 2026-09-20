@@ -25,3 +25,8 @@ test('knockback resolves against the actual closed ferry wall without losing sup
   assert.ok(p.x>-42.6&&p.x<=-41.4);
   assert.ok(foldedSupport(p.x,p.z,p.y));
 });
+
+test('a hit preserves the driver speed while supplying an independent directional impulse',()=>{
+ const p=struck({speed:3.2});
+ assert.equal(p.speed,3.2);assert.ok(hitDisplacement(p,1.05,.05).x>0);
+});

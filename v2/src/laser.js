@@ -35,4 +35,4 @@ export function traceLaser(x,z,dx,dz,{mirrors=[],walls=[],targets=[],range=LASER
   return segments;
 }
 export function rearHit(heading,dx,dz){return dx*Math.sin(heading)+dz*Math.cos(heading)>.55;}
-export function laserHeat(p,dt,time){if(p.hp<=0||p.overheated)return false;p.heat=clamp(p.heat+LASER.heat*dt,0,100);p.lastHeat=time;if(p.heat>=100)p.overheated=true;return true;}
+export function laserHeat(p,dt,time){if(p.hp<=0||p.overheated)return false;p.heat=clamp(p.heat+LASER.heat*dt,0,100);p.lastHeat=time;p.boostCooling=false;p.actionHeatAt=time;if(p.heat>=100)p.overheated=true;return true;}

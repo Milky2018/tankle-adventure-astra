@@ -18,7 +18,7 @@ export function makeSidePuzzles(scene,state){
  function paddle(id,x,y,z,treadle=false){
   const root=new T.Group();root.position.set(x,y,z);scene.add(root);roots.push(root);
   box(root,.35,1.3,.35,0,.65,0,C.dark,0);
-  const handle=box(root,1.1,.65,.25,0,1.3,0,C.orange);ring(handle,.27,.05,0,0,.16,C.yellow).rotation.x=Math.PI/2;
+  const handle=box(root,1.1,.65,.25,0,1.3,0,C.orange);ring(handle,.27,.05,0,0,.16,C.yellow).rotation.x=0;
   const lamp=box(root,.3,.12,.2,0,.8,.23,mat(SIGNAL.ready,true),0);
   const plate=treadle?box(root,2.6,.16,2.6,0,.1,0,C.yellow,0):null;
   if(plate)for(const x of [-.8,.8])for(const z of [-.7,0,.7])box(root,.3,.025,.2,x,.19,z,C.dark,0);

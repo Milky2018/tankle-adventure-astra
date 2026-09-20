@@ -135,7 +135,7 @@ Visible surfaces and aiming agree. A translucent foreground must not cause aim t
 
 Damage volumes and solid-body collision serve different purposes. Forgiving edge hits do not bypass armour; a surviving enemy remains a physical obstacle. Direct and repeated contact damage respect the protection interval. Furnace channels are a separate environmental hazard, described under combat.
 
-A damaging attack briefly knocks the Tank away from its source: approximately 1.2 units over the first 0.18 seconds, stopped by walls and unsupported edges. During the 0.6-second recovery the hull blinks, further attacks cannot deal damage, and movement, aim, weapons, traction, equipment changes and world interaction are disabled. Pause remains available. Held movement and fire resume after recovery; one-shot interactions pressed during recovery are not queued. Repeated hits cannot extend the recovery window. Death transitions directly to reconstruction presentation.
+A damaging attack adds a velocity impulse away from its source: approximately 1.2 units of displacement over the first 0.18 seconds, stopped by walls and unsupported edges. This impulse combines with normal driving; it does not reset engine speed or disable steering, acceleration, aim, equipment changes or world interaction. During the 0.6-second recovery the hull blinks and further attacks cannot deal damage. Cannon, Mortar, Laser and magnetic firing are disabled until recovery ends; held fire resumes then. Repeated hits cannot extend the recovery window. Death transitions directly to reconstruction presentation.
 
 HP is restored at Repair Hives or through reconstruction. An armour discovery adds and fills its new 5-HP segment once; it is not a repeatable field-healing supply. Low HP changes lights, exhaust, motion accents and HUD colour without weakening control responsiveness.
 
@@ -146,12 +146,13 @@ HP is restored at Repair Hives or through reconstruction. An armour discovery ad
 | Heat range | 0–100 |
 | Overheat begins | 100 |
 | Overheat releases | At or below 30 |
-| Delay after all Heat generation ends | 0.75 s |
+| Cooling delay after weapon/tool Heat | 0.75 s |
+| Cooling delay after releasing Boost | Immediate |
 | Base cooling rate | 50 Heat/s |
 | Cooling with the optional filter upgrade | 62.5 Heat/s |
-| Boost Heat, including acceleration and deceleration | 15 Heat/s |
+| Boost Heat while the engine actively accelerates or sustains boost | 15 Heat/s |
 
-Weapons and tools add their own costs, listed with each ability. Shooting and boost costs accumulate together. Cooling starts only after Heat-generating actions have stopped and the speed multiplier has returned to normal. A cold Tank can fire four consecutive Cannon shots safely; the fifth reaches Overheat.
+Weapons and tools add their own costs, listed with each ability. Shooting and boost costs accumulate together. Releasing Boost stops its Heat generation and starts cooling immediately, even while the Tank coasts above normal speed. Weapon/tool Heat retains its 0.75-second delay; releasing Shift does not cancel a shot or tool use that just generated Heat. A cold Tank can fire four consecutive Cannon shots safely; the fifth reaches Overheat.
 
 During Overheat, weapons and the magnetic tool lock. Ordinary movement and Flotation remain available. Without Water Circulation, acceleration also locks. With it, grounded boost can continue or restart, keeps producing Heat and maintains the red-hot state. Displayed Heat stays capped at 100; continuing boost does not secretly start a self-damage timer or force a stop. Releasing boost permits ordinary deceleration, cooling and recovery.
 
@@ -189,7 +190,7 @@ Incomplete moving-object puzzles retain a supported local retry, never a strande
 | --- | --- | --- | --- |
 | Standard Cannon | Starting equipment | Break exposed supports, scrap and impact mechanisms | Reliable direct fire and exposed weak-point hits |
 | Overdrive | R1 Prototype | Reverse familiar conveyors and operate momentum machinery | Reposition, evade and ram suitable ordinary enemies |
-| Magnetic Traction | R2 loading workshop | Pull rail-mounted slides, cover and suitable mirror carriages | Strip blue shields, pull light enemies, disarm mines and intercept shells |
+| Magnetic Traction | R2 loading workshop | Tear out blue locks and plates; reposition the few movable cover carts | Strip blue shields, pull light enemies, disarm mines and intercept shells |
 | Flotation Chassis | R3 ferry cradle | Traverse the connected water network and reach new banks | Change firing angle and bypass suitable floor hazards |
 | Mortar | Shared R2 turntable | Reach protected targets through a clear overhead arc | Delayed attacks over low cover against clusters or committed targets |
 | Phoenix Engine | R5 test building | Break momentum shutters and open express routes | Destroy ordinary enemies at full speed while preserving travel momentum |
@@ -238,10 +239,12 @@ Blue grip fittings, removable plates, mines and interceptable artillery shells s
 | Empty-scan Heat | 3/s |
 | Connected-pull Heat | 12/s |
 | Driving speed during connected traction | 55% of normal |
-| Rail counterweight travel | 3 units/s |
+| Repositionable cover travel | 3 units/s |
 | Time to remove a blue shield | 0.7 s |
 
-Solid walls and intervening cargo interrupt the tether. Mounted objects follow their rails toward the pulling position, stop short of the hull and cannot be pulled through other bodies. Partial travel persists after release. A counterweight may latch at its end detent and permanently operate a linked machine; ordinary magnetic cover carts remain repositionable in both directions. Heavy bolted machinery resists rather than moving inexplicably.
+Ordinary magnetic machinery uses removable blue locks, pins or plates. Holding traction for about 0.6 seconds visibly loosens the part, then tears it free and drops it beside its mounting. The empty socket and green fixed lamp remain; its passage or linked machinery stays released after leaving or reloading. Releasing traction early lets an unfinished pull settle back. Any clear reachable approach works, without an invisible rail-axis or standing-position condition. Heavy machinery responds through the exposed coupling rather than the whole machine flying toward the Tank.
+
+Solid walls and intervening cargo interrupt the tether. Only objects whose position needs repeated adjustment use visible rails: the Testworks cover cart and Sorter cover. These remain solid, move toward the pulling position, stop before bodies or unsupported edges, and preserve partial travel. The player can pull them back from the other end. Optional mirror carriages can use the same rule; ordinary access locks do not require rails.
 
 A blue shield tears free, throws aside and briefly staggers its bearer; the missing plate remains absent until that encounter resets. Movable cover may remove the enemy's screen and the player's shelter together. Mines can be pulled and disarmed or shot from outside their blast; blue shells can be intercepted. These are advantages, not prerequisites for every combat encounter: flanking, cover and leaving a warned impact area remain alternatives.
 
@@ -289,7 +292,7 @@ Mortar rewards predicting a committed enemy or cluster. Its delay, range and act
 
 Phoenix raises the same grounded engine to **3.2×** speed while retaining Overdrive's **1.2 multiplier/s acceleration**. From normal moving speed, maximum takes about **1.83 seconds** and a straight run-up of about **37.73 units**. Maximum world speed is **31.36 units/s**. Release deceleration retains the existing slope, approximately **1.71 multipliers/s**. Shared engine Heat is unchanged. Short entrance shutters leave at least 40 units of usable straight approach from a normal moving start; the faster base travel must not force a precise last-moment impact.
 
-A distinct exhaust, hull state, speed gauge and engine register announce full-speed readiness. At maximum, eligible barricades break and ordinary enemies die immediately, including frontal guards and mirror inspectors. Breaking an ordinary body or obstacle preserves momentum. Intact major structures remain solid, and a blocked hull loses speed.
+At the same full-speed threshold that lights the Phoenix HUD indicator, twin pale-yellow flames stream backwards from the hull and pulse gently. They follow hull orientation and disappear below that threshold or on death. Hull state, speed gauge and engine register reinforce readiness. At maximum, eligible barricades break and ordinary enemies die immediately, including frontal guards and mirror inspectors. Breaking an ordinary body or obstacle preserves momentum. Intact major structures remain solid, and a blocked hull loses speed.
 
 The finite high contact tier is 12 damage before Circulation's multiplier; ordinary full-speed destruction remains guaranteed rather than weakened by later ordinary-enemy HP. Cold Phoenix does not grant a required Boss attack or bypass special-enemy armour. Its combat purpose is overwhelming ordinary opposition during travel.
 
@@ -385,7 +388,7 @@ Solid arrows show progression; dotted arrows show earned returns. Region numbers
 | --- | --- | --- |
 | Overdrive | Foundry side route and Prototype, with a pre-fight return to A | Short reverse belt faces the familiar press and A; its far side releases an ordinary bypass |
 | Mortar | Foundry exit and common cradle at B | Release a supported freight platform over a low screen, completing the dry crossing |
-| Magnet | Optional loading workshop reached with existing abilities | Pull a blue slide out of a maintenance opening back toward B; reposition a neighboring slide to change a firing window |
+| Magnet | Optional loading workshop reached with existing abilities | Tear out a blue retaining lock to open the short return toward B; later reposition a cover cart to change a firing window |
 | Flotation | Magnet opens the dry filter-work approach | Calm visible crossing, then alternative bank approaches; the bridge-underpass route opens a dry door back to B |
 | Phoenix | Either Testworks entrance and the common Mortar load; a B return opens before the finite court | Installation exits directly through the runway to C and the B–C cage |
 | Laser | Upper optical loop from C, after Phoenix | One broad reflection opens a short return to C; the main return and cooling connection precede Guardian |
@@ -435,17 +438,17 @@ Hidden items do not appear on the map merely because a room is discovered. A war
 | Armour pack 1 | A short observation branch behind the Foundry sorting machine, with a visible inspection gap; a small early discovery, not a separate puzzle chain | Add one 5-HP hull segment |
 | Armour pack 2 | A dry inspection island seen from the reservoir bank before Flotation; return by water to reach it | Add one 5-HP hull segment |
 | Armour pack 3 | A discarded-chassis recovery area beside the Phoenix runway, entered through a full-speed breakthrough; a short loop rejoins the Testworks | Add one 5-HP hull segment |
-| Armour pack 4 | An optical maintenance mezzanine whose entrance is recognized from another floor. Magnet moves a blue rail slide out of the access opening; the reward is inside the workspace, not another drawer at the end of a long spur | Add one 5-HP hull segment |
+| Armour pack 4 | An optical maintenance mezzanine whose entrance is recognized from another floor. Magnet tears out a blue retaining plate to release the access opening; the reward is inside the workspace, not another drawer at the end of a long spur | Add one 5-HP hull segment |
 | Armour pack 5 | A retired predecessor's service room near D. Quiet inspection returns nearby; there is no additional wave or long vault corridor | Add one 5-HP hull segment |
 | Cannon reinforcement | An optional finite warehouse encounter: racks and moving freight interrupt a sniper line while a shield carrier or flanker closes; a finite lobber, charger and mine-layer reserve follows after four seconds. Retreat remains open, and completion permanently clears the trial and releases the stores | Cannon damage 1 → 1.5 |
-| Mortar reinforcement | A latch behind an inspection cabinet is seen from the observation gallery. A high side window admits a lob behind the latch's screen and opens the room; the spatial problem differs from the introductory upper tray | Mortar damage 3 → 4.5 |
+| Mortar reinforcement | A horizontal circular pressure tray rests on an inspection cabinet behind a low screen. Its open top is recognizable from the approach; a lob through the framed opening lands in the tray and opens the adjacent reward room | Mortar damage 3 → 4.5 |
 | Laser reinforcement | A low window, internal partition and fixed broad mirror form a short optical route to a recessed collector beside the separator. The Tank cannot enter the casing, and modest aim error remains acceptable | Laser damage 4.5 → 6.75 HP/s |
 | Cooling filter | A later condensate-island revisit. Flotation bypasses the pump room's defended front and reaches the island; a nearby bank closes the return | Cooling 50 → 62.5 Heat/s |
 | Weapon scope | A rangefinding workshop observation branch. Moving a maintenance screen reveals a side entrance; the workshop's long firing line lets the player immediately experience the acquired reach. No repeated magnetic drawer sequence or extended return aisle | Cannon and Mortar range 24 → 36 (+50%); damage, Cannon speed, Mortar flight duration and firing rate unchanged |
 
 Keep a mixture of easy local finds, visible-but-unreachable rewards, ability revisits and a finite combat reward. Hidden reinforcement hardware should advertise an unusual machine or accessible side route, without a map marker revealing the item or a written ability answer. Avoid hiding every reward behind a prop.
 
-Armour raises the maximum from five to ten segments and fills only the added segment at pickup. Repairs and reconstruction fill the earned maximum. Upgrades persist through rest, death and reload and cannot be collected repeatedly. Cooling retains the 0.75-second delay, Overheat thresholds and all Heat costs. Damage reinforcement modules preserve firing rate, range and blast radius. The scope extends Cannon and Mortar range by 50%; Laser range is unchanged. Mortar landing previews use the extended reach.
+Armour raises the maximum from five to ten segments and fills only the added segment at pickup. Repairs and reconstruction fill the earned maximum. Upgrades persist through rest, death and reload and cannot be collected repeatedly. Cooling retains the weapon/tool cooling delay, immediate Boost-release cooling, Overheat thresholds and all Heat costs. Damage reinforcement modules preserve firing rate, range and blast radius. The scope extends Cannon and Mortar range by 50%; Laser range is unchanged. Mortar landing previews use the extended reach.
 
 Acquisition briefly pairs an armour/fan/weapon pictogram with its numerical improvement. Added hull segments and an Armor card with five collection pips retain the armour count. A Scope card with a telescopic-sight reticle permanently shows +50% range. A named Cooling card shows +25%, while each reinforced weapon card permanently shows +50%. Ability cards carry concise English names, and acquisition notices show the item name and its specific benefit. These indicators restore from the save and do not depend on the brief acquisition animation. Reinforced Cannon and Mortar rounds are brighter and larger; the reinforced Mortar adds an inner blast ring, and Laser has a thicker energy core. The ordinary weapon appearances remain unchanged.
 
@@ -560,16 +563,20 @@ Door frames and the map do not display the ability required to pass a barrier. T
 | --- | --- |
 | Recessed impact paddle or bullseye, spring and travel slot | Cannon-operable mechanism; recoil, sparks, sound and connected motion on impact |
 | Yellow ready face / green operated lamp | Ordinary mechanism state; fixed jamb lights remain after a shutter retracts |
-| Saturated blue fitting or plate | Magnetic grip; the physical grip stays blue even when a linked status lamp turns green |
-| Framed mirror and lens-like receiver | Optical route; contact flare and outgoing beam show the reflection |
-| Horizontal upper pressure tray behind a screen | A descending impact can press it; shots from below strike protected structure |
+| Blue removable plate or U-shaped pull ring; visible rails only on repositionable carts | Magnetic traction; a torn part stays blue beside its empty socket while the fixed status lamp turns green |
+| Framed mirror and circular optical collector | Optical route; contact flare and outgoing beam show the reflection |
+| Horizontal circular pressure tray with an open top and raised rim | A descending impact or exposed blast from above presses it; side and underside hits strike the protective casing |
 | Sprung striped pressure plate | Hull weight maintains an action; leaving releases it |
 | Hinged treadle linked to track blades | One crossing changes the visible detent once; remaining on it does not toggle repeatedly |
 | Reinforced braced shutter, dented wrecks and clear approach | Momentum can break the weakened structure; the supported run-up is visible |
 | Heated load-bearing fasteners | Red contact releases a thermal barrier with steam and visible separation |
 | Mint repair ring | Safe maintenance area and weapon boundary |
 
-Mechanisms answer unsuccessful attempts with the appropriate impact, resistance or failed pulse. An inactive target must not feel like a broken input. A connecting cable or pipe leads from the control to its actual consequence. Activation travels along that connection progressively; it does not leave disconnected floating lamps. Distant encountered links remain identifiable on the discovered map.
+A direct-fire switch presents an upright impact face. Every mechanism intended for a lob uses a horizontal circular collecting tray, including the freight platform, freight crossing, Testworks load, final supply load and optional Mortar reinforcement cabinet. Their differing consequences do not change this shared shape. The opening and rim are visible from the intended approach, and a successful impact visibly depresses the tray. A high tray's Mortar landing preview refers to its collecting surface rather than the ground behind it. No standing target quietly demands a particular weapon when an ordinary shot physically reaches its working face.
+
+Shape identifies the action; colour identifies readiness and completion. A closed striped metal cover conceals an unavailable target and opens when its prerequisite is restored. The exposed target is yellow when ready and turns green when operated; blue remains reserved for magnetic fittings. Directional access comes from visible recesses, backplates and protected upper trays. A shot that reaches an exposed working face must not be rejected merely because the Tank stands on another floor or crosses an invisible coordinate boundary.
+
+Mechanisms answer unsuccessful attempts with the appropriate impact, resistance or failed pulse. An inactive target must not feel like a broken input. A connecting cable or pipe leads from the control to its actual consequence. Magnetic retaining locks use the same readable power connection: a yellow line leaves the fixed pedestal, follows exposed floor or wall surfaces and terminates beside the controlled mechanism. The blue detachable grip never carries the cable away. Pedestals stand outside moving covers, and wiring must not terminate inside a box or take an unsupported shortcut between floors. The switch latches immediately while green power advances along the yellow connection. Linked machinery remains locked until that front reaches its endpoint; branches from one switch finish together. Saving and reconstruction retain unfinished transmission, while completed connections stay green without replaying the delay. Direct mechanical paddles still move their attached parts immediately. Power flow does not leave disconnected floating lamps. Distant encountered links remain identifiable on the discovered map.
 
 Player shots operate machinery through their actual paths. Earlier walls and cover intercept them. Enemy attacks cannot silently solve progression mechanisms. Decorative panels do not copy usable target shapes. Difficulty comes from space, timing and pressure around simple actions, not written instructions or arbitrary input recipes.
 
@@ -581,7 +588,7 @@ Ordinary shortcut doors can remain one-hit releases. A major machine must do mor
 | --- | --- | --- |
 | Conveyors and freight | Move with or against transport, follow moving cover, release accessible brakes | Change traversal, firing exposure and return direction |
 | Rail carts and hanging loads | Shoot visible track blades or brake paddles; release a supported load through a clear arc | Change docking, cover, bridge support and passage geometry |
-| Magnetic slides | Pull blue hardware along a visible rail to a supported stop | Reposition cover, reveal a firing window or expose a maintenance opening |
+| Magnetic locks and cover | Tear out a blue lock or plate; move the few rail-mounted carts | Permanently release an opening or repeatedly change cover and firing windows |
 | Sluices and water | Shoot a visible latch to change a local diversion plate | Alter actual channel flow and safe approaches to the bank |
 | Mirrors and optical paths | Shoot from another position, release a fixed-detent mirror or move an obstructing screen | Change light paths, machinery access and weak-point firing lines |
 | Thermal maintenance | Sustain a hot run and release jammed fasteners with red contact | Establish a maintenance bridge, hot passage and permanent cool return |
@@ -611,9 +618,11 @@ A lift's visible far-side coupling releases the whole service. Remove redundant 
 
 Suspended loads obey visible supports and safe catch zones. B's first Mortar shot releases a freight platform onto supports to complete a crossing. The Testworks load changes cover and opens a side passage; the final supply load exposes both a passage and an optical sightline. These are different consequences of the same readable action, not separate trays connected to interchangeable doors. Players cannot be stranded by dropping a load, and a wrong or interrupted attempt retains a local recovery.
 
-### Magnetic slides and moving cover
+### Magnetic locks and moving cover
 
-Blue slides remain physical objects along visible rails. Their stops leave supported access and recovery space. Magnet's first slide moves out of a maintenance opening back toward B; the next changes a firing window. Optical maintenance and optional equipment use the same rule to reveal a workspace instead of ending every branch at a magnetic drawer.
+Most magnetic mechanisms release by tearing out a recognizable blue part. The first lock opens the maintenance return toward B; optical maintenance uses the same action to reveal its workspace. Loosening, separation, the dropped part and the exposed socket explain success without text.
+
+Rails are reserved for repeated positioning. The Testworks cover cart remains a physical obstacle and can change a firing window in either direction. Its stops leave supported access and recovery space.
 
 Movable combat cover changes both hostile and player lines. Sorter's rail cover remains a developed example: placement can interrupt its committed sweep and expose the drive, while its barrage discourages permanent shelter. The Tank can still win without Magnet. Any optional mirror carriage is positioned and secured before firing; no mandatory task requires simultaneous traction and Laser use.
 
@@ -792,7 +801,7 @@ Each region develops a distinct spatial activity around real machinery. The [fou
 
 **First junction.** From B, the shared Mortar cradle and dry freight route are ahead, the inaccessible roof cage is overhead, the magnetic workshop lies to the side, and water with another bank is visible below. Mortar's safe first shot releases a freight platform behind a low screen; it settles onto supports and completes a crossing. The player sees trajectory, impact and result together. The onward freight encounter develops indirect fire around actual cover.
 
-**Workshop expedition.** A divided assembly hall combines a sniper line interrupted by moving freight with an advancing shield carrier and a separate close route. Existing Cannon actions can release a small cart to a new berth, providing cover or an alternate approach before Magnet is owned. The installation lies deeper in the working space, without a ballast-and-ratchet checklist. After acquisition, pulling the neighboring blue slide reveals the short maintenance exit toward B. A second slide changes a firing window and supplies an immediate spatial use beyond opening a door.
+**Workshop expedition.** A divided assembly hall combines a sniper line interrupted by moving freight with an advancing shield carrier and a separate close route. Existing Cannon actions can release a small cart to a new berth, providing cover or an alternate approach before Magnet is owned. The installation lies deeper in the working space, without a ballast-and-ratchet checklist. After acquisition, tearing out the neighboring blue retaining lock opens the short maintenance exit toward B. Later, the Testworks cover cart develops repeated positioning and changes a firing window.
 
 **Branches and rewards.** The optional shunting route keeps its cart, switches and destination locally visible. Securing the cart lowers the adjacent inspection bridge and makes a workshop cross-connection. A separate stores encounter combines racks, freight, distant aim and close pressure; its finite reserves permanently end when the Cannon reinforcement is earned. Restoring the small maintenance arm and rail remains a short optional act, distinct from both challenges. Water advertises the Gardens and dry freight leads to the Testworks. The later Phoenix cage reaches this same flywheel from above.
 

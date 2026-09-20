@@ -56,3 +56,21 @@ test('shield fragments share the spark lifetime without clearing another scene',
   assert.equal(scene.children.length, 0);
   assert.equal(other.children.length, 1);
 });
+
+test('Phoenix exhaust projects behind the hull and reuses meshes across activation', async () => {
+  const { createPhoenixExhaust } = await import('./folded-effects.js');
+  const body = new T.Group(),
+    effect = createPhoenixExhaust(body);
+  assert.equal(effect.root.visible, false);
+  const jets = [...effect.root.children];
+  effect.update(true, 1);
+  body.rotation.y = Math.PI / 2;
+  body.updateMatrixWorld(true);
+  const tip = jets[0].localToWorld(new T.Vector3(0, 0, -1));
+  const nozzle = jets[0].localToWorld(new T.Vector3());
+  assert.ok(tip.x < nozzle.x - 2);
+  effect.update(false, 2);
+  assert.equal(effect.root.visible, false);
+  effect.update(true, 3);
+  assert.deepEqual(effect.root.children, jets);
+});

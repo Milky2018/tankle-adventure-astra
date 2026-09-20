@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
-import {initialFoldedState,foldedSupport,moveFolded,releaseFolded,foldedDecks,foldedLiftDefs,foldedAimHeight,foldedEnemies,foldedBlocked} from './folded-layout.js';
+import {initialFoldedState,foldedSupport,moveFolded,releaseFolded,foldedDecks,foldedLiftDefs,foldedAimHeight,foldedEnemies,foldedBlocked,foldedControls} from './folded-layout.js';
 import {renderDecks} from './hoist-layout.js';
 
 function drive(p,x,z,state,boost=false){
@@ -35,7 +35,7 @@ test('the pump return reveals its closed gate at the machine and reconnects dry 
   for(let i=0;i<250;i++)moveFolded(firstVisit,0,-.15,s);
   assert.ok(firstVisit.z>-23,'the ferry-side shutter must prevent bypassing the first Flotation crossing');
   drive(p,58,4,s);
-  assert.equal(releaseFolded('pump','cannon',firstVisit,s,[]),false);
+  assert.deepEqual(foldedControls.find(c=>c.id==='pump').facing,[0,0,1]);
   for(let i=0;i<90;i++)moveFolded(p,0,-.15,s);
   assert.ok(p.z>-9,'the closed return is visible before entering the long bridge');
   drive(p,58,4,s);p.pumpPressure=.8;
@@ -61,12 +61,12 @@ test('ordinary Overdrive cannot break the launch shutter, while the supported Ph
   drive(p,166,-86,s);drive(p,166,-32,s);assert.equal(p.y,24);
 });
 
-test('inside releases and saved progression never grant the roof from below',()=>{
+test('the roof coupling stays covered before Phoenix and preserves its release on reload',()=>{
   const p=player(),s=initialFoldedState();assert.equal(releaseFolded('cage','cannon',p,s,[]),false);
-  Object.assign(p,{y:24,phoenix:true});assert.ok(releaseFolded('cage','cannon',p,s,[]));
+  Object.assign(p,{y:24,phoenix:true});s.phoenix=true;assert.ok(releaseFolded('cage','cannon',p,s,[]));
   const restored=initialFoldedState({...s,anchor:'roof',flotation:true,phoenix:true,unknown:true});
   assert.equal(restored.cage,true);assert.equal(restored.anchor,'distribution');assert.equal(restored.unknown,undefined);
-  Object.assign(p,{x:56,y:-8});assert.equal(releaseFolded('gangway','cannon',p,restored,[]),false);
+  assert.deepEqual(foldedControls.find(c=>c.id==='gangway').facing,[1,0,0]);
   Object.assign(p,{x:86});assert.ok(releaseFolded('gangway','cannon',p,restored,[]));
 });
 

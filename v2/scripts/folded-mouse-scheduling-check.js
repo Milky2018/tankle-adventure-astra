@@ -37,9 +37,9 @@ async page=>{
   const stunned=await page.evaluate(()=>{
     const q=__game.debug,before=q.follow.yaw;q.p.hurtAt=q.time;q.p.hurtUntil=q.time+.6;
     document.dispatchEvent(new MouseEvent('mousemove',{movementX:100,movementY:100,bubbles:true}));
-    if(q.follow.yaw!==before)throw Error('Mouse look operated during hit recovery');
+    if(Math.abs(q.follow.yaw-before+.25)>1e-8)throw Error('Mouse look locked during hit recovery');
     __game.step(.65);document.dispatchEvent(new MouseEvent('mousemove',{movementX:40,bubbles:true}));
-    if(Math.abs(q.follow.yaw-before+.1)>1e-8)throw Error('Mouse look did not recover');return true;
+    if(Math.abs(q.follow.yaw-before+.35)>1e-8)throw Error('Mouse look did not recover');return true;
   });
   await page.mouse.up({button:'middle'});
   await page.keyboard.press('Escape');

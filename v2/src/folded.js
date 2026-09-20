@@ -2,7 +2,7 @@ import { pullSlide } from './folded-mechanisms.js';
 import { applyUpgrades, weaponDamage, scopeRange } from './folded-upgrades.js';
 import { predictMortar, mortarGroundTarget, MORTAR_PREVIEW_SEGMENTS } from './folded-ballistics.js';
 import { createFoldedPreferences, mountFoldedSettings, keyGlyph } from './folded-settings.js';
-import { createFoldedEffects } from './folded-effects.js';
+import { createFoldedEffects, createPhoenixExhaust } from './folded-effects.js';
 import { createPlayerDeath, DEATH_HOLD } from './folded-death.js';
 import { createFoldedEnemies } from './folded-ai.js';
 import { createEnemyView } from './folded-enemy-view.js';
@@ -37,6 +37,7 @@ import {
   clamp,
   angleDelta,
   redContact,
+  phoenixReady,
 } from './mechanics.js';
 import {
   foldedSolids,
@@ -266,6 +267,7 @@ const shots = [],
   mines = [],
   discovered = new Set(state.discovered);
 const effects = createFoldedEffects(scene);
+const phoenixExhaust = createPhoenixExhaust(model.body);
 const { burst, ripple, projectile, updateSparks, updateWaves } = effects;
 let time = 0,
   frames = 0,
@@ -426,15 +428,17 @@ function setState(id, kind) {
     } else rejectImpact(kind);
     return changed;
   }
-  if (!releaseFolded(id, kind, p, state, world.lifts, time)) {
+  if (world.signals.active(id)) return false;
+  const next = { ...state };
+  if (!releaseFolded(id, kind, p, next, world.lifts, time)) {
     rejectImpact(kind);
     return false;
   }
+  const changes = Object.fromEntries(
+    Object.entries(next).filter(([key, value]) => value === true && !state[key]),
+  );
+  world.signals.trigger(id, changes);
   world.signalRelease(id, time);
-  if (!state.relays && state['relay-west'] && state['relay-east']) {
-    state.relays = true;
-    world.signalRelease('relays', time);
-  }
   audio.event('lever');
   save();
   return true;
@@ -474,15 +478,18 @@ function weaponOrigin() {
   return new T.Vector3(0, 2, 0).applyQuaternion(model.root.quaternion).add(model.root.position);
 }
 function updateAim() {
-  if (playerStunned(p, time)) return;
   if (thirdPerson) pointer.set(0, 0);
   picker.setFromCamera(pointer, camera);
   const direct = world.cast(picker.ray.origin, picker.ray.direction, 300, {
     aiming: true,
     extras: mines,
   });
+  const tray =
+    p.weapon === 'mortar'
+      ? [direct?.target, direct?.blockedTarget].find((target) => target?.surface === 'top')
+      : null;
   const hit =
-    p.weapon === 'mortar' && !direct?.target
+    p.weapon === 'mortar' && !direct?.target && !tray
       ? world.cast(picker.ray.origin, picker.ray.direction, 300, {
           aiming: true,
           terrainOnly: true,
@@ -503,6 +510,8 @@ function updateAim() {
     }
   } else picker.ray.intersectPlane(new T.Plane(new T.Vector3(0, 1, 0), -p.y - 2), aim);
   if (p.weapon === 'mortar') {
+    // A tray rim identifies its horizontal landing surface, even when viewed from below.
+    if (tray) picker.ray.intersectPlane(new T.Plane(new T.Vector3(0, 1, 0), -tray.y), aim);
     const range = scopeRange(p, MORTAR.range);
     const clamped = Math.hypot(aim.x - p.x, aim.z - p.z) > range;
     const t = mortarTarget(p.x, p.z, aim.x, aim.z, range);
@@ -511,7 +520,7 @@ function updateAim() {
     if (clamped) aim.y = Math.max(p.y, aim.y);
     // Elevated machinery has a contact surface of its own. Actor hulls and
     // range-clamped aim instead resolve to the supporting ground below them.
-    const machinery = hit?.target && !hit.target.model && !hit.target.enemy;
+    const machinery = tray || (hit?.target && !hit.target.model && !hit.target.enemy);
     if (!machinery || clamped)
       aim.copy(
         mortarGroundTarget(aim, (start, direction, distance) =>
@@ -575,6 +584,8 @@ function updateLaser(dt) {
   }
   p.heat = Math.min(100, p.heat + LASER.heat * dt);
   p.lastHeat = time;
+  p.boostCooling = false;
+  p.actionHeatAt = time;
   if (p.heat >= 100) p.overheated = true;
   for (let i = 0; i < path.length; i++) {
     const { start, end, hit } = path[i];
@@ -709,7 +720,7 @@ function target() {
 }
 function interact() {
   const t = target();
-  if (!t || p.hp <= 0 || playerStunned(p, time)) return false;
+  if (!t || p.hp <= 0) return false;
   if (t.kind === 'pickup') {
     state[t.id] = true;
     if (t.upgrade) {
@@ -779,6 +790,8 @@ function respawn() {
     afloat: false,
     speed: 1,
     lastHeat: -10,
+    boostCooling: false,
+    actionHeatAt: -10,
     lastShot: -10,
     invincible: time + 1,
     hurtUntil: 0,
@@ -786,6 +799,7 @@ function respawn() {
     knockX: 0,
     knockZ: 0,
   });
+  phoenixExhaust.update(false, time);
   clearShots();
   resetEnemies();
   p.dockHold = 0;
@@ -895,7 +909,9 @@ function updateMagnet(dt) {
     aimDir = aim.clone().sub(origin).normalize();
   const candidates = [
     ...world.sidePuzzles.targets.filter((c) => c.kind === 'magnet'),
-    ...world.controls.filter((c) => c.kind === 'magnet' && (c.slide || !state[c.id])),
+    ...world.controls.filter(
+      (c) => c.kind === 'magnet' && (c.slide || !world.signals.active(c.id)),
+    ),
     ...world.enemies.filter(
       (e) =>
         ((e.magneticShield && !e.shieldRemoved) || magnetPullable(e)) &&
@@ -916,14 +932,19 @@ function updateMagnet(dt) {
         pos,
         delta,
         locked: c === magnetLock,
+        pointed:
+          c.kind === 'magnet' && picker.ray.distanceSqToPoint(pos) <= (c.radius || 0.75) ** 2,
         distance: delta.length(),
         alignment: delta.clone().normalize().dot(aimDir),
       };
     })
-    .filter((q) => q.distance < 13 && q.alignment > (q.locked ? 0.75 : 0.95))
+    .filter((q) => q.distance < 13 && (q.pointed || q.alignment > (q.locked ? 0.75 : 0.95)))
     .sort(
       (a, b) =>
-        Number(b.locked) - Number(a.locked) || b.alignment - a.alignment || a.distance - b.distance,
+        Number(b.locked) - Number(a.locked) ||
+        Number(b.pointed) - Number(a.pointed) ||
+        b.alignment - a.alignment ||
+        a.distance - b.distance,
     )
     .find((q) => {
       const h = world.cast(origin, q.delta.clone().normalize(), q.distance, { extras: mines });
@@ -967,6 +988,8 @@ function updateMagnet(dt) {
   if (p.overheated) return;
   p.heat = Math.min(100, p.heat + (c ? 12 : 3) * dt);
   p.lastHeat = time;
+  p.boostCooling = false;
+  p.actionHeatAt = time;
   if (p.heat >= 100) p.overheated = true;
   if (!c) return;
   if (c.slide) {
@@ -1040,13 +1063,14 @@ function updateMagnet(dt) {
     burst(end, SIGNAL.magnet, 8);
     audio.event('armor');
   } else {
+    c.tugAt = time;
+    c.pullDirection.copy(origin).sub(c.root.position);
+    c.pullDirection.y = 0;
+    c.pullDirection.normalize().applyQuaternion(c.root.quaternion.clone().invert());
     c.pull = (c.pull || 0) + dt;
-    c.moving.position.z = Math.min(0.9, c.pull);
-    c.root.rotation.z = Math.sin(time * 30) * 0.08;
-    if (c.pull > 0.6) {
-      setState(c.id, 'magnet');
-      audio.event('lever');
-      c.root.rotation.z = 0;
+    if (c.pull >= 0.6 && setState(c.id, 'magnet')) {
+      burst(end, SIGNAL.magnet, 6);
+      audio.event('armor', { position: c });
     }
   }
 }
@@ -1096,6 +1120,11 @@ function completeEnding() {
 function advance(dt) {
   if (paused || mapOpen) return;
   time += dt;
+  phoenixExhaust.update(p.hp > 0 && !p.endingTime && phoenixReady(p), time);
+  if (world.advanceSignals(dt, time)) {
+    if (!state.relays && state['relay-west'] && state['relay-east']) state.relays = true;
+    save();
+  }
   if (deathAt >= 0) {
     laserBeam.visible = laserGuide.visible = laserEndpoint.visible = false;
     mortarGuide.visible = mortarLanding.visible = magneticBeam.visible = false;
@@ -1114,8 +1143,7 @@ function advance(dt) {
     if (p.endingTime >= ENDING_DURATION) completeEnding();
     return;
   }
-  const stunned = playerStunned(p, time);
-  const dock = stunned ? null : target();
+  const dock = target();
   const walking = [bindings.up, bindings.down, bindings.left, bindings.right].some((k) =>
     keys.has(k),
   );
@@ -1154,10 +1182,8 @@ function advance(dt) {
       : 0;
   world.transport(dt, p);
   updateLifts(dt);
-  const horizontal = stunned
-      ? 0
-      : Number(keys.has(bindings.right)) - Number(keys.has(bindings.left)),
-    vertical = stunned ? 0 : Number(keys.has(bindings.down)) - Number(keys.has(bindings.up));
+  const horizontal = Number(keys.has(bindings.right)) - Number(keys.has(bindings.left)),
+    vertical = Number(keys.has(bindings.down)) - Number(keys.has(bindings.up));
   const move = thirdPerson
     ? cameraMovement(horizontal, vertical, follow.yaw)
     : screenMovement(horizontal, vertical);
@@ -1215,6 +1241,7 @@ function advance(dt) {
   if (!wasOverheated && p.overheated) audio.event('heat');
   recoil = Math.max(0, recoil - dt * 2);
   model.barrel.position.z = -recoil;
+  phoenixExhaust.update(p.hp > 0 && phoenixReady(p), time);
   model.rollWheels(Math.hypot(p.x - oldX, p.z - oldZ) * 2.4);
   for (const { m, color, opacity, transparent, depthWrite } of hullMaterials) {
     const fade =
@@ -1439,10 +1466,6 @@ function input(code, repeat = false) {
     if (code === bindings.skip && !repeat) respawn();
     return;
   }
-  if (playerStunned(p, time)) {
-    keys.add(code);
-    return;
-  }
   if (code === bindings.map && !repeat) {
     setMap(!mapOpen);
     return;
@@ -1475,9 +1498,6 @@ const controls = installFoldedInput({
   pointer,
   follow,
   status: {
-    get stunned() {
-      return playerStunned(p, time);
-    },
     get thirdPerson() {
       return thirdPerson;
     },

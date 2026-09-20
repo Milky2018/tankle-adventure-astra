@@ -39,7 +39,7 @@ export const magnetPullable=e=>['scout','skirmisher','miner','repairer'].include
 export const playerStunned = (p,time) => p.hp > 0 && time < (p.hurtUntil || 0);
 export function beginPlayerHit(p,time,source){
   const dx=source?p.x-source.x:0,dz=source?p.z-source.z:0,length=Math.hypot(dx,dz);
-  p.hurtAt=time;p.hurtUntil=p.invincible;p.speed=1;p.dockHold=0;
+  p.hurtAt=time;p.hurtUntil=p.invincible;
   p.knockX=length>.001?dx/length:-Math.sin(p.heading||0);
   p.knockZ=length>.001?dz/length:-Math.cos(p.heading||0);
 }

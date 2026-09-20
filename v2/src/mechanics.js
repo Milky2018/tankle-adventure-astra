@@ -23,6 +23,8 @@ export function newPlayer() {
 export function shootHeat(p, time, cost = 20, cooldown = 0.5) {
   if (p.overheated || p.hp <= 0 || time - p.lastShot < Math.max(cooldown, p.shotCooldown || 0.5)) return false;
   p.lastShot = p.lastHeat = time;
+  p.boostCooling = false;
+  p.actionHeatAt = time;
   p.shotCooldown = cooldown;
   p.heat = Math.min(100, p.heat + cost);
   if (p.heat >= 100) p.overheated = true;
@@ -32,11 +34,11 @@ export function updateHeat(p, dt, time, boost, moving) {
   const active = boost && moving && p.overdrive && (!p.overheated || p.circulation) && !p.deployed;
   const speedRange = OVERDRIVE_MAX_SPEED - 1;
   p.speed = approach(p.speed, active ? (p.phoenix ? PHOENIX_MAX_SPEED : OVERDRIVE_MAX_SPEED) : 1, dt * speedRange / (active ? 0.5 : 0.35));
-  if (p.speed > 1.00001) {
-    // The shared engine budget continues during deceleration, including an overheat coast.
+  if (active) {
+    p.boostCooling = true;
     p.heat = Math.min(100, p.heat + 15 * dt);
     p.lastHeat = time;
-  } else if (time - p.lastHeat >= 0.75) {
+  } else if ((!boost && p.boostCooling && time - (p.actionHeatAt ?? -Infinity) >= 0.75) || time - p.lastHeat >= 0.75) {
     p.heat = Math.max(0, p.heat - 50 * (p.coolingUpgrade ? 1.25 : 1) * dt);
     if (p.heat <= 30) p.overheated = false;
   }

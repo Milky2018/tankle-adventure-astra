@@ -7,8 +7,9 @@ async page=>{
  g.scenario({state:open,enemies:Object.fromEntries(a.world.enemies.map(e=>[e.id,0])),player:{invincible:1e9}});
  const results=[];
  for(const c of [...a.world.controls,...a.world.sidePuzzles.targets]){
-  if(c.surface==='top'||c.id==='rail-carrier'||c.opticalNormal||['laser','dock','use'].includes(c.kind))continue;
-  a.state[c.id]=false;g.step(0);
+  if(c.surface==='top'||['rail-carrier','mortar-cache'].includes(c.id)||c.opticalNormal||['laser','dock','use'].includes(c.kind))continue;
+  if(c.requires)a.state[c.requires]=true;
+  a.state[c.id]=false;g.step(.6,false);
   let found=null;
   for(const radius of [3,5,8,12,18]){
    for(let i=0;i<32&&!found;i++){
@@ -24,7 +25,7 @@ async page=>{
   }
   results.push({id:c.id,kind:c.kind,position:[c.x,c.y,c.z],approach:found});a.state[c.id]=true;
  }
- const unreachable=results.filter(r=>!r.approach);if(unreachable.length)throw Error(JSON.stringify(unreachable));return {count:results.length,unreachable,results,scope:'Supported approach and direct firing line for ordinary controls; lob trays and optical receivers covered by their gameplay suites.'};
+ const unreachable=results.filter(r=>!r.approach);if(unreachable.length)throw Error(JSON.stringify(unreachable));return {count:results.length,unreachable,results,scope:'Supported approach and direct firing line for ordinary controls; lob trays, high inspection window and optical receivers covered by their gameplay suites.'};
  });
  for(const view of ['overhead','third']){
   await page.evaluate(view=>{const g=__game;g.scenario({player:{x:-162,y:8,z:-70,hp:50}});g.debug.setCameraView(view);g.look(Math.PI,.25);g.step(.2);},view);

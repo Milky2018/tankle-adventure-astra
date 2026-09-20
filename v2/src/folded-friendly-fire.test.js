@@ -385,3 +385,19 @@ test('accepted hits start directional stun and repeated hits do not extend it', 
   assert.equal(f.p.hurtUntil, 1.6);
   assert.ok(f.p.knockX > 0);
 });
+
+test('horizontal trays accept exposed top blasts but reject explosions underneath', () => {
+  const tray = { id: 'tray', x: 0, y: 2, z: 0, radius: 0.95, surface: 'top' };
+  for (const [height, expected] of [
+    [1.95, []],
+    [2, ['tray']],
+    [2.5, ['tray']],
+  ]) {
+    const f = fixture([], { controls: [tray] });
+    f.impact(
+      { point: new T.Vector3(0, height, 0) },
+      { mortar: true, hostile: false, origin: new T.Vector3(0, 2, -10) },
+    );
+    assert.deepEqual(f.events, expected);
+  }
+});

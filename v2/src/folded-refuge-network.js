@@ -83,11 +83,11 @@ export const refugeSolids = [
 export const refugeControls = [
   { id: 'optical-screen', x: 214, y: 25.3, z: -10, kind: 'shot', circuit: [[214,24.12,-10],[219.7,24.12,-10],[219.7,24.12,-4]] },
   { id: 'coolant-bypass', x: 278, y: -22.7, z: 117, kind: 'shot', requires: 'coolant-return' },
-  { id: 'inner-transit', x: 122, y: 25.3, z: 35, circuit: [[122,24.12,35],[138,24.12,35],[138,24.12,-20]], kind: 'shot', requires: 'inner-thermal', approach: { y: 24, minZ: 28 } },
-  { id: 'proving-inspection', x: 65, y: 17.3, z: -154, kind: 'shot', requires: 'load', approach: { y: 16, maxZ: -148 } },
-  { id: 'prototype-inspection', x: -40, y: -14.7, z: 112, kind: 'shot', requires: 'relays', approach: { y: -16, maxZ: 115 } },
-  { id: 'overseer-service', x: -10, y: -6.7, z: 61, kind: 'shot', approach: { y: -8, maxZ: 63 } },
-  { id: 'overdrive-bypass', x: -20, y: -6.7, z: 87, kind: 'shot', requires: 'overdrive', approach: { y: -8, maxZ: 92 } },
+  { id: 'inner-transit', x: 122, y: 25.3, z: 35, circuit: [[122,24.12,35],[138,24.12,35],[138,24.12,-20]], kind: 'shot', requires: 'inner-thermal', facing: [0,0,-1] },
+  { id: 'proving-inspection', x: 65, y: 17.3, z: -154, kind: 'shot', requires: 'load', facing: [1,0,0] },
+  { id: 'prototype-inspection', x: -40, y: -14.7, z: 112, kind: 'shot', requires: 'relays', facing: [-1,0,0] },
+  { id: 'overseer-service', x: -10, y: -6.7, z: 61, kind: 'shot', facing: [0,0,-1] },
+  { id: 'overdrive-bypass', x: -20, y: -6.7, z: 87, kind: 'shot', requires: 'overdrive', facing: [1,0,0] },
 ];
 export const refugeFlags = ['optical-screen','coolant-bypass', 'proving-inspection', 'prototype-inspection', 'overseer-service', 'overdrive-bypass', 'phoenix-departure'];
 

@@ -6,7 +6,7 @@ import {inRect,deckHeight,moveFolded,foldedSupport} from './folded-layout.js';
 export function applyFloorHeat(player,dt,time,state){
   const floor=[...expansionHeat,...cityBelts.filter(b=>b.heat)].find(q=>inRect(player.x,player.z,q)&&Math.abs(deckHeight(q,player.z)-player.y)<.5&&(!q.release||!state[q.release])&&(!q.stop||!state[q.stop]));
   if(!floor)return;
-  player.heat=Math.min(100,player.heat+floor.heat*dt);player.lastHeat=time;
+  player.heat=Math.min(100,player.heat+floor.heat*dt);player.lastHeat=time;player.boostCooling=false;player.actionHeatAt=time;
   if(player.heat>=100)player.overheated=true;
 }
 

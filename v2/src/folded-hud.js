@@ -1,3 +1,4 @@
+import {phoenixReady} from './mechanics.js';
 import { playerMaxHp } from './mechanics.js';
 const tank='<path d="M10 34h28v12H10zM18 27h14v7H18zM30 29h15M14 40h20"/>';
 const target='<path d="M145 27h20v19h-20zM150 33h10M150 40h10"/>';
@@ -69,7 +70,7 @@ export function createAbilityHud(tools,acquired,keyGlyph){
     for(const def of definitions){
       const card=cards.get(def.id),owned=def.id==='cannon'||!!p[def.id],reinforced=!!p[`${def.id}Upgrade`];card.hidden=!owned&&!reinforced;card.querySelector('kbd').hidden=!owned;
       const selected=def.group==='weapons'&&p.weapon===def.id;
-      const active=selected||def.id==='magnet'&&!!magnetic||def.id==='flotation'&&p.deployed||def.id==='overdrive'&&p.speed>1.01||def.id==='phoenix'&&p.speed>=3.19||def.id==='circulation'&&p.overheated;
+      const active=selected||def.id==='magnet'&&!!magnetic||def.id==='flotation'&&p.deployed||def.id==='overdrive'&&p.speed>1.01||def.id==='phoenix'&&phoenixReady(p)||def.id==='circulation'&&p.overheated;
       card.classList.toggle('reinforced',reinforced);card.querySelector('.reinforcement-value').hidden=!reinforced;card.setAttribute('aria-label',def.label+(reinforced?' · damage +50%':''));
       card.classList.toggle('selected',selected);card.classList.toggle('active',!!active);
       card.classList.toggle('new-ability',(def.id===latest||def.id===upgradeLatest)&&time<until);
