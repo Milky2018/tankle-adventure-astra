@@ -35,7 +35,7 @@ test('the pump return reveals its closed gate at the machine and reconnects dry 
   for(let i=0;i<250;i++)moveFolded(firstVisit,0,-.15,s);
   assert.ok(firstVisit.z>-23,'the ferry-side shutter must prevent bypassing the first Flotation crossing');
   drive(p,58,4,s);
-  assert.equal(releaseFolded('pump','cannon',p,s,[]),false);
+  assert.equal(releaseFolded('pump','cannon',firstVisit,s,[]),false);
   for(let i=0;i<90;i++)moveFolded(p,0,-.15,s);
   assert.ok(p.z>-9,'the closed return is visible before entering the long bridge');
   drive(p,58,4,s);p.pumpPressure=.8;
@@ -65,7 +65,7 @@ test('inside releases and saved progression never grant the roof from below',()=
   const p=player(),s=initialFoldedState();assert.equal(releaseFolded('cage','cannon',p,s,[]),false);
   Object.assign(p,{y:24,phoenix:true});assert.ok(releaseFolded('cage','cannon',p,s,[]));
   const restored=initialFoldedState({...s,anchor:'roof',flotation:true,phoenix:true,unknown:true});
-  assert.equal(restored.cage,true);assert.equal(restored.anchor,'roof');assert.equal(restored.unknown,undefined);
+  assert.equal(restored.cage,true);assert.equal(restored.anchor,'distribution');assert.equal(restored.unknown,undefined);
   Object.assign(p,{x:56,y:-8});assert.equal(releaseFolded('gangway','cannon',p,restored,[]),false);
   Object.assign(p,{x:86});assert.ok(releaseFolded('gangway','cannon',p,restored,[]));
 });
@@ -81,7 +81,7 @@ test('rendered flat surfaces never overlap at the same height and the shared cag
 
 test('both onward Phoenix shutters have sufficient supported runup and remain open for ordinary return',()=>{
   const state=initialFoldedState(),p=Object.assign(player(),{x:136,y:24,z:-30,phoenix:true});
-  drive(p,190,-30,state,true);assert.ok(state.optics);p.phoenix=false;drive(p,150,-30,state);
+  drive(p,190,-30,state,true);assert.equal(p.y,24);p.phoenix=false;drive(p,150,-30,state);
   Object.assign(p,{x:166,y:16,z:-64,phoenix:true,heat:0,overheated:false,speed:1});
   drive(p,166,-3,state,true);assert.ok(state.pressure);p.phoenix=false;drive(p,166,-40,state);
 });

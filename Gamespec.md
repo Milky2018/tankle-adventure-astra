@@ -129,11 +129,13 @@ Visible surfaces and aiming agree. A translucent foreground must not cause aim t
 | --- | ---: |
 | Starting hull / base maximum | 5 segments (25 HP) |
 | Maximum after five optional armour packs | 10 segments (50 HP) |
-| Protection after a direct hit | 0.6 s |
+| Hit recovery and protection after an attack | 0.6 s |
 | Player damage radius | 0.8 world units, inset from the hull |
 | Enemy body and weak-point hit allowance | 15% larger radius than the underlying target |
 
 Damage volumes and solid-body collision serve different purposes. Forgiving edge hits do not bypass armour; a surviving enemy remains a physical obstacle. Direct and repeated contact damage respect the protection interval. Furnace channels are a separate environmental hazard, described under combat.
+
+A damaging attack briefly knocks the Tank away from its source: approximately 1.2 units over the first 0.18 seconds, stopped by walls and unsupported edges. During the 0.6-second recovery the hull blinks, further attacks cannot deal damage, and movement, aim, weapons, traction, equipment changes and world interaction are disabled. Pause remains available. Held movement and fire resume after recovery; one-shot interactions pressed during recovery are not queued. Repeated hits cannot extend the recovery window. Death transitions directly to reconstruction presentation.
 
 HP is restored at Repair Hives or through reconstruction. An armour discovery adds and fills its new 5-HP segment once; it is not a repeatable field-healing supply. Low HP changes lights, exhaust, motion accents and HUD colour without weakening control responsiveness.
 
@@ -758,7 +760,7 @@ Projectile warnings last at least 0.85 seconds, lock before release and show bot
 
 | Boss | Structure and pressure | Player response and reward |
 | --- | --- | --- |
-| Prototype | Nine HP; a pressing carriage with a broad ram and readable radiator lids. Below roughly half health, a faster committed charge becomes two charges, each with a fresh warning | Bait an impact into solid cover to cancel the follow-up and expose the drive. Defeat opens the visible Overdrive cradle and return route. No damage quota limits a successful punish |
+| Prototype | Nine HP; a pressing carriage with a broad ram, readable radiator lids and alternating Cannon volleys and committed charges. Each Cannon volley has a fixed warning followed by three spread shots and a recovery opening. Below roughly half health, the charge becomes two charges, each with a fresh warning | Bait an impact into solid cover to cancel the follow-up and expose the drive. Defeat opens the visible Overdrive cradle and return route. No damage quota limits a successful punish |
 | Recycling Foundry / Overseer | Four HP per side battery and six in the core, fourteen total. Alternating batteries release staggered fans and aimed ground barrages. One finite pair of light reserves enters below 60% health | Use cover and side routes, then exploit open drive windows. Destroying a battery cancels its unreleased volley and stops its associated machinery, creating a flank. Ordinary Overdrive is not a Boss ram solution |
 | Optical Guardian | Forty-eight HP; armour protects front, sides and roof. Tracks between attacks, then holds its facing through warning, attack and recovery. Five-lane fast fans alternate with paired seeking shells whose turning is limited and ends before impact | Dodge the committed attack and use the stable recovery to find a reflected rear shot through broad mirrors and a clearly exposed rear aperture. Red contact is an alternative. No per-window quota. Victory gives access to the optional outward transmission and tower descent to the upper Gardens; the main optical returns precede the fight |
 | Sorter | An optional roof machine that moves rail cover and alternates a committed arm sweep with ground barrages. Hiding behind cargo invites a barrage | Read the pale-to-red-to-dark sweep warning and use its cover interaction to interrupt the arm and expose the drive. Magnet adds control of rail cover, but ordinary movement and Cannon remain viable. Victory releases a parallel B–C fast track; no ability reward or requirement for the ordinary B–C cage |

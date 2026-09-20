@@ -9,7 +9,7 @@ test('circuits include linked shutters, remote returns, carrier and rotating mir
   const links=circuitLinks(foldedControls,foldedSolids,foldedLiftDefs,cityMirrors);
   assert.equal(links.filter(l=>l.id==='pump').length,2);
   assert.equal(links.filter(l=>l.id==='pressure-return').length,4);
-  for(const [source,target]of [['load','carrier'],['relay-east','relays'],['mirror-index','return-index'],['garden-optical','garden-lift'],['reservoir-inlet','reservoir-transfer']])assert.ok(links.some(l=>l.id===source&&l.target===target));
+  for(const [source,target]of [['load','carrier'],['relay-east','relays'],['mirror-index','return-index'],['garden-optical','garden-lift'],['bridge-crane','freight-platform']])assert.ok(links.some(l=>l.id===source&&l.target===target));
 });
 
 test('activation changes the cable behind the traveling front, not the entire cable at once',()=>{

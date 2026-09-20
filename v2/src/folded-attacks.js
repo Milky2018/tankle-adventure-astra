@@ -4,5 +4,5 @@ export function barrageTargets(origin,target){
   return [-1,0,1].map((side,i)=>({x:target.x+dz/length*side*5,y:target.y,z:target.z-dx/length*side*5,delay:i*.32}));
 }
 export const RAIL={range:86,speed:120,lockTime:.8};
-export const BARRAGE={duration:1.65,height:15,radius:4};
+export const BARRAGE={duration:1.9,height:9,radius:4};
 export const SORTER_REACH=18;

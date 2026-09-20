@@ -62,7 +62,7 @@ test('old lower-Hive saves cannot resume behind the relocated workshop lock',()=
   const restored=initialFoldedState(saved);
   assert.equal(restored.anchor,'awakening');assert.equal(restored['relay-east'],true);assert.equal(restored['relay-west'],false);
   assert.deepEqual(restored.discovered,['foundry-awakening']);
-  assert.equal(initialFoldedState({...saved,'relay-west':true}).anchor,'lower-foundry');
+  assert.equal(initialFoldedState({...saved,'relay-west':true}).anchor,'awakening');
 });
 
 test('Foundry controls have local consequences and unobstructed overhead target silhouettes',()=>{
@@ -112,7 +112,7 @@ test('Mortar opens the outer ring and its inside return without giving the emitt
 
 test('Phoenix opens independent optical and circulation paths and all pre-guardian optical returns',()=>{
   const s=initialFoldedState(),p=player(136,24,-30,{overdrive:true,phoenix:true});
-  travel(p,s,[[228,-30]],{boost:true});assert.ok(s.optics);
+  travel(p,s,[[228,-30]],{boost:true});assert.equal(p.y,24);
   travel(p,s,[[242,-20],[242,-30],[254,-30],[254,-98],[64,-98],[64,-86]]);assert.equal(p.y,24);
   assert.ok(releaseFolded('emitter-cage','cannon',p,s,[]));assert.equal(s.guardian,false);
   travel(p,s,[[64,-98],[254,-98],[254,-30],[242,-30],[242,-20],[228,-20]]);s.gallery=true;assert.ok(releaseFolded('garden-optical','laser',p,s,[]));assert.ok(releaseFolded('yard-optical','laser',p,s,[]));
@@ -128,26 +128,21 @@ test('Phoenix alone reaches the dry circulation rig from its roof branch',()=>{
   travel(p,s,[[242,120],[222,120]]);assert.equal(p.y,-24);assert.equal(p.mortar,false);assert.equal(p.flotation,false);assert.equal(p.laser,false);
 });
 
-test('Circulation opens its own return but the inner lane also needs the optical release',()=>{
+test('Circulation opens its industrial return and the vestibule preserves the optical requirement',()=>{
   const s=initialFoldedState(),p=player(214,-24,128,{overdrive:true,phoenix:true,circulation:true});
-  travel(p,s,[[211,128],[211,25],[211,13],[218,13]],{boost:true});assert.equal(p.y,-16);
+  travel(p,s,[[211,128],[211,25],[211,13],[218,13]],{boost:true});
   assert.ok(releaseFolded('pressure-return','cannon',p,s,[]));
-  travel(p,s,[[234,13],[254,13],[254,120],[266,120]]);
-  for(let i=0;i<240;i++)moveFolded(p,0,-.2,s);
-  assert.ok(p.z>112,'Circulation cannot bypass the optical shutter');
-  assert.equal(releaseFolded('inner-optics','cannon',p,s,[]),false);
-  assert.equal(releaseFolded('inner-optics','mortar',p,s,[]),false);
-  assert.ok(releaseFolded('inner-optics','laser',p,s,[]));
-  travel(p,s,[[266,120]]);
-  travel(p,s,[[266,6]],{boost:true});assert.equal(p.y,-40);
-  travel(p,s,[[44,6],[44,-10]]);assert.ok(releaseFolded('last-cage','cannon',p,s,[]));
-  s['core-feed']=true; // The separate hearth circuit is covered by the expansion route test.
-  travel(p,s,[[34,-10],[34,6],[34,68],[0,68],[0,48]]);assert.equal(p.y,-56);
-  s.keeper=true;travel(p,s,[[0,8],[0,0]]);assert.equal(p.y,-56);
+  const upper=player(122,24,-28,{overdrive:true,phoenix:true,circulation:true});
+  assert.equal(releaseFolded('inner-optics','cannon',upper,s,[]),false);
+  assert.equal(releaseFolded('inner-optics','mortar',upper,s,[]),false);
+  travel(upper,s,[[122,32]],{boost:true});assert.ok(s['inner-thermal']);
+  assert.ok(releaseFolded('inner-transit','cannon',upper,s,[]));
+  assert.equal(s['inner-optics'],false);
+  assert.ok(releaseFolded('inner-optics','laser',upper,s,[]));
 });
 
-test('the ordinary Phoenix heat budget cannot cross either sustained belt even with repeated cooling',()=>{
-  for(const [x,z,y,end]of [[211,128,-24,28],[266,128,-24,16]]){
+test('the ordinary Phoenix heat budget cannot cross the industrial sustained belt even with repeated cooling',()=>{
+  for(const [x,z,y,end]of [[211,128,-24,28]]){
     const p=player(x,y,z,{overdrive:true,phoenix:true}),s=initialFoldedState({'inner-optics':true});let farthest=z;
     for(let i=0;i<60*90;i++){
       updateHeat(p,1/60,i/60,!p.overheated,true);applyFloorHeat(p,1/60,i/60,s);
@@ -158,18 +153,13 @@ test('the ordinary Phoenix heat budget cannot cross either sustained belt even w
   }
 });
 
-test('predecessor service bays are reachable without obstructing the final through-rail',()=>{
-  const s=initialFoldedState(),p=player(250,-40,6,{overdrive:true,phoenix:true,circulation:true});
-  for(const x of [210,146,82]){
-    travel(p,s,[[x,6],[x,-2],[x-6,-2],[x-6,-9],[x-6,-2],[x,6]]);
-    assert.equal(p.y,-40);
-  }
-  travel(p,s,[[44,6],[44,-10]]);
-  assert.equal(releaseFolded('last-cage','cannon',p,s,[]),true);
-  travel(p,s,[[44,6],[250,6]],{boost:true});
-  travel(p,s,[[44,6]],{boost:true});
-  assert.equal(p.y,-40);
-  assert.equal(s.keeper,false);
+test('compact predecessor rooms link the furnace landing, quiet bays and refuge',()=>{
+  const s=initialFoldedState(),p=player(82,-40,46,{overdrive:true,phoenix:true,circulation:true});
+  travel(p,s,[[82,56],[70,56],[70,46],[82,46],[82,30],[102,30],[102,20],[82,20],[82,6],[76,6],[76,-8],[76,6],[44,6],[44,-10]]);
+  assert.equal(p.y,-40);assert.equal(s.keeper,false);
+  assert.ok(releaseFolded('last-cage','cannon',p,s,[]));
+  s['core-feed']=true;
+  travel(p,s,[[34,-10],[34,68],[0,68],[0,48]]);assert.equal(p.y,-56);
 });
 
 test('the steep signal ascent supports the entire hull in both directions',()=>{

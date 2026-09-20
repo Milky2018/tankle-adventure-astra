@@ -9,12 +9,16 @@ export const UPGRADE_IDS = [
   'cannon-coil',
   'mortar-charge',
   'laser-focus',
+  'cannon-scope',
 ];
 export function applyUpgrades(player, state) {
   player.armorPacks = UPGRADE_IDS.slice(0, 5).filter((id) => state[id]).length;
   player.coolingUpgrade = !!state['cooling-filter'];
   player.cannonUpgrade = !!state['cannon-coil'];
   player.mortarUpgrade = !!state['mortar-charge'];
+  player.scopeUpgrade = !!state['cannon-scope'];
   player.laserUpgrade = !!state['laser-focus'];
 }
 export const weaponDamage = (player, weapon, base) => base * (player[`${weapon}Upgrade`] ? 1.5 : 1);
+
+export const scopeRange = (player, base) => base * (player.scopeUpgrade ? 1.5 : 1);

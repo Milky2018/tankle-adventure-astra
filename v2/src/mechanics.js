@@ -1,4 +1,4 @@
-export const MAX_HP = 50;
+export const MAX_HP = 25;
 export const playerMaxHp = p => MAX_HP + 5 * (p.armorPacks || 0);
 export const BASE_SPEED = 9.8;
 export const OVERDRIVE_MAX_SPEED = 1.6;

@@ -1,3 +1,4 @@
+import { HOSTILE_DAMAGE, BOSS_ATTACK_DAMAGE, hostileContactDamage } from './folded-weapons.js';
 import * as T from 'three';
 import { ENEMY_KINDS, woundedAlly } from './folded-enemy-rules.js';
 import { BOSS_ARENAS } from './folded-boss-arenas.js';
@@ -5,7 +6,7 @@ import { bossPattern, bossBarrage } from './folded-bosses.js';
 import { barrageTargets, RAIL, SORTER_REACH } from './folded-attacks.js';
 import { refugeAt, REFUGE_CLEARANCE } from './folded-refuges.js';
 import { canTelegraph } from './folded-pacing.js';
-import { cityContact } from './folded-combat.js';
+import { cityContact, playerStunned } from './folded-combat.js';
 import { moveWithConveyor } from './folded-machinery.js';
 import { foldedBattles, moveFolded } from './folded-layout.js';
 import { redContact } from './mechanics.js';
@@ -38,7 +39,10 @@ export function createFoldedEnemies({
     }
     for (const e of world.enemies) {
       Object.assign(e, e.spawn);
-      e.hp = e.persistent && state[e.id] ? 0 : e.max;
+      const completedCourt = foldedBattles.some(
+        (battle) => battle.battle === e.battle && state[battle.id],
+      );
+      e.hp = (e.persistent && state[e.id]) || completedCourt ? 0 : e.max;
       e.phase = 'idle';
       e.timer = 1.5;
       e.alertUntil = 0;
@@ -203,7 +207,8 @@ export function createFoldedEnemies({
         dz = p.z - e.z,
         along = dx * dir.x + dz * dir.z,
         side = Math.abs(dx * dir.z - dz * dir.x);
-      if (Math.abs(p.y - e.y) < 2 && along > 0 && along < length && side < 1.2) hurt(8);
+      if (Math.abs(p.y - e.y) < 2 && along > 0 && along < length && side < 1.2)
+        hurt(BOSS_ATTACK_DAMAGE.sweep, e);
       if (e.timer <= 0) {
         e.phase = 'vent';
         e.timer = e.pattern.recovery;
@@ -251,7 +256,8 @@ export function createFoldedEnemies({
           dz = p.z - e.z,
           along = dx * dir.x + dz * dir.z,
           side = Math.abs(dx * dir.z - dz * dir.x);
-        if (Math.abs(p.y - e.y) < 2 && along > 2 && along < reach && side < 1.1) hurt(9);
+        if (Math.abs(p.y - e.y) < 2 && along > 2 && along < reach && side < 1.1)
+          hurt(BOSS_ATTACK_DAMAGE.sweep, e);
         const cover = state.bodies.obstacles.find((s) => s.id === 'sorter-cover'),
           next = cover.x + dt * (e.sweepRight ? -5 : 5);
         if (
@@ -416,6 +422,10 @@ export function createFoldedEnemies({
           }
           if (e.timer <= 0 && canTelegraph(e, world.enemies)) {
             const sighting = state.combatArena === e.id || clearSight ? p : e.lastSeen || p;
+            if (e.id === 'prototype') {
+              e.attackCycle = (e.attackCycle || 0) + 1;
+              e.attack = e.attackCycle % 2 ? 'cannon' : 'charge';
+            }
             e.phase = 'warn';
             e.timer = e.id === 'prototype' ? (e.hp / e.max < 0.55 ? 0.85 : 1.05) : spec.warn;
             e.lock = new T.Vector3(
@@ -432,13 +442,27 @@ export function createFoldedEnemies({
             audio.event('warn', { position: e });
           }
         } else if (e.phase === 'warn') {
+          if (e.type === 'welder' && e.timer > 0.35 && clearSight) {
+            if (distance > 6) approachEnemy(e, p, dt);
+            e.aim = Math.atan2(p.x - e.x, p.z - e.z);
+            e.lock.set(p.x, p.y + 1.2, p.z);
+            origin.set(e.x, e.y + 1.5, e.z);
+          }
           if (e.type === 'sniper' && e.timer > RAIL.lockTime && clearSight) {
             e.lock.set(p.x, p.y + 1.2, p.z);
             e.aim = Math.atan2(p.x - e.x, p.z - e.z);
           }
           view.warn(e, origin, now());
           if (e.timer <= 0) {
-            if (spec.attack === 'charge') {
+            if (e.id === 'prototype' && e.attack === 'cannon') {
+              for (const offset of [-0.18, 0, 0.18])
+                shootEnemy(e, offset, null, e.lock, 0, false, {
+                  speed: 23,
+                  silent: offset !== -0.18,
+                });
+              e.phase = 'vent';
+              e.timer = spec.recovery;
+            } else if (spec.attack === 'charge') {
               e.phase = 'charge';
               e.timer = e.type === 'elite' ? 1.2 : 0.75;
             } else if (spec.attack === 'sweep') {
@@ -524,15 +548,21 @@ export function createFoldedEnemies({
             e.timer = spec.recovery;
           }
         } else if (e.phase === 'flame') {
+          // Advance along the committed bearing; passing behind remains a counter.
+          if (Math.hypot(e.x - e.spawn.x, e.z - e.spawn.z) < 32)
+            moveEnemy(e, e.aim, spec.speed * 0.55, dt);
+          origin.set(e.x, e.y + 1.5, e.z);
+          to.set(p.x, p.y + 1.2, p.z).sub(origin);
           const angle = e.aim - 0.7 + ((1.8 - e.timer) / 1.8) * 1.4,
             dir = new T.Vector3(Math.sin(angle), 0, Math.cos(angle));
-          const hit = world.cast(origin, dir, 8, { targets: false }),
-            length = hit ? hit.distance : 8,
+          const hit = world.cast(origin, dir, spec.reach, { targets: false }),
+            length = hit ? hit.distance : spec.reach,
             end = origin.clone().addScaledVector(dir, length);
           view.beam(e, origin, dir, length, 1, true);
           const across = to.x * dir.x + to.z * dir.z,
             side = Math.abs(to.x * dir.z - to.z * dir.x);
-          if (Math.abs(p.y - e.y) < 2 && across > 0 && across < length && side < 1) hurt(6);
+          if (Math.abs(p.y - e.y) < 2 && across > 0 && across < length && side < 1)
+            hurt(HOSTILE_DAMAGE.flame, e);
           if (now() - (e.flameAt || 0) > 0.12) {
             view.impact(end, 'orange', 3);
             e.flameAt = now();
@@ -598,21 +628,14 @@ export function createFoldedEnemies({
       if (Math.abs(p.y - e.y) < 2 && Math.hypot(p.x - e.x, p.z - e.z) < e.radius + 0.8) {
         if (now() - e.ramAt > 0.5) {
           e.ramAt = now();
-          const damage = cityContact(p, e);
+          const damage = playerStunned(p, now()) ? 0 : cityContact(p, e);
           if (damage) {
             hitEnemy(e, damage, new T.Vector3(p.x, p.y, p.z), redContact(p) ? 'red' : 'ram');
             audio.event('ram');
             if (!redContact(p) && p.speed < 3.19) p.speed = 1;
-          } else {
-            hurt(
-              e.id === 'prototype' && e.phase === 'charge'
-                ? 18
-                : p.speed >= 1.3 && e.type === 'guard'
-                  ? 6
-                  : 5,
-            );
+          } else if (hostileContactDamage(e)) {
+            hurt(hostileContactDamage(e), e);
             if (e.id === 'prototype' && e.phase === 'charge') {
-              moveFolded(p, Math.sin(e.aim) * 4, Math.cos(e.aim) * 4, state, world.lifts);
               e.phase = 'vent';
               e.timer = 1.6;
             }

@@ -26,9 +26,9 @@ test('the observation gallery is a real alternative at a different height, trave
  assert.ok(route.rooms.some(r=>r.y===20));
 });
 test('Phoenix has physical acceleration distance before the runout shutter and its first defenders',()=>{
- const p={...newPlayer(),x:218,y:16,z:-122,overdrive:true,phoenix:true},s=initialFoldedState({'proving-transfer':true,'proving-endurance':true});
- let time=0;while(p.x>174&&time<10){time+=1/60;updateHeat(p,1/60,time,true,true);moveFolded(p,-BASE_SPEED*p.speed/60,0,s);}
- assert.ok(s['proving-return']);assert.ok(p.x<174);assert.equal(p.overheated,false);
+ const p={...newPlayer(),x:238,y:16,z:-114,overdrive:true,phoenix:true},s=initialFoldedState({'proving-transfer':true,'proving-endurance':true});
+ let time=0;while(p.z< -68&&time<10){time+=1/60;updateHeat(p,1/60,time,true,true);moveFolded(p,0,BASE_SPEED*p.speed/60,s);}
+ assert.ok(s['phoenix-departure']);assert.ok(p.z> -68);assert.equal(p.overheated,false);
 });
 test('the coolant runout delivers red contact from a cold start using the unchanged heat rules',()=>{
  const hotFloor=expansionHeat[0],p={...newPlayer(),x:374,y:-24,z:106,overdrive:true,phoenix:true,circulation:true},s=initialFoldedState();
@@ -47,7 +47,7 @@ test('relocated acquisition and recovery points remain clear for an old saved an
 // Sweep every cross-section of the route gates; testing only their centre would
 // miss a new adjacent floor that lets the player skirt the jamb.
 test('full-width transfer and return shutters cover their supporting lane',()=>{
- for(const id of ['arsenal-transfer','arsenal-return','proving-transfer','proving-endurance','proving-return','lens-transfer','lens-return','coolant-transfer','hearth-transfer']){
+ for(const id of ['arsenal-return','proving-transfer','proving-endurance','lens-return','hearth-transfer']){
   const s=initialFoldedState(),gate=expansionSolids.find(g=>g.id===id),alongX=gate.w>gate.d;
   const fixed=alongX?gate.z:gate.x,start=(alongX?gate.x:gate.z)-3,end=start+(alongX?gate.w:gate.d)+6;
   for(let v=start;v<=end;v+=.5){

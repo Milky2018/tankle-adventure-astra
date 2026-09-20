@@ -18,7 +18,7 @@ export const arenaGates=[
 ];
 export const bossReserves=[
  {id:'foundry-reserve-left',reserveFor:'foundry',reserveAt:.6,type:'skirmisher',x:-12,y:-8,z:50,hp:3},
- {id:'foundry-reserve-right',reserveFor:'foundry',reserveAt:.6,type:'scout',x:22,y:-8,z:50,hp:2},
+ {id:'foundry-reserve-right',reserveFor:'foundry',reserveAt:.6,type:'scout',x:10,y:-8,z:50,hp:2},
  {id:'keeper-reserve-west',reserveFor:'keeper',reserveAt:.65,type:'skirmisher',x:-23,y:-56,z:30,hp:4},
  {id:'keeper-reserve-east',reserveFor:'keeper',reserveAt:.65,type:'miner',x:22,y:-56,z:44,hp:3},
  {id:'keeper-reserve-flank',reserveFor:'keeper',reserveAt:.32,type:'scout',x:-23,y:-56,z:38,hp:3},

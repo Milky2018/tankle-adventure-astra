@@ -5,7 +5,7 @@ export const sideDecks=[
  {id:'sorting-bay',x:112,z:-126,w:36,d:32,y:24,region:'testworks'},
  {id:'sorting-walk',x:120,z:-94,w:12,d:62,y:24,region:'testworks'}
 ];
-export const sideGates=[-25.5,-10.5].map(z=>({id:'rail-crossing',x:-94,z,w:20,d:1,y:8,h:3}));
+export const sideGates=[];
 export const sideObstacles=[
  {id:'rail-cart',x:-177.1,z:-77.1,w:2.2,d:2.2,y:8,h:1.6,permanent:true},
  {id:'care-screen',x:32,z:32,w:3,d:12,y:-8,h:3,permanent:true},

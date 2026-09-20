@@ -252,3 +252,93 @@ test('a sheltered sniper repositions and attacks without leaving its authored po
   assert.ok(e.z < 25.9);
   assert.ok(f.fired.length > 0);
 });
+
+test('physical contact is harmless unless a charging machine is attacking', () => {
+  for (const [type, phase, expected] of [
+    ['guard', 'idle', []],
+    ['scout', 'warn', []],
+    ['scout', 'charge', [5]],
+    ['elite', 'charge', [5]],
+  ]) {
+    const e = enemy(type, { z: 30, phase, timer: 1, awake: true });
+    const f = fixture([e], { z: 31, speed: 1 });
+    f.step(0.01);
+    assert.deepEqual(f.hits, expected, `${type}/${phase}`);
+  }
+});
+
+test('welder closes during early warning but commits before its sweep', () => {
+  const e = enemy('welder'),
+    f = fixture([e], { z: 34 });
+  f.step(0.05);
+  assert.equal(e.phase, 'warn');
+  f.p.x = 3;
+  f.step(0.2);
+  assert.ok(e.z > 21, 'Early warning must continue advancing');
+  assert.ok(e.aim > 0, 'Early warning follows lateral movement');
+  while (e.timer > 0.35) f.step(0.025);
+  const locked = e.aim,
+    x = e.x,
+    z = e.z;
+  f.p.x = -10;
+  f.step(0.1);
+  assert.equal(e.aim, locked);
+  assert.equal(e.x, x);
+  assert.equal(e.z, z);
+});
+
+test('welder advances through a committed sweep and threatens mid-range without tracking behind', () => {
+  const e = enemy('welder', { phase: 'flame', timer: 1.8, aim: 0 }),
+    f = fixture([e], { z: 37 });
+  f.step(0.9);
+  assert.ok(e.z > 23, 'Committed sweep must gain ground');
+  assert.deepEqual(f.hits, [5]);
+  const behind = enemy('welder', { phase: 'flame', timer: 1.8, aim: 0 }),
+    g = fixture([behind], { z: 15 });
+  g.step(0.9);
+  assert.deepEqual(g.hits, []);
+  assert.equal(behind.aim, 0);
+});
+
+test('welder sweep still stops at solid cover', () => {
+  const e = enemy('welder', { phase: 'flame', timer: 1.8, aim: 0 }),
+    f = fixture([e], { z: 37 });
+  f.block(true);
+  f.step(0.9);
+  assert.deepEqual(f.hits, []);
+});
+
+test('completed finite courts keep both the first squad and reserves cleared after reconstruction', () => {
+  const group = [
+    enemy('artillery', { battle: 'proving-endurance', wave: 0 }),
+    enemy('guard', { battle: 'proving-endurance', wave: 1 }),
+  ];
+  const patrol = enemy('scout');
+  const f = fixture([...group, patrol]);
+  f.ai.resetEnemies();
+  assert.ok(group.every((e) => e.hp === 0));
+  assert.equal(patrol.hp, patrol.max);
+});
+
+test('Prototype alternates warned cannon fire with its committed charge', () => {
+  const e = enemy('elite', {
+    id: 'prototype',
+    x: -32,
+    y: -16,
+    z: 130,
+    hp: 9,
+    max: 9,
+    persistent: true,
+  });
+  const f = fixture([e], { x: -40, y: -16, z: 122 });
+  for (let i = 0; i < 240; i++) f.step(0.05);
+  assert.ok(
+    f.events.some((event) => event.phase === 'charge'),
+    'Prototype must keep its charge',
+  );
+  assert.ok(f.fired.length >= 3, `Expected a cannon volley, got ${f.fired.length} shots`);
+  assert.ok(
+    f.events.some((event) => event.name === 'warn'),
+    'Firing must be telegraphed',
+  );
+});

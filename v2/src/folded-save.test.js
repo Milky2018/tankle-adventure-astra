@@ -22,10 +22,7 @@ test('campaign and each preview preserve their 0.1.0 save keys and initial equip
   for (const route of ['foundry', 'garden', 'freight']) {
     const preview = createFoldedSave(route, () => storage);
     const state = preview.load();
-    assert.equal(
-      state.anchor,
-      route === 'foundry' ? 'awakening' : route === 'garden' ? 'garden-entry' : 'loading-entry',
-    );
+    assert.equal(state.anchor, route === 'foundry' ? 'awakening' : 'turntable');
     assert.equal(state.overdrive, route !== 'foundry');
     assert.equal(state.magnetModule, route === 'garden');
     assert.equal(state.mortarModule, route === 'freight');
@@ -33,7 +30,7 @@ test('campaign and each preview preserve their 0.1.0 save keys and initial equip
     assert.ok(storage.getItem(`furnace-born-v2-folded-${route}`));
     preview.reset();
     assert.equal(storage.getItem(`furnace-born-v2-folded-${route}`), null);
-    assert.equal(campaign.load().anchor, 'roof');
+    assert.equal(campaign.load().anchor, 'distribution');
     assert.equal(campaign.load().phoenix, true);
   }
 });

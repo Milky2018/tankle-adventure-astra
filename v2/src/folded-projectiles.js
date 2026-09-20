@@ -1,8 +1,8 @@
-import { mortarPosition } from './folded-ballistics.js';
+import { mortarPosition, mortarGroundTarget, MORTAR_MAX_AGE } from './folded-ballistics.js';
 import * as T from 'three';
 import { BOSS_ARENAS } from './folded-boss-arenas.js';
 import { steerSeeker } from './folded-bosses.js';
-import { cityDamage, armorAbsorbs } from './folded-combat.js';
+import { cityDamage, armorAbsorbs, beginPlayerHit } from './folded-combat.js';
 import { refugeAt, refugeRayDistance } from './folded-refuges.js';
 import { BARRAGE, RAIL } from './folded-attacks.js';
 import { MORTAR } from './abilities.js';
@@ -28,9 +28,10 @@ export function createFoldedCombat({
 }) {
   const { burst, ripple, refugeImpact, rejectImpact, audio, projectile } = effects;
   const { alertSquad, save, setState, detonateMine, layMine } = events;
-  function hurt(amount) {
+  function hurt(amount, source) {
     const time = now();
     if (!refugeAt(p, world.hives, state) && damagePlayer(p, amount, time)) {
+      beginPlayerHit(p, time, source);
       events.hurt(time);
       audio.event('hurt');
       if (p.hp <= 0) {
@@ -123,7 +124,7 @@ export function createFoldedCombat({
             targets: false,
           })
         )
-          hurt(shot.blastDamage ?? HOSTILE_DAMAGE.barrage);
+          hurt(shot.blastDamage ?? HOSTILE_DAMAGE.barrage, blastOrigin);
         for (const e of world.enemies)
           if (e.hp > 0 && e.id !== shot.owner) {
             for (const target of [e, ...e.parts.filter((part) => part.hp > 0)]) {
@@ -233,7 +234,12 @@ export function createFoldedCombat({
     if (offset) dir.applyAxisAngle(new T.Vector3(0, 1, 0), offset);
     const mortar = lob || e.type === 'artillery' || e.type === 'miner',
       mesh = projectile(origin, dir, mortar, true, e.guardian || e.type === 'boss');
-    if (mortar) mesh.material.color.setHex(SIGNAL.magnet);
+    if (mortar) {
+      mesh.material.color.setHex(SIGNAL.magnet);
+      target = mortarGroundTarget(target, (start, direction, range) =>
+        world.cast(start, direction, range, { terrainOnly: true }),
+      );
+    }
     if (options.homing) {
       mesh.material.color.setHex(0xffb64a);
       mesh.scale.setScalar(1.8);
@@ -256,8 +262,8 @@ export function createFoldedCombat({
       owner: e.id,
       marker,
       delay,
-      duration: lob || e.type === 'artillery' ? BARRAGE.duration : MORTAR.duration,
-      arc: lob || e.type === 'artillery' ? BARRAGE.height : MORTAR.height,
+      duration: BARRAGE.duration,
+      arc: e.type === 'boss' ? 10 : BARRAGE.height,
       range: e.id === 'keeper' ? 94 : e.type === 'sniper' ? RAIL.range : 55,
       mineOwner: e.type === 'miner' ? e.id : null,
       damage: hostileShotDamage(e, lob ? 'barrage' : options.homing ? 'seekers' : e.attack),
@@ -288,7 +294,7 @@ export function createFoldedCombat({
             ? 'seeker-shot'
             : e.type === 'sniper'
               ? 'rail-shot'
-              : e.type === 'boss'
+              : e.type === 'boss' || e.id === 'prototype'
                 ? 'foundry-shot'
                 : e.guardian
                   ? 'guard-shot'
@@ -360,19 +366,17 @@ export function createFoldedCombat({
           point.distanceTo(s.position) <= distance &&
           (!hit || point.distanceTo(s.position) < hit.distance)
         ) {
-          hurt(s.damage);
+          hurt(s.damage, s.position);
           hit = { point, distance: point.distanceTo(s.position) };
         }
       }
       s.distance += distance;
       if (
         hit ||
-        (s.mortar && s.age >= (s.duration || MORTAR.duration)) ||
-        (!s.mortar && s.distance > (s.hostile ? s.range || 55 : CANNON.range)) ||
-        s.age > 4
+        (!s.mortar && s.distance > (s.hostile ? s.range || 55 : (s.range ?? CANNON.range))) ||
+        s.age >= MORTAR_MAX_AGE
       ) {
-        if (hit || (s.mortar && s.age >= (s.duration || MORTAR.duration)))
-          impact(hit || { point: next }, s);
+        if (hit) impact(hit, s);
         scene.remove(s.mesh);
         s.mesh.material.dispose();
         if (s.marker) {

@@ -1,4 +1,4 @@
-# Furnace Born
+# Tankle Adventure Astra
 
 A wordless tank Metroidvania with an interconnected mechanical city, third-person and overhead cameras, and eight weapons/abilities. [Gamespec.md](../Gamespec.md) owns game design. This directory owns implementation; no `v1` source or assets are used.
 
@@ -29,7 +29,7 @@ npm run build
 npm run preview
 ```
 
-`dist/` can be served by any static web server. Assets, music and dependencies are served locally without runtime CDN requests.
+`dist/` can be served by any static web server. Assets, music and dependencies are served locally without runtime CDN requests. The four imported MZ music cues can be auditioned at `/music/index.html`; source details and reimport instructions are in [scripts/music/README.md](scripts/music/README.md).
 
 ## Controls and settings
 
@@ -66,6 +66,7 @@ For browser regression checks, keep the development server running on port 5174 
 export PLAYWRIGHT_CLI=/absolute/path/to/playwright_cli.sh
 npm run test:browser
 npm run test:browser -- full-journey
+npm run test:browser -- soundtrack death
 # With a production preview running separately on port 5176:
 npm run test:browser -- production
 ```
@@ -91,7 +92,15 @@ See [sound-effect auditions](scripts/SOUND_EFFECTS.md) to regenerate the old/new
 Optional discovery, equipment persistence, real upgraded weapon hits and both-view Mortar landing checks:
 
 ```bash
-npm run test:browser -- exploration secret-trials secret-optics secret-access secret-cover upgrade-balance backdrop save-safety
+npm run test:browser -- exploration reward-routes detour-combat secret-trials secret-optics secret-access secret-cover control-clearance indoor-artillery upgrade-balance backdrop save-safety
 ```
 
+`boss-victory` covers Prototype, Foundry, Sorter and Keeper; pair it with `laser-readability` for the Guardian reflected-fire battle.
+
+`control-clearance` surveys supported approach positions and actual world rays for ordinary controls; lob trays and optical collectors use their dedicated gameplay checks. `indoor-artillery` fires live hostile shells beneath authored ceilings and verifies their landing and peak height. `exploration` also verifies all ten pickup notices, persistent equipment indicators and compact-window overlap.
+
 `secret-trials` compares the old Mortar orbit with a mixed-weapon response to the optional stores fight, then checks both-view reflected cabinet release, the Mortar annex, denied premature pickups, save/reload and input-driven detours. `secret-optics` surveys direct collector approaches and off-centre reflection. `secret-access` exercises Flotation, Phoenix and Magnet access; `secret-cover` checks physical canopy protection and its open firing lane. `backdrop` captures seven views, checks bounded draw overhead and repeated camera-switch resources. `upgrade-balance` compares ordinary/full equipment using controlled Keeper arena entries and identical input policies, with a 20–40-second mobile-Laser target; it is not a full-collection journey or a blind-player difficulty test. The warning-specific audition is `/output/audio/warning-comparison/index.html`; see the sound-effect notes for its snapshot baseline.
+
+`reward-routes` drives each expanded discovery route and its return with enemies disabled for geometry isolation. `detour-combat` separately exercises the three added squads at five hull segments without optional upgrades or invulnerability, and checks the one-segment mine payload.
+
+`title-icons` checks title hierarchy and narrow-screen line breaks and renders the actual HUD icon set for inspection. `scope` exercises the optional workshop, magnetic drawer, save persistence and real 24/36-unit Cannon and Mortar flights with matching landing previews. `artillery-clearance` surveys clear same-floor firing lanes at every artillery spawn while preserving walkable upper decks as physical cover.

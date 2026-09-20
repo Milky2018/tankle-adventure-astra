@@ -1,63 +1,41 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><title>The City Remembers · Furnace Born</title>
+<html lang="en">
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Music · Tankle Adventure — Astra</title>
 <style>
-:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#10191b;color:#e4e6d8}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 85% 0,#254043,transparent 60%);min-height:100vh}main{max-width:1160px;margin:auto;padding:54px 32px}.eyebrow{letter-spacing:.28em;font-size:11px;color:#c4a770}h1{font-family:Georgia,serif;font-weight:400;font-size:clamp(38px,6vw,68px);margin:14px 0}header p{color:#a7b4af;line-height:1.8;max-width:650px}header{border-bottom:1px solid #ffffff19;padding-bottom:28px}.layout{display:grid;grid-template-columns:1fr 1fr;gap:54px;margin-top:32px}h2{font-size:11px;letter-spacing:.2em;font-weight:500;color:#839c98;margin:24px 0 12px}.track{display:flex;align-items:center;gap:16px;width:100%;padding:14px 16px;border:1px solid transparent;border-bottom-color:#ffffff0c;background:transparent;color:inherit;text-align:left;cursor:pointer;border-radius:5px}.track:hover{background:#ffffff06}.track[aria-pressed=true]{background:#dec28e0d;border-color:#c4a77055}.number{font:12px monospace;color:#7f9995;width:22px}.track .names{flex:1}.track strong{font-size:14px;font-weight:500;display:block}.track small{font-size:11px;color:#829690;display:block;margin-top:4px}.duration{font:12px monospace;color:#bba77d}.deck{position:sticky;top:32px;align-self:start;border:1px solid #829b902f;border-radius:12px;background:#111c1dcc;padding:32px}.emblem{height:166px;display:grid;place-items:center}.rings{width:126px;height:126px;border:1px solid #b9a375;border-radius:50%;position:relative;box-shadow:0 0 50px #d2aa6610}.rings:before,.rings:after{content:'';position:absolute;border:1px dashed #6b8279;border-radius:50%;inset:12px}.rings:after{inset:34px;border:3px double #c2a87a}.playing .rings{animation:turn 24s linear infinite}@keyframes turn{to{transform:rotate(360deg)}}.deck h3{font:30px Georgia,serif;font-weight:400;margin:12px 0}.zh{color:#d9c89d;font-size:15px}.description{font-size:13px;color:#9bb0a8;line-height:1.8;min-height:48px}.timeline{height:4px;background:#31423e;position:relative;margin:28px 0 10px}.timeline i{display:block;height:100%;width:0;background:#d1b477}.timeline b{position:absolute;top:-3px;height:10px;width:1px;background:#d1b477}.time{display:flex;justify-content:space-between;color:#91a79e;font:11px monospace}.controls{display:flex;gap:10px;margin:26px 0 18px}button.control{background:#243735;color:#dce5dd;border:1px solid #526358;border-radius:5px;padding:12px 16px;cursor:pointer}button.control.primary{background:#d3ba84;color:#172724;border:none;min-width:95px}button:focus-visible,a:focus-visible{outline:2px solid #e5c982;outline-offset:3px}button:disabled{opacity:.45;cursor:wait}.setting[hidden]{display:none}.setting{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#a6b8af;margin:17px 0}input[type=range]{accent-color:#cbb581;width:48%}input[type=checkbox]{accent-color:#cbb581}a{color:#c5b78e;font-size:12px}.form{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0}.form button{font:11px system-ui;color:#a6b8af;border:1px solid #52635855;background:#172624;border-radius:4px;padding:6px 8px;cursor:pointer}.note{font-size:11px;color:#778e84;line-height:1.8}#status{color:#bda977;font-size:12px;min-height:18px}footer{padding-top:28px;border-top:1px solid #ffffff12;margin-top:40px;color:#768e84;font-size:11px;line-height:1.9}@media(max-width:750px){main{padding:28px 20px}.layout{grid-template-columns:1fr;gap:20px}.deck{position:relative;grid-row:1}.emblem{height:100px}.rings{height:80px;width:80px}.rings:after{inset:25px}}@media(prefers-reduced-motion:reduce){.playing .rings{animation:none}}
-</style></head><body><main><header><div class="eyebrow">FURNACE BORN / ORIGINAL SCORE</div><h1>The City Remembers</h1><p>城市仍然记得。<br>七处遗迹，三场守望，一次没有告别的清晨。</p></header><div class="layout"><div id="tracks" aria-label="曲目列表"></div><section class="deck" id="deck"><div class="eyebrow" id="category">REGION 01</div><div class="emblem" aria-hidden="true"><div class="rings"></div></div><h3 id="title">Clockwork Crypt</h3><div class="zh" id="zh">齿轮古堡</div><p class="description" id="description"></p><div class="timeline" aria-hidden="true"><i id="progress"></i><b id="marker"></b></div><div class="time"><span id="time">0:00</span><span id="loop"></span></div><div class="controls"><button class="control primary" id="play">播放</button><button class="control" id="restart">从头播放</button><button class="control" id="seam">试听接缝</button></div><div class="form" id="form" aria-label="曲式段落"></div><div id="status" role="status">选择曲目后开始播放</div><label class="setting">音量<input id="volume" aria-label="音量" type="range" min="0" max="1" step=".01" value=".65"></label><label class="setting" id="combat-row">叠加战斗节奏<input id="combat" type="checkbox"></label><p class="note" id="format"></p><a id="download" download>下载完整试听 MP3</a></section></div><footer>仅《齿轮古堡》保留古老圣咏动机与管风琴，其余十首采用独立主题和配器。每首 90–180 秒，没有使用现成游戏录音或外部采样。<br>区域与战斗曲以无损分轨播放，引子只出现一次，之后循环；结局曲自然结束。</footer></main>
+:root{color-scheme:dark;font:16px/1.6 system-ui,sans-serif;background:#102124;color:#e8e3cf}body{max-width:960px;margin:auto;padding:48px 24px}header{border-bottom:1px solid #52605a;padding-bottom:28px;margin-bottom:28px}.eyebrow{letter-spacing:.25em;color:#a7b6a5;font-size:.75rem}h1{font-size:clamp(1.6rem,4vw,2.5rem);margin:10px 0 0;letter-spacing:.04em}h1 small{font-weight:400;color:#dab979}p{color:#abbab3}#tracks{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{border:1px solid #425653;background:#182d30;padding:24px}.card.active{border-color:#e1bd72;background:#233637}.role{font-size:.75rem;color:#e1bd72;letter-spacing:.12em;text-transform:uppercase}h2{margin:8px 0;font-size:1.5rem}.meta{font-variant-numeric:tabular-nums;font-size:.85rem;color:#b5c2ba}.actions{display:flex;gap:16px;align-items:center;margin-top:20px}button{font:inherit;border:1px solid #bca96e;background:#cbb77f;color:#11272a;padding:8px 20px;cursor:pointer}button:disabled{opacity:.4;cursor:default}button:focus-visible,a:focus-visible{outline:2px solid #fff;outline-offset:4px}a{color:#cbb77f;font-size:.85rem}footer{margin-top:32px;padding-top:24px;border-top:1px solid #425653}footer .actions{flex-wrap:wrap}#status{min-height:1.6em}label{display:flex;align-items:center;gap:12px;font-size:.85rem}#credit{font-size:.75rem} @media(max-width:620px){#tracks{grid-template-columns:1fr}body{padding:24px 16px}h1 small{display:block}}
+</style>
+<header><div class="eyebrow">SOUNDTRACK / FOUR THEMES</div><h1>Tankle Adventure <small>Astra</small></h1><p>Two stages of the journey. Two scales of confrontation.</p></header>
+<main id="tracks"></main>
+<footer><div class="actions"><button id="stop" disabled>Stop</button><button id="seam" disabled>Hear loop transition</button><label>Volume <input id="volume" type="range" min="0" max="1" step=".01" value=".7"></label></div><p id="status" role="status">Select a recording to listen.</p><p id="credit">KADOKAWA · RPG Maker MZ. Imported from the owner's local music collection. Original loops preserved.</p><a href="/?chapter=folded">Return to the game</a></footer>
 <script type="module">
 const $=id=>document.getElementById(id),manifest=await fetch('./manifest.json').then(r=>r.json());
-let selected=manifest.tracks[0],ctx,master,voice,loaded,loading,token=0,pausedAt=0,playing=false,startTime=0;
-const clock=n=>`${Math.floor(n/60)}:${String(Math.floor(n%60)).padStart(2,'0')}`;
-const offset=n=>selected.loopStart==null?Math.min(n,selected.duration):n<selected.loopEnd?n:selected.loopStart+(n-selected.loopStart)%(selected.loopEnd-selected.loopStart);
-function stop(){if(voice){for(const {s,g}of voice){s.stop();s.disconnect();g.disconnect();}voice=null;}playing=false;$('deck').classList.remove('playing');$('play').textContent='播放';}
-function show(){
- $('title').textContent=selected.title;$('zh').textContent=selected.zh;$('description').textContent=`${selected.genre} · ${selected.description}`;
- $('category').textContent=`${selected.kind==='region'?'EXPLORATION':selected.kind==='battle'?'BATTLE':'EPILOGUE'} / ${selected.bpm} BPM / ${selected.meter}`;
- $('loop').textContent=selected.loopStart==null?`${selected.duration.toFixed(1)}s · 自然结束`:`${selected.loopStart.toFixed(2)} → ${selected.loopEnd.toFixed(2)}s`;
- $('marker').style.left=`${100*(selected.loopStart||0)/selected.duration}%`;$('marker').hidden=selected.loopStart==null;
- $('combat-row').hidden=selected.kind!=='region';$('seam').disabled=selected.loopStart==null;
- $('format').textContent=selected.loopStart==null?'结局镜头：连接 → 轨道 → 水庭 → 苏醒 → 清晨':'FLAC 无损 · 44.1 kHz · 尾音与混响已包含在循环中';
- $('download').href=`./${selected.preview}`;$('download').textContent=selected.kind==='ending'?'下载结局曲 MP3':'下载完整试听 MP3';
- for(const button of document.querySelectorAll('.track'))button.setAttribute('aria-pressed',button.dataset.id===selected.id?'true':'false');
- $('time').textContent='0:00';$('progress').style.width='0';
- $('form').replaceChildren();
- for(const section of selected.sections){const button=document.createElement('button');button.textContent=`${clock(section.time)} · ${section.name}`;button.onclick=()=>play(section.time);$('form').append(button);}
-}
-async function play(from=pausedAt){
- if(!ctx){ctx=new AudioContext({sampleRate:44100});master=ctx.createGain();master.gain.value=Number($('volume').value);master.connect(ctx.destination);}
- await ctx.resume();const mine=++token;stop();$('status').textContent='正在载入无损音轨…';$('play').disabled=true;
+let ctx,master,source,selected,serial=0;const cache=new Map();
+const clock=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+function stop(){if(source){source.stop();source.disconnect();source=null;}document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));$('stop').disabled=true;}
+async function play(track,seam=false){
+ const token=++serial;stop();selected=track;
+ if(!ctx){ctx=new AudioContext({sampleRate:44100});master=ctx.createGain();master.connect(ctx.destination);}
+ await ctx.resume();master.gain.value=Number($('volume').value);$('status').textContent=`Loading ${track.title}…`;
  try{
-  if(loaded?.id!==selected.id){
-   if(loading?.id!==selected.id){
-    const track=selected;
-    loading={id:track.id,promise:(async()=>{const buffers={};for(const [stem,file]of Object.entries(track.assets)){const r=await fetch(`./${file}`);if(!r.ok)throw Error(file);buffers[stem]=await ctx.decodeAudioData(await r.arrayBuffer());}return {id:track.id,buffers};})()};
-   }
-   const data=await loading.promise;if(mine!==token)return;loaded=data;
-  }
-  if(mine!==token)return;
-  pausedAt=offset(from);if(selected.loopStart==null&&pausedAt>=selected.duration)pausedAt=0;
-  startTime=ctx.currentTime+.03;voice=[];
-  for(const [stem,buffer]of Object.entries(loaded.buffers)){
-   const s=ctx.createBufferSource(),g=ctx.createGain();s.buffer=buffer;s.loop=selected.loopStart!=null;
-   if(s.loop){s.loopStart=selected.loopStart;s.loopEnd=selected.loopEnd;}
-   g.gain.value=stem==='pulse'?$('combat').checked?1:selected.explorationPulse:1;
-   s.connect(g);g.connect(master);s.start(startTime,pausedAt);voice.push({s,g,stem});
-  }
-  playing=true;$('deck').classList.add('playing');$('play').textContent='暂停';$('status').textContent=selected.loopStart==null?'结局曲正在播放':'引子后将无缝循环';
- }catch(error){if(mine===token)$('status').textContent=`载入失败，请重试：${error.message}`;}
- finally{if(mine===token)$('play').disabled=false;}
+  let buffer=cache.get(track.id);
+  if(!buffer){const response=await fetch(`./${track.assets.mix}`);if(!response.ok)throw Error('Recording unavailable');buffer=await ctx.decodeAudioData(await response.arrayBuffer());cache.set(track.id,buffer);while(cache.size>2)cache.delete(cache.keys().next().value);}
+  if(token!==serial)return;
+  source=ctx.createBufferSource();source.buffer=buffer;source.loop=true;source.loopStart=track.loopStart;source.loopEnd=track.loopEnd;source.connect(master);source.start(0,seam?track.loopEnd-4:0);
+  document.querySelector(`[data-id="${track.id}"]`).classList.add('active');$('stop').disabled=false;$('seam').disabled=false;
+  $('status').textContent=`${track.role} · ${track.title} — ${seam?'Loop transition in four seconds.':'Playing with its original loop.'}`;
+ }catch(error){if(token===serial)$('status').textContent=error.message;}
 }
-for(const [kind,label]of [['region','01—07 / 城市的七个区域'],['battle','08—10 / 主要战斗'],['ending','11 / 结局']]){
- const heading=document.createElement('h2');heading.textContent=label;$('tracks').append(heading);
- for(const track of manifest.tracks.filter(t=>t.kind===kind)){
-  const button=document.createElement('button');button.className='track';button.dataset.id=track.id;
-  button.innerHTML=`<span class="number">${String(manifest.tracks.indexOf(track)+1).padStart(2,'0')}</span><span class="names"><strong>${track.zh}</strong><small>${track.genre} · ${track.meter}</small></span><span class="duration">${clock(Math.round(track.duration))}</span>`;
-  button.onclick=()=>{token++;stop();selected=track;pausedAt=0;loaded=null;show();play(0);};$('tracks').append(button);
- }
+for(const track of manifest.tracks){
+ const card=document.createElement('section');card.className='card';card.dataset.id=track.id;
+ card.innerHTML=`<div class="role">${track.role}</div><h2>${track.title}</h2><div class="meta">${clock(track.duration)} · Loop ${track.loopStart.toFixed(3)} → ${track.loopEnd.toFixed(3)} s</div><p>${track.description}</p><div class="actions"><button data-track="${track.id}">Listen</button><a href="./${track.original}" download>Original OGG</a></div>`;
+ card.querySelector('button').onclick=()=>play(track);$('tracks').append(card);
 }
-$('play').onclick=()=>{if(playing){pausedAt=offset(pausedAt+ctx.currentTime-startTime);token++;stop();$('status').textContent='已暂停';}else play();};
-$('restart').onclick=()=>play(0);$('seam').onclick=()=>play(selected.loopEnd-5);
-$('volume').oninput=()=>{if(master)master.gain.setTargetAtTime(Number($('volume').value),ctx.currentTime,.06);};
-$('combat').onchange=()=>{for(const v of voice||[])if(v.stem==='pulse')v.g.gain.setTargetAtTime($('combat').checked?1:selected.explorationPulse,ctx.currentTime,.6);};
-setInterval(()=>{if(!playing)return;const elapsed=pausedAt+Math.max(0,ctx.currentTime-startTime),p=offset(elapsed);$('time').textContent=clock(p);$('progress').style.width=`${100*p/selected.duration}%`;if(selected.loopStart==null&&elapsed>=selected.duration){stop();pausedAt=0;$('status').textContent='播放完毕';}else if(elapsed>=selected.loopEnd&&selected.loopStart!=null)$('status').textContent='循环段正在播放';},100);
-addEventListener('pagehide',()=>{stop();ctx?.close();});show();
-</script></body></html>
+$('stop').onclick=()=>{serial++;stop();$('status').textContent='Stopped.';};
+$('seam').onclick=()=>selected&&play(selected,true);
+$('volume').oninput=()=>{if(master)master.gain.value=Number($('volume').value);};
+addEventListener('pagehide',()=>{serial++;stop();ctx?.close();});
+</script>
+</html>

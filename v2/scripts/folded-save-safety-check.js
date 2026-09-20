@@ -15,7 +15,7 @@ async page=>{
     }
     // Inject already launched attacks after spawn immunity expires. This exercises
     // projectile/contact handling independently of whether a sentry can see a Hive.
-    const h=foldedHives.find(h=>h.id==='arsenal-hive-0');
+    const h=foldedHives.find(h=>h.id==='turntable');
     g.scenario({state:{anchor:h.id}});g.respawn();g.step(2,false);
     g.scenario({enemies:Object.fromEntries(a.world.enemies.map(e=>[e.id,0])),player:{invincible:0}});
     const e=a.world.enemies.find(e=>e.type==='sniper');
@@ -29,13 +29,13 @@ async page=>{
     a.shootEnemy(artillery);
     for(let i=0;i<120;i++)a.updateShots(1/60);
     const mortarHp=a.p.hp,markersCleared=a.shots.length===0;
-    g.scenario({player:{hp:50,invincible:0}});
+    g.scenario({player:{hp:25,invincible:0}});
     a.layMine({id:'safety-fixture',x:h.x,y:h.y,z:h.z});
     for(let i=0;i<180;i++)a.updateMines(1/60);
     const mineHp=a.p.hp;
     a.clearShots();
     // A clear slice of the room isolates pursuit and charge from wall collisions.
-    g.scenario({player:{x:h.x+7,y:h.y,z:h.z,hp:50,invincible:0}});
+    g.scenario({player:{x:h.x+7,y:h.y,z:h.z,hp:25,invincible:0}});
     const scout=a.world.enemies.find(e=>e.type==='scout');
     Object.assign(scout,{x:h.x+19.5,y:h.y,z:h.z,hp:2,phase:'charge',timer:.7,aim:-Math.PI/2});
     scout.spawn={...scout.spawn,x:scout.x,y:scout.y,z:scout.z};
@@ -49,12 +49,12 @@ async page=>{
     a.shootEnemy(e);a.updateShots(.1);const outsideHp=a.p.hp;
     const V=e.model.root.position.constructor;
     const outbound=a.castWeapon(new V(h.x,h.y+2,h.z),new V(1,0,0),30,{targets:false});
-    a.clearShots();g.scenario({player:{x:h.x,y:h.y,z:h.z,hp:50}});
+    a.clearShots();g.scenario({player:{x:h.x,y:h.y,z:h.z,hp:25}});
     Object.assign(scout,{phase:'warn',timer:.01,alertUntil:a.time+10,lastSeen:{...a.p}});
     a.updateEnemies(1/60);const disengaged=scout.phase==='idle'&&scout.alertUntil===0;
     g.respawn();g.step(0);
     return {runs,projectileHp,incomingStopped,mortarHp,markersCleared,mineHp,pursuitDistance,chargeDistance,outsideHp,outboundBlocked:!!outbound?.refuge,disengaged};
   });
-  if(result.runs.some(r=>r.hp!==50||r.nearest<19.35)||result.projectileHp!==50||!result.incomingStopped||result.mortarHp!==50||!result.markersCleared||result.mineHp!==50||result.pursuitDistance<19.35||result.chargeDistance<19.35||result.outsideHp!==36||!result.outboundBlocked||!result.disengaged||errors.length)throw Error(JSON.stringify({...result,errors}));
+  if(result.runs.some(r=>r.hp!==25||r.nearest<19.35)||result.projectileHp!==25||!result.incomingStopped||result.mortarHp!==25||!result.markersCleared||result.mineHp!==25||result.pursuitDistance<19.35||result.chargeDistance<19.35||result.outsideHp!==15||!result.outboundBlocked||!result.disengaged||errors.length)throw Error(JSON.stringify({...result,errors}));
   return {...result,errors};
 }

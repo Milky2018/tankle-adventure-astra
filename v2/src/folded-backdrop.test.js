@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { basinSupports } from './folded-backdrop.js';
+import { basinSupports, basinBounds } from './folded-backdrop.js';
 import { foldedDecks, foldedLiftDefs } from './folded-layout.js';
 
 test('basin foundations touch their slabs without occupying lower routes or lift shafts', () => {
@@ -20,5 +20,16 @@ test('basin foundations touch their slabs without occupying lower routes or lift
         p.x <= l.x - 2 || p.x >= l.x + l.w + 2 || p.z <= l.z - 2 || p.z >= l.z + l.d + 2,
         `Pier crosses ${l.id}`,
       );
+  }
+});
+
+
+test('excavation walls leave camera clearance beyond every expanded deck', () => {
+  const b = basinBounds(foldedDecks);
+  for (const d of foldedDecks) {
+    assert.ok(d.x - b.left >= 40, d.id);
+    assert.ok(b.right - d.x - d.w >= 40, d.id);
+    assert.ok(d.z - b.north >= 40, d.id);
+    assert.ok(b.south - d.z - d.d >= 40, d.id);
   }
 });

@@ -6,7 +6,7 @@ export function mountFoldedInterface(){
   const $=id=>document.getElementById(id),panel=document.querySelector('#settings .panel'),grid=panel.querySelector('.settings-grid');
   $('game').tabIndex=-1;
   $('settings').setAttribute('role','dialog');$('settings').setAttribute('aria-modal','true');
-  panel.querySelector('h1').id='pause-title';panel.querySelector('h1').textContent='旅程暂停';
+  panel.querySelector('h1').id='pause-title';panel.querySelector('h1').textContent='Paused';
   $('settings').setAttribute('aria-labelledby','pause-title');
   const controls=$('bindings').parentElement,journey=$('journey-button');
   const display=document.createElement('div'),sound=document.createElement('div');
@@ -14,9 +14,9 @@ export function mountFoldedInterface(){
   display.append($('quality').closest('label'),$('fullscreen').closest('label'));
   sound.append($('volume').closest('label'),$('music').closest('label'),$('sfx').closest('label'));
   controls.append($('reset-bindings'));
-  const nav=document.createElement('nav');nav.className='settings-tabs';nav.setAttribute('role','tablist');nav.setAttribute('aria-label','设置分类');
+  const nav=document.createElement('nav');nav.className='settings-tabs';nav.setAttribute('role','tablist');nav.setAttribute('aria-label','Settings tabs');
   grid.before(nav);grid.replaceChildren(display,sound,controls);
-  const sections=[['display','画面与镜头',display],['sound','声音',sound],['controls','操作',controls]];
+  const sections=[['display','Display & camera',display],['sound','Audio',sound],['controls','Controls',controls]];
   function select(id){for(const [key,,section]of sections){const button=$(`tab-${key}`);section.hidden=key!==id;button.setAttribute('aria-selected',String(key===id));button.tabIndex=key===id?0:-1;}grid.scrollTop=0;}
   for(const [id,label,section]of sections){
     const button=document.createElement('button');button.id=`tab-${id}`;button.textContent=label;button.setAttribute('role','tab');button.setAttribute('aria-controls',`settings-${id}`);
@@ -26,11 +26,11 @@ export function mountFoldedInterface(){
   }
   select('display');
   const utility=document.createElement('div');utility.className='settings-utility';
-  journey.textContent='旅程菜单';utility.append(journey,$('new-game'));panel.querySelector('.panel-footer').prepend(utility);
+  journey.textContent='Journey menu';utility.append(journey,$('new-game'));panel.querySelector('.panel-footer').prepend(utility);
   const volume=$('volume'),output=document.createElement('output');output.id='volume-value';output.htmlFor='volume';volume.after(output);
   volume.addEventListener('input',()=>{output.value=`${Math.round(Number(volume.value)*100)}%`;});
-  const mapHeader=document.createElement('header');mapHeader.className='map-heading';mapHeader.innerHTML='<span class="eyebrow">FURNACE BORN</span><h1>机械城</h1>';$('region').prepend(mapHeader);
-  const mapFooter=document.createElement('footer');mapFooter.className='map-footer';mapFooter.innerHTML='<span class="map-legend"><i class="map-player"></i>当前位置</span><span class="map-legend"><i class="map-refuge"></i>维修点</span><span class="map-legend"><i class="map-gate"></i>未开启通路</span><span class="map-key"><kbd></kbd> 返回</span>';$('region').append(mapFooter);
+  const mapHeader=document.createElement('header');mapHeader.className='map-heading';mapHeader.innerHTML='<span class="eyebrow">TANKLE ADVENTURE ASTRA</span><h1>Mechanical City</h1>';$('region').prepend(mapHeader);
+  const mapFooter=document.createElement('footer');mapFooter.className='map-footer';mapFooter.innerHTML='<span class="map-legend"><i class="map-player"></i>Your position</span><span class="map-legend"><i class="map-refuge"></i>Repair hive</span><span class="map-legend"><i class="map-gate"></i>Closed passage</span><span class="map-key"><kbd></kbd> Back</span>';$('region').append(mapFooter);
   const mapKey=document.createElement('kbd');mapKey.className='minimap-key';$('minimap-wrap').append(mapKey);
   $('settings').addEventListener('keydown',e=>{
     if($('settings').hidden||e.key!=='Tab'||$('bindings').querySelector('.binding-listening'))return;

@@ -1,3 +1,4 @@
+import {currentVelocity} from './folded-mechanisms.js';
 import {makeCityBackdrop} from './folded-backdrop.js';
 import {cityMaterials} from './folded-materials.js';
 import {makeFinalMachinery} from './folded-final-machinery.js';
@@ -107,19 +108,20 @@ export function makeCityPresentation(scene,aperture){
   }
   // Three retired service bays leave the through-rail clear. Their hardware
   // repeats the player's mount, cooling jacket and final docking socket.
-  for(const [x,kind]of [[210,'mount'],[146,'cooling'],[82,'dock']]){
+  for(const [x,z,kind]of [[76,50,'mount'],[98,25,'cooling'],[82,-6.5,'dock']]){
+    const bay=new T.Group();bay.position.z=z+6.5;scenery.add(bay);
     for(const side of [-1,1]){
-      box(scenery,.22,.08,11,x+side*2,-39.92,-5.5,pale,0);
-      box(scenery,.8,8,.8,x+side*10.7,-36,-12.5,iron,0);
+      box(bay,.22,.08,11,x+side*2,-39.92,-5.5,pale,0);
+      box(bay,.8,8,.8,x+side*10.7,-36,-12.5,iron,0);
     }
-    box(scenery,22,1,1,x,-32,-12.5,rock,0);
+    box(bay,22,1,1,x,-32,-12.5,rock,0);
     if(kind==='mount')for(const side of [-1,1]){
-      box(scenery,.45,4,.6,x+side*3,-38,-8,iron,0);
-      box(scenery,2,.3,.6,x+side*2.2,-36.2,-8,copper,0);
+      box(bay,.45,4,.6,x+side*3,-38,-8,iron,0);
+      box(bay,2,.3,.6,x+side*2.2,-36.2,-8,copper,0);
     }
-    if(kind==='cooling')for(const side of [-1,1])for(const z of [-9,-7,-5])cylinder(scenery,.38,2,x+side*2.5,-38.9,z,copper,8);
-    if(kind==='dock')for(const side of [-1,1])box(scenery,.5,1,3,x+side*3,-39.5,-6.5,copper,0);
-    box(scenery,6,.18,.4,x,-34,-12.2,mat(0xbfb69b,true),0);
+    if(kind==='cooling')for(const side of [-1,1])for(const z of [-9,-7,-5])cylinder(bay,.38,2,x+side*2.5,-38.9,z,copper,8);
+    if(kind==='dock')for(const side of [-1,1])box(bay,.5,1,3,x+side*3,-39.5,-6.5,copper,0);
+    box(bay,6,.18,.4,x,-34,-12.2,mat(0xbfb69b,true),0);
   }
   for(const x of [-30,30])for(const z of [18,38,58]){box(scenery,3,23,4,x,-45,z,rock,0);box(scenery,4,1,5,x,-33.5,z,copper,0);}
   // Quiet practical lamps mark door heights, never use the control/target colors.
@@ -132,7 +134,7 @@ export function makeCityPresentation(scene,aperture){
   const districts=makeWorkingDistricts(scenery,moving);
   const currents=[];
   for(const c of expansionCurrents)for(let n=0;n<Math.max(c.w,c.d)/8;n++){
-    const m=box(moving,1.4,.035,.15,0,c.y+.08,0,mat(0xc3ded0,true),0);currents.push({m,c,n});
+    const m=box(moving,1.4,.035,.15,0,c.y+.08,0,mat(0xc3ded0,true),0);currents.push({m,c,n,phase:n*8});
   }
   const carrier=new T.Group();moving.add(carrier);
   box(carrier,4,.6,5,0,0,0,pale,.2);const jaws=[-1,1].map(s=>box(carrier,.35,1.4,3,s*1.6,.7,0,iron,0));
@@ -161,7 +163,7 @@ export function makeCityPresentation(scene,aperture){
   const opticalPulse=box(moving,.18,.18,22,204,48,162,mat(0xe3d1a5,true),0);opticalPulse.visible=false;
   const pipeFlow=[];
   for(const x of [142,146,150])for(let y=-24;y<=24;y+=8){const m=ring(moving,.73,.08,x,y,-42,mat(0x9aaf96,true));pipeFlow.push(m);}
-  const oldEye=box(moving,.4,.15,.15,146,-37.8,-5.2,mat(0x8c8873,true),0);
+  const oldEye=box(moving,.4,.15,.15,98,-37.8,26.3,mat(0x8c8873,true),0);
   const endingSprout=box(moving,.3,.8,.3,50,-7.4,29.5,mat(0x95aa75),0);
   const finale=makeFinalMachinery(scenery,moving);
   // Static scenery is batched; the small working mechanisms keep their own transforms.
@@ -169,11 +171,18 @@ export function makeCityPresentation(scene,aperture){
   for(const root of [scenery,moving])root.traverse(m=>{if(m.isMesh){m.castShadow=false;m.receiveShadow=true;aperture.apply(m.material);m.material.depthWrite=true;sceneryMaterials.add(m.material);visualMaterials.add(m.material);}});
   batchStatic(scenery,{preserveGeometry:true});
   const bounds=()=>({solids:colliders.size,rooms:foldedArchitecture.rooms.length});
-  let frameRegion='foundry';
+  let frameRegion='foundry',previousTime=0,signalTime=-Infinity,signalWasOn=false,initialized=false;
   function update(time,p,state){
     districts.update(time,state);backdrop.update(time,p,state);
     frameRegion=expansionDecks.find(d=>d.region&&Math.abs(d.y-p.y)<.5&&p.x>=d.x&&p.x<=d.x+d.w&&p.z>=d.z&&p.z<=d.z+d.d)?.region||regionAt(p,foldedArchitecture.rooms);
-    for(const {m,c,n}of currents){const along=(n*8+time*4)%Math.max(c.w,c.d);m.position.x=c.current.x?c.x+(c.current.x>0?along:c.w-along):c.x+c.w/2+Math.sin(n)*4;m.position.z=c.current.z?c.z+(c.current.z>0?along:c.d-along):c.z+c.d/2;m.rotation.y=c.current.x?Math.PI/2:0;}
+    const flowDt=Math.min(.1,Math.max(0,time-previousTime));previousTime=time;
+    for(const item of currents){
+      const {m,c,n}=item,v=currentVelocity(c,state),length=v.x?c.w:c.d;
+      item.phase=(item.phase+Math.hypot(v.x,v.z)*flowDt)%length;
+      m.position.x=v.x?c.x+(v.x>0?item.phase:c.w-item.phase):c.x+c.w/2+Math.sin(n)*4;
+      m.position.z=v.z?c.z+(v.z>0?item.phase:c.d-item.phase):c.z+c.d/2;
+      m.rotation.y=v.x?Math.PI/2:0;
+    }
     const cycle=p.endingTime?4+Math.max(0,p.endingTime-9)/3:time%18,travel=cycle<6?cycle/6:cycle<11?1:(18-cycle)/7;
     carrier.position.set(0,7,-22+travel*40);
     jaws.forEach((m,i)=>m.position.x=(i?1:-1)*(cycle>6&&cycle<11?2.1:1.6));
@@ -184,7 +193,9 @@ export function makeCityPresentation(scene,aperture){
     pumpFans.forEach((m,i)=>m.rotation.z=time*(state[i<2?'pump':'rig']?2: .22+.08*Math.sin(time*.7+i)));
     hot.color.setHex(state.foundry?0xc77b44:0xffaf62);
     waterFlow.visible=!!state.pump;waterFlow.scale.x=.85+Math.sin(time*2)*.05;waterRipples.forEach((m,i)=>{m.visible=!!state.pump;m.position.x=71+(i*2.4+time*2)%12;});
-    const signalPhase=time%9;
+    if(initialized&&state.signal&&!signalWasOn)signalTime=time;
+    signalWasOn=!!state.signal;initialized=true;
+    const signalPhase=time-signalTime;
     opticalPulse.visible=!!state.signal&&signalPhase<.65;opticalPulse.scale.z=.8+signalPhase*.4;
     for(let i=0;i<pipeFlow.length;i++){const m=pipeFlow[i],active=state.circulation||state.endingSeen||state.pump&&m.position.y===-8;m.visible=!!active;m.material.color.setHex((time*2+i)%4<1?0xb7c4a3:0x748d80);}
     oldEye.material.color.setHex(state.endingSeen?0xcac5a1:0x575749);endingSprout.visible=!!state.pump;

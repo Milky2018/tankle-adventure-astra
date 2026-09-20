@@ -9,8 +9,8 @@ export function cameraMovement(horizontal,vertical,yaw){
 export class FollowCamera{
   constructor(aspect,yaw=Math.PI){
     this.camera=new T.PerspectiveCamera(60,aspect,.15,110);
-    this.yaw=yaw;this.pitch=.32;this.distance=12;
-    this.boom=12;this.height=1.6;this.shoulder=1.2;this.sensitivity=1;
+    this.yaw=yaw;this.pitch=15.3*Math.PI/180;this.distance=15;
+    this.boom=15;this.height=2.5;this.shoulder=0;this.sensitivity=3;
     this.pivot=new T.Vector3();this.forward=new T.Vector3();this.right=new T.Vector3();this.up=new T.Vector3();
     this.offset=new T.Vector3();this.probe=new T.Vector3();
   }

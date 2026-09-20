@@ -13,6 +13,6 @@ export const routeSigns=[
   {id:'roof-optics',x:172,y:24,z:-30,yaw:Math.PI/2},
   {id:'roof-circulation',x:162,y:24,z:-19,yaw:0},
   {id:'rig-return',x:214,y:-24,z:101,yaw:Math.PI},
-  {id:'predecessor-rail',x:250,y:-40,z:6,yaw:-Math.PI/2},
-  {id:'inner-lane',x:266,y:-24,z:114,yaw:0}
+  {id:'predecessor-rail',x:82,y:-40,z:40,yaw:Math.PI},
+  {id:'inner-lane',x:122,y:24,z:-25,yaw:0}
 ];

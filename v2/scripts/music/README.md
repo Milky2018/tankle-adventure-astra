@@ -1,40 +1,28 @@
-# The City Remembers
+# Four-track MZ soundtrack
 
-Eleven locally authored scores for Furnace Born: seven regions, three battles, and a finite ending. Only **Clockwork Crypt** retains the approved notes in `clockwork.json` and the historical Dies irae fragment. Ten independent themes replace the former related arrangements. Organ appears in Clockwork alone.
+The active soundtrack uses four recordings from the owner's local RPG Maker MZ collection. The original OGG copies retain their metadata and SHA-256 hashes. Playback FLACs contain the same arrangements and sample positions, with constant gain only: approximately -19 LUFS and at least 3 dB true-peak headroom. No new instruments, compression, reverb, time stretching or remixes are applied.
 
-`scores.py` defines notes, harmony, meter and developed forms. `arrangements.py` gives each piece its own rhythmic and instrumental grammar. `instruments.py` synthesizes every voice; `render.py` mixes and exports. No external music service, samples, SoundFonts or game recordings are used.
+| Role | Original | Duration | Native loop |
+| --- | --- | ---: | --- |
+| Before Phoenix | Dungeon2.ogg | 91.43 s | 0–91.429 s |
+| After Phoenix | Theme1.ogg | 92.25 s | 1.500–92.250 s |
+| Ordinary Bosses | Battle4.ogg | 107.37 s | 11.368–107.368 s |
+| Final Keeper | Battle8.ogg | 107.43 s | 0–107.429 s |
 
-| Piece | Identity | Duration |
-| --- | --- | --- |
-| Clockwork Crypt | Gothic clockwork; retained theme plus new sections | 1:50 |
-| Platform Zero | Electric-piano nocturne, swung brushes | 2:00 |
-| Water Remembers | 6/8 marimba, kalimba and flute | 1:51 |
-| Flight Test | Analogue synth, sequenced bass, motor rhythm | 1:57 |
-| Unanswered Light | 5/4 spectral ambient and FM glass | 2:08 |
-| Second Heart | Industrial trip-hop and brass stabs | 1:53 |
-| Those Before Us | Exposed low-string elegy | 2:08 |
-| Iron Vigil | Industrial metal / breakbeat | 2:16 |
-| Mirror Hunt | 7/8 horror pursuit, bowed metal | 2:06 |
-| The Last Keeper | Symphonic siege, brass, strings and battle drums | 2:50 |
-| Morning Without Us | Piano / chamber epilogue | 1:50 |
+Author metadata: KADOKAWA, RPG Maker MZ, 2020. Imported at the resource owner's request from `Documents/rpgGames/快乐城堡/audio/bgm`. These commercial recordings are not authored by this project; the repository does not grant an independent license to them.
 
-## Render
+## Reimport and verify
 
-Requires Python 3 with NumPy and ffmpeg on PATH:
+Requires Python 3, ffmpeg and ffprobe. Supply the local resource directory explicitly:
 
 ```sh
-python scripts/music/render.py
-# Render one changed composition:
-python scripts/music/render.py water-remembers
-python scripts/music/validate.py
+python3 scripts/music/import_mz.py /path/to/MZ/audio/bgm
+python3 scripts/music/validate.py
+npm test
 ```
 
-Production FLAC stems and single-form MP3 previews go to `public/music/`. Each complete asset is 90–180 seconds, without a baked second pass. WAV masters, note lists and diagnostics go to ignored `output/music/soundtrack/`. MP3 previews have a listening-only final fade. The game and audition deck use the lossless sources without that fade.
+The importer copies the four originals, measures source loudness, creates browser-compatible FLAC playback versions, preserves `LOOPSTART` and `LOOPLENGTH`, and records hashes and frame boundaries in `public/music/manifest.json`. It removes only obsolete recordings named by the replaced manifest. The former composition generators and generated recordings have been removed.
 
-Regional bed, melody and pulse files have identical lengths and one shared linear master gain. The rhythmic layer rises during encounters without restarting the composition. Release tails and reverb are rendered cyclically. Introductions quote the turnaround and fade in only at the beginning; there is no fade at the repeat. WAV masters carry RIFF `smpl` markers, and the generated manifest records exact frame boundaries. Reverb uses bounded overlap-add blocks rather than a multi-minute FFT. Battle mixes use gentle bus saturation; mastering retains at least 2 dB of sample-peak headroom.
+The audition page is `/music/index.html`, including an original-file download and a loop-transition preview. Playback decodes only the selected recording; the game keeps at most two cached recordings. Safari compatibility uses the same FLAC path as the previous soundtrack.
 
-The 109.67-second ending keeps the cinematic accents at 9, 15, 20 and 26 seconds, then develops beneath the completion card. It does not lengthen the cinematic or loop. Skipping the cinematic seeks to the title accent, not to the end of the track.
-
-The audition page is `/music/index.html`. It shows genre, meter, duration and buttons for each form section, plus a seam preview and combat-layer switch. Only the selected piece is decoded. The game cache retains at most two score entries; outgoing voices disconnect after transitions. Web Audio requests 44.1 kHz to match the frame markers. Longer stems increase download and decoded memory size; sequential loading avoids simultaneous decoding allocations.
-
-The historical fragment in Clockwork is public-domain plainchant, not a transcription of a Castlevania or Hollow Knight recording. All other themes, accompaniment and timbres are newly authored here. Numeric and browser checks verify playback, clipping and continuity; they do not establish listener approval of the compositions.
+Music routing is progression-based: Phoenix ownership permanently selects the second exploration track, including on earlier maps and after reload or death. Committed Boss arenas override exploration; victory restores the appropriate main cue. Ordinary enemies do not trigger another track. The final quiet approach remains silent, and the ending reuses the second main theme without adding a fifth cue. Pause resumes at the saved position; death discards that position. Warning sounds briefly duck music.

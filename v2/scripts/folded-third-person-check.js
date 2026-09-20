@@ -20,13 +20,13 @@ async page=>{
   if(!reticle||Math.abs(reticle.x+reticle.width/2-640)>1||Math.abs(reticle.y+reticle.height/2-360)>1)throw Error('Third-person reticle is not centered');
   await page.keyboard.press('Tab');await page.waitForFunction(()=>!document.pointerLockElement);
   if(!(await snapshot()).mapOpen||(await snapshot()).paused)throw Error('Map unlock also paused the game');
-  await page.getByRole('button',{name:'关闭地图',exact:true}).click();await page.waitForFunction(()=>!!document.pointerLockElement);
+  await page.getByRole('button',{name:'Close map',exact:true}).click();await page.waitForFunction(()=>!!document.pointerLockElement);
   await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.pointerLockElement);
   if(!(await snapshot()).paused)throw Error('Escape did not release and pause');
-  await page.getByLabel('视角',{exact:true}).selectOption('overhead');
-  await page.getByRole('button',{name:'继续',exact:true}).click();
+  await page.getByLabel('Camera view',{exact:true}).selectOption('overhead');
+  await page.getByRole('button',{name:'Resume',exact:true}).click();
   if((await snapshot()).camera.view!=='overhead'||(await snapshot()).camera.locked)throw Error('Overhead comparison retained pointer lock');
-  await page.keyboard.press('Escape');await page.getByLabel('视角',{exact:true}).selectOption('third');
+  await page.keyboard.press('Escape');await page.getByLabel('Camera view',{exact:true}).selectOption('third');
   await page.reload();await page.waitForFunction(()=>window.__game);await page.evaluate(()=>__game.manual(true));
   if((await snapshot()).camera.view!=='third')throw Error('View preference was not saved');
   await page.locator('#game').click({position:{x:640,y:360}});await page.waitForFunction(()=>!!document.pointerLockElement);

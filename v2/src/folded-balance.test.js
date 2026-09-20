@@ -13,7 +13,7 @@ import { MORTAR, FLOTATION } from './abilities.js';
 import { ENEMY_KINDS } from './folded-enemies.js';
 import { foldedEnemies } from './folded-layout.js';
 import { bossPattern } from './folded-bosses.js';
-import { CANNON, LASER, hostileShotDamage } from './folded-weapons.js';
+import { CANNON, LASER, hostileShotDamage, hostileContactDamage } from './folded-weapons.js';
 
 // Captured by importing the archived 0.1.0 sources, not the refactored modules.
 // Update only with an intentional, reviewed gameplay change.
@@ -21,7 +21,7 @@ const baseline = JSON.parse(
   readFileSync(new URL('../test-fixtures/balance-0.1.0.json', import.meta.url), 'utf8'),
 );
 
-test('balance preserves the baseline apart from explicitly authored travel and Keeper changes', () => {
+test('balance preserves the baseline apart from explicitly authored travel, hull and Keeper changes', () => {
   assert.deepEqual(
     {
       MAX_HP,
@@ -31,11 +31,18 @@ test('balance preserves the baseline apart from explicitly authored travel and K
       PLAYER_HURT_RADIUS,
       ENEMY_HURT_SCALE,
     },
-    { ...baseline.player, BASE_SPEED: Number((baseline.player.BASE_SPEED * 1.4).toFixed(1)) },
+    {
+      ...baseline.player,
+      MAX_HP: 25,
+      BASE_SPEED: Number((baseline.player.BASE_SPEED * 1.4).toFixed(1)),
+    },
   );
-  assert.deepEqual(MORTAR, baseline.mortar);
+  assert.deepEqual(MORTAR, { ...baseline.mortar, height: 10 });
   assert.deepEqual(FLOTATION, baseline.flotation);
-  assert.deepEqual(ENEMY_KINDS, baseline.enemies);
+  assert.deepEqual(ENEMY_KINDS, {
+    ...baseline.enemies,
+    welder: { ...baseline.enemies.welder, speed: 6.8, reach: 18, warn: 0.9, recovery: 0.9 },
+  });
   assert.deepEqual(
     Object.fromEntries(
       foldedEnemies.filter((e) => e.id in baseline.health).map((e) => [e.id, e.hp]),
@@ -55,12 +62,12 @@ test('extracted weapon values retain the 0.1.0 direct-fire and laser contracts',
   assert.deepEqual(CANNON, { damage: 1, heat: 20, cooldown: 0.5, speed: 38, range: 24 });
   assert.deepEqual(LASER, { damage: 4.5, heat: 24, range: 90, bounces: 5 });
   for (const [enemy, damage] of [
-    [{ id: 'keeper', type: 'boss' }, 9],
-    [{ type: 'boss' }, 15],
-    [{ type: 'guard', guardian: true }, 15],
-    [{ type: 'sniper' }, 14],
+    [{ id: 'keeper', type: 'boss' }, 5],
+    [{ type: 'boss' }, 5],
+    [{ type: 'guard', guardian: true }, 5],
+    [{ type: 'sniper' }, 10],
     [{ type: 'skirmisher' }, 5],
-    [{ type: 'turret' }, 8],
+    [{ type: 'turret' }, 5],
   ]) {
     assert.equal(hostileShotDamage(enemy), damage);
   }
@@ -71,4 +78,16 @@ test('Keeper endurance retains destructible feeds and an uncapped core', () => {
   assert.deepEqual(keeper.parts, [9, 9]);
   assert.equal(keeper.core, 66);
   assert.equal(keeper.hp, keeper.core + keeper.parts.reduce((a, b) => a + b, 0));
+});
+
+test('only committed charging enemies deal contact damage', () => {
+  for (const type of Object.keys(ENEMY_KINDS))
+    for (const phase of ['idle', 'warn', 'vent', 'charge']) {
+      assert.equal(
+        hostileContactDamage({ type, phase }),
+        phase === 'charge' && ['scout', 'elite'].includes(type) ? 5 : 0,
+        `${type}/${phase}`,
+      );
+    }
+  assert.equal(hostileShotDamage({ type: 'artillery' }), 10);
 });

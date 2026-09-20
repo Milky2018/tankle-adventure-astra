@@ -1,6 +1,8 @@
 import * as T from 'three';
 import {box,cylinder,ring,mat,C} from './world.js';
 import {expansionProps,expansionPickups} from './folded-expansion-layout.js';
+import {currentVelocity} from './folded-mechanisms.js';
+import {expansionCurrents} from './folded-expansion-layout.js';
 import {SIGNAL} from './folded-visibility.js';
 
 export function makeDistrictMachinery(parent){
@@ -82,6 +84,9 @@ export function makeWorkingDistricts(fixed,moving){
  for(let i=0;i<6;i++){const blade=box(pump,.35,4,.18,0,0,0,metal,0);blade.rotation.z=i*Math.PI/6;}
  pipe([-123,-1,78],[-123,-1,100],.45);pipe([-123,-1,100],[-72,-1,100],.45);pipe([-72,-1,100],[-72,-7,100],.45);
  const flow=box(moving,24,.06,1,-108,-7.85,64,water,0),ripples=[];
+ const diversion=new T.Group();diversion.position.set(-100,-8.2,98);moving.add(diversion);
+ box(diversion,14,.22,.4,7,0,0,metal,0);cylinder(diversion,.3,1.6,0,0,0,brass,10);
+ let lastTime=0,flowPhase=0;
  for(let i=0;i<6;i++)ripples.push(box(moving,.12,.025,.8,-120+i*4,-7.8,64,water,0));
  // The calibration well is a true hole between the galleries, with visible depth.
  for(const x of [297,325]){box(fixed,1,16,30,x,15,-65,iron,0);for(const y of [8,16,23])box(fixed,1.4,.3,30,x,y,-65,brass,0);}
@@ -98,5 +103,5 @@ export function makeWorkingDistricts(fixed,moving){
  // A receiving frame announces the finite reserve's entry side.
  for(const x of [185,198])box(fixed,.6,6,.6,x,19,-193,iron,0);
  box(fixed,14,.6,.6,191.5,22,-193,metal,0);box(fixed,4,.12,.18,191.5,21.5,-192.5,warm,0);
- return {update(time,state){pump.rotation.z=time*(state['reservoir-inlet']?1.5:.08);flow.visible=!!state['reservoir-inlet'];for(const [i,r]of ripples.entries()){r.visible=flow.visible;r.position.x=-120+(i*4+time*3)%24;}gimbal.rotation.y=state['lens-transfer']?time*.16:0;separator.rotation.y=time*(state['coolant-transfer']?.5:.06);}};
+ return {update(time,state){const dt=Math.max(0,Math.min(.1,time-lastTime));lastTime=time;flowPhase+=currentVelocity(expansionCurrents[1],state).x*dt;diversion.rotation.y=state['reservoir-inlet']?-.65:0;pump.rotation.z=time*(state['reservoir-inlet']?1.5:.08);for(const [i,r]of ripples.entries()){r.visible=flow.visible;r.position.x=-120+((i*4+flowPhase)%24+24)%24;}gimbal.rotation.y=state['lens-transfer']?time*.16:0;separator.rotation.y=time*(state['coolant-transfer']?.5:.06);}};
 }

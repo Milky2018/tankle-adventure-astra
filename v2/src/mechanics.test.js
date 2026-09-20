@@ -32,7 +32,7 @@ test('opposing belt defeats normal movement and becomes traversable only above e
  assert(BASE_SPEED-BASE_SPEED*1.15<0);assert(BASE_SPEED*1.6-BASE_SPEED*1.15>0);
 });
 test('direct protection does not block furnace damage or normal movement',()=>{
- const p=newPlayer();assert(damagePlayer(p,8,1));assert(!damagePlayer(p,8,1.3));assert(damagePlayer(p,5,1.3,true));assert.equal(p.hp,37);assert(damagePlayer(p,8,1.7));assert.equal(p.hp,29);
+ const p=newPlayer();assert(damagePlayer(p,8,1));assert(!damagePlayer(p,8,1.3));assert(damagePlayer(p,5,1.3,true));assert.equal(p.hp,12);assert(damagePlayer(p,8,1.7));assert.equal(p.hp,4);
 });
 test('fast projectile sweeps intersect targets even between frames',()=>{
  assert(segmentCircle(-10,0,10,0,0,0,1));assert(!segmentCircle(-10,2,10,2,0,0,1));assert(segmentCircle(0,0,0,0,0,0,1));

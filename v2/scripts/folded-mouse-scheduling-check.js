@@ -5,6 +5,8 @@ async page=>{
   await page.goto('http://127.0.0.1:5174/?chapter=folded&view=third&test&manual');await page.waitForFunction(()=>window.__game?.debug);
   await page.evaluate(()=>{
     const q=__game.debug;
+    // Fix the fixture sensitivity independently of the configurable game default.
+    q.follow.sensitivity=1;
     window.__mouseSchedule={
       get counts(){return {camera:q.profile.stats.camera?.count||0,aim:q.profile.stats.aim?.count||0};},
       reset:()=>q.profile.start({gpu:false}),
@@ -31,11 +33,19 @@ async page=>{
   const click=await page.evaluate(()=>({sample:__mouseSchedule.sample(),counts:{...__mouseSchedule.counts}}));
   if(Math.abs(click.sample.cameraYaw-click.sample.yaw)>1e-8||!click.sample.heat)throw Error('Immediate fire used an outdated camera');
   if(click.counts.camera!==1||click.counts.aim!==1)throw Error('Press refreshed the camera more than once');
-  await page.mouse.up({button:'left'});await page.mouse.up({button:'middle'});
+  await page.mouse.up({button:'left'});
+  const stunned=await page.evaluate(()=>{
+    const q=__game.debug,before=q.follow.yaw;q.p.hurtAt=q.time;q.p.hurtUntil=q.time+.6;
+    document.dispatchEvent(new MouseEvent('mousemove',{movementX:100,movementY:100,bubbles:true}));
+    if(q.follow.yaw!==before)throw Error('Mouse look operated during hit recovery');
+    __game.step(.65);document.dispatchEvent(new MouseEvent('mousemove',{movementX:40,bubbles:true}));
+    if(Math.abs(q.follow.yaw-before+.1)>1e-8)throw Error('Mouse look did not recover');return true;
+  });
+  await page.mouse.up({button:'middle'});
   await page.keyboard.press('Escape');
   const paused=await page.evaluate(()=>{const before=__mouseSchedule.sample().yaw;document.dispatchEvent(new MouseEvent('mousemove',{movementX:100,bubbles:true}));return __mouseSchedule.sample().yaw===before;});
   if(!paused)throw Error('Paused mouse input changed the view');
   await page.evaluate(()=>__game.debug.profile.stop());
   if(errors.length)throw Error(errors.join('\n'));
-  return {burst,click,paused,errors};
+  return {burst,click,stunned,paused,errors};
 }

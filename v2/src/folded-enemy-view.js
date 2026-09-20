@@ -2,6 +2,7 @@ import * as T from 'three';
 import { C } from './world.js';
 import { animateEnemy } from './folded-enemies.js';
 import { bossBarrage } from './folded-bosses.js';
+import { ENEMY_KINDS } from './folded-enemy-rules.js';
 import { SORTER_REACH } from './folded-attacks.js';
 
 export function createEnemyView({ world, project, getCamera, burst }) {
@@ -147,7 +148,26 @@ export function createEnemyView({ world, project, getCamera, burst }) {
   }
 
   function warn(e, origin, time) {
-    if (e.type === 'artillery') {
+    if (e.id === 'prototype' && e.attack === 'cannon') {
+      const points = [];
+      for (const offset of [-0.18, 0, 0.18]) {
+        const dir = e.lock
+          .clone()
+          .sub(origin)
+          .normalize()
+          .applyAxisAngle(new T.Vector3(0, 1, 0), offset);
+        const length = Math.max(12, origin.distanceTo(e.lock));
+        const hit = world.cast(origin, dir, length, { targets: false });
+        points.push(
+          origin.clone(),
+          origin.clone().addScaledVector(dir, hit?.distance ?? length),
+          origin.clone(),
+        );
+      }
+      e.warning.visible = true;
+      e.warning.geometry.setFromPoints(points);
+      e.warning.geometry.setDrawRange(0, points.length);
+    } else if (e.type === 'artillery') {
       e.zone.visible = true;
       e.zone.position.copy(e.lock);
       e.zone.position.y += 0.1;
@@ -162,7 +182,9 @@ export function createEnemyView({ world, project, getCamera, burst }) {
       const points = [origin.clone()];
       for (let i = 0; i <= 12; i++) {
         const angle = e.aim - 0.7 + (i * 1.4) / 12;
-        points.push(origin.clone().add(new T.Vector3(Math.sin(angle) * 8, 0, Math.cos(angle) * 8)));
+        const dir = new T.Vector3(Math.sin(angle), 0, Math.cos(angle));
+        const hit = world.cast(origin, dir, ENEMY_KINDS.welder.reach, { targets: false });
+        points.push(origin.clone().addScaledVector(dir, hit?.distance ?? ENEMY_KINDS.welder.reach));
       }
       points.push(origin.clone());
       e.warning.visible = true;
@@ -171,8 +193,9 @@ export function createEnemyView({ world, project, getCamera, burst }) {
     } else {
       e.warning.visible = true;
       e.warning.geometry.setFromPoints([origin, e.lock]);
+      e.warning.geometry.setDrawRange(0, 2);
     }
-    if (e.charge) {
+    if (e.charge && e.attack !== 'cannon') {
       e.charge.root.visible = true;
       e.charge.root.position.set(e.x, e.y, e.z);
       e.charge.root.rotation.y = e.aim;

@@ -1,7 +1,8 @@
+import {pullSlide,stepReleasedSlides} from './folded-mechanisms.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {expansionRoutes,expansionPickups,expansionControls} from './folded-expansion-layout.js';
-import {foldedDecks,foldedSolids,deckHeight,foldedSupport,foldedBlocked,moveFolded,initialFoldedState,releaseFolded} from './folded-layout.js';
+import {foldedDecks,foldedSolids,foldedControls,deckHeight,foldedSupport,foldedBlocked,moveFolded,initialFoldedState,releaseFolded} from './folded-layout.js';
 import {cameraApertureOpacity} from './folded-visibility.js';
 import {barrageTargets,RAIL} from './folded-attacks.js';
 import {moveWithConveyor} from './folded-machinery.js';
@@ -9,6 +10,7 @@ import {moveWithConveyor} from './folded-machinery.js';
 function walk(p,s,x,z){
   for(let i=0;i<9000&&Math.hypot(x-p.x,z-p.z)>.1;i++){
     const dx=x-p.x,dz=z-p.z,len=Math.hypot(dx,dz);p.speed=3.2;
+    stepReleasedSlides(s.bodies.solids,s,1/60,[p],(x,z,y)=>!!foldedSupport(x,z,y));
     moveFolded(p,dx/len*Math.min(.2,len),dz/len*Math.min(.2,len),s);
     if(i===8999)assert.fail(`blocked at ${p.x},${p.y},${p.z} toward ${x},${z}`);
   }
@@ -34,11 +36,23 @@ for(const route of expansionRoutes)test(`${route.id} acquisition and onward exit
     walk(p,s,x,z);
     if(action==='float')p.deployed=!p.deployed;
     else if(action&&action!=='boost'){
-      const c=expansionControls.find(c=>c.id===action);
+      const c=foldedControls.find(c=>c.id===action);
+      if(c.slide){
+        const body=s.bodies.solids.find(b=>b.id===c.slide);
+        walk(p,s,-106,-54);
+        for(let i=0;i<600;i++){
+          moveFolded(p,0,p.z< -30?.05:0,s);
+          if(Math.hypot(p.x-body.x-body.w/2,p.z-body.z-body.d/2)<=13)
+            pullSlide(body,p,1/60,s.bodies.solids.filter(b=>b!==body&&(b.permanent||b.rail||!s[b.id])),(x,z,y)=>!!foldedSupport(x,z,y));
+        }
+        assert.equal(body[body.rail.axis],body.rail.max);
+        s.slidePositions[body.id]=body[body.rail.axis];
+        walk(p,s,-106,-54);walk(p,s,x,z);
+      }
       assert.equal(releaseFolded(c.id,c.kind==='shot'?'cannon':c.kind,p,s,[]),true,action);
     }
   }
-  assert.equal(p.y,route.y);
+  assert.equal(p.y,route.returnY??route.y);
 });
 test('acquisition modules have clear dry support and authored districts have different shapes',()=>{
   for(const p of expansionPickups){assert.ok(foldedSupport(p.x,p.z,p.y));assert.equal(!!foldedBlocked(p.x,p.y,p.z,initialFoldedState()),false,p.id);}
@@ -83,9 +97,9 @@ test('new return routes reject unearned engines, Magnet, Laser and water crossin
   const gate=foldedSolids.find(w=>w.id===id);assert.ok(foldedBlocked(gate.x+gate.w/2,gate.y,gate.z+gate.d/2,s));
   p[ability]=true;assert.equal(releaseFolded(id,kind,p,s,[]),true);
  }
- const ordinary={x:181,y:16,z:-122,speed:1.6,overdrive:true,boosting:true},a=initialFoldedState();
- moveFolded(ordinary,-12,0,a);assert.ok(ordinary.x>176);assert.equal(a['proving-return'],false);
- const phoenix={...ordinary,x:181,speed:3.2,phoenix:true};moveFolded(phoenix,-12,0,a);assert.ok(phoenix.x<174);assert.equal(a['proving-return'],true);
+ const ordinary={x:238,y:16,z:-74,speed:1.6,overdrive:true,boosting:true},a=initialFoldedState();
+ moveFolded(ordinary,0,12,a);assert.ok(ordinary.z< -70);assert.equal(a['phoenix-departure'],false);
+ const phoenix={...ordinary,z:-74,speed:3.2,phoenix:true};moveFolded(phoenix,0,12,a);assert.ok(phoenix.z> -69);assert.equal(a['phoenix-departure'],true);
  const cold={x:330,y:-24,z:106,speed:3.2,phoenix:true,boosting:true,circulation:true,overheated:false},b=initialFoldedState();
  moveFolded(cold,-12,0,b);assert.ok(cold.x>325);assert.equal(b['coolant-return'],false);
  const red={...cold,x:330,speed:3.2,heat:100,overheated:true};moveFolded(red,-12,0,b);assert.ok(red.x<323);assert.equal(b['coolant-return'],true);

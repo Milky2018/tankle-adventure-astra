@@ -3,15 +3,23 @@ import { DEFAULT_BINDINGS, clamp } from './mechanics.js';
 const DEFAULT_CITY_BINDINGS = { ...DEFAULT_BINDINGS, camera: 'KeyC' };
 const cameraFields = {
   third: [
-    ['pitch', '俯仰角', -30, 54, 1, (0.32 * 180) / Math.PI, '°'],
-    ['distance', '跟随距离', 6, 20, 0.5, 12, ''],
-    ['height', '镜头高度', 0, 5, 0.1, 1.6, ''],
-    ['shoulder', '左右偏移', -3, 3, 0.1, 1.2, ''],
-    ['sensitivity', '鼠标灵敏度', 0.25, 3, 0.05, 1, '×'],
+    ['pitch', 'Pitch', -30, 54, 0.1, 15.3, '°'],
+    ['distance', 'Follow distance', 6, 20, 0.5, 15, ''],
+    ['height', 'Camera height', 0, 5, 0.1, 2.5, ''],
+    ['shoulder', 'Shoulder offset', -3, 3, 0.1, 0, ''],
+    ['sensitivity', 'Mouse sensitivity', 1, 10, 0.1, 3, ''],
   ],
   overhead: [
-    ['angle', '俯视角度', 30, 70, 1, (Math.atan2(39.6, Math.hypot(28, 28)) * 180) / Math.PI, '°'],
-    ['scale', '视野范围', 12, 28, 0.5, 17, ''],
+    [
+      'angle',
+      'Overhead angle',
+      30,
+      70,
+      1,
+      (Math.atan2(39.6, Math.hypot(28, 28)) * 180) / Math.PI,
+      '°',
+    ],
+    ['scale', 'View scale', 12, 28, 0.5, 17, ''],
   ],
 };
 
@@ -74,38 +82,38 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
   function renderBindings() {
     $('bindings').replaceChildren();
     const labels = {
-      up: '前进',
-      left: '向左',
-      down: '后退',
-      right: '向右',
-      fire: '射击',
-      magnet: '磁力牵引',
-      weapon: '切换武器',
-      camera: '切换视角',
-      flotation: '浮航',
-      overdrive: '加速',
-      map: '地图',
-      repair: '使用 / 修复',
-      skip: '跳过',
-      pause: '暂停',
+      up: 'Move forward',
+      left: 'Move left',
+      down: 'Move back',
+      right: 'Move right',
+      fire: 'Fire',
+      magnet: 'Magnet',
+      weapon: 'Cycle weapons',
+      camera: 'Switch camera',
+      flotation: 'Flotation',
+      overdrive: 'Boost',
+      map: 'Map',
+      repair: 'Use / repair',
+      skip: 'Skip',
+      pause: 'Pause',
     };
     for (const action of Object.keys(DEFAULT_CITY_BINDINGS)) {
       const label = document.createElement('span'),
         b = document.createElement('button');
       label.textContent = labels[action];
-      b.setAttribute('aria-label', `${labels[action]}：${bindings[action]}`);
+      b.setAttribute('aria-label', `${labels[action]}: ${bindings[action]}`);
       b.classList.toggle('binding-listening', rebind === action);
       b.textContent =
         rebind === action
-          ? '按下新按键…'
+          ? 'Press a key…'
           : bindings[action]
               .replace(/^Key/, '')
-              .replace('ShiftLeft', '左 Shift')
-              .replace('ShiftRight', '右 Shift')
-              .replace('Mouse0', '鼠标左键')
-              .replace('Mouse1', '鼠标中键')
-              .replace('Mouse2', '鼠标右键')
-              .replace('Space', '空格')
+              .replace('ShiftLeft', 'Left Shift')
+              .replace('ShiftRight', 'Right Shift')
+              .replace('Mouse0', 'Left mouse')
+              .replace('Mouse1', 'Middle mouse')
+              .replace('Mouse2', 'Right mouse')
+              .replace('Space', 'Space')
               .replace('Escape', 'Esc');
       b.onclick = () => {
         rebind = action;
@@ -161,25 +169,26 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
   };
   quality();
   const viewLabel = document.createElement('label');
-  viewLabel.textContent = '视角';
+  viewLabel.textContent = 'Camera view';
   const viewSelect = document.createElement('select');
   viewSelect.id = 'camera-view';
-  viewSelect.setAttribute('aria-label', '视角');
+  viewSelect.setAttribute('aria-label', 'Camera view');
   viewSelect.innerHTML =
-    '<option value="third">第三人称</option><option value="overhead">俯视</option>';
+    '<option value="third">Third person</option><option value="overhead">Overhead</option>';
   viewLabel.append(viewSelect);
   $('quality').parentElement.after(viewLabel);
   const cameraNote = document.createElement('p');
   cameraNote.className = 'binding-note';
-  cameraNote.textContent = '第三人称：点击画面后移动鼠标转动视角，WASD 移动；Esc 释放鼠标。';
+  cameraNote.textContent =
+    'Click the game to capture the mouse. Move the mouse to look, WASD to move, and Esc to pause.';
   viewLabel.after(cameraNote);
   const cameraTuning = document.createElement('section');
   cameraTuning.id = 'camera-tuning';
   cameraTuning.hidden = true;
-  cameraTuning.setAttribute('aria-label', '镜头调整');
+  cameraTuning.setAttribute('aria-label', 'Camera adjustment');
   $('settings').append(cameraTuning);
   const tuneButton = document.createElement('button');
-  tuneButton.textContent = '调整镜头';
+  tuneButton.textContent = 'Adjust camera';
   cameraNote.after(tuneButton);
   function closeCameraTuning() {
     const wasOpen = !cameraTuning.hidden;
@@ -198,13 +207,13 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
     cameraTuning.hidden = false;
     $('settings').classList.add('camera-tuning');
     const heading = document.createElement('h2');
-    heading.textContent = thirdPerson ? '第三人称镜头' : '俯视镜头';
+    heading.textContent = thirdPerson ? 'Third-person camera' : 'Overhead camera';
     cameraTuning.append(heading);
     const note = document.createElement('p');
     note.className = 'binding-note';
     note.textContent = thirdPerson
-      ? '拖动滑块实时预览。游戏已暂停；遮挡物会半透明化，跟随距离保持不变。俯仰角作为下次进入游戏的起始角度，游玩时仍可用鼠标转动。'
-      : '拖动滑块实时预览。视野范围越大，能看到的区域越广。';
+      ? 'Adjust sliders to preview while paused. Obstructions fade without changing follow distance. Pitch sets the starting angle; mouse look remains free during play.'
+      : 'Adjust sliders to preview. A larger view scale shows more of the city.';
     cameraTuning.append(note);
     for (const [key, title, min, max, step, , suffix] of cameraFields[view]) {
       const label = document.createElement('label'),
@@ -234,7 +243,7 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
       };
     }
     const reset = document.createElement('button');
-    reset.textContent = '恢复此视角默认';
+    reset.textContent = 'Reset this view';
     reset.onclick = () => {
       preferences.resetCamera(view);
       if (thirdPerson) camera.pitch = (cameraSettings.third.pitch * Math.PI) / 180;
@@ -242,10 +251,10 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
       openCameraTuning();
     };
     const back = document.createElement('button');
-    back.textContent = '返回设置';
+    back.textContent = 'Back to settings';
     back.onclick = closeCameraTuning;
     const resume = document.createElement('button');
-    resume.textContent = '继续游戏';
+    resume.textContent = 'Resume';
     resume.onclick = () => {
       actions.resume();
     };
@@ -288,7 +297,7 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
     },
     captureUnavailable() {
       cameraNote.textContent =
-        '第三人称：按住鼠标中键拖动视角，WASD 移动；左键射击，右键磁力牵引。';
+        'Hold the middle mouse button to look. WASD moves, left click fires, and right click uses Magnet.';
     },
   };
 }

@@ -15,16 +15,16 @@ export const REGION_STYLE={
 export const OPEN_ROOMS=new Set(['turntable','garden-bank','pump-terrace','rear-dock','ferry-cradle','bridge-underside','canal-landing','guardian-court','predecessor-gallery','reservoir-east-bank','reservoir-filter-bank','reservoir-pump-island','proving-impact','proving-observation','lens-west-gallery','lens-north-gallery','lens-east-gallery']);
 // [support, region, wall height, roof]. Enclosed halls keep Mortar headroom.
 export const ROOM_PLAN=[
-  ['garden-care','garden',12,true],['sorting-bay','testworks',20,true],
-  ['foundry-awakening','foundry',12,true],['foundry-west','foundry',12,true],
-  ['press-working-floor','foundry',12,true],['reclaim-sorting-bay','foundry',12,true],['prototype-court','foundry',20,true],['recycling-furnace','foundry',20,true],
-  ['turntable','transit',10,false],['hub-entry','transit',12,true],['loading','transit',12,true],['mortar-apron','transit',12,true],['training-gallery','transit',12,true],['freight','transit',12,true],
+  ['garden-care','garden',16,true],['sorting-bay','testworks',24,true],
+  ['foundry-awakening','foundry',16,true],['foundry-west','foundry',16,true],
+  ['press-working-floor','foundry',16,true],['reclaim-sorting-bay','foundry',16,true],['prototype-court','foundry',24,true],['recycling-furnace','foundry',24,true],
+  ['turntable','transit',16,true],['roof-junction','transit',16,true],['hub-entry','transit',16,true],['loading','transit',16,true],['mortar-apron','transit',16,true],['training-gallery','transit',16,true],['freight','transit',16,true],
   ['ferry-cradle','garden',5,false],['bridge-underside','garden',3.5,false],['canal-landing','garden',4,false],
   ['garden-bank','garden',5,false],['pump-terrace','garden',5,false],['rear-dock','garden',5,false],
-  ['common-benches','testworks',16,true],['carrier-landing','testworks',12,true],['phoenix-cradle','testworks',12,true],
-  ['calibration','optics',12,true],['mirror-service-gallery','optics',12,true],['guardian-court','optics',10,false],
-  ['circulation-yard','circulation',12,true],['circulation-rig','circulation',12,true],['pressure-release-court','circulation',12,true],
-  ['predecessor-gallery','furnace',7,false],['predecessor-mount','furnace',12,true],['predecessor-cooling','furnace',12,true],['predecessor-dock','furnace',12,true],['last-refuge','furnace',12,true],['keeper-court','furnace',20,true],['central-furnace','furnace',20,true]
+  ['common-benches','testworks',16,true],['carrier-landing','testworks',16,true],['phoenix-cradle','testworks',16,true],
+  ['calibration','optics',16,true],['mirror-service-gallery','optics',16,true],['guardian-court','optics',10,false],
+  ['circulation-yard','circulation',16,true],['circulation-rig','circulation',16,true],['pressure-release-court','circulation',16,true],
+  ['predecessor-gallery','furnace',7,false],['predecessor-mount','furnace',16,true],['predecessor-cooling','furnace',16,true],['predecessor-dock','furnace',16,true],['last-refuge','furnace',16,true],['keeper-court','furnace',24,true],['central-furnace','furnace',24,true]
 ];
 // Authored receiving bays frame the first route. Openings correspond to the
 // service ramp, local shutter and later engine return.
@@ -38,9 +38,7 @@ const roomWalls={
   'circulation-yard':[[148,52.05,87.9,.8],[147.15,36,.8,16],[196.1,35.15,39.8,.8]],
   'circulation-rig':[[208,136.05,52,.8],[207.15,100,.8,36],[220.1,99.15,15.8,.8]],
   'pressure-release-court':[[208,3.15,52,.8],[260.05,4,.8,24],[220.1,28.05,27.8,.8]],
-  'predecessor-gallery':[[40.1,12.05,31.8,.8],[92.1,12.05,43.8,.8],[156.1,12.05,43.8,.8],[220.1,12.05,27.8,.8],[28,-.85,43.9,.8],[92.1,-.85,43.8,.8],[156.1,-.85,43.8,.8],[220.1,-.85,39.8,.8]],
-  'predecessor-mount':[[200,-12.85,20,.8],[199.15,-12,.8,11.9],[220.05,-12,.8,11.9]],
-  'predecessor-cooling':[[136,-12.85,20,.8],[135.15,-12,.8,11.9],[156.05,-12,.8,11.9]],
+  'predecessor-gallery':[[40.1,12.05,21.8,.8],[92.1,-.85,15.8,.8],[28,-.85,43.9,.8]],
   'predecessor-dock':[[72,-12.85,20,.8],[71.15,-12,.8,11.9],[92.05,-12,.8,11.9]],
   'last-refuge':[[28,-24.85,28,.8],[56.05,-24,.8,24]],
   'keeper-court':[[-28.85,12,.8,48],[28.05,12,.8,48],[-28,11.15,11.9,.8],[16.1,11.15,11.9,.8]],
@@ -74,7 +72,7 @@ export function buildArchitecture(decks,lifts){
     if(lifts.some(l=>overlaps(s,l,.15)&&l.stops[0]<y+h&&l.stops.at(-1)+4>y))return;
     const key=[x,y,z,w,h,d].map(n=>n.toFixed(2)).join('/');if(seen.has(key))return;seen.add(key);solids.push(s);return s;
   }
-  for(const [id,region,h,roof]of [...ROOM_PLAN,...[...expansionRooms,...explorationRooms].map(r=>[r.id,r.region,12,!OPEN_ROOMS.has(r.id)])]){
+  for(const [id,region,h,roof]of [...ROOM_PLAN,...[...expansionRooms,...explorationRooms].map(r=>[r.id,r.region,16,!OPEN_ROOMS.has(r.id)])]){
     const f=decks.find(d=>d.id===id),room={...f,region,h,roof};rooms.push(room);
     // Roof construction precedes the authored-wall branches: all hall types
     // receive ceilings, while floor and lift intersections carve real openings.

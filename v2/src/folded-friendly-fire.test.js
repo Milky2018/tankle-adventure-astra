@@ -99,8 +99,8 @@ function fireThrough(f, shooter) {
 
 test('hostile projectiles retain their player damage and direct-hit protection', () => {
   for (const [type, damage] of [
-    ['turret', 8],
-    ['sniper', 14],
+    ['turret', 5],
+    ['sniper', 10],
     ['skirmisher', 5],
   ]) {
     const shooter = enemy('shooter', 0, 0, { type });
@@ -224,10 +224,10 @@ test('destroying a battery cancels its unreleased second wave but not shells alr
 
 test('boss attack shapes carry distinct damage through direct and blast impacts', () => {
   for (const [attack, damage] of [
-    ['fan', 9],
-    ['batteries', 12],
-    ['seekers', 16],
-    ['barrage', 18],
+    ['fan', 5],
+    ['batteries', 5],
+    ['seekers', 10],
+    ['barrage', 10],
   ]) {
     const boss = enemy('keeper', 0, 0, { type: 'boss', attack });
     const f = fixture([boss]);
@@ -290,4 +290,98 @@ test('a blast on a rendered canopy cannot damage a Tank through its underside', 
   }
   roof.geometry.dispose();
   roof.material.dispose();
+});
+
+test('Boss lobs reach a Tank just behind arena cover without reaching the ceiling', () => {
+  const boss = enemy('keeper', 0, 32, { type: 'boss' });
+  const f = fixture([boss], {
+    walls: [
+      new T.Box3(new T.Vector3(12, 0, 42), new T.Vector3(16, 2, 45)),
+      new T.Box3(new T.Vector3(-28, 24, 12), new T.Vector3(28, 25, 60)),
+    ],
+  });
+  Object.assign(f.p, { x: 14, z: 46 });
+  f.shootEnemy(boss, 0, null, new T.Vector3(14, 0.05, 46), 0, true, { duration: 1.35 });
+  for (let i = 0; i < 180; i++) f.step(1 / 120);
+  assert.ok(f.p.hp < 50, 'The cover must not intercept every aimed barrage');
+  assert.equal(f.shots.length, 0);
+});
+
+test('player, artillery and Boss mortars fly beyond an empty target and only explode on contact', () => {
+  for (const [kind, duration, arc] of [
+    ['player', 1.15, 10],
+    ['artillery', 1.9, 9],
+    ['boss', 1.35, 10],
+  ]) {
+    const owner = enemy('launcher', 0, 0, { type: kind === 'player' ? 'artillery' : kind });
+    const ground = new T.Box3(new T.Vector3(-100, -12, -100), new T.Vector3(100, -10, 100));
+    const f = fixture([owner], { walls: [ground] });
+    f.p.x = 100;
+    f.shootEnemy(owner, 0, null, new T.Vector3(0, 5, 20), 0, true, { duration, arc });
+    const shot = f.shots[0];
+    // Model the aimed surface disappearing after launch.
+    shot.target.set(0, 5, 20);
+    shot.hostile = kind !== 'player';
+    while (f.shots.length && shot.age < duration + 0.05) f.step(1 / 120);
+    assert.equal(f.shots.length, 1, `${kind}: no timed airburst`);
+    assert.ok(shot.position.z > 20 && shot.position.y < 5, `${kind}: keep falling forward`);
+    assert.equal(f.sounds.filter(([name]) => name === 'explode').length, 0);
+    while (f.shots.length && shot.age < 4.1) f.step(1 / 120);
+    assert.equal(f.shots.length, 0);
+    const explosions = f.sounds.filter(([name]) => name === 'explode');
+    assert.equal(explosions.length, 1, kind);
+    assert.ok(Math.abs(explosions[0][1].position.y + 10) < 1e-8, `${kind}: lower-floor impact`);
+  }
+});
+
+test('a mortar lost into empty space expires silently instead of exploding', () => {
+  const owner = enemy('launcher', 0, 0, { type: 'artillery' });
+  const f = fixture([owner]);
+  f.p.x = 100;
+  f.shootEnemy(owner, 0, null, new T.Vector3(0, 0, 20));
+  for (let i = 0; i < 500; i++) f.step(1 / 120);
+  assert.equal(f.shots.length, 0);
+  assert.equal(f.sounds.filter(([name]) => name === 'explode').length, 0);
+});
+
+test('all mortar owners explode immediately on walls and ceilings before the planned landing time', () => {
+  for (const kind of ['player', 'artillery', 'boss']) {
+    for (const surface of ['wall', 'ceiling']) {
+      const owner = enemy('launcher', 0, 0, { type: kind === 'player' ? 'artillery' : kind });
+      const box =
+        surface === 'wall'
+          ? new T.Box3(new T.Vector3(-5, -10, 6), new T.Vector3(5, 30, 7))
+          : new T.Box3(new T.Vector3(-50, 6, -50), new T.Vector3(50, 7, 50));
+      const f = fixture([owner], { walls: [box] });
+      f.p.x = 100;
+      f.shootEnemy(owner, 0, null, new T.Vector3(0, 0, 20), 0, true);
+      const shot = f.shots[0];
+      shot.hostile = kind !== 'player';
+      if (kind === 'player') {
+        shot.duration = 1.15;
+        shot.arc = 10;
+      }
+      for (let i = 0; i < 480 && f.shots.length; i++) f.step(1 / 120);
+      assert.equal(f.shots.length, 0);
+      assert.ok(shot.age < shot.duration, `${kind}: ${surface} must interrupt flight`);
+      const explosions = f.sounds.filter(([name]) => name === 'explode');
+      assert.equal(explosions.length, 1);
+      const point = explosions[0][1].position;
+      assert.ok(Math.abs((surface === 'wall' ? point.z : point.y) - 6) < 1e-8);
+    }
+  }
+});
+
+test('accepted hits start directional stun and repeated hits do not extend it', () => {
+  const f = fixture([]);
+  f.hurt(5, { x: -5, z: 20 });
+  assert.equal(f.p.hp, 45);
+  assert.equal(f.p.hurtUntil, 1.6);
+  assert.ok(f.p.knockX > 0);
+  assert.equal(f.p.knockZ, 0);
+  f.step(0.2);
+  f.hurt(10, { x: 5, z: 20 });
+  assert.equal(f.p.hp, 45);
+  assert.equal(f.p.hurtUntil, 1.6);
+  assert.ok(f.p.knockX > 0);
 });

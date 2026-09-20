@@ -11,7 +11,8 @@ async page=>{
   shoot('rail-signal',-176,-65);g.step(8,false);if(q.rail.state.moving)throw Error('Carrier recall failed');
   shoot('rail-a',-166,-88);if(!q.rail.state.switches[0])throw Error('Rail paddle cannot be shot');
   // Drive onto a treadle, hold, withdraw, then cross again.
-  g.scenario({player:{x:-158,y:8,z:-76}});g.step(.1,false);g.step(1,false);if(!q.rail.state.switches[1])throw Error('Treadle failed/debounced incorrectly');
+  shoot('rail-b',-154,-76);if(!q.rail.state.switches[1])throw Error('Second rail paddle is obstructed');shoot('rail-b',-154,-76);
+  g.scenario({player:{x:-158,y:8,z:-72}});g.setInput(['KeyW','KeyD']);g.step(.35,false);g.setInput([]);g.step(1,false);if(!q.rail.state.switches[1])throw Error('Treadle failed/debounced incorrectly');
   shoot('rail-carrier',-176,-84);if(!q.rail.state.moving)throw Error('Cart brake not hittable');
   g.scenario({player:{x:-176,y:8,z:-69}});g.interact();g.step(3,false);if(q.rail.state.moving)throw Error('Nearby recall failed');
   shoot('rail-carrier',-176,-84);

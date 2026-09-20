@@ -1,5 +1,15 @@
-// Dispersed optional finds occupy existing side spaces, not a new acquisition loop.
+// Optional rewards occupy separate journeys, including later return branches.
 export const explorationPickups = [
+  {
+    id: 'cannon-scope',
+    upgrade: 'scope',
+    x: 390,
+    y: 24,
+    z: 12,
+    place: 'Detached rangefinding workshop off the optical service gallery',
+    requires: 'scope-drawer',
+    preview: true,
+  },
   {
     id: 'armor-foundry',
     upgrade: 'armor',
@@ -29,18 +39,18 @@ export const explorationPickups = [
   {
     id: 'cooling-filter',
     upgrade: 'cooling',
-    x: -123,
-    y: -8,
-    z: 84,
-    place: 'Rear of the pump island',
+    x: 453,
+    y: -24,
+    z: 60,
+    place: 'Condensate recovery island beyond the cooling works',
   },
   {
     id: 'armor-proving',
     upgrade: 'armor',
-    x: 240,
+    x: 252,
     y: 16,
-    z: -124,
-    place: 'Impact stores behind the fractured runout shutter',
+    z: -170,
+    place: 'Discarded chassis beside the test runway',
     requires: 'impact-store',
     preview: true,
   },
@@ -57,10 +67,10 @@ export const explorationPickups = [
   {
     id: 'armor-lens',
     upgrade: 'armor',
-    x: 269,
-    y: 24,
-    z: -94,
-    place: 'Blue inspection drawer beneath the collimator',
+    x: 382,
+    y: 32,
+    z: -66,
+    place: 'Rail-screened optical maintenance mezzanine',
     requires: 'collimator-drawer',
     preview: true,
   },
@@ -74,7 +84,14 @@ export const explorationPickups = [
     requires: 'laser-cache',
     preview: true,
   },
-  { id: 'armor-hearth', upgrade: 'armor', x: 150, y: -40, z: -8, place: 'Predecessor cooling bay' },
+  {
+    id: 'armor-hearth',
+    upgrade: 'armor',
+    x: 56,
+    y: -40,
+    z: 23,
+    place: 'Retired service room beside the furnace refuge',
+  },
 ].map((p) => ({ ...p, hidden: true }));
 
 // Bounds are shared by collision, occlusion and the visible machines. Keep the
@@ -93,7 +110,7 @@ const machine = (id, kind, x, y, z, w, d, h = 2.5) => ({
 });
 export const explorationSolids = [
   machine('stores-screen', 'rack', -188, 8, -87, 10, 2, 3.4),
-  machine('stores-spare-hulls', 'rack', -176, 8, -92, 3, 8),
+  machine('stores-spare-hulls', 'rack', -174, 8, -95, 3, 8),
   machine('dispatch-stator', 'coil', -118, 8, 25, 5, 5, 2.8),
   machine('dispatch-pallets', 'rack', -134, 8, 30, 9, 3, 1.6),
   machine('drydock-filter', 'filter', -171, -8, 94, 5, 2, 2.6),
@@ -108,7 +125,7 @@ export const explorationSolids = [
   machine('emitter-coils', 'optics', 312, 24, -40, 5, 3, 2.5),
   machine('separator-service-pump', 'filter', 346, -24, 188, 2, 2, 3),
   machine('coolant-spare-jackets', 'filter', 353, -24, 174, 4, 5, 2.4),
-  machine('hearth-tool-bench', 'rack', 148, -40, -4, 4, 2, 2.5),
+  machine('hearth-tool-bench', 'rack', 80, -40, 58, 4, 2, 2.5),
   machine('service-compressor', 'filter', 114, 0, -1, 4, 3, 2),
   machine('service-stores', 'rack', 129, 0, 6, 5, 3, 2.4),
   machine('freight-side-cargo', 'rack', 107, 8, -112, 6, 3, 2.6),
@@ -118,11 +135,11 @@ export const explorationSolids = [
 ];
 
 export const explorationEnemies = [
-  { id: 'service-lancer', type: 'sniper', x: 124, y: 0, z: 3, hp: 4, encounter: 'service-ambush' },
+  { id: 'service-lancer', type: 'sniper', x: 88, y: 0, z: 3, hp: 4, encounter: 'service-ambush' },
   {
     id: 'service-flanker',
     type: 'skirmisher',
-    x: 116,
+    x: 96,
     y: 0,
     z: 7,
     hp: 4,
@@ -170,6 +187,26 @@ for (const e of explorationEnemies.filter((e) => e.encounter === 'stores-patrol'
 }
 explorationEnemies.push(
   {
+    id: 'rangefinder-turret',
+    type: 'turret',
+    x: 392,
+    y: 24,
+    z: -3,
+    hp: 3,
+    encounter: 'rangefinder',
+    activation: { x: 376, y: 24, z: -24, radius: 14 },
+  },
+  {
+    id: 'rangefinder-flanker',
+    type: 'skirmisher',
+    x: 379,
+    y: 24,
+    z: 2,
+    hp: 3,
+    encounter: 'rangefinder',
+    activation: { x: 376, y: 24, z: -24, radius: 14 },
+  },
+  {
     id: 'stores-reserve-lobber',
     type: 'artillery',
     x: -187,
@@ -207,13 +244,12 @@ for (const e of explorationEnemies.filter((e) => e.battle === 'stores-trial'))
   e.activation = { x: -173, y: 8, z: -74, radius: 17 };
 
 export const explorationControls = [
+  { id: 'scope-drawer', kind: 'shot', x: 376, y: 25.3, z: -13 },
   {
     id: 'mortar-cache',
     kind: 'shot',
-    surface: 'top',
-    counterweight: true,
     x: 155.5,
-    y: 22.6,
+    y: 25.4,
     ground: 20,
     z: -134.5,
   },
@@ -227,7 +263,15 @@ export const explorationControls = [
     z: 193,
     normal: [1, 0, 0],
   },
-  { id: 'collimator-drawer', kind: 'magnet', x: 270, y: 25.3, z: -89.5 },
+  {
+    id: 'collimator-drawer',
+    kind: 'magnet',
+    x: 369.5,
+    y: 34,
+    z: -80,
+    ground: 32,
+    slide: 'collimator-drawer',
+  },
 ];
 export const explorationMirrors = [
   {
@@ -240,15 +284,54 @@ export const explorationMirrors = [
   },
 ];
 explorationSolids.push(
-  machine('mortar-cache-tray', 'rack', 153.5, 20, -136.5, 4, 4, 2.5),
-  { id: 'mortar-cache', x: 158, y: 20, z: -140.5, w: 6, d: 0.8, h: 3.5 },
+  machine('rangefinder-approach-pump', 'filter', 372, 24, -40, 2, 8, 2),
+  machine('rangefinder-return-spares', 'rack', 401, 24, -34, 3, 6, 2),
+  {
+    id: 'scope-screen',
+    x: 374,
+    y: 24,
+    z: -9,
+    w: 8,
+    d: 3,
+    h: 3,
+    permanent: true,
+    rail: { axis: 'x', min: 374, max: 388, release: 'scope-drawer' },
+  },
+  {
+    id: 'collimator-drawer',
+    x: 368,
+    y: 32,
+    z: -86,
+    w: 3,
+    d: 12,
+    h: 3,
+    magnetic: true,
+    rail: { axis: 'z', min: -86, max: -70, latch: 'collimator-drawer' },
+  },
+  machine('mirror-rail-pocket', 'optics', 366, 32, -74, 2, 24, 1.2),
+  machine('rangefinder-cabinet', 'optics', 383, 24, 9, 3, 6, 2.5),
+  machine('rangefinder-test-bench', 'optics', 368, 24, -4, 8, 3, 2),
+  machine('mortar-cache-cabinet', 'rack', 153.5, 20, -136.5, 4, 4, 2.5),
+  machine('mortar-inspection-sill', 'rack', 152, 20, -138.5, 7, 0.5, 5),
+  machine('mortar-window-left', 'rack', 152, 20, -138.5, 0.5, 0.5, 15.2),
+  machine('mortar-window-right', 'rack', 158.5, 20, -138.5, 0.5, 0.5, 15.2),
+  { ...machine('mortar-window-lintel', 'rack', 152, 35.2, -138.5, 7, 0.5, 0.5), ground: 20 },
+  machine('mortar-inspection-west', 'rack', 152, 20, -138, 0.5, 7, 6.2),
+  machine('mortar-inspection-east', 'rack', 158.5, 20, -138, 0.5, 7, 6.2),
+  machine('mortar-inspection-back', 'rack', 152, 20, -131.5, 7, 0.5, 1.8),
+  { id: 'mortar-cache', x: 158, y: 20, z: -140.5, w: 6, d: 0.8, h: 3 },
   { id: 'impact-store', x: 228, y: 16, z: -128, w: 1, d: 8, h: 3.5, phoenix: true },
-  machine('impact-store-north', 'rack', 226, 16, -128, 22, 0.6, 4),
+  machine('impact-store-north', 'rack', 226, 16, -128, 8, 0.6, 4),
+  machine('impact-store-door-jamb', 'rack', 246, 16, -128, 2, 0.6, 4),
   machine('impact-store-south', 'rack', 226, 16, -120.6, 22, 0.6, 4),
   machine('impact-store-end', 'rack', 247.4, 16, -128, 0.6, 8, 4),
 
   ...explorationPickups
-    .filter((p) => p.requires && !['impact-store', 'mortar-cache'].includes(p.requires))
+    .filter(
+      (p) =>
+        p.requires &&
+        !['impact-store', 'mortar-cache', 'collimator-drawer', 'scope-drawer'].includes(p.requires),
+    )
     .map((p) => ({
       id: p.requires,
       x: p.x - 1.8,
@@ -265,6 +348,7 @@ explorationSolids.push(
 // the city or obstructing its existing through routes.
 export const explorationDecks = [
   { id: 'reservoir-inspection-island', x: -149, y: -8, z: 88, w: 8, d: 8, region: 'garden' },
+  { id: 'mortar-window-foot', x: 152, y: 20, z: -139, w: 7, d: 9, region: 'testworks' },
   { id: 'mortar-inspection-neck', x: 158, y: 20, z: -142, w: 6, d: 8, region: 'testworks' },
   {
     id: 'mortar-inspection-room',
@@ -278,6 +362,191 @@ export const explorationDecks = [
   },
   { id: 'impact-store-spur', x: 222, y: 16, z: -128, w: 26, d: 8, region: 'testworks' },
 ];
+// Four different return trips separate rewards from the ability that first reveals them.
+explorationDecks.push(
+  { id: 'rangefinder-approach', x: 372, y: 24, z: -58, w: 8, d: 52, region: 'transit' },
+  {
+    id: 'rangefinder-workshop',
+    x: 366,
+    y: 24,
+    z: -10,
+    w: 38,
+    d: 30,
+    region: 'transit',
+    district: 'rangefinder',
+  },
+  { id: 'rangefinder-return', x: 396, y: 24, z: -58, w: 8, d: 52, region: 'transit' },
+  {
+    id: 'crash-runout',
+    x: 234,
+    y: 16,
+    z: -156,
+    w: 14,
+    d: 32,
+    region: 'testworks',
+    district: 'crash',
+  },
+  {
+    id: 'crash-recovery',
+    x: 234,
+    y: 16,
+    z: -180,
+    w: 30,
+    d: 24,
+    region: 'testworks',
+    district: 'crash',
+  },
+  {
+    id: 'crash-return',
+    x: 252,
+    y: 16,
+    z: -156,
+    w: 12,
+    d: 48,
+    region: 'testworks',
+    district: 'crash',
+  },
+  { id: 'crash-runway-return', x: 238, y: 16, z: -114, w: 26, d: 12, region: 'testworks' },
+  { id: 'mirror-service-approach', x: 338, y: 24, z: -118, w: 10, d: 30, region: 'optics' },
+  { id: 'mirror-service-neck', x: 338, y: 24, z: -118, w: 28, d: 12, region: 'optics' },
+  { id: 'mirror-service-rise', x: 354, y: 24, z: -106, w: 12, d: 20, rise: 8, region: 'optics' },
+  {
+    id: 'mirror-cleaning-hall',
+    x: 354,
+    y: 32,
+    z: -86,
+    w: 14,
+    d: 36,
+    region: 'optics',
+    district: 'mirror-service',
+  },
+  {
+    id: 'mirror-repair-workshop',
+    x: 368,
+    y: 32,
+    z: -86,
+    w: 26,
+    d: 36,
+    region: 'optics',
+    district: 'mirror-service',
+  },
+  { id: 'rangefinder-neck', x: 342, y: 24, z: -32, w: 38, d: 8, region: 'optics' },
+  { id: 'condensate-neck', x: 382, y: -24, z: 110, w: 36, d: 12, region: 'circulation' },
+  {
+    id: 'condensate-pump-room',
+    x: 396,
+    y: -24,
+    z: 62,
+    w: 30,
+    d: 60,
+    region: 'circulation',
+    district: 'condensate',
+  },
+  { id: 'condensate-basin', x: 426, y: -24, z: 46, w: 40, d: 64, water: true, region: 'garden' },
+  { id: 'condensate-filter-island', x: 448, y: -24, z: 54, w: 10, d: 14, region: 'circulation' },
+  { id: 'condensate-north-bank', x: 408, y: -24, z: 40, w: 58, d: 8, region: 'circulation' },
+  { id: 'condensate-bank-return', x: 408, y: -24, z: 40, w: 12, d: 30, region: 'circulation' },
+  { id: 'retired-hull-neck', x: 42, y: -40, z: 6, w: 8, d: 16, region: 'furnace' },
+  {
+    id: 'retired-hull-workshop',
+    x: 42,
+    y: -40,
+    z: 16,
+    w: 22,
+    d: 18,
+    region: 'furnace',
+    district: 'retired',
+  },
+  { id: 'retired-hull-return', x: 56, y: -40, z: 26, w: 18, d: 8, region: 'furnace' },
+);
+explorationSolids.push(
+  machine('retired-workshop-chassis', 'rack', 45, -40, 27, 4, 5, 1.1),
+  { id: 'impact-store', x: 252, y: 16, z: -132, w: 12, d: 1, h: 3.5, phoenix: true },
+  machine('crash-buffer-west', 'rack', 235, 16, -146, 3, 12, 3),
+  machine('crash-buffer-east', 'rack', 244, 16, -154, 3, 9, 2.5),
+  machine('crash-recovery-press', 'coil', 236, 16, -176, 5, 6, 3),
+  machine('crash-recovery-screen', 'rack', 239, 16, -170, 3, 8, 2.5),
+  machine('condensate-header', 'filter', 398, -24, 97, 12, 4, 3),
+  machine('condensate-pump', 'filter', 416, -24, 78, 7, 10, 3),
+  machine('condensate-valves', 'coil', 398, -24, 64, 4, 9, 2),
+  machine('condensate-filter-housing', 'filter', 449, -24, 54, 8, 2, 2.6),
+);
+explorationEnemies.push(
+  {
+    id: 'crash-range-sniper',
+    type: 'sniper',
+    x: 252,
+    y: 16,
+    z: -160,
+    hp: 3,
+    encounter: 'crash-range',
+    activation: { x: 241, y: 16, z: -156, radius: 18 },
+  },
+  {
+    id: 'crash-range-skirmisher',
+    type: 'skirmisher',
+    x: 258,
+    y: 16,
+    z: -176,
+    hp: 3,
+    encounter: 'crash-range',
+    activation: { x: 241, y: 16, z: -156, radius: 18 },
+  },
+  {
+    id: 'mirror-workshop-reflector',
+    type: 'reflector',
+    x: 382,
+    y: 32,
+    z: -76,
+    hp: 4,
+    encounter: 'mirror-workshop',
+    activation: { x: 378, y: 32, z: -80, radius: 12 },
+  },
+  {
+    id: 'mirror-workshop-skirmisher',
+    type: 'skirmisher',
+    x: 386,
+    y: 32,
+    z: -56,
+    hp: 3,
+    encounter: 'mirror-workshop',
+    activation: { x: 378, y: 32, z: -80, radius: 12 },
+  },
+  {
+    id: 'mirror-workshop-repairer',
+    type: 'repairer',
+    x: 380,
+    y: 32,
+    z: -56,
+    hp: 3,
+    encounter: 'mirror-workshop',
+    activation: { x: 378, y: 32, z: -80, radius: 12 },
+  },
+  {
+    id: 'condensate-welder',
+    type: 'welder',
+    x: 412,
+    y: -24,
+    z: 86,
+    hp: 4,
+    encounter: 'condensate',
+    activation: { x: 414, y: -24, z: 103, radius: 14 },
+  },
+  {
+    id: 'condensate-turret',
+    type: 'turret',
+    x: 408,
+    y: -24,
+    z: 68,
+    hp: 3,
+    encounter: 'condensate',
+    activation: { x: 414, y: -24, z: 103, radius: 14 },
+  },
+);
+
+// Local activation uses the same encounter scheduler as the warehouse patrol.
+for (const e of explorationEnemies) if (e.activation && !e.battle) e.battle = e.encounter;
+
 export const explorationRooms = explorationDecks.filter((d) => d.district);
 const casing = (id, x, y, z, w, d, h, ground = y) => ({
   id,
@@ -303,7 +572,7 @@ explorationSolids.push(
   casing('optical-case-partition-front', 362, -24, 190, 0.4, 2.1, 4),
   casing('optical-case-partition-back', 362, -24, 194, 0.4, 2, 4),
   { ...casing('optical-case-roof', 352, -20, 190, 15.6, 6, 0.3, -24), mass: true },
-  machine('stores-cross-cover', 'rack', -160, 8, -82, 4, 10, 2.6),
+  machine('stores-cross-cover', 'rack', -160, 8, -90, 4, 10, 2.6),
   {
     ...casing('stores-inspection-canopy', -158, 12.4, -92, 18, 14, 0.45, 8),
     theme: 'transit',

@@ -81,7 +81,7 @@ const bullets=[],effects=[],enemies=[],lobShots=[];
 let magneticTarget=null,wasPulling=false;
 const tetherGeometry=new T.BufferGeometry().setFromPoints([new T.Vector3(),new T.Vector3()]);
 const tether=new T.Line(tetherGeometry,new T.LineBasicMaterial({color:C.mint,transparent:true,opacity:.8}));scene.add(tether);tether.visible=false;
-const hpEl=$('hp');for(let i=0;i<10;i++)hpEl.append(document.createElement('i'));
+const hpEl=$('hp');for(let i=0;i<MAX_HP/5;i++)hpEl.append(document.createElement('i'));
 const projectileGeometry=new T.SphereGeometry(.23,10,6),particleGeometry=new T.IcosahedronGeometry(1,1);
 const bulletMaterials={player:mat(0xfff1b0,true),enemy:mat(0xff783e,true)};
 const enemyDefs=[['scout',27,0],['scout',17,40],['scout',26,45],['turret',15,46],['guard',79,41],['turret',83,25],['elite',52,65],['boss',0,-51],...transitEnemies,...gardenEnemies,...midgameEnemies];
@@ -762,7 +762,7 @@ function drawMap(canvas,large=false){
   ctx.strokeStyle='#a8c8af88';ctx.beginPath();ctx.moveTo(w/2,7);ctx.lineTo(w/2,14);ctx.stroke();
 }
 function updateHUD(){
-  for(let i=0;i<10;i++){const value=player.hp-i*5;hpEl.children[i].className=value<=0?'empty':value<5?'half':'';}
+  for(let i=0;i<MAX_HP/5;i++){const value=player.hp-i*5;hpEl.children[i].className=value<=0?'empty':value<5?'half':'';}
   $('heat').style.strokeDashoffset=String(100-clamp(player.heat,0,100));
   const heatColorRatio=player.overheated?1:clamp(player.heat/100,0,1);
   $('reticle').style.setProperty('--heat-color',`hsl(${48-40*heatColorRatio} 100% ${82-15*heatColorRatio}%)`);
@@ -836,15 +836,15 @@ function frame(now){
 }
 requestAnimationFrame(frame);
 
-function keyLabel(code){return code==='Mouse0'?'鼠标左键':code==='Mouse1'?'鼠标中键':code==='Mouse2'?'鼠标右键':code==='Space'?'Space':code.startsWith('Key')?code.slice(3):code.startsWith('Digit')?code.slice(5):code==='ShiftLeft'?'Shift':code;}
+function keyLabel(code){return code==='Mouse0'?'Left mouse':code==='Mouse1'?'Middle mouse':code==='Mouse2'?'Right mouse':code==='Space'?'Space':code.startsWith('Key')?code.slice(3):code.startsWith('Digit')?code.slice(5):code==='ShiftLeft'?'Shift':code;}
 function keyGlyph(element,code){
   const mouse=code.startsWith('Mouse');element.textContent=mouse?'':keyLabel(code);
   element.classList.toggle('mouse-key',mouse);element.dataset.button=code;
 }
-const labels={up:'向上移动',left:'向左移动',down:'向下移动',right:'向右移动',fire:'发射当前武器',magnet:'磁力牵引（按住）',weapon:'切换已获得的武器',flotation:'展开 / 收起浮航底盘',overdrive:'超载引擎',map:'区域地图',repair:'交互 / 激活维修巢',skip:'跳过死亡动画',pause:'暂停 / 设置'};
+const labels={up:'Move forward',left:'Move left',down:'Move back',right:'Move right',fire:'Fire weapon',magnet:'Magnet (hold)',weapon:'Cycle weapons',flotation:'Deploy / retract Flotation',overdrive:'Overdrive',map:'Region map',repair:'Use / repair',skip:'Skip reconstruction',pause:'Pause / settings'};
 function renderBindings(){
   $('bindings').replaceChildren();for(const action of Object.keys(DEFAULT_BINDINGS)){
-    const label=document.createElement('span');label.textContent=labels[action];const b=document.createElement('button');b.textContent=rebind===action?'按下新按键…':keyLabel(bindings[action]);b.addEventListener('click',()=>{rebind=action;renderBindings();});$('bindings').append(label,b);
+    const label=document.createElement('span');label.textContent=labels[action];const b=document.createElement('button');b.textContent=rebind===action?'Press a key…':keyLabel(bindings[action]);b.addEventListener('click',()=>{rebind=action;renderBindings();});$('bindings').append(label,b);
   }
   const glyph=$('glyphs');keyGlyph(glyph.children[0],bindings.up);[bindings.left,bindings.down,bindings.right].forEach((b,i)=>keyGlyph(glyph.children[1].children[i],b));keyGlyph(glyph.children[3],bindings.map);keyGlyph($('interaction').firstElementChild,bindings.repair);keyGlyph($('acquired').lastElementChild,bindings.overdrive);keyGlyph($('magnet-tool').querySelector('kbd'),bindings.magnet);keyGlyph($('weapon-tool').querySelector('kbd'),bindings.weapon);keyGlyph($('flotation-tool').querySelector('kbd'),bindings.flotation);
 }
@@ -884,13 +884,13 @@ $('quality').value=prefs.quality||'high';
 function quality(){const high=$('quality').value==='high';renderer.setPixelRatio(Math.min(devicePixelRatio,high?1.75:1));renderer.shadowMap.enabled=high;scene.traverse(m=>{if(m.isMesh&&m.material)m.material.needsUpdate=true;});resize();}
 quality();
 $('volume').addEventListener('input',()=>{audio.volume=Number($('volume').value);savePrefs();});$('music').addEventListener('change',()=>{audio.music=$('music').checked;savePrefs();});$('sfx').addEventListener('change',()=>{audio.sfx=$('sfx').checked;savePrefs();});$('quality').addEventListener('change',()=>{quality();savePrefs();});
-$('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{$('fullscreen').textContent='当前窗口不支持';}});
+$('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{$('fullscreen').textContent='Unavailable in this window';}});
 $('reset-bindings').addEventListener('click',()=>{bindings={...DEFAULT_BINDINGS};rebind=null;renderBindings();savePrefs();});
 function restart(){try{localStorage.removeItem(SAVE_KEY);}catch{}location.reload();}
 $('new-game').addEventListener('click',()=>{if(resetArmed)restart();else{resetArmed=true;$('reset-confirm').hidden=false;}});
 const journeyMenu=createJourneyMenu(()=>{});$('journey-button').onclick=()=>journeyMenu.show();
-document.querySelector('#settings .subtitle').textContent=`历史版本 · ${({'2':'第二关','3':'第三关','4':'中段',hoist:'升降井'})[chapter]||'第一关'}`;
-$('new-game').textContent='重新开始当前旧版存档';$('reset-confirm').textContent='再次点击将重置当前旧版存档，机械城旅程不受影响。';
+document.querySelector('#settings .subtitle').textContent=`Archived map · ${({'2':'Freight','3':'Garden','4':'Midgame',hoist:'Hoist'})[chapter]||'Foundry'}`;
+$('new-game').textContent='Restart archived save';$('reset-confirm').textContent='Click again to reset this archived save. Your campaign save is unaffected.';
 renderBindings();
 // A development-only observation surface supports reproducible browser verification.
 if(import.meta.env.DEV&&new URLSearchParams(location.search).has('test')){

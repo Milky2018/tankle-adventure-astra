@@ -123,7 +123,7 @@ export class FactoryAudio {
       paused,
       dead: p.hp <= 0,
       enabled: this.music,
-      overdrive: p.overdrive,
+      phoenix: !!p.phoenix,
       endingTime: p.endingTime || 0,
       duck: t < this.duckUntil,
       ...musicState,

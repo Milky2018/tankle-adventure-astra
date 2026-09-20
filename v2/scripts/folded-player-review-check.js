@@ -26,9 +26,9 @@ async page=>{
   if(clipped>=25||restored!==25||insideOpen||!g.snapshot().state.freight||!sounds.includes('blocked'))throw Error('Sanctuary preview/interception regression '+JSON.stringify({clipped,restored,insideOpen,sounds}));
   return {clipped,restored,insideOpen,outsideOpen:g.snapshot().state.freight,blockedSound:sounds.includes('blocked')};
  });
- await page.locator('#settings-button').click();await page.getByRole('button',{name:'调整镜头',exact:true}).click();
- await page.getByRole('button',{name:'返回设置',exact:true}).click();await page.locator('#camera-view').selectOption('third');await page.getByRole('button',{name:'调整镜头',exact:true}).click();
- if(!(await page.locator('#camera-tuning').textContent()).includes('跟随距离保持不变'))throw Error('Camera settings contradict fixed boom');
+ await page.locator('#settings-button').click();await page.getByRole('button',{name:'Adjust camera',exact:true}).click();
+ await page.getByRole('button',{name:'Back to settings',exact:true}).click();await page.locator('#camera-view').selectOption('third');await page.getByRole('button',{name:'Adjust camera',exact:true}).click();
+ if(!(await page.locator('#camera-tuning').textContent()).includes('without changing follow distance'))throw Error('Camera settings contradict fixed boom');
  await page.evaluate(()=>localStorage.setItem('furnace-born-v2-city',JSON.stringify({endingSeen:true})));await page.goto('http://127.0.0.1:5174/');
  const completed=await page.locator('#journey-continue').textContent();if(!completed.includes('Mission Accomplished')||completed.includes('传火'))throw Error('Completed journey label regressed');
  if(errors.length)throw Error(errors.join('\n'));return {opening:{x:opening.player.x,z:opening.player.z},cameraShortcut:true,refuge,completed,errors};

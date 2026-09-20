@@ -3,36 +3,36 @@ import './journey-menu.css';
 
 const citySave='furnace-born-v2-city';
 const previews=[
-  {id:'foundry',name:'第一关 · 回收铸造厂',description:'从苏醒点开始，仅携带原始火炮。'},
-  {id:'garden',name:'花园路线入口',description:'从花园入口维修点开始，携带加速器和磁力牵引。'},
-  {id:'freight',name:'货运路线入口',description:'从货运入口维修点开始，携带加速器和迫击炮。'}
+  {id:'foundry',name:'Chapter 1 · Foundry',description:'Start at the awakening site with the Cannon.'},
+  {id:'garden',name:'Garden entrance',description:'Start at the Garden repair hive with Overdrive and Magnet.'},
+  {id:'freight',name:'Freight entrance',description:'Start at the Freight repair hive with Overdrive and Mortar.'}
 ];
 
 export function createJourneyMenu(back=null){
   const menu=document.createElement('div');menu.className='journey-menu';menu.hidden=true;menu.setAttribute('role','dialog');menu.setAttribute('aria-modal','true');menu.setAttribute('aria-labelledby','journey-title');
   menu.innerHTML=`<section class="journey-panel">
-    <header><div><p class="journey-kicker">一座沉寂的城 · 一台苏醒的机器</p><h1 id="journey-title">FURNACE<br><span>BORN</span></h1><p class="journey-intro">在余烬之下，寻找仍在运转的心脏。</p></div><button class="journey-back" ${back?'':'hidden'}>返回设置</button></header>
-    <section class="journey-campaign" aria-label="完整旅程">
-      <div><h2>完整旅程</h2><p>从回收铸造厂苏醒，探索彼此相连的机械城。</p><div class="journey-actions"><button id="journey-continue" class="journey-primary">继续旅程</button><button id="journey-start">从第一关开始</button></div><p id="journey-confirm" role="status" hidden>重新开始将覆盖完整旅程的进度。再次点击确认，或选择下方的第一关独立试玩保留进度。</p></div>
+    <header><div><p class="journey-kicker">A silent city. A machine awakens.</p><h1 id="journey-title"><span class="journey-main-title">TANKLE ADVENTURE</span><span class="journey-subtitle">ASTRA</span></h1><p class="journey-intro">Beneath the embers, find the heart still beating.</p></div><button class="journey-back" ${back?'':'hidden'}>Back to settings</button></header>
+    <section class="journey-campaign" aria-label="Campaign">
+      <div><h2>Campaign</h2><p>Awaken in the Foundry and explore an interconnected mechanical city.</p><div class="journey-actions"><button id="journey-continue" class="journey-primary">Continue</button><button id="journey-start">New campaign</button></div><p id="journey-confirm" role="status" hidden>Starting over replaces your campaign save. Click again to confirm, or use a separate Foundry preview below to keep your progress.</p></div>
     </section>
-    <section class="journey-preview-section" aria-label="独立试玩"><div class="journey-section-heading"><h2>独立试玩</h2><p>不影响完整旅程存档</p></div><div class="journey-previews">${previews.map((p,i)=>`<button data-preview="${p.id}"><span class="journey-route-number" aria-hidden="true">0${i+1}</span><span class="journey-route-copy"><strong>${p.name}</strong><span>${p.description}</span></span><span class="journey-play" aria-hidden="true">↗</span></button>`).join('')}</div></section>
-    <details class="journey-history"><summary>历史版本试玩</summary><p>以下是早期地图版本，与当前机械城及其旅程存档分开。</p><div>${[['legacy','旧版第一关'],['2','旧版第二关'],['3','旧版第三关'],['4','旧版中段'],['hoist','旧版升降井']].map(([id,name])=>`<a href="/?chapter=${id}">${name}</a>`).join('')}</div></details>
+    <section class="journey-preview-section" aria-label="Route previews"><div class="journey-section-heading"><h2>Route previews</h2><p>Separate from your campaign save</p></div><div class="journey-previews">${previews.map((p,i)=>`<button data-preview="${p.id}"><span class="journey-route-number" aria-hidden="true">0${i+1}</span><span class="journey-route-copy"><strong>${p.name}</strong><span>${p.description}</span></span><span class="journey-play" aria-hidden="true">↗</span></button>`).join('')}</div></section>
+    <details class="journey-history"><summary>Archived maps</summary><p>Earlier maps with separate saves, outside the current campaign.</p><div>${[['legacy','Archived Foundry'],['2','Archived Freight'],['3','Archived Garden'],['4','Archived midgame'],['hoist','Archived Hoist']].map(([id,name])=>`<a href="/?chapter=${id}">${name}</a>`).join('')}</div></details>
   </section>`;
   document.body.append(menu);
   const start=menu.querySelector('#journey-start'),resume=menu.querySelector('#journey-continue'),confirmation=menu.querySelector('#journey-confirm');
   let armed=false,returnFocus=null;
   const hasSave=()=>{try{return !!localStorage.getItem(citySave);}catch{return false;}};
   function show(){
-    returnFocus=document.activeElement;armed=false;confirmation.hidden=true;start.textContent='从第一关开始';resume.hidden=!hasSave();
+    returnFocus=document.activeElement;armed=false;confirmation.hidden=true;start.textContent='New campaign';resume.hidden=!hasSave();
     let completed=false;try{completed=JSON.parse(localStorage.getItem(citySave))?.endingSeen===true;}catch{}
-    resume.textContent=completed?'继续探索 · Mission Accomplished':'继续旅程';
+    resume.textContent=completed?'Explore · Mission Accomplished':'Continue';
     start.classList.toggle('journey-primary',resume.hidden);menu.hidden=false;(resume.hidden?start:resume).focus();
   }
   function close(){menu.hidden=true;back();returnFocus?.focus();}
   menu.querySelector('.journey-back').onclick=close;
   resume.onclick=()=>{location.href='/?chapter=folded';};
   start.onclick=()=>{
-    if(hasSave()&&!armed){armed=true;confirmation.hidden=false;start.textContent='确认重新开始第一关';return;}
+    if(hasSave()&&!armed){armed=true;confirmation.hidden=false;start.textContent='Confirm new campaign';return;}
     try{localStorage.removeItem(citySave);}catch{}
     location.href='/?chapter=folded';
   };

@@ -25,11 +25,11 @@ async page=>{
     await page.mouse.up({button:'middle'});const stopped=await yaw();await page.mouse.move(780,360);if(await yaw()!==stopped)throw Error('Released middle drag remained active');
     rows.push({mode:'fallback',order,delta,...s});
   }
-  await page.keyboard.press('Escape');await page.getByRole('button',{name:'调整镜头',exact:true}).click();const slider=page.getByRole('slider',{name:'鼠标灵敏度',exact:true});await slider.focus();await slider.press('Home');for(let i=0;i<35;i++)await slider.press('ArrowRight');
-  await page.getByRole('button',{name:'继续游戏',exact:true}).click();await page.mouse.move(600,360);await page.mouse.down({button:'middle'});const start=await yaw();await page.mouse.move(680,360);await page.mouse.up({button:'middle'});
+  await page.keyboard.press('Escape');await page.getByRole('button',{name:'Adjust camera',exact:true}).click();const slider=page.getByRole('slider',{name:'Mouse sensitivity',exact:true});await slider.focus();await slider.press('Home');for(let i=0;i<10;i++)await slider.press('ArrowRight');
+  await page.getByRole('button',{name:'Resume',exact:true}).click();await page.mouse.move(600,360);await page.mouse.down({button:'middle'});const start=await yaw();await page.mouse.move(680,360);await page.mouse.up({button:'middle'});
   const fast=Math.abs(await yaw()-start);if(Math.abs(fast-.4)>.01)throw Error(`Sensitivity did not double look: ${fast}`);
   await load();const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('furnace-born-v2-settings')).cameraSettings.third.sensitivity);if(saved!==2)throw Error('Sensitivity did not persist');
-  await page.keyboard.press('Escape');await page.getByRole('button',{name:'调整镜头',exact:true}).click();await page.getByRole('button',{name:'恢复此视角默认',exact:true}).click();
-  const defaults=await page.evaluate(()=>JSON.parse(localStorage.getItem('furnace-born-v2-settings')).cameraSettings.third.sensitivity);if(defaults!==1)throw Error('Sensitivity reset failed');
+  await page.keyboard.press('Escape');await page.getByRole('button',{name:'Adjust camera',exact:true}).click();await page.getByRole('button',{name:'Reset this view',exact:true}).click();
+  const defaults=await page.evaluate(()=>JSON.parse(localStorage.getItem('furnace-born-v2-settings')).cameraSettings.third.sensitivity);if(defaults!==3)throw Error('Sensitivity reset failed');
   if(errors.length)throw Error(errors.join('\n'));return {rows,fast,saved,defaults,errors};
 }

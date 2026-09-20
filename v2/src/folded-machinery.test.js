@@ -23,9 +23,9 @@ test('ordinary walking cannot reverse the Foundry belt; a cold Overdrive crosses
 });
 
 test('released lifts cycle repeatedly with endpoint dwell and no second input',()=>{
-  for(const def of foldedLiftDefs){
+  for(const def of foldedLiftDefs.filter(l=>!l.settle)){
     const lift={...def,y:def.stops[0],destination:def.stops[0],wait:0};
-    const state={[def.lock||def.id]:true,brake:true},p={x:def.x+def.w/2,y:lift.y,z:def.z+def.d/2};
+    const state={...Object.fromEntries((def.locks||[]).map(id=>[id,true])),[def.lock||def.id]:true,brake:true},p={x:def.x+def.w/2,y:lift.y,z:def.z+def.d/2};
     let visits=0,lastStop=null,dwell=0;
     for(let i=0;i<4800;i++){
       stepLifts([lift],state,p,1/60);
@@ -83,8 +83,8 @@ test('the released carrier runs empty without boarding or a brake interaction',(
 });
 
 test('unlocked lifts dwell for three seconds at both endpoints without a passenger',()=>{
-  for(const def of foldedLiftDefs){
-    const lift={...def,y:def.stops[0],destination:def.stops[0],wait:0},state={load:true,[def.lock||def.id]:true},p={x:1000,y:0,z:1000};
+  for(const def of foldedLiftDefs.filter(l=>!l.settle)){
+    const lift={...def,y:def.stops[0],destination:def.stops[0],wait:0},state={load:true,...Object.fromEntries((def.locks||[]).map(id=>[id,true])),[def.lock||def.id]:true},p={x:1000,y:0,z:1000};
     for(let i=0;i<180;i++)stepLifts([lift],state,p,1/60);
     assert.equal(lift.y,def.stops[0],`${def.id}: initial landing dwell`);
     stepLifts([lift],state,p,1/60);assert.ok(lift.y>def.stops[0],`${def.id}: starts without input`);

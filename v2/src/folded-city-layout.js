@@ -41,10 +41,9 @@ export const cityDecks=[
   d('pressure-bypass',248,28,12,72,-16,{rise:-8}),d('industrial-return',64,12,52,12,-16),d('industrial-return-east',128,12,80,12,-16),d('industrial-return-elbow',104,24,36,12,-16),
   d('industrial-ascent',64,-24,12,36,-8,{rise:-8}),d('inner-return-rise',116,-24,12,48,0,{rise:-16}),
   d('inner-return-top',100,-36,28,12,0),d('inner-service-connector',104,-24,12,22,0),
-  d('inner-receiver-plinth',275,120,8,7,-24),
-  d('inner-sustained-approach',260,16,12,96,-40,{rise:16}),d('inner-lane-landing',248,0,32,16,-40),
-  d('predecessor-gallery',28,0,232,12,-40),
-  d('predecessor-mount',200,-12,20,12,-40),d('predecessor-cooling',136,-12,20,12,-40),d('predecessor-dock',72,-12,20,12,-40),d('last-refuge',28,-24,28,24,-40),d('last-cage-top',16,-12,12,10,0),
+  d('predecessor-gallery',28,0,80,12,-40),
+  d('predecessor-service-link',76,18,32,12,-40),
+  d('predecessor-mount',66,44,22,18,-40),d('predecessor-cooling',88,18,20,16,-40),d('predecessor-dock',72,-12,20,12,-40),d('last-refuge',28,-24,28,24,-40),d('last-cage-top',16,-12,12,10,-8),
   d('predecessor-descent',28,12,12,48,-40,{rise:-16}),d('keeper-forecourt',-28,60,68,16,-56),
   d('keeper-court',-28,12,56,48,-56),d('central-furnace',-16,-16,32,28,-56),
   d('loading-water',0,-40,12,30,-16,{water:true}),d('loading-water-bend',12,-40,8,12,-16,{water:true}),d('loading-water-rise',8,-64,12,24,-8,{rise:-8}),d('loading-water-apron',8,-88,24,24,-8),
@@ -57,29 +56,27 @@ export const cityLifts=[
   {id:'emitter-cage',x:44,z:-92,w:12,d:12,stops:[-8,24],lock:'emitter-cage'},
   {id:'garden-lift',x:104,z:12,w:12,d:12,stops:[-8,16],lock:'garden-optical'},
   {id:'yard-lift',x:236,z:24,w:12,d:12,stops:[-8,16],lock:'yard-optical',recess:.6},
-  {id:'last-cage',x:16,z:-24,w:12,d:12,stops:[-40,0],lock:'last-cage'}
+  {id:'last-cage',x:16,z:-24,w:12,d:12,stops:[-40,-8],lock:'last-cage'}
 ];
 export const citySolids=[
   gate('awakening-carrier',6.8,77.6,2.4,4.5,-8,1.1,{permanent:true,invisible:true}),
   gate('final-predecessor',-13.1,3,4.2,4,-56,1.9,{permanent:true,invisible:true}),
   gate('furnace-shell',-5,-13,10,10,-56,7,{permanent:true,invisible:true}),
-  gate('predecessor-west',144,-8,4,3,-40,2.7,{permanent:true,invisible:true}),
+  gate('predecessor-west',96,23.5,4,3,-40,2.7,{permanent:true,invisible:true}),
   gate('predecessor-east',80,-8,4,3,-40,2.7,{permanent:true,invisible:true}),
-  gate('predecessor-mount',208,-8,4,3,-40,2.7,{permanent:true,invisible:true}),
+  gate('predecessor-mount',74,48.5,4,3,-40,2.7,{permanent:true,invisible:true}),
   gate('predecessor-last',48,-19.5,4,3,-40,2.7,{permanent:true,invisible:true}),
   gate('foundry-foundation',-14,74,28,24,-24,15.2,{permanent:true,mass:true}),
   gate('optical-foundation',196,-36,52,24,-24,47.2,{permanent:true,mass:true}),
   gate('rig-foundation',208,100,52,36,-56,31.2,{permanent:true,mass:true}),
   gate('refuge-foundation',28,-24,28,24,-64,23.2,{permanent:true,mass:true}),
-  gate('training-pier-west',-55.4,23.2,1.2,1.2,-16,24,{permanent:true}),gate('training-pier-east',-45.6,37.2,1.2,1.2,-16,24,{permanent:true}),
+  gate('training-pier-west',-58.8,23.2,1.2,1.2,-16,24,{permanent:true}),gate('training-pier-east',-45.6,37.2,1.2,1.2,-16,24,{permanent:true}),
   gate('relay-west',-47.5,44,1,12,-16,3),
   gate('relays',-50.5,120,1,12,-16),gate('overdrive-return',-26,100,12,1,-12,5),
   gate('prototype-jamb-north',-50.5,116,1,4,-16,6,{permanent:true}),gate('prototype-jamb-south',-50.5,132,1,8,-16,6,{permanent:true}),
   gate('foundry',18,33.5,12,1,-8),gate('press-return',-62.5,44,1,12,-16),
   gate('bridge-crane',-6,-20,12,1,0,3.2),
   gate('bridge-crane',-6,-28,1,8,0,3.2),gate('bridge-crane',5,-28,1,8,0,3.2),
-  gate('inner-optics',260,112,12,1,-24,5),
-  gate('inner-receiver-screen',275,125,7,1,-24,5,{permanent:true}),
   gate('freight',25.5,-40.5,12,1,0,3.2),gate('freight',25.5,-28,12,1,0,3.2),gate('freight',36.5,-40,1,12,0,3.2),
   gate('freight-return',62.5,-40,1,12,0),gate('optics-outer',212,-46,12,1,18,8,{phoenix:true}),
   // Expose the same Phoenix lock before the long outer approach, not at its far end.
@@ -91,9 +88,7 @@ export const citySolids=[
   gate('pump',52,-10,12,1,-8),gate('pump',-32,-24,12,1,-8),gate('pressure-return',248,98,12,1,-24),
   gate('pressure-return',64,-1,12,1,-14,4),gate('pressure-return',116,23,12,1,-16),gate('pressure-return',104,-5,12,1,0),
   gate('pressure-thermal',208,52,12,1,-18.6666666667,3,{red:true}),
-  gate('inner-thermal',260,40,12,1,-36,3,{red:true}),
   gate('keeper',-8,11.5,16,1,-56),
-  gate('ratchet',-48.5,22,1,18,8),
   gate('receiver-south',222,-.5,14,.5,24,3,{permanent:true}),gate('receiver-east',235.5,-8,.5,8,24,3,{permanent:true}),
   gate('receiver-aperture-north',221.5,-8,.5,2,24,3,{permanent:true}),gate('receiver-aperture-south',221.5,-2,.5,2,24,3,{permanent:true}),
   gate('rig-cover',228,106,3,5,-24,2,{magnetic:true}),gate('yard-cover',219,42,5,4,-8,2,{magnetic:true}),
@@ -112,13 +107,13 @@ export const citySolids=[
   gate('loading-cover',38,-79,4,3,-8,2,{permanent:true}),
   gate('outer-cover',210,-99,3,5,8,2,{permanent:true}),
   gate('yard-inlet-cover',164,40,4,3,-8,2,{permanent:true}),
-  gate('calibration-cover',223,-27,3,4,24,2,{permanent:true}),
+  gate('calibration-cover',223,-26,3,4,24,2,{permanent:true}),
   gate('gallery-cover',211,32,4,3,16,2,{permanent:true})
 ];
 export const cityControls=[
   control('relay-west',-35,-14.5,44),control('relay-east',-65,-14.5,114),
-  control('press-return',-70,-14.6,50),control('ballast',-29,1.3,27),control('ratchet',-45.5,9.3,27),
-  control('bridge-crane',0,4.2,-24,'shot',{ground:0,surface:'top'}),control('inner-optics',278,-22,124,'laser',{ground:-24,normal:[-1,0,0]}),
+  control('press-return',-70,-14.6,50),control('ballast',-29,1.3,27),
+  control('bridge-crane',0,6.8,-24,'shot',{ground:5,surface:'top'}),control('inner-optics',126,26,-16,'laser',{ground:24,normal:[0,0,-1]}),
   control('loading-return',32,-6.7,-58),control('freight-return',70,1.3,-34),
   control('emitter-cage',63,25.4,-86),control('gallery',228,26,-4,'laser',{ground:24,normal:[-1,0,0]}),
   control('mirror-index',238,25.3,-4),control('garden-optical',232,26,-9.5,'laser',{ground:24,normal:[0,0,1]}),control('yard-optical',228,18,38,'laser',{ground:16}),
@@ -127,12 +122,6 @@ export const cityControls=[
   control('pressure-return',218,-14.6,18),control('last-cage',40,-38.6,-12),
   control('signal',198,41.3,146,'use'),control('maintenance',110,-22.1,30,'shot'),
   control('dock',0,-54.6,0,'dock')
-];
-export const cityHives=[
-  {id:'awakening',x:0,y:-8,z:86,heading:-Math.PI/2},{id:'lower-foundry',x:-56,y:-16,z:76,heading:0},
-  {id:'foundry-exit',x:6,y:-8,z:48,requires:'foundry'},
-  {id:'emitter',x:202,y:24,z:-24,heading:Math.PI/2},{id:'yard',x:210,y:-8,z:44},{id:'rig',x:214,y:-24,z:116,heading:Math.PI},
-  {id:'industrial',x:234,y:-16,z:18},{id:'last-refuge',x:44,y:-40,z:-10,heading:0}
 ];
 export const cityPickups=[
   {id:'overdrive',ability:'overdrive',x:-30,y:-16,z:136,requires:'prototype',preview:true},
@@ -172,13 +161,13 @@ export const cityEnemies=[
   {id:'keeper',x:0,y:-56,z:32,hp:84,type:'boss',parts:[9,9],core:66,persistent:true}
 ];
 export const cityBelts=[
+  {id:'vestibule-heat',x:116,z:-22,w:12,d:50,y:24,vx:0,vz:0,heat:28,stop:'inner-transit'},
   {id:'press-crossing',x:-44,z:47,w:22,d:5,y:-16,vx:2.4,vz:0},
   {id:'rejection',x:-6,z:64,w:12,d:8,y:-8,vx:0,vz:9.95},
-  {id:'overdrive-return-belt',x:-26,z:98,w:12,d:4,y:-10,rise:-4/3,vx:0,vz:9.95},
+  {id:'overdrive-return-belt',x:-26,z:98,w:12,d:4,y:-10,rise:-4/3,vx:0,vz:9.95,stop:'overdrive-bypass'},
   {id:'loading',x:-4,z:-76,w:8,d:8,y:-8,vx:-9.95,vz:0},
   {id:'loading-final',x:16,z:-76,w:8,d:8,y:-8,vx:-9.95,vz:0},
   {id:'return',x:208,z:28,w:12,d:48,y:-16,rise:-16/3,vx:0,vz:9.95,release:'pressure-return',heat:28},
-  {id:'inner',x:260,z:16,w:12,d:48,y:-40,rise:8,vx:0,vz:9.95,release:'inner-transit',heat:28},
   {id:'foundry-feed-left',x:-14,z:40,w:8,d:14,y:-8,vx:-3.2,vz:0},
   {id:'foundry-feed-right',x:14,z:40,w:8,d:14,y:-8,vx:3.2,vz:0},
   {id:'keeper-feed-left',x:-23,z:24,w:8,d:26,y:-56,vx:0,vz:-3.2},
@@ -186,7 +175,6 @@ export const cityBelts=[
 ];
 const q=Math.SQRT1_2;
 export const cityMirrors=[
-  {id:'inner-turn',x:254,y:-22,z:124,n:[q,0,q],size:8},
   {id:'calibration',x:216,y:26,z:-4,n:[-Math.sqrt(3)/2,0,.5],size:10},
   {id:'return-index',x:232,y:26,z:-4,n:[q,0,-q],rotated:[q,0,q],index:'mirror-index',size:6},
   {id:'guardian-east-b',x:210,y:18,z:70,n:[1.1417430631,0,1.5397934235],size:10},

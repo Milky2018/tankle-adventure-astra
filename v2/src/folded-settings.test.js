@@ -36,12 +36,12 @@ test('camera settings clamp old values and reset only the selected view', () => 
     third = cameras.third;
   assert.equal(third.distance, 20);
   assert.equal(third.height, 0);
-  assert.equal(third.sensitivity, 1);
-  assert.equal(third.pitch, (0.32 * 180) / Math.PI);
+  assert.equal(third.sensitivity, 3);
+  assert.equal(third.pitch, 15.3);
   prefs.resetCamera('third');
   assert.equal(cameras.third, third);
-  assert.equal(third.distance, 12);
-  assert.equal(third.height, 1.6);
+  assert.equal(third.distance, 15);
+  assert.equal(third.height, 2.5);
   assert.equal(cameras.overhead.angle, 65);
   assert.equal(cameras.overhead.scale, 24);
 });
@@ -70,4 +70,22 @@ test('preferences round-trip through real settings storage without altering camp
   assert.equal(data.get('furnace-born-v2-city'), campaign);
   loaded.resetBindings();
   assert.equal(prefs.values.bindings.camera, 'KeyV');
+});
+
+test('absolute sensitivity defaults to 3 and preserves saved values within 1–10', () => {
+  for (const [saved, expected] of [
+    [undefined, 3],
+    [0.25, 1],
+    [2, 2],
+    [10, 10],
+    [99, 10],
+  ]) {
+    const preferences = createFoldedPreferences(
+      { cameraSettings: { third: { sensitivity: saved } } },
+      () => {},
+    );
+    assert.equal(preferences.values.cameraSettings.third.sensitivity, expected);
+    preferences.resetCamera('third');
+    assert.equal(preferences.values.cameraSettings.third.sensitivity, 3);
+  }
 });

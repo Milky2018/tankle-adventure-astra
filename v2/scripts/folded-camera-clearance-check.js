@@ -42,14 +42,14 @@ async page=>{
     return Math.min(...distances);
   });
   if(orbit<10)throw Error('Orbiting beside the save point collapsed the camera');
-  await page.keyboard.press('Escape');await page.getByLabel('视角',{exact:true}).selectOption('overhead');
+  await page.keyboard.press('Escape');await page.getByLabel('Camera view',{exact:true}).selectOption('overhead');
   const overhead=await page.evaluate(()=>__game.snapshot());if(overhead.camera.view!=='overhead')throw Error('Overhead view was lost');
   const restored=await page.evaluate(()=>{
     const h=__game.debug.world.hives.find(h=>h.id==='awakening');let valid=true;
     h.root.traverse(m=>{if(m.isMesh&&Math.abs(m.position.x)===2.4&&m.position.y===1.4&&m.material.opacity<.99)valid=false;});return valid;
   });
   if(!restored)throw Error('Third-person prop fading leaked into overhead view');
-  await page.getByLabel('视角',{exact:true}).selectOption('third');
+  await page.getByLabel('Camera view',{exact:true}).selectOption('third');
   if(errors.length)throw Error(errors.join('\n'));
   return {minimum,orbit,restored,crossingSamples:crossing.length,views,opacity,errors};
 }

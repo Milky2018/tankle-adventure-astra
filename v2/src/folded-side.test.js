@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createDelivery} from './folded-delivery.js';
-import {foldedSupport,initialFoldedState,moveFolded} from './folded-layout.js';
+import {foldedSupport,foldedLiftDefs,initialFoldedState,moveFolded} from './folded-layout.js';
 import {cityContact,cityDamage} from './folded-combat.js';
 
 test('maintenance delivery waits for occupants, follows supported banks, and restores its completed berth',()=>{
@@ -11,9 +11,11 @@ test('maintenance delivery waits for occupants, follows supported banks, and res
  for(let i=0;i<1800&&!d.complete;i++){arrived=d.update(1/60,true,()=>false)||arrived;assert.ok(foldedSupport(d.position[0],d.position[2],d.position[1],true),JSON.stringify(d.position));}
  assert.equal(arrived,true);assert.deepEqual(d.position,[130,-16,18]);assert.deepEqual(createDelivery(true).position,d.position);
 });
-test('optional rail crossing joins old rooms only after docking and persists with old secured saves',()=>{
- const p={x:-82,y:8,z:-31,speed:1};const s=initialFoldedState();moveFolded(p,0,30,s);assert.ok(p.z<-25);
- const restored=initialFoldedState({sidePuzzles:{rail:{secured:true}}});moveFolded(p,0,30,restored);assert.ok(p.z>-10);
+test('docking the carrier restores its adjacent inspection bridge and survives an old secured save',()=>{
+ const def=foldedLiftDefs.find(l=>l.id==='rail-inspection-bridge'),lift={...def,y:14},p={x:-162,y:8,z:-68,speed:1},s=initialFoldedState();
+ moveFolded(p,12,0,s,[lift]);assert.ok(p.x< -160);
+ const restored=initialFoldedState({sidePuzzles:{rail:{secured:true}}});assert.equal(restored['rail-crossing'],true);
+ lift.y=8;moveFolded(p,12,0,restored,[lift]);assert.ok(p.x> -152);
 });
 test('garden care side room has a traversable shore entrance',()=>{
  const p={x:46,y:-8,z:24,speed:1};moveFolded(p,0,14,{});assert.ok(Math.abs(p.z-38)<1e-6);

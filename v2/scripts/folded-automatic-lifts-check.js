@@ -4,10 +4,10 @@ async page=>{
   const results=await page.evaluate(()=>{
     const {world}=__game.debug,g=__game,results=[];
     if(world.controls.some(c=>c.kind==='call'||c.id.startsWith('call-')))throw Error('Elevator call controls remain in the scene');
-    for(const lift of world.lifts){
-      g.respawn();g.scenario({player:{x:lift.x+lift.w/2,y:lift.stops[0],z:lift.z+lift.d/2,invincible:1e9},state:{[lift.lock||lift.id]:true},enemies:Object.fromEntries(world.enemies.map(e=>[e.id,0]))});
+    for(const lift of world.lifts.filter(l=>!l.settle)){
+      g.respawn();g.scenario({player:{x:lift.x+lift.w/2,y:lift.stops[0],z:lift.z+lift.d/2,invincible:1e9},state:{...Object.fromEntries((lift.locks||[]).map(id=>[id,true])),[lift.lock||lift.id]:true},enemies:Object.fromEntries(world.enemies.map(e=>[e.id,0]))});
       const lower=lift.stops[0],upper=lift.stops.at(-1);let visits=0,last=null,dwell=0,dwells=[];
-      for(let i=0;i<3600;i++){
+      for(let i=0;i<Math.ceil((lift.stops.at(-1)-lift.stops[0])/5*4*60+3*6*60);i++){
         g.step(1/60,false);const p=g.snapshot().player;
         if(Math.abs(p.y-lift.y)>.001)throw Error(lift.id+' left its passenger behind');
         const at=lift.y===lower?'lower':lift.y===upper?'upper':null;
@@ -27,7 +27,7 @@ async page=>{
   }
   await page.evaluate(()=>{__game.save();__game.respawn();});
   await page.reload();await page.waitForFunction(()=>window.__game?.debug);
-  const restored=await page.evaluate(()=>{__game.scenario({player:{x:0,y:-8,z:86,invincible:1e9}});__game.step(4,false);return __game.debug.world.lifts.map(l=>({id:l.id,y:l.y,lower:l.stops[0]}));});
+  const restored=await page.evaluate(()=>{__game.scenario({player:{x:0,y:-8,z:86,invincible:1e9}});__game.step(4,false);return __game.debug.world.lifts.filter(l=>!l.settle).map(l=>({id:l.id,y:l.y,lower:l.stops[0]}));});
   if(restored.some(l=>l.y<=l.lower))throw Error('Unlocked lift failed to restart after reload '+JSON.stringify(restored));
   if(errors.length)throw Error(errors.join('\n'));return {results,noCallControls:true,eDoesNotOperateLifts:true,restored,errors};
 }

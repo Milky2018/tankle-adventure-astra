@@ -14,7 +14,7 @@ test('overheat recovery returns control with a usable heat reserve while ordinar
 });
 
 test('mastered thermal conveyors carry both enemies and the player toward their exit after reload',()=>{
- for(const [id,flag]of [['return','pressure-return'],['inner','inner-transit']]){
+ for(const [id,flag]of [['return','pressure-return']]){
   const b=cityBelts.find(b=>b.id===id),body={x:b.x+b.w/2,z:b.z+b.d/2,y:deckHeight(b,b.z+b.d/2)};
   assert.ok(conveyorVelocity(body,[],{}).z>0);
   const restored=initialFoldedState({[flag]:true});assert.ok(conveyorVelocity(body,[],restored).z<0);
@@ -24,7 +24,7 @@ test('mastered thermal conveyors carry both enemies and the player toward their 
 });
 
 test('shorter thermal trials still reject a cold Phoenix across repeated cooling attempts',()=>{
- for(const id of ['return','inner']){
+ for(const id of ['return']){
   const b=cityBelts.find(b=>b.id===id),s=initialFoldedState({'inner-optics':true});
   const p={...newPlayer(),x:b.x+6,z:b.z+b.d-.95,y:deckHeight(b,b.z+b.d-.95),overdrive:true,phoenix:true,speed:3.2};
   let farthest=p.z;
@@ -40,7 +40,7 @@ test('shorter thermal trials still reject a cold Phoenix across repeated cooling
 
 test('pulsing a cold engine cannot turn either thermal gate into a repeatable gain',()=>{
  const state=initialFoldedState({'inner-optics':true});
- for(const b of cityBelts.filter(b=>['return','inner'].includes(b.id)))for(const on of [.5,2,4,6])for(const off of [.5,1,2,3]){
+ for(const b of cityBelts.filter(b=>['return'].includes(b.id)))for(const on of [.5,2,4,6])for(const off of [.5,1,2,3]){
   const p={...newPlayer(),x:b.x+6,z:b.z+b.d-.95,y:deckHeight(b,b.z+b.d-.95),overdrive:true,phoenix:true,speed:3.2};
   let farthest=p.z;
   for(let i=0;i<60*60;i++){

@@ -21,7 +21,7 @@ export const ENEMY_KINDS = {
   sniper: { role: 'ranged', speed: 2.8, reach: 86, warn: 2.2, recovery: 2.2, attack: 'rail' },
   artillery: { role: 'ranged', speed: 2.5, reach: 55, warn: 1.4, recovery: 2.8, attack: 'lob' },
   miner: { role: 'pressure', speed: 4.6, reach: 13, warn: 0.8, recovery: 2.1, attack: 'mine' },
-  welder: { role: 'pressure', speed: 4.2, reach: 8, warn: 1.4, recovery: 1.8, attack: 'sweep' },
+  welder: { role: 'pressure', speed: 6.8, reach: 18, warn: 0.9, recovery: 0.9, attack: 'sweep' },
   repairer: { role: 'support', speed: 4.5, reach: 10, warn: 1, recovery: 2, attack: 'repair' },
   reflector: { role: 'ranged', speed: 3.2, reach: 16, warn: 1.6, recovery: 1.9, attack: 'reflect' },
   elite: { role: 'pressure', speed: 4.2, reach: 20, warn: 1.5, recovery: 1.6, attack: 'charge' },

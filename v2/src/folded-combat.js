@@ -33,3 +33,21 @@ export function armorAbsorbs(e,amount,origin,kind='cannon',part=null){
   return cityDamage(copy,amount,origin,kind,part?parts[e.parts.indexOf(part)]:null)<amount*.99;
 }
 export const magnetPullable=e=>['scout','skirmisher','miner','repairer'].includes(e.type);
+
+// Hit recovery shares the existing damage protection window. Displacement is
+// integrated over the frame interval, then resolved by normal world collision.
+export const playerStunned = (p,time) => p.hp > 0 && time < (p.hurtUntil || 0);
+export function beginPlayerHit(p,time,source){
+  const dx=source?p.x-source.x:0,dz=source?p.z-source.z:0,length=Math.hypot(dx,dz);
+  p.hurtAt=time;p.hurtUntil=p.invincible;p.speed=1;p.dockHold=0;
+  p.knockX=length>.001?dx/length:-Math.sin(p.heading||0);
+  p.knockZ=length>.001?dz/length:-Math.cos(p.heading||0);
+}
+export function hitDisplacement(p,time,dt){
+  const progress=t=>{const u=Math.max(0,Math.min(1,(t-(p.hurtAt??-10))/.18));return 1-(1-u)**2;};
+  const distance=p.hp>0?1.2*(progress(time)-progress(time-dt)):0;
+  return {x:(p.knockX||0)*distance,z:(p.knockZ||0)*distance};
+}
+export function hitOpacity(p,time){
+  return playerStunned(p,time)&&Math.floor((time-p.hurtAt)/.075)%2===0?.3:1;
+}

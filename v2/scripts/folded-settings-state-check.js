@@ -6,13 +6,13 @@ async page => {
   await page.goto('http://127.0.0.1:5174/?chapter=folded&route=foundry&test&manual&view=overhead');
   await page.waitForFunction(() => window.__game);
   await page.keyboard.press('Escape');
-  await page.getByRole('tab', { name: '操作', exact: true }).click();
-  await page.getByRole('button', { name: '切换视角：KeyC', exact: true }).click();
+  await page.getByRole('tab', { name: 'Controls', exact: true }).click();
+  await page.getByRole('button', { name: 'Switch camera：KeyC', exact: true }).click();
   await page.keyboard.press('w');
   let bindings = await page.evaluate(() => __game.snapshot().bindings);
   check(bindings.camera === 'KeyW' && bindings.up === 'KeyC', 'Occupied keyboard binding did not swap');
   check(await page.locator('#camera-toggle kbd').textContent() === 'W', 'HUD camera binding is stale');
-  await page.getByRole('button', { name: '射击：Mouse0', exact: true }).click();
+  await page.getByRole('button', { name: 'Fire：Mouse0', exact: true }).click();
   // The settings pointerdown handler must consume this click as a binding.
   await page.locator('#bindings .binding-listening').click({ button: 'right' });
   bindings = await page.evaluate(() => __game.snapshot().bindings);
@@ -30,15 +30,15 @@ async page => {
   await page.keyboard.press('c');
   check(await page.evaluate(() => __game.snapshot().camera.view) === 'overhead', 'Default camera action was not restored');
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: '切换视角：KeyC', exact: true }).click();
+  await page.getByRole('button', { name: 'Switch camera：KeyC', exact: true }).click();
   // External pause transitions must discard the unfinished rebind.
   await page.evaluate(() => { __game.debug.setPause(false); __game.debug.setPause(true); });
   check(await page.locator('.binding-listening').count() === 0, 'Pause transition retained rebind capture');
-  await page.getByRole('tab', { name: '画面与镜头', exact: true }).click();
+  await page.getByRole('tab', { name: 'Display & camera', exact: true }).click();
   await page.locator('#quality').selectOption('low');
   const low = await page.evaluate(() => ({ ratio: __game.debug.renderer.getPixelRatio(), shadows: __game.debug.renderer.shadowMap.enabled }));
   check(low.ratio === 1 && !low.shadows, 'Quality preference did not reach the renderer');
-  await page.getByRole('tab', { name: '声音', exact: true }).click();
+  await page.getByRole('tab', { name: 'Audio', exact: true }).click();
   await page.locator('#volume').fill('0');
   await page.locator('#volume').dispatchEvent('change');
   await page.locator('#music').uncheck();

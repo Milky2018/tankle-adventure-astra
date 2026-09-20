@@ -1,6 +1,16 @@
 import * as T from 'three';
 import { box, cylinder, batchStatic } from './world.js';
 
+// Keep the excavation outside the playable city and its longest camera boom.
+export function basinBounds(decks) {
+  return {
+    left: Math.min(-258, ...decks.map((d) => d.x - 40)),
+    right: Math.max(454, ...decks.map((d) => d.x + d.w + 40)),
+    north: Math.min(-262, ...decks.map((d) => d.z - 40)),
+    south: Math.max(248, ...decks.map((d) => d.z + d.d + 40)),
+  };
+}
+
 // These supports stop below their own slab and never cross a playable lower floor.
 export function basinSupports(decks, lifts = []) {
   const supports = [];
@@ -165,9 +175,10 @@ export function makeCityBackdrop(scene, aperture, decks, lifts) {
   const positions = [],
     colors = [],
     bedColor = new T.Color();
+  const bounds = basinBounds(decks);
   const height = (x, z) => -75 + Math.sin(x * 0.037) * 0.9 + Math.cos(z * 0.051) * 0.7;
-  for (let x = -272; x < 472; x += 24)
-    for (let z = -284; z < 268; z += 24) {
+  for (let x = bounds.left - 14; x < bounds.right + 14; x += 24)
+    for (let z = bounds.north - 22; z < bounds.south + 20; z += 24) {
       for (const [dx, dz] of [
         [0, 0],
         [0, 24],
@@ -191,7 +202,17 @@ export function makeCityBackdrop(scene, aperture, decks, lifts) {
   root.add(bed);
   // Water occupies the low sediment pockets, with no animated decorative targets.
   const water = material(0x2e4947);
-  box(root, 744, 0.08, 552, 100, -75.15, -8, water, 0);
+  box(
+    root,
+    bounds.right - bounds.left + 28,
+    0.08,
+    bounds.south - bounds.north + 42,
+    (bounds.left + bounds.right) / 2,
+    -75.15,
+    (bounds.north + bounds.south) / 2 - 1,
+    water,
+    0,
+  );
   for (const p of basinSupports(decks, lifts)) {
     const h = p.top - p.bottom;
     box(root, 2, h, 2, p.x, p.bottom + h / 2, p.z, stone, 0);
@@ -203,17 +224,18 @@ export function makeCityBackdrop(scene, aperture, decks, lifts) {
     }
   }
   // Three sides enclose the excavation; the southern mouth stays open to the horizon.
-  for (let x = -264; x < 464; x += 28) {
+  for (let x = bounds.left - 6; x < bounds.right + 6; x += 28) {
     const top = 24 + Math.sin(x * 0.08) * 7;
-    box(root, 28, top + 78, 14, x + 14, (top - 78) / 2, -262, stone, 0);
-    for (const y of [-60, -32, -4]) box(root, 28, 0.65, 0.5, x + 14, y, -254.8, edge, 0);
+    box(root, 28, top + 78, 14, x + 14, (top - 78) / 2, bounds.north, stone, 0);
+    for (const y of [-60, -32, -4])
+      box(root, 28, 0.65, 0.5, x + 14, y, bounds.north + 7.2, edge, 0);
   }
-  for (const x of [-258, 454])
-    for (let z = -248; z < 232; z += 32) {
+  for (const x of [bounds.left, bounds.right])
+    for (let z = bounds.north + 14; z < bounds.south - 16; z += 32) {
       const top = 16 + Math.cos(z * 0.09) * 9;
       box(root, 12, top + 78, 32, x, (top - 78) / 2, z + 16, stone, 0);
       for (const y of [-60, -32, -4])
-        box(root, 0.5, 0.65, 32, x + (x < 0 ? 6.2 : -6.2), y, z + 16, edge, 0);
+        box(root, 0.5, 0.65, 32, x + (x === bounds.left ? 6.2 : -6.2), y, z + 16, edge, 0);
     }
   for (const m of [stone, iron, edge]) {
     aperture.apply(m, { radius: 36 });

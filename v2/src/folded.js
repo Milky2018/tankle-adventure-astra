@@ -1,5 +1,6 @@
-import { applyUpgrades, weaponDamage } from './folded-upgrades.js';
-import { predictMortar } from './folded-ballistics.js';
+import { pullSlide } from './folded-mechanisms.js';
+import { applyUpgrades, weaponDamage, scopeRange } from './folded-upgrades.js';
+import { predictMortar, mortarGroundTarget, MORTAR_PREVIEW_SEGMENTS } from './folded-ballistics.js';
 import { createFoldedPreferences, mountFoldedSettings, keyGlyph } from './folded-settings.js';
 import { createFoldedEffects } from './folded-effects.js';
 import { createPlayerDeath, DEATH_HOLD } from './folded-death.js';
@@ -9,14 +10,14 @@ import { installFoldedInput } from './folded-input.js';
 import { createFoldedSave } from './folded-save.js';
 import { createFoldedMap } from './folded-map.js';
 import { createFoldedCombat } from './folded-projectiles.js';
-import { CANNON, LASER } from './folded-weapons.js';
+import { CANNON, LASER, HOSTILE_DAMAGE } from './folded-weapons.js';
 import { createBossArenas } from './folded-boss-arenas.js';
 import { traceFoldedLaser } from './folded-laser.js';
 import { createGroundPose, groundPatches, groundAim } from './folded-ground.js';
 import { refugeAt, REFUGE_CLEARANCE } from './folded-refuges.js';
 import { createEncounterPacing } from './folded-pacing.js';
 import { FollowCamera, cameraMovement } from './folded-camera.js';
-import { magnetPullable } from './folded-combat.js';
+import { magnetPullable, playerStunned, hitDisplacement, hitOpacity } from './folded-combat.js';
 import { moveWithConveyor, stepLifts, applyFloorHeat } from './folded-machinery.js';
 import { SIGNAL } from './folded-visibility.js';
 import * as T from 'three';
@@ -39,6 +40,7 @@ import {
 } from './mechanics.js';
 import {
   foldedSolids,
+  foldedArchitecture,
   foldedDecks,
   foldedHives,
   releaseFolded,
@@ -194,7 +196,10 @@ scene.add(laserEndpoint);
 laserEndpoint.visible = false;
 laserEndpoint.renderOrder = 4;
 const mortarGuide = new T.Line(
-  new T.BufferGeometry().setAttribute('position', new T.BufferAttribute(new Float32Array(99), 3)),
+  new T.BufferGeometry().setAttribute(
+    'position',
+    new T.BufferAttribute(new Float32Array((MORTAR_PREVIEW_SEGMENTS + 1) * 3), 3),
+  ),
   new T.LineDashedMaterial({
     color: 0xffe4a9,
     transparent: true,
@@ -311,20 +316,20 @@ const { hurt, castWeapon, hitEnemy, impact, shootEnemy, updateShots } = createFo
   events: combatEvents,
 });
 const hp = $('hp');
-for (let i = 0; i < 10; i++) hp.append(document.createElement('i'));
+for (let i = 0; i < playerMaxHp(p) / 5; i++) hp.append(document.createElement('i'));
 const abilityHud = createAbilityHud($('tools'), $('acquired'), keyGlyph);
 const cameraToggle = document.createElement('button');
 cameraToggle.id = 'camera-toggle';
 cameraToggle.className = 'icon-button';
-cameraToggle.setAttribute('aria-label', '切换视角');
+cameraToggle.setAttribute('aria-label', 'Switch camera');
 cameraToggle.innerHTML =
-  '<svg viewBox="0 0 24 24"><path d="m3 7 7-4 7 4-7 4zM3 7v8l7 4 7-4V7M10 11v8M18 3l3 3-3 3M21 6h-5"/></svg><kbd></kbd>';
+  '<svg viewBox="0 0 24 24"><path d="M3 7h4l2-3h6l2 3h4v13H3zM12 10a3 3 0 1 0 0 6 3 3 0 1 0 0-6"/></svg><kbd></kbd>';
 $('hud').append(cameraToggle);
 cameraToggle.onclick = () => input(bindings.camera);
 const lookHint = document.createElement('div');
 lookHint.id = 'look-hint';
 lookHint.setAttribute('role', 'img');
-lookHint.setAttribute('aria-label', '按住鼠标中键拖动视角，也可点击画面后移动鼠标');
+lookHint.setAttribute('aria-label', 'Hold middle mouse to look, or click to capture the mouse');
 lookHint.innerHTML =
   '<kbd></kbd><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4"/></svg>';
 keyGlyph(lookHint.querySelector('kbd'), 'Mouse1');
@@ -353,7 +358,7 @@ const ending = createEnding(
 );
 const skipEnding = document.createElement('button');
 skipEnding.id = 'ending-skip';
-skipEnding.textContent = '跳过';
+skipEnding.textContent = 'Skip';
 skipEnding.hidden = true;
 skipEnding.onclick = () => {
   if (p.endingTime >= 0.75) completeEnding();
@@ -368,12 +373,12 @@ dockProgress.innerHTML =
 $('interaction').append(dockProgress);
 $('journey-button').onclick = () => journeyMenu.show();
 document.querySelector('#settings .subtitle').textContent = preview
-  ? `独立试玩 · ${freight ? '货运路线入口' : garden ? '花园路线入口' : '第一关 · 回收铸造厂'}`
-  : '完整旅程 · 机械城';
-$('new-game').textContent = preview ? '重新开始当前试玩' : '重新开始当前旅程';
+  ? `Route previews · ${freight ? 'Freight entrance' : garden ? 'Garden entrance' : 'Chapter 1 · Foundry'}`
+  : 'Campaign · Mechanical City';
+$('new-game').textContent = preview ? 'Restart preview' : 'Restart campaign';
 $('reset-confirm').textContent = preview
-  ? '再次点击将重置当前试玩，完整旅程不受影响。'
-  : '再次点击将重置完整旅程，从第一关开始。';
+  ? 'Click again to reset this preview. Your campaign save is unaffected.'
+  : 'Click again to reset the campaign and begin at the Foundry.';
 
 const enemies = createFoldedEnemies({
   player: p,
@@ -469,6 +474,7 @@ function weaponOrigin() {
   return new T.Vector3(0, 2, 0).applyQuaternion(model.root.quaternion).add(model.root.position);
 }
 function updateAim() {
+  if (playerStunned(p, time)) return;
   if (thirdPerson) pointer.set(0, 0);
   picker.setFromCamera(pointer, camera);
   const direct = world.cast(picker.ray.origin, picker.ray.direction, 300, {
@@ -496,21 +502,22 @@ function updateAim() {
       picker.ray.intersectPlane(plane, aim);
     }
   } else picker.ray.intersectPlane(new T.Plane(new T.Vector3(0, 1, 0), -p.y - 2), aim);
-  const distance = Math.hypot(aim.x - p.x, aim.z - p.z);
   if (p.weapon === 'mortar') {
-    const t = mortarTarget(p.x, p.z, aim.x, aim.z);
+    const range = scopeRange(p, MORTAR.range);
+    const clamped = Math.hypot(aim.x - p.x, aim.z - p.z) > range;
+    const t = mortarTarget(p.x, p.z, aim.x, aim.z, range);
     aim.x = t.x;
     aim.z = t.z;
-    // Resolve clamped XZ against support rather than floating at hull height.
-    if (distance > MORTAR.range) {
-      const floor = world.cast(
-        new T.Vector3(aim.x, Math.max(p.y, aim.y) + 0.45, aim.z),
-        new T.Vector3(0, -1, 0),
-        80,
-        { terrainOnly: true },
+    if (clamped) aim.y = Math.max(p.y, aim.y);
+    // Elevated machinery has a contact surface of its own. Actor hulls and
+    // range-clamped aim instead resolve to the supporting ground below them.
+    const machinery = hit?.target && !hit.target.model && !hit.target.enemy;
+    if (!machinery || clamped)
+      aim.copy(
+        mortarGroundTarget(aim, (start, direction, distance) =>
+          world.cast(start, direction, distance, { terrainOnly: true }),
+        ),
       );
-      aim.y = floor?.point.y ?? p.y;
-    }
   } else aim.copy(groundAim(weaponOrigin(), aim, model.root.quaternion).target);
   const turretAim = groundAim(weaponOrigin(), aim, model.root.quaternion);
   model.turret.rotation.y = turretAim.yaw;
@@ -533,7 +540,7 @@ function updateAim() {
       80,
       { terrainOnly: true },
     );
-    mortarLanding.visible = !!floor;
+    mortarLanding.visible = !!predicted.hit && !!floor;
     if (floor) {
       mortarLanding.position.copy(floor.point).add(new T.Vector3(0, 0.07, 0));
       const normal = floor.face.normal.clone().transformDirection(floor.object.matrixWorld);
@@ -545,7 +552,8 @@ function updateAim() {
 }
 function updateLaser(dt) {
   laserBeam.visible = laserGuide.visible = laserEndpoint.visible = false;
-  if (p.weapon !== 'laser' || !p.laser || p.hp <= 0 || p.endingTime) return;
+  if (p.weapon !== 'laser' || !p.laser || p.hp <= 0 || p.endingTime || playerStunned(p, time))
+    return;
   const origin = weaponOrigin(),
     path = traceFoldedLaser(origin, aim.clone().sub(origin), (start, dir, range) =>
       castWeapon(start, dir, range, { extras: mines }),
@@ -627,6 +635,7 @@ function refugeImpact(point, origin) {
 }
 
 function fire() {
+  if (playerStunned(p, time)) return false;
   if (p.weapon === 'laser') return false;
   const mortar = p.weapon === 'mortar';
   if (
@@ -651,6 +660,7 @@ function fire() {
   shots.push({
     damage: weaponDamage(p, p.weapon, mortar ? MORTAR.damage : CANNON.damage),
     upgraded,
+    range: scopeRange(p, mortar ? MORTAR.range : CANNON.range),
     origin: origin.clone(),
     position: origin.clone(),
     dir,
@@ -699,14 +709,14 @@ function target() {
 }
 function interact() {
   const t = target();
-  if (!t || p.hp <= 0) return false;
+  if (!t || p.hp <= 0 || playerStunned(p, time)) return false;
   if (t.kind === 'pickup') {
     state[t.id] = true;
     if (t.upgrade) {
       const oldMax = playerMaxHp(p);
       applyUpgrades(p, state);
       p.hp = Math.min(playerMaxHp(p), p.hp + playerMaxHp(p) - oldMax);
-      abilityHud.acquireUpgrade(t.upgrade, time);
+      abilityHud.acquireUpgrade(t.upgrade, time, p);
       ripple(new T.Vector3(p.x, p.y, p.z), 3, C.lightYellow, 0.9, 0.7);
     } else {
       p[t.ability || t.id] = true;
@@ -771,6 +781,10 @@ function respawn() {
     lastHeat: -10,
     lastShot: -10,
     invincible: time + 1,
+    hurtUntil: 0,
+    hurtAt: -10,
+    knockX: 0,
+    knockZ: 0,
   });
   clearShots();
   resetEnemies();
@@ -780,7 +794,8 @@ function respawn() {
   skipEnding.hidden = true;
   $('hud').classList.remove('ending-active');
   for (const l of world.lifts) {
-    l.y = l.destination = l.stops[0];
+    l.y = l.settle && !state[l.lock] ? l.stops.at(-1) : l.stops[0];
+    l.destination = l.stops[0];
     l.wait = 0;
   }
   deathAt = -1;
@@ -831,7 +846,8 @@ function detonateMine(m) {
   const pos = new T.Vector3(m.x, m.y + 0.3, m.z);
   ripple(pos, 3, C.orange, 0.6, 0.8);
   audio.event('explode');
-  if (Math.abs(m.y - p.y) < 2 && Math.hypot(m.x - p.x, m.z - p.z) < 3.4) hurt(9);
+  if (Math.abs(m.y - p.y) < 2 && Math.hypot(m.x - p.x, m.z - p.z) < 3.4)
+    hurt(HOSTILE_DAMAGE.mine, m);
   for (const e of world.enemies)
     if (e.hp > 0 && Math.abs(e.y - m.y) < 2 && Math.hypot(e.x - m.x, e.z - m.z) < 3)
       hitEnemy(e, 2, pos, 'mortar');
@@ -870,8 +886,8 @@ function updateMagnet(dt) {
   magnetic = null;
   magneticBeam.visible = false;
   magnetEmitter.visible = p.magnet;
-  if (!p.magnet || !keys.has(bindings.magnet) || p.hp <= 0) {
-    if (magnetLock?.id === 'sorting-cover') save();
+  if (!p.magnet || !keys.has(bindings.magnet) || p.hp <= 0 || playerStunned(p, time)) {
+    if (magnetLock?.id === 'sorting-cover' || magnetLock?.slide) save();
     magnetLock = null;
     return;
   }
@@ -879,7 +895,7 @@ function updateMagnet(dt) {
     aimDir = aim.clone().sub(origin).normalize();
   const candidates = [
     ...world.sidePuzzles.targets.filter((c) => c.kind === 'magnet'),
-    ...world.controls.filter((c) => c.kind === 'magnet' && !state[c.id]),
+    ...world.controls.filter((c) => c.kind === 'magnet' && (c.slide || !state[c.id])),
     ...world.enemies.filter(
       (e) =>
         ((e.magneticShield && !e.shieldRemoved) || magnetPullable(e)) &&
@@ -953,7 +969,41 @@ function updateMagnet(dt) {
   p.lastHeat = time;
   if (p.heat >= 100) p.overheated = true;
   if (!c) return;
-  if (c.id === 'sorting-cover') world.sidePuzzles.pullCover(dt, p, world.enemies, time);
+  if (c.slide) {
+    const body = state.bodies.solids.find((b) => b.id === c.slide);
+    if (
+      pullSlide(
+        body,
+        p,
+        dt,
+        [
+          ...state.bodies.solids.filter(
+            (b) => b !== body && (b.permanent || b.rail || !state[b.id]),
+          ),
+          ...state.bodies.obstacles,
+          ...foldedArchitecture.solids,
+          ...world.enemies
+            .filter((e) => e.hp > 0)
+            .map((e) => ({
+              x: e.x - e.radius,
+              y: e.y,
+              z: e.z - e.radius,
+              w: e.radius * 2,
+              d: e.radius * 2,
+            })),
+        ],
+        (x, z, y) => !!foldedSupport(x, z, y, false, world.lifts),
+      )
+    ) {
+      state.slidePositions[body.id] = body[body.rail.axis];
+      if (body.rail.latch && body[body.rail.axis] === body.rail.max && !state[body.rail.latch]) {
+        state[body.rail.latch] = true;
+        world.signalRelease(body.rail.latch, time);
+        audio.event('lever');
+        save();
+      }
+    }
+  } else if (c.id === 'sorting-cover') world.sidePuzzles.pullCover(dt, p, world.enemies, time);
   else if (c.model && magnetPullable(c)) {
     const body = { x: c.x, y: c.y, z: c.z, speed: 1 };
     if (length > c.radius + 1.4)
@@ -1064,7 +1114,8 @@ function advance(dt) {
     if (p.endingTime >= ENDING_DURATION) completeEnding();
     return;
   }
-  const dock = target();
+  const stunned = playerStunned(p, time);
+  const dock = stunned ? null : target();
   const walking = [bindings.up, bindings.down, bindings.left, bindings.right].some((k) =>
     keys.has(k),
   );
@@ -1103,8 +1154,10 @@ function advance(dt) {
       : 0;
   world.transport(dt, p);
   updateLifts(dt);
-  const horizontal = Number(keys.has(bindings.right)) - Number(keys.has(bindings.left)),
-    vertical = Number(keys.has(bindings.down)) - Number(keys.has(bindings.up));
+  const horizontal = stunned
+      ? 0
+      : Number(keys.has(bindings.right)) - Number(keys.has(bindings.left)),
+    vertical = stunned ? 0 : Number(keys.has(bindings.down)) - Number(keys.has(bindings.up));
   const move = thirdPerson
     ? cameraMovement(horizontal, vertical, follow.yaw)
     : screenMovement(horizontal, vertical);
@@ -1121,10 +1174,11 @@ function advance(dt) {
     oldZ = p.z;
   const travelScale = p.deployed ? (p.afloat ? 1.15 : FLOTATION.speed) : 1;
   const impactSpeed = p.speed;
+  const knock = hitDisplacement(p, time, dt);
   moveWithConveyor(
     p,
-    move.x * BASE_SPEED * p.speed * travelScale * dt,
-    move.z * BASE_SPEED * p.speed * travelScale * dt,
+    move.x * BASE_SPEED * p.speed * travelScale * dt + knock.x,
+    move.z * BASE_SPEED * p.speed * travelScale * dt + knock.z,
     dt,
     state,
     world.lifts,
@@ -1163,7 +1217,8 @@ function advance(dt) {
   model.barrel.position.z = -recoil;
   model.rollWheels(Math.hypot(p.x - oldX, p.z - oldZ) * 2.4);
   for (const { m, color, opacity, transparent, depthWrite } of hullMaterials) {
-    const fade = thirdPerson ? clamp((follow.distance - 1.25) / 1.75, 0, 1) : 1;
+    const fade =
+      (thirdPerson ? clamp((follow.distance - 1.25) / 1.75, 0, 1) : 1) * hitOpacity(p, time);
     m.opacity = opacity * fade;
     m.transparent = transparent || fade < 1;
     m.depthWrite = depthWrite && fade === 1;
@@ -1235,9 +1290,7 @@ function updateMusic(moving = false) {
             (e.alertUntil > time || e.phase !== 'idle') &&
             Math.hypot(e.x - p.x, e.z - p.z) < (e.id === 'keeper' ? 94 : 48),
         );
-  const musicBoss = musicThreats.find((e) =>
-    ['keeper', 'guardian', 'foundry', 'prototype', 'sorter'].includes(e.id),
-  );
+  const musicBoss = world.enemies.find((e) => e.hp > 0 && e.id === state.combatArena);
   audio.update(time, p, musicThreats.length > 0, area, false, moving, {
     boss: musicBoss?.id,
     quiet: state.keeper && region === 'furnace',
@@ -1356,7 +1409,7 @@ function updateBindingGlyphs() {
 }
 function setPause(value) {
   if (ending.visible) return;
-  $('resume').textContent = p.endingTime ? '继续播放' : '继续游戏';
+  $('resume').textContent = p.endingTime ? 'Resume cinematic' : 'Resume';
   paused = value;
   keys.clear();
   controls.stopOrbit();
@@ -1384,6 +1437,10 @@ function input(code, repeat = false) {
   if (paused || p.endingTime) return;
   if (deathAt >= 0) {
     if (code === bindings.skip && !repeat) respawn();
+    return;
+  }
+  if (playerStunned(p, time)) {
+    keys.add(code);
     return;
   }
   if (code === bindings.map && !repeat) {
@@ -1418,6 +1475,9 @@ const controls = installFoldedInput({
   pointer,
   follow,
   status: {
+    get stunned() {
+      return playerStunned(p, time);
+    },
     get thirdPerson() {
       return thirdPerson;
     },

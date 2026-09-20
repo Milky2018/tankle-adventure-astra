@@ -5,13 +5,13 @@ async page=>{
  const assert=(ok,message)=>{if(!ok)throw Error(message);};
  const cases=[
   {id:'lens-return',from:[324,24,-32],mirror:[324,26,-14],state:{'lens-return':false}},
-  {id:'gallery',from:[225.2376,24,-20],mirror:[216,26,-4],state:{gallery:false,'mirror-index':false,'garden-optical':false}},
-  {id:'garden-optical',from:[225.2376,24,-20],mirror:[216,26,-4],state:{gallery:true,'mirror-index':true,'garden-optical':false}},
-  {id:'inner-optics',from:[254,-24,134],mirror:[254,-22,124],state:{'inner-optics':false}}
+  {id:'gallery',from:[225.2376,24,-20],mirror:[216,26,-4],state:{'optical-screen':true,gallery:false,'mirror-index':false,'garden-optical':false}},
+  {id:'garden-optical',from:[225.2376,24,-20],mirror:[216,26,-4],state:{'optical-screen':true,gallery:true,'mirror-index':true,'garden-optical':false}},
+  {id:'inner-optics',from:[122,24,-28],mirror:[126,26,-16],state:{'inner-optics':false}}
  ];
  async function fixture(c,view){await page.evaluate(({c,view})=>{
   const a=__game.debug,g=__game;g.setInput([]);a.clearShots();a.setCameraView(view);
-  g.scenario({player:{x:c.from[0],y:c.from[1],z:c.from[2],hp:50,heat:0,lastHeat:-100,overheated:false,speed:1,laser:true,weapon:'laser',deployed:false},state:c.state});g.step(1.6);
+  g.scenario({player:{x:c.from[0],y:c.from[1],z:c.from[2],hp:25,heat:0,lastHeat:-100,overheated:false,speed:1,laser:true,weapon:'laser',deployed:false},state:c.state});g.step(1.6);
  },{c,view});
  if(view==='third'&&!await page.evaluate(()=>!!document.pointerLockElement)){await page.mouse.click(600,427);await page.waitForFunction(()=>!!document.pointerLockElement||__game.snapshot().camera.dragLook);}
  }
@@ -47,7 +47,7 @@ async page=>{
  const mechanics=await page.evaluate(()=>{
   const a=__game.debug,g=__game,check=(ok,msg)=>{if(!ok)throw Error(msg);};
   const trace=(from,to)=>a.traceFoldedLaser(new a.T.Vector3(...from),new a.T.Vector3(...to).sub(new a.T.Vector3(...from)),(o,d,r)=>a.castWeapon(o,d,r));
-  g.setInput([]);g.scenario({player:{x:225.2376,y:24,z:-20,weapon:'laser',heat:0,overheated:false},state:{gallery:true,'mirror-index':false,'garden-optical':false}});g.step(2);
+  g.setInput([]);g.scenario({player:{x:225.2376,y:24,z:-20,weapon:'laser',heat:0,overheated:false},state:{'optical-screen':true,gallery:true,'mirror-index':false,'garden-optical':false}});g.step(2);
   check(trace([225.2376,26,-20],[216,26,-4]).at(-1).hit?.target?.id!=='garden-optical','Unindexed mirror solved the return');
   for(const from of [[232,26,-16],[238,26,-9.5],[232,26,6]])check(trace(from,[232,26,-9.5]).at(-1).hit?.target?.id!=='garden-optical','A direct shot bypasses the receiver housing');
   a.state['mirror-index']=true;g.step(2);
@@ -68,15 +68,15 @@ async page=>{
    }
    check(count>=36,`${id}: too narrow, ${count}/45 rays`);areas.push({id,hits:count,total:45});
   }
-  // Existing final feed still accepts direct light from its approach.
-  a.state['core-feed']=false;check(trace([24,-38,110],[24,-38,118]).at(-1).hit?.target?.id==='core-feed','Final feed facing is inaccessible');
+  // The final feed is reached through its fixed service mirror.
+  a.state['core-feed']=false;check(trace([24,-38,100],[24,-38,110]).at(-1).hit?.target?.id==='core-feed','Final feed facing is inaccessible');
   g.scenario({player:{x:225.2376,y:24,z:-20,weapon:'cannon'}});g.step(.02);check(!a.laserGuide.visible&&!a.laserEndpoint.visible,'Guide survives switching weapons');
   g.scenario({player:{weapon:'laser',heat:100,overheated:true,lastHeat:g.snapshot().time}});g.step(.02);check(a.laserGuide.visible&&!a.laserBeam.visible,'Overheat hides planning or permits fire');
   return {areas};
  });
  const guardian=await page.evaluate(()=>{
   const a=__game.debug,g=__game,e=a.world.enemies.find(e=>e.guardian),check=(ok,msg)=>{if(!ok)throw Error(msg);};
-  a.setCameraView('overhead');g.setInput([]);a.clearShots();g.scenario({player:{x:202,y:16,z:48,hp:50,heat:0,overheated:false,weapon:'laser',invincible:1e9},state:{guardian:false}});
+  a.setCameraView('overhead');g.setInput([]);a.clearShots();g.scenario({player:{x:202,y:16,z:48,hp:25,heat:0,overheated:false,weapon:'laser',invincible:1e9},state:{guardian:false}});
   for(const m of a.world.mirrors.filter(m=>m.id.startsWith('guardian'))){const q=g.project(m.x,m.z,m.y);check(q.x>20&&q.x<innerWidth-20&&q.y>20&&q.y<innerHeight-20,'Guardian mirror centre is outside the playable view');}
   Object.assign(e,{hp:e.max,phase:'idle',timer:0,stunnedUntil:0});e.model.root.visible=true;for(let i=0;i<120&&e.phase==='idle';i++)g.step(1/60);check(e.phase==='warn','Guardian never committed');const locked=e.aim;
   g.scenario({player:{x:194,z:54}});g.step(.2);check(Math.abs(e.aim-locked)<1e-8,'Guardian tracks during its warning');
@@ -92,7 +92,7 @@ async page=>{
  });
  const battle=await page.evaluate(()=>{
   const a=__game.debug,g=__game,e=a.world.enemies.find(e=>e.guardian);g.setInput([]);a.clearShots();a.setCameraView('overhead');
-  g.scenario({player:{x:196,y:16,z:50,hp:50,overdrive:true,phoenix:true,heat:0,overheated:false,lastHeat:-100,invincible:0,speed:1,weapon:'laser'},state:{guardian:false}});
+  g.scenario({player:{x:196,y:16,z:50,hp:25,overdrive:true,phoenix:true,heat:0,overheated:false,lastHeat:-100,invincible:0,speed:1,weapon:'laser'},state:{guardian:false}});
   Object.assign(e,{hp:e.max,phase:'idle',timer:1.2,stunnedUntil:0,attackCycle:0});
   const orbit=[[196,50],[210,50]],phases=new Set(),outcomes={};let corner=0,cooling=false,previousPhase='idle',start=g.snapshot().time;
   for(let i=0;i<75*30&&e.hp>0&&a.p.hp>0;i++){

@@ -28,7 +28,7 @@ async page=>{
   s=await page.evaluate(()=>window.__game.snapshot());if(s.player.flotation||s.player.magnet||Math.abs(s.player.y+8)>.01)throw Error('Dry retreat used an unearned ability');
   await page.keyboard.press('Tab');
   const before=await page.evaluate(()=>window.__game.snapshot());
-  await page.getByRole('button',{name:'查看已发现的上一层'}).click();
+  await page.getByRole('button',{name:'View discovered floor above'}).click();
   const after=await page.evaluate(()=>window.__game.snapshot());
   if(before.chosenLayer===after.chosenLayer||before.player.y!==after.player.y||before.aim.y!==after.aim.y)throw Error('Map selection changed physical height or aim');
   await page.screenshot({path:'v2/output/playwright/folded-city/floor-map.png'});

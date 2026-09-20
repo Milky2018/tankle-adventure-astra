@@ -134,3 +134,21 @@
 }
 @media(max-height:600px){.folded-ui #settings .panel{padding:18px 26px}.folded-ui .panel h1{font-size:23px;margin:6px 0}.folded-ui .panel .subtitle{margin-bottom:8px}.folded-ui .settings-tabs{margin-bottom:10px}.folded-ui .panel-footer{padding-top:12px;margin-top:8px}}
 @media(prefers-reduced-motion:reduce){.folded-ui *{animation:none!important;transition:none!important}}
+
+/* Equipment stays identifiable after the acquisition animation ends. */
+.folded-ui #tools .ability-card{width:62px;min-height:83px;gap:4px}
+.folded-ui #tools .ability-name{font-size:9px;line-height:1.2;letter-spacing:.02em;color:inherit}
+.folded-ui #tools .equipment-value{font-size:11px;font-variant-numeric:tabular-nums;color:var(--ui-brass)}
+.folded-ui #tools .reinforcement-value{position:absolute;top:-8px;right:-2px;padding:2px 3px;background:#233b34;border:1px solid #e9c58065;color:#ffe2a0;font-size:9px}
+.folded-ui #tools .reinforced::after{content:none}
+.armor-packs{display:flex;gap:3px}
+.armor-packs i{width:6px;height:3px;background:#899b8633}
+.armor-packs i.collected{background:#ffe2a0}
+.equipment-copy{display:flex;flex-direction:column;gap:8px;max-width:250px}
+.equipment-copy>strong{font-size:15px;font-weight:500;letter-spacing:.025em}
+.equipment-copy>small{font-size:12px;color:#c3d0c0;line-height:1.5}
+.folded-ui #acquired .equipment-copy>svg{width:172px;height:60px}
+@media(max-width:700px){.folded-ui #tools .ability-card{width:48px;min-height:76px}.folded-ui #tools .ability-name{font-size:8px}.folded-ui #acquired.ability-acquired{max-width:calc(100vw - 36px)}.equipment-copy>strong{font-size:13px}}
+
+@media(max-width:1000px){.folded-ui #acquired.ability-acquired{bottom:calc(92px + var(--tray-height,180px) + 14px)}}
+@media(max-width:700px){.folded-ui #acquired.ability-acquired{bottom:calc(80px + var(--tray-height,180px) + 14px)}}

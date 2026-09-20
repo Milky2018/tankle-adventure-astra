@@ -30,6 +30,6 @@ async(page)=>{
   await page.keyboard.press('f');results.push(await page.evaluate(()=>({name:'Real F input deploys the chassis',passed:window.__game.snapshot().player.deployed})));
   await page.keyboard.press('f');results.push(await page.evaluate(()=>({name:'Real F input retracts on supported ground',passed:!window.__game.snapshot().player.deployed})));
   await page.keyboard.press('Tab');results.push({name:'Map opens with the garden discovered',passed:await page.locator('#region').isVisible()});await page.keyboard.press('Tab');
-  await page.locator('#settings-button').click();results.push({name:'Flotation has a visible rebind control',passed:await page.getByText('展开 / 收起浮航底盘',{exact:true}).isVisible()});await page.locator('#resume').click();
+  await page.locator('#settings-button').click();results.push({name:'Flotation has a visible rebind control',passed:await page.getByText('Deploy / retract Flotation',{exact:true}).isVisible()});await page.locator('#resume').click();
   if(errors.length||results.some(r=>!r.passed))throw new Error(JSON.stringify({errors,results}));return results;
 }

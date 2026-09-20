@@ -90,7 +90,7 @@
 /* Installed optional equipment remains legible after the discovery reveal. */
 .ability-card.reinforced { border-color: #f2d08a; box-shadow: inset 0 -3px #f2d08a; }
 .ability-card.reinforced::after { content: '◆'; position: absolute; right: 4px; top: 1px; color: #ffe3a5; font-size: 10px; }
-.ability-acquired[data-ability="upgrade"] strong { font-size: 24px; color: #ffe3a5; font-variant-numeric: tabular-nums; }
+.ability-acquired[data-ability="upgrade"] .ability-reveal>strong { font-size: 24px; color: #ffe3a5; font-variant-numeric: tabular-nums; }
 .cooling-module { color: #d7edc5; }
 
 .folded-ui #acquired[data-ability="upgrade"] .ability-reveal { border: 0; padding: 0; min-width: 58px; }

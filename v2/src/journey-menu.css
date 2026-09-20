@@ -40,3 +40,8 @@
 @media(max-height:650px) and (min-width:761px){.journey-menu{padding:28px 48px}.journey-panel h1{font-size:58px;margin:12px 0}.journey-panel header{margin-bottom:24px}.journey-campaign{margin-bottom:28px}.journey-history{margin-top:0}}
 @media(max-width:760px){.journey-panel header:has(.journey-back:not([hidden])){padding-top:48px}.journey-panel .journey-back{position:absolute;top:0;right:0}}
 @media(prefers-reduced-motion:reduce){.journey-panel *{transition:none!important}}
+
+.journey-panel #journey-title{font-size:clamp(24px,4.6vw,66px);letter-spacing:.025em}
+.journey-panel #journey-title span{display:block;white-space:nowrap}
+.journey-panel #journey-title .journey-main-title{color:#eeead9;letter-spacing:.025em}
+.journey-panel #journey-title .journey-subtitle{font-size:.48em;letter-spacing:.32em;margin-top:.55em;color:#dbbd84}

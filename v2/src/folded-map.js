@@ -15,7 +15,10 @@ export function createFoldedMap({ player: p, world, state, discovered, heading }
   ]) {
     const b = document.createElement('button');
     b.textContent = label;
-    b.setAttribute('aria-label', delta > 0 ? '查看已发现的上一层' : '查看已发现的下一层');
+    b.setAttribute(
+      'aria-label',
+      delta > 0 ? 'View discovered floor above' : 'View discovered floor below',
+    );
     b.addEventListener('click', () => changeLayer(delta));
     layers.append(b);
   }
@@ -104,7 +107,7 @@ export function createFoldedMap({ player: p, world, state, discovered, heading }
     ctx.lineWidth = 1;
     for (const wall of [
       ...foldedArchitecture.solids,
-      ...world.walls.filter((w) => w.permanent),
+      ...world.walls.filter((w) => w.permanent || w.rail),
       ...state.bodies.obstacles,
     ]) {
       if (
@@ -136,6 +139,7 @@ export function createFoldedMap({ player: p, world, state, discovered, heading }
     for (const wall of world.walls)
       if (
         !wall.permanent &&
+        !wall.rail &&
         !wall.hidden &&
         seen(wall.x + wall.w / 2, wall.y, wall.z + wall.d / 2) &&
         Math.abs(wall.y - layer) < 5
@@ -154,7 +158,10 @@ export function createFoldedMap({ player: p, world, state, discovered, heading }
       }
     for (const l of world.lifts)
       if (l.stops.includes(layer) && l.stops.some((y) => seen(l.x + l.w / 2, y, l.z + l.d / 2))) {
-        ctx.strokeStyle = state[l.lock || l.id] ? '#a6e3cd' : '#e8bd62';
+        ctx.strokeStyle =
+          state[l.lock || l.id] && (!l.locks || l.locks.every((id) => state[id]))
+            ? '#a6e3cd'
+            : '#e8bd62';
         ctx.lineWidth = 2;
         ctx.strokeRect(ox + l.x * scale, oz + l.z * scale, l.w * scale, l.d * scale);
         const x = ox + (l.x + l.w / 2) * scale,
@@ -231,7 +238,7 @@ export function createFoldedMap({ player: p, world, state, discovered, heading }
       for (const y of knownLayers().reverse()) {
         const b = document.createElement('button');
         b.className = `layer-bar${y === layer ? ' selected' : ''}${y === playerLayer ? ' player-layer' : ''}`;
-        b.setAttribute('aria-label', `查看高度 ${y} 的楼层`);
+        b.setAttribute('aria-label', `View floor at elevation ${y}`);
         b.onclick = () => {
           chosenLayer = y;
           drawMap(true);

@@ -41,13 +41,14 @@ test('existing earned abilities and far-side saves preserve access across newly 
   assert.equal(s['proving-transfer'],true);assert.equal(s['proving-endurance'],true);
   assert.equal(s['hearth-transfer'],true);assert.equal(s['hearth-endurance'],true);
   assert.equal(initialFoldedState()['proving-endurance'],false);
-  assert.equal(initialFoldedState({flotation:true})['reservoir-inlet'],true);
+  assert.equal(initialFoldedState({flotation:true})['reservoir-inlet'],false);
   assert.equal(initialFoldedState()['reservoir-inlet'],false);
 });
 
-test('the reservoir inlet exposes its connected transfer without a timed sleeve',()=>{
+test('each reservoir sluice can be operated independently without a timed sleeve',()=>{
  const c=expansionControls.find(c=>c.id==='reservoir-transfer'),p={x:c.x-8,y:-8,z:c.z},s=initialFoldedState();
- assert.equal(releaseFolded(c.id,'cannon',p,s,[]),false);
+ assert.equal(releaseFolded(c.id,'cannon',p,s,[]),true);
+ s[c.id]=false;
  assert.equal(releaseFolded('reservoir-inlet','cannon',p,s,[]),true);
  assert.equal(releaseFolded(c.id,'cannon',p,s,[]),true);
 });

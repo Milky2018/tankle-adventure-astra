@@ -13,22 +13,35 @@ async page => {
       if(q.requires)g.scenario({state:{[q.requires]:true}});
       g.scenario({player:{x:q.x,y:q.y,z:q.z,hp:playerMaxHp(a.p)-5}});g.step(.02);
       if(!a.state[q.id])throw Error('Pickup failed: '+q.id);
-      results.push({id:q.id,hp:a.p.hp,max:playerMaxHp(a.p),segments:document.getElementById('hp').children.length});
+      const notice=document.getElementById('acquired');if(!notice.textContent.trim()||notice.style.display==='none')throw Error('Missing acquisition notice '+q.id);
+      const card=document.getElementById(q.upgrade==='armor'?'armor-tool':q.upgrade==='cooling'?'cooling-tool':q.upgrade+'-tool');if(!card||card.hidden||!card.getAttribute('aria-label'))throw Error('Missing persistent equipment '+q.id);
+      results.push({id:q.id,hp:a.p.hp,max:playerMaxHp(a.p),segments:document.getElementById('hp').children.length,notice:notice.textContent.trim(),card:card.getAttribute('aria-label')});
     }
     a.p.mortar=a.p.laser=true;a.state.mortarModule=a.state.laser=true;
     g.scenario({state:{anchor:'awakening'}});g.save();g.respawn();g.step(1.3);
     return {results,max:playerMaxHp(a.p),hp:a.p.hp,reinforced:document.querySelectorAll('.ability-card.reinforced').length,cooler:!document.querySelector('.cooling-module').hidden};
   });
-  if(pickups.max!==75||pickups.hp!==75||pickups.reinforced!==3||!pickups.cooler)throw Error(JSON.stringify(pickups));
+  if(pickups.max!==50||pickups.hp!==50||pickups.reinforced!==3||!pickups.cooler)throw Error(JSON.stringify(pickups));
   await page.screenshot({path:'v2/output/playwright/regression/exploration-hud.png'});
   await page.reload();await page.waitForFunction(()=>window.__game?.debug);
-  const restored=await page.evaluate(()=>({hp:__game.debug.p.hp,armor:__game.debug.p.armorPacks,cooler:__game.debug.p.coolingUpgrade,cannon:__game.debug.p.cannonUpgrade,mortar:__game.debug.p.mortarUpgrade,laser:__game.debug.p.laserUpgrade}));
-  if(restored.hp!==75||restored.armor!==5||!restored.cooler||!restored.cannon||!restored.mortar||!restored.laser)throw Error(JSON.stringify(restored));
+  const restored=await page.evaluate(()=>({hp:__game.debug.p.hp,armor:__game.debug.p.armorPacks,cooler:__game.debug.p.coolingUpgrade,cannon:__game.debug.p.cannonUpgrade,mortar:__game.debug.p.mortarUpgrade,laser:__game.debug.p.laserUpgrade,scope:__game.debug.p.scopeUpgrade}));
+  if(restored.hp!==50||restored.armor!==5||!restored.cooler||!restored.cannon||!restored.mortar||!restored.laser||!restored.scope)throw Error(JSON.stringify(restored));
+  await page.evaluate(()=>{const a=__game.debug;__game.scenario({player:{overdrive:true,magnet:true,flotation:true,phoenix:true,circulation:true}});__game.step(.2);a.abilityHud.acquireUpgrade('armor',a.time,a.p);__game.step(.02);});
+  for(const width of [1440,800,390]){
+    await page.setViewportSize({width,height:844});await page.evaluate(()=>__game.step(.02));await page.waitForTimeout(120);
+    const hud=await page.evaluate(()=>{
+      const cards=[...document.querySelectorAll('#tools .ability-card')].filter(c=>!c.hidden),notice=document.getElementById('acquired').getBoundingClientRect(),tray=document.getElementById('tools').getBoundingClientRect();
+      return {cards:cards.map(c=>({id:c.id,label:c.getAttribute('aria-label'),name:c.querySelector('.ability-name')?.textContent,inside:c.getBoundingClientRect().right<=innerWidth})),pips:document.querySelectorAll('.armor-packs .collected').length,overlap:notice.left<tray.right&&notice.right>tray.left&&notice.top<tray.bottom&&notice.bottom>tray.top};
+    });
+    if(hud.cards.length!==11||hud.pips!==5||hud.overlap||hud.cards.some(c=>!c.label||!c.name||!c.inside))throw Error('Equipment HUD '+width+' '+JSON.stringify(hud));
+    await page.screenshot({path:`v2/output/playwright/regression/equipment-${width}.png`});
+  }
+  await page.setViewportSize({width:1440,height:900});
   const landings=[];
   for(const view of ['overhead','third']){
     const landing=await page.evaluate(view=>{
       const g=__game,a=g.debug,T=a.T;g.manual(true);g.setInput([]);a.setCameraView(view);a.clearShots();
-      g.scenario({player:{x:140,y:16,z:-176,hp:75,weapon:'mortar',mortar:true,heat:0,overheated:false,lastShot:-100,invincible:10000},enemies:Object.fromEntries(a.world.enemies.map(e=>[e.id,0]))});g.step(1);
+      g.scenario({player:{x:140,y:16,z:-176,hp:50,weapon:'mortar',mortar:true,heat:0,overheated:false,lastShot:-100,invincible:10000},enemies:Object.fromEntries(a.world.enemies.map(e=>[e.id,0]))});g.step(1);
       if(view==='overhead')g.aimAt(158,-181,16);else g.look(Math.PI/2,.45);
       a.updateAim();const predicted=a.mortarLanding.userData.prediction,marker=a.mortarLanding.visible,ground=a.mortarLanding.position.toArray();
       if(!g.fire())throw Error('Mortar failed to launch');
@@ -46,7 +59,7 @@ async page => {
   const damage=await page.evaluate(()=>{
     const g=__game,a=g.debug,results=[];a.setCameraView('overhead');
     for(const weapon of ['cannon','mortar','laser']){
-      g.setInput([]);a.clearShots();g.scenario({player:{x:140,y:16,z:-176,weapon,hp:75,heat:0,overheated:false,lastShot:-100,lastHeat:-100},enemies:Object.fromEntries(a.world.enemies.map(e=>[e.id,0]))});
+      g.setInput([]);a.clearShots();g.scenario({player:{x:140,y:16,z:-176,weapon,hp:50,heat:0,overheated:false,lastShot:-100,lastHeat:-100},enemies:Object.fromEntries(a.world.enemies.map(e=>[e.id,0]))});
       const e=a.world.enemies.find(e=>e.id==='foundry-west-scout');Object.assign(e,{x:150,y:16,z:-176,hp:20,max:20,awake:true,stunnedUntil:1e9,deadAt:null});g.step(.05);g.aimAt(e.x,e.z,e.y+1.5);
       const before=e.hp;
       if(weapon==='laser'){g.setInput(['Mouse0']);g.step(1/60,false);g.setInput([]);}
