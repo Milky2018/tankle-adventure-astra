@@ -49,7 +49,7 @@ test('the pump return reveals its closed gate at the machine and reconnects dry 
 
 test('the dry freight approach reaches common benches without Magnet or Flotation',()=>{
   const p=Object.assign(player(),{magnet:false,mortar:true}),s=initialFoldedState({freight:true,'bridge-crane':true});
-  for(const [x,z]of [[0,-34],[59,-34],[59,-84],[67,-84],[67,-34],[70,-34],[70,-19],[90,-19]])drive(p,x,z,s);
+  for(const [x,z]of [[0,-34],[59,-34],[59,-63],[67,-63],[67,-34],[70,-34],[70,-19],[90,-19]])drive(p,x,z,s);
   assert.equal(p.y,0);assert.equal(p.flotation,false);assert.equal(p.magnet,false);
   s.load=true;drive(p,90,-59,s);assert.equal(p.y,8);
 });

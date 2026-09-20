@@ -147,7 +147,7 @@ async page=>{
   }else{
 
   await move(0,-6);await shoot(0,-24,6.8,'bridge-crane','mortar');await move(0,-34);await move(18,-34);await shoot(32,-34,4.2,'freight','mortar');
-  for(const [x,z]of [[59,-34],[59,-84],[67,-84],[67,-34],[70,-34],[70,-19],[94,-18]])await move(x,z);
+  for(const [x,z]of [[59,-34],[59,-63],[67,-63],[67,-34],[70,-34],[70,-19],[94,-18]])await move(x,z);
   await use();await record('dry-approach');
 
   }

@@ -97,7 +97,7 @@ test('Magnet training and the unassisted Mortar route preserve dry access',()=>{
 
 test('Mortar opens the outer ring and its inside return without giving the emitter before Phoenix',()=>{
   const s=initialFoldedState({freight:true,'bridge-crane':true}),p=player(0,0,-34,{overdrive:true,mortar:true});
-  travel(p,s,[[59,-34],[59,-84],[67,-84],[67,-34],[70,-34],[70,-18],[90,-18]]);
+  travel(p,s,[[59,-34],[59,-63],[67,-63],[67,-34],[70,-34],[70,-18],[90,-18]]);
   assert.equal(p.y,0);assert.ok(releaseFolded('freight-return','cannon',p,s,[]));
   travel(p,s,[[70,-18],[70,-34],[59,-34],[59,-106],[76,-106]]);
   for(let i=0;i<300;i++){updateHeat(p,1/60,i/60,true,true);moveFolded(p,BASE_SPEED*p.speed/60,0,s);}

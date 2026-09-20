@@ -88,6 +88,13 @@ export function buildArchitecture(decks,lifts){
         for(let t=0;t<length;t+=4){
           const x=along?f.x+t:side==='west'?f.x-.85:f.x+f.w+.05,z=along?(side==='north'?f.z-.85:f.z+f.d+.05):f.z+t;
           const w=along?Math.min(4,length-t):.8,d=along?.8:Math.min(4,length-t);
+          // The work-lane window exposes the outer approach to the separator
+          // battery while its sill keeps both walking routes physically distinct.
+          if(f.id==='coolant-west-service'&&side==='east'&&t>=16&&t<32){
+            add(room,'wall',x,f.y,z,w,1.05,d);
+            add(room,'wall',x,f.y+4,z,w,wallHeight-4,d);
+            continue;
+          }
           const overlook={'lens-west-gallery':['east'],'lens-north-gallery':['south'],'lens-east-gallery':['west'],'proving-observation':['north','south'],'proving-impact':['south']}[f.id]?.includes(side);
           const h=!roof&&overlook?1.05:!roof&&region==='transit'&&Math.floor(t/4)%4===1?2.5:wallHeight;
           const base=add(room,'wall',x,f.y,z,w,h,d);
