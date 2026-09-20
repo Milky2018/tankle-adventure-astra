@@ -1,3 +1,4 @@
+import { AQUATIC, torpedoTargets } from './folded-aquatic.js';
 import { mortarPosition, mortarGroundTarget, MORTAR_MAX_AGE } from './folded-ballistics.js';
 import * as T from 'three';
 import { BOSS_ARENAS } from './folded-boss-arenas.js';
@@ -41,7 +42,10 @@ export function createFoldedCombat({
     }
   }
   function castWeapon(origin, dir, distance, options) {
-    const hit = world.cast(origin, dir, distance, options),
+    const hit = world.cast(origin, dir, distance, {
+        ...options,
+        extras: [...(options?.extras || []), ...torpedoTargets(shots)],
+      }),
       boundary = refugeRayDistance(origin, dir, hit?.distance ?? distance, world.hives, state);
     return Number.isFinite(boundary)
       ? { point: origin.clone().addScaledVector(dir, boundary), distance: boundary, refuge: true }
@@ -158,6 +162,26 @@ export function createFoldedCombat({
       }
       return;
     }
+    const turned = new Set(hit.mirror?.turnable ? [hit.mirror] : []);
+    if (shot.mortar)
+      for (const mirror of world.mirrors) {
+        if (!mirror.turnable || turned.has(mirror)) continue;
+        const to = new T.Vector3(mirror.x, mirror.y, mirror.z).sub(blastOrigin);
+        const distance = to.length();
+        if (distance > MORTAR.radius) continue;
+        const obstruction = world.cast(blastOrigin, to.normalize(), distance, { targets: false });
+        if (!obstruction || obstruction.mirror === mirror) turned.add(mirror);
+      }
+    for (const mirror of turned) {
+      state.mirrorTurns[mirror.id] = (state.mirrorTurns[mirror.id] || 0) + 1;
+      mirror.flash = 0.25;
+      audio.event('lever', { position: hit.point });
+      save();
+    }
+    if (hit.target?.kind === 'torpedo') {
+      hit.target.shot.captured = true;
+      audio.event('hit', { position: hit.point });
+    }
     if (shot.mortar) {
       audio.event('explode', { position: hit.point });
       ripple(hit.point, MORTAR.radius, C.lightYellow, 0.5, 0.8);
@@ -207,6 +231,7 @@ export function createFoldedCombat({
           }
         }
     } else if (hit.target) {
+      if (hit.target.kind === 'torpedo') return;
       if (hit.target.kind === 'mine') detonateMine(hit.target);
       else if (hit.target.enemy || hit.target.model)
         hitEnemy(
@@ -243,6 +268,10 @@ export function createFoldedCombat({
       target = mortarGroundTarget(target, (start, direction, range) =>
         world.cast(start, direction, range, { terrainOnly: true }),
       );
+    }
+    if (options.torpedo) {
+      mesh.material.color.setHex(SIGNAL.magnet);
+      mesh.scale.set(0.7, 0.7, 1.5);
     }
     if (options.homing) {
       mesh.material.color.setHex(0xffb64a);
@@ -292,17 +321,19 @@ export function createFoldedCombat({
     events.shot?.(e, lob);
     if (!options.silent)
       audio.event(
-        mortar
-          ? 'mortar'
-          : options.homing
-            ? 'seeker-shot'
-            : e.type === 'sniper'
-              ? 'rail-shot'
-              : e.type === 'boss' || e.id === 'prototype'
-                ? 'foundry-shot'
-                : e.guardian
-                  ? 'guard-shot'
-                  : 'welder-shot',
+        options.torpedo
+          ? 'torpedo-shot'
+          : mortar
+            ? 'mortar'
+            : options.homing
+              ? 'seeker-shot'
+              : e.type === 'sniper'
+                ? 'rail-shot'
+                : e.type === 'boss' || e.id === 'prototype'
+                  ? 'foundry-shot'
+                  : e.guardian
+                    ? 'guard-shot'
+                    : 'welder-shot',
         { position: e },
       );
   }
@@ -347,6 +378,26 @@ export function createFoldedCombat({
         targets: !s.hostile,
         extras: mines,
       });
+      if (s.torpedo) {
+        const water = foldedSupport(
+          next.x,
+          next.z,
+          next.y - AQUATIC.torpedoHeight,
+          true,
+          world.lifts,
+        );
+        if (!water?.water && !hit) hit = { point: next, distance };
+        if (s.age - (s.wakeAt || 0) > 0.16) {
+          ripple(
+            new T.Vector3(s.position.x, s.position.y - AQUATIC.torpedoHeight + 0.1, s.position.z),
+            0.65,
+            0xc7eee2,
+            0.5,
+            0.28,
+          );
+          s.wakeAt = s.age;
+        }
+      }
       if (s.hostile && !s.mineOwner) {
         const ray = new T.Ray(s.position, path.clone().normalize());
         // Friendly bodies stop a shot before the player; machinery stays out of this query.

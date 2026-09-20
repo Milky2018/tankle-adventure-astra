@@ -1,7 +1,7 @@
 async page=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:5174/?chapter=folded&test&manual&view=overhead');await page.waitForFunction(()=>window.__game?.debug);
- const cases=[['rail-repair',-18,0,19],['magnet',-30,-8,-8],['arsenal-return',-106,8,-54],['collimator-drawer',363,32,-80],['dock-cover',75,-8,14.5],['rig-cover',223,-24,108],['yard-cover',213,-8,44]];
+ const cases=[['rail-repair',-18,0,19],['arsenal-return',-106,8,-54]];
  const results=[];
  for(const view of ['overhead','third'])for(const [id,x,y,z]of cases){
   const before=await page.evaluate(async({view,id,x,y,z})=>{
@@ -41,7 +41,6 @@ async page=>{
    return {duration:pending.duration,open:q.state[id],endpointColors:feeds.map(f=>f.lamps.at(-1).color.getHex())};
   },{view,id});
   results.push({view,id,feeds:before,timing});
-  if(id==='dock-cover')await page.screenshot({path:`v2/output/playwright/regression/cable-dock-cover-${view}-open.png`});
  }
  // A contact sheet preserves each unmodified gameplay capture for visual review.
  const sheet=await page.context().newPage();await sheet.setViewportSize({width:1400,height:2920});

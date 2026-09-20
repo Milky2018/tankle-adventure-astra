@@ -112,3 +112,30 @@ test('moving machinery belongs to one session and never mutates authored geometr
     116,
   );
 });
+
+test('repeatable mirror turns survive saves and migrate the retired switch', () => {
+  const storage = memoryStorage();
+  const saves = createFoldedSave(null, () => storage);
+  for (const turns of [0, 1, 2, 4, 7]) {
+    const state = saves.load();
+    state.mirrorTurns['return-index'] = turns;
+    saves.save(state);
+    assert.equal(saves.load().mirrorTurns['return-index'], turns);
+  }
+  for (const saved of [
+    { 'mirror-index': true },
+    { pendingSignals: { 'mirror-index': { elapsed: 0.1 } } },
+  ]) {
+    const state = initialFoldedState(saved);
+    assert.equal(state.mirrorTurns['return-index'], 1);
+    assert.equal(state['mirror-index'], undefined);
+    assert.equal(state.pendingSignals['mirror-index'], undefined);
+  }
+  assert.equal(initialFoldedState().mirrorTurns['return-index'], 0);
+  assert.equal(
+    initialFoldedState({ 'mirror-index': true, mirrorTurns: { 'return-index': 4 } }).mirrorTurns[
+      'return-index'
+    ],
+    4,
+  );
+});

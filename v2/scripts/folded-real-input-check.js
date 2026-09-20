@@ -22,7 +22,7 @@ async page=>{
  }
  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=third&test');await page.waitForFunction(()=>window.__game);
  await page.evaluate(()=>{
-  __game.manual(true);__game.scenario({player:{x:216,y:24,z:-20,hp:50,heat:0,overheated:false,laser:true,weapon:'laser'},state:{gallery:false,'garden-optical':false,'mirror-index':false},enemies:Object.fromEntries(__game.snapshot().enemies.map(e=>[e.id,0]))});
+  __game.manual(true);__game.scenario({player:{x:216,y:24,z:-20,hp:50,heat:0,overheated:false,laser:true,weapon:'laser'},state:{gallery:false,'garden-optical':false,mirrorTurns:{'return-index':0}},enemies:Object.fromEntries(__game.snapshot().enemies.map(e=>[e.id,0]))});
   __game.look(0,.1);__game.step(.016);
  });
  await page.mouse.click(640,360);await page.waitForFunction(()=>!!document.pointerLockElement);await page.mouse.move(610,354,{steps:15});

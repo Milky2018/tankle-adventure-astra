@@ -41,6 +41,15 @@ test('balance preserves the baseline apart from explicitly authored travel, hull
   assert.deepEqual(FLOTATION, baseline.flotation);
   assert.deepEqual(ENEMY_KINDS, {
     ...baseline.enemies,
+    hunter: { role: 'ranged', speed: 6, reach: 24, warn: 1.3, recovery: 2, attack: 'torpedoes' },
+    dredger: {
+      role: 'pressure',
+      speed: 2.4,
+      reach: 11,
+      warn: 1.2,
+      recovery: 2.4,
+      attack: 'suction',
+    },
     welder: { ...baseline.enemies.welder, speed: 6.8, reach: 18, warn: 0.9, recovery: 0.9 },
   });
   assert.deepEqual(

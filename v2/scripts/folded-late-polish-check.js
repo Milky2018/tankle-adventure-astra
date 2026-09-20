@@ -35,14 +35,14 @@ async page=>{
     });
     await shot(78,-77.7,18,'brake');
     await page.screenshot({path:`v2/output/playwright/late-polish/carrier-${view}.png`});
-    await page.evaluate(()=>{__game.scenario({player:{x:242,y:24,z:-4,weapon:'cannon',laser:true,heat:0,overheated:false},state:{'mirror-index':false}});__game.step(1);});
-    const original=await page.evaluate(()=>__game.debug.world.mirrors.find(m=>m.index).normal.toArray());
-    await shot(238,-4,25.3,'mirror-index');
+    await page.evaluate(()=>{__game.scenario({player:{x:242,y:24,z:-4,weapon:'cannon',laser:true,heat:0,overheated:false},state:{mirrorTurns:{'return-index':0}}});__game.step(1);});
+    const original=await page.evaluate(()=>__game.debug.world.mirrors.find(m=>m.turnable).normal.toArray());
+    await aim(232,-4,26);await page.mouse.down();await page.evaluate(()=>__game.step(1/60));await page.mouse.up();await page.evaluate(()=>__game.step(.8));
     const rotation=await page.evaluate(original=>{
-      const m=__game.debug.world.mirrors.find(m=>m.index),lamp=__game.debug.scene.getObjectByName('folded-mirror-link').children.at(-1);
-      return {distance:m.normal.distanceTo(new __game.debug.T.Vector3(...original)),lamp:lamp.material.color.getHex()};
+      const m=__game.debug.world.mirrors.find(m=>m.turnable);
+      return {distance:m.normal.distanceTo(new __game.debug.T.Vector3(...original))};
     },original);
-    if(rotation.distance<.1)throw Error('Shot paddle did not turn the actual mirror');
+    if(rotation.distance<.1)throw Error('Direct hit did not turn the actual mirror');
     await page.screenshot({path:`v2/output/playwright/late-polish/mirror-${view}.png`});
     await page.evaluate(()=>{__game.scenario({player:{x:156,y:-8,z:34,hp:50,invincible:0,weapon:'cannon',heat:0,overheated:false},state:{pressure:true},enemies:{'yard-inlet-gunner':2,'yard-inlet-flanker':2}});__game.look(0,.22);__game.step(.1);});
     for(const id of ['yard-inlet-gunner','yard-inlet-flanker']){

@@ -1,3 +1,4 @@
+import { AQUATIC, swims, inSuction } from './folded-aquatic.js';
 import { HOSTILE_DAMAGE, BOSS_ATTACK_DAMAGE, hostileContactDamage } from './folded-weapons.js';
 import * as T from 'three';
 import { ENEMY_KINDS, woundedAlly } from './folded-enemy-rules.js';
@@ -8,8 +9,8 @@ import { refugeAt, REFUGE_CLEARANCE } from './folded-refuges.js';
 import { canTelegraph } from './folded-pacing.js';
 import { cityContact, playerStunned } from './folded-combat.js';
 import { moveWithConveyor } from './folded-machinery.js';
-import { foldedBattles, moveFolded } from './folded-layout.js';
-import { redContact } from './mechanics.js';
+import { foldedBattles, moveFolded, foldedSupport } from './folded-layout.js';
+import { redContact, angleDelta } from './mechanics.js';
 
 // Decisions and collision queries do not depend on enemy meshes. The view
 // adapter receives updates at their original points in the simulation step.
@@ -51,6 +52,10 @@ export function createFoldedEnemies({
       e.stunnedUntil = 0;
       e.shieldPull = 0;
       e.shieldRemoved = false;
+      e.swimWaypoint = 0;
+      e.biteAt = -10;
+      e.travelHeading = null;
+      e.deployed = swims(e);
       view.reset(e);
       for (const part of e.parts) part.hp = part.max;
     }
@@ -66,8 +71,12 @@ export function createFoldedEnemies({
       }
   }
   function moveEnemy(e, angle, speed, dt) {
+    if (e.type === 'hunter' && !e.afloat && e.travelHeading != null)
+      angle =
+        e.travelHeading +
+        T.MathUtils.clamp(angleDelta(e.travelHeading, angle), -1.8 * dt, 1.8 * dt);
     for (const turn of [0, 0.75, -0.75, 1.4, -1.4]) {
-      const body = { x: e.x, y: e.y, z: e.z, speed: 1, deployed: false };
+      const body = { x: e.x, y: e.y, z: e.z, speed: 1, deployed: swims(e) };
       moveFolded(
         body,
         Math.sin(angle + turn) * speed * dt,
@@ -75,6 +84,13 @@ export function createFoldedEnemies({
         state,
         world.lifts,
       );
+      if (e.type === 'dredger' && !body.afloat) continue;
+      if (
+        swims(e) &&
+        Math.hypot(body.x - e.spawn.x, body.z - e.spawn.z) >
+          Math.max(32, Math.hypot(e.x - e.spawn.x, e.z - e.spawn.z))
+      )
+        continue;
       // A sentry can reposition within its shelter without abandoning that firing post.
       if (
         e.patrol &&
@@ -99,13 +115,24 @@ export function createFoldedEnemies({
       e.x = body.x;
       e.y = body.y;
       e.z = body.z;
-      view.roll(e, speed * dt * 2.4);
+      e.afloat = body.afloat;
+      e.travelHeading = angle + turn;
+      if (!body.afloat) view.roll(e, speed * dt * 2.4);
       break;
     }
   }
   function approachEnemy(e, goal, dt) {
-    if (Math.abs(goal.y - e.y) > 3 || Math.hypot(e.x - e.spawn.x, e.z - e.spawn.z) > 32) return;
-    moveEnemy(e, Math.atan2(goal.x - e.x, goal.z - e.z), ENEMY_KINDS[e.type].speed, dt);
+    if (
+      Math.abs(goal.y - e.y) > (e.type === 'hunter' ? 8 : 3) ||
+      Math.hypot(e.x - e.spawn.x, e.z - e.spawn.z) > 32
+    )
+      return;
+    moveEnemy(
+      e,
+      Math.atan2(goal.x - e.x, goal.z - e.z),
+      ENEMY_KINDS[e.type].speed * (e.type === 'hunter' && !e.afloat ? 0.55 : 1),
+      dt,
+    );
   }
   function beginBossAttack(e, clearSight = true) {
     const sighting = state.combatArena === e.id || clearSight ? p : e.lastSeen || p;
@@ -317,9 +344,13 @@ export function createFoldedEnemies({
       }
     for (const e of world.enemies) {
       view.clearWarnings(e);
+      e.deployed = swims(e);
       const beforeDrift = { x: e.x, y: e.y, z: e.z };
       moveWithConveyor(e, 0, 0, dt, state, world.lifts, world.enemies);
-      if (refugeAt(e, world.hives, state, REFUGE_CLEARANCE + e.radius))
+      if (
+        refugeAt(e, world.hives, state, REFUGE_CLEARANCE + e.radius) ||
+        (e.type === 'dredger' && !e.afloat)
+      )
         Object.assign(e, beforeDrift);
       view.deployment(e, now());
       if (!e.hp) {
@@ -365,6 +396,8 @@ export function createFoldedEnemies({
         'flame',
         'sweep',
         'repair',
+        'suction',
+        'bite',
         'vent',
       ].includes(e.phase);
       const active =
@@ -393,6 +426,12 @@ export function createFoldedEnemies({
           Math.hypot(e.x - e.lastSeen.x, e.z - e.lastSeen.z) > 3
         )
           approachEnemy(e, e.lastSeen, dt);
+        if (!resting && e.swimPatrol && !(e.alertUntil > now())) {
+          const point = e.swimPatrol[e.swimWaypoint || 0];
+          if (Math.hypot(point[0] - e.x, point[1] - e.z) < 1.5)
+            e.swimWaypoint = ((e.swimWaypoint || 0) + 1) % e.swimPatrol.length;
+          else moveEnemy(e, Math.atan2(point[0] - e.x, point[1] - e.z), spec.speed * 0.45, dt);
+        }
         e.phase = 'idle';
         e.timer = 0.55;
       } else {
@@ -407,6 +446,9 @@ export function createFoldedEnemies({
             if (!ally || Math.hypot(ally.x - e.x, ally.z - e.z) > 10) {
               e.timer = Math.max(e.timer, 0.2);
             } else e.patient = ally;
+          } else if (e.type === 'hunter' && e.afloat && !p.afloat) {
+            approachEnemy(e, p, dt);
+            e.timer = Math.max(e.timer, 0.2);
           } else if (
             ((e.type === 'sniper' && distance < 11) ||
               (e.type === 'artillery' && distance < 9) ||
@@ -414,12 +456,21 @@ export function createFoldedEnemies({
             Math.hypot(e.x - e.spawn.x, e.z - e.spawn.z) < 28
           )
             moveEnemy(e, e.aim + Math.PI, spec.speed, dt);
+          else if (e.type === 'hunter' && distance < spec.reach)
+            moveEnemy(
+              e,
+              e.aim + ((e.id.length % 2 ? 1 : -1) * Math.PI) / 2,
+              spec.speed * (e.afloat ? 1 : 0.55),
+              dt,
+            );
           else if (e.type === 'skirmisher' && distance < 20)
             moveEnemy(e, e.aim + ((e.id.length % 2 ? 1 : -1) * Math.PI) / 2, spec.speed, dt);
           else if (spec.speed && !e.guardian && distance > (e.type === 'guard' ? 5 : spec.reach)) {
             approachEnemy(e, p, dt);
             if (distance > spec.reach) e.timer = Math.max(e.timer, 0.2);
           }
+          if (e.type === 'dredger' && (!p.afloat || distance > spec.reach))
+            e.timer = Math.max(e.timer, 0.2);
           if (e.timer <= 0 && canTelegraph(e, world.enemies)) {
             const sighting = state.combatArena === e.id || clearSight ? p : e.lastSeen || p;
             if (e.id === 'prototype') {
@@ -439,7 +490,10 @@ export function createFoldedEnemies({
               e.lock.x = e.x + (e.lock.x - e.x) * fraction;
               e.lock.z = e.z + (e.lock.z - e.z) * fraction;
             }
-            audio.event('warn', { position: e });
+            audio.event(
+              e.type === 'dredger' ? 'pump-warn' : e.type === 'hunter' ? 'sonar-lock' : 'warn',
+              { position: e },
+            );
           }
         } else if (e.phase === 'warn') {
           if (e.type === 'welder' && e.timer > 0.35 && clearSight) {
@@ -462,6 +516,24 @@ export function createFoldedEnemies({
                 });
               e.phase = 'vent';
               e.timer = spec.recovery;
+            } else if (spec.attack === 'torpedoes') {
+              const afloat = !!e.afloat,
+                source = new T.Vector3(e.x, e.y + (afloat ? AQUATIC.torpedoHeight : 1.5), e.z);
+              const target = e.lock.clone();
+              if (afloat) target.y = source.y;
+              for (const delay of [0, 0.65])
+                shootEnemy(e, 0, source, target, delay, false, {
+                  torpedo: afloat,
+                  speed: afloat ? 12 : 18,
+                  range: 30,
+                  silent: delay > 0,
+                });
+              e.phase = 'vent';
+              e.timer = spec.recovery;
+            } else if (spec.attack === 'suction') {
+              e.phase = 'suction';
+              e.timer = 2.8;
+              audio.event('pump-run', { position: e });
             } else if (spec.attack === 'charge') {
               e.phase = 'charge';
               e.timer = e.type === 'elite' ? 1.2 : 0.75;
@@ -571,6 +643,64 @@ export function createFoldedEnemies({
             e.phase = 'vent';
             e.timer = spec.recovery;
           }
+        } else if (e.phase === 'suction' || e.phase === 'bite') {
+          view.suction(e, now());
+          const exposed = (body) => {
+            if (
+              !inSuction(e, body) ||
+              !foldedSupport(body.x, body.z, body.y, true, world.lifts)?.water
+            )
+              return false;
+            const from = new T.Vector3(e.x, e.y + 0.6, e.z),
+              to = new T.Vector3(body.x, body.y + 0.6, body.z).sub(from);
+            return !world.cast(from, to.clone().normalize(), Math.max(0, to.length() - 0.3), {
+              targets: false,
+            });
+          };
+          if (e.phase === 'suction') {
+            if (now() - (e.pumpSoundAt || 0) > 0.35) {
+              audio.event('pump-run', { position: e });
+              e.pumpSoundAt = now();
+            }
+            for (const wreck of world.enemies)
+              if (wreck !== e && wreck.hp <= 0 && swims(wreck) && exposed(wreck))
+                moveEnemy(wreck, Math.atan2(e.x - wreck.x, e.z - wreck.z), 1.2, dt);
+            // One pump owns the force in an overlap; currents still act normally.
+            if (
+              p.afloat &&
+              exposed(p) &&
+              !world.enemies.some(
+                (other) =>
+                  other !== e &&
+                  other.hp > 0 &&
+                  other.type === 'dredger' &&
+                  other.phase === 'suction' &&
+                  other.id < e.id &&
+                  inSuction(other, p),
+              )
+            ) {
+              const angle = Math.atan2(e.x - p.x, e.z - p.z);
+              moveFolded(
+                p,
+                Math.sin(angle) * AQUATIC.pullSpeed * dt,
+                Math.cos(angle) * AQUATIC.pullSpeed * dt,
+                state,
+                world.lifts,
+              );
+            }
+            if (e.timer <= 0) {
+              e.phase = 'bite';
+              e.timer = 0.8;
+              audio.event('pump-warn', { position: e });
+            }
+          } else if (e.timer <= 0) {
+            if (p.afloat && inSuction(e, p, AQUATIC.biteReach) && exposed(p))
+              hurt(HOSTILE_DAMAGE.charge, e);
+            e.biteAt = now();
+            e.phase = 'vent';
+            e.timer = spec.recovery;
+            audio.event('armor', { position: e });
+          }
         } else if (e.phase === 'repair') {
           const ally = e.patient;
           if (ally?.hp > 0) {
@@ -610,7 +740,7 @@ export function createFoldedEnemies({
         e.phase === 'vent' &&
         spec.speed &&
         !e.guardian &&
-        !['scout', 'elite', 'skirmisher'].includes(e.type)
+        !['scout', 'elite', 'skirmisher', 'hunter', 'dredger'].includes(e.type)
       ) {
         const angle = Math.atan2(p.x - e.x, p.z - e.z);
         if (e.type === 'repairer') {

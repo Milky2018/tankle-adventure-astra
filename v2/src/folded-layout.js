@@ -1,3 +1,4 @@
+import {mountedControlPosition} from './folded-control-housing.js';
 import {restoreSlidePositions} from './folded-mechanisms.js';
 import {refugeHives,refugeDecks,refugeSolids,refugeControls,refugeFlags,refugeLifts,migrateRefuge} from './folded-refuge-network.js';
 import {explorationDecks,explorationBattles,explorationControls,explorationFlags,explorationPickups,explorationSolids,explorationEnemies} from './folded-exploration-layout.js';
@@ -59,17 +60,15 @@ export const foldedSolids=[
   {id:'bench-cover',x:77,z:-25,w:3,d:4,y:0,h:2,magnetic:true},
   {id:'upper-cover',x:94,z:-58,w:3,d:3,y:8,h:2,permanent:true},
   {id:'gangway-casing',x:84.4,z:28,w:.5,d:6,y:-8,h:3,permanent:true},
-  {id:'dock-cover',x:78,z:13,w:3,d:3,y:-8,h:2,magnetic:true},
   ...explorationSolids,...citySolids,...expansionSolids,...sideGates,...transportSolids,...arenaGates,...refugeSolids
 ];
 export const foldedControls=[
   {id:'rail-repair',x:-18,y:1.4,z:23,kind:'magnet',ground:0},
-  {id:'magnet',x:-38.4,y:-6.6,z:-8,kind:'magnet',ground:-8},
+  {id:'magnet',x:-38.4,y:-6.6,z:-8,kind:'magnet',ground:-8,mount:'magnet',facing:[1,0,0]},
   {id:'freight',x:32,y:4.2,z:-34,ground:0,kind:'shot',surface:'top'},
-  {id:'gangway',x:86,y:-6.6,z:31,kind:'shot',facing:[1,0,0]},
+  {id:'gangway',x:86,y:-6.6,z:31,kind:'shot',mount:'gangway',facing:[1,0,0]},
   {id:'load',x:90,y:7,z:-34,ground:2,kind:'shot',surface:'top'},
   {id:'cage',x:150,y:25.4,z:-23,kind:'shot',requires:'phoenix',facing:[0,0,-1],circuit:[[150,24.12,-23],[150,24.12,-35],[32,24.12,-35],[32,24.12,8],[16,24.12,8],[10,24.12,16]]},
-  {id:'dock-cover',x:77.1,y:-6.6,z:14.5,kind:'magnet',ground:-8,yaw:-Math.PI/2},
   {id:'bench-cover',x:78.5,y:2.4,z:-23,kind:'magnet',ground:0},
   ...cityControls,...expansionControls,...explorationControls,...refugeControls
 ];
@@ -93,12 +92,20 @@ export const foldedEnemies=[
 // The test-bench cover remains repositionable; ordinary access locks tear free.
 for(const [id,axis,min,max]of [['bench-cover','z',-25,-17]]){
   const body=foldedSolids.find(s=>s.id===id);body.rail={axis,min,max};
-  const c=foldedControls.find(c=>c.id===id);c.slide=id;
+  const c=foldedControls.find(c=>c.id===id);c.slide=id;c.mount=id;c.facing=[-1,0,0];
+}
+
+// Local controls live on their actuator's working face. Remote receivers and
+// overhead trays retain their authored sightlines and collecting surfaces.
+for(const c of foldedControls.filter(c=>c.mount)){
+  const body=foldedSolids.find(s=>s.id===c.mount);
+  Object.assign(c,mountedControlPosition(c,body));
+  body.localControl=c.id;
 }
 
 export const foldedArchitecture=buildArchitecture(foldedDecks,foldedLiftDefs);
 export const architectureGrid=architectureIndex(foldedArchitecture.solids);
-export const activeSolid=(s,state)=>s.arena?state.combatArena===s.arena:s.permanent||!!s.rail||!state[s.id];
+export const activeSolid=(s,state)=>s.arena?state.combatArena===s.arena:s.permanent||!!s.rail||(!state[s.id]&&!(s.localControl&&state.pendingSignals?.[s.localControl]));
 export function foldedAimHeight(p,target){
   const verticalReach=Math.hypot(target.x-p.x,target.z-p.z)*Math.tan(Math.PI*40/180);
   return clamp(target.y,p.y+2-verticalReach,p.y+2+verticalReach);
@@ -160,6 +167,9 @@ export function initialFoldedState(saved={}){
   state['maintenance-started']=saved['maintenance-started']===true;
   state.sidePuzzles=saved.sidePuzzles||{};
   state.pendingSignals=structuredClone(saved.pendingSignals||{});
+  // Preserve the old indexed orientation, including an in-flight switch signal.
+  state.mirrorTurns={'return-index':saved.mirrorTurns?.['return-index']??(saved['mirror-index']||saved.pendingSignals?.['mirror-index']?1:0)};
+  delete state.pendingSignals['mirror-index'];
   state['rail-crossing']=!!(saved.sidePuzzles?.rail?.solved||saved.sidePuzzles?.rail?.secured);
   for(const p of explorationPickups)if(p.requires&&state[p.id])state[p.requires]=true;
   state.anchor=migrateRefuge(saved.anchor,state);

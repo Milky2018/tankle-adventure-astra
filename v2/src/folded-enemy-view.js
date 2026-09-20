@@ -1,3 +1,4 @@
+import { AQUATIC, swims } from './folded-aquatic.js';
 import * as T from 'three';
 import { C } from './world.js';
 import { animateEnemy } from './folded-enemies.js';
@@ -11,6 +12,7 @@ export function createEnemyView({ world, project, getCamera, burst }) {
     if (e.batteryWarning) e.batteryWarning.visible = false;
     e.model.root.scale.copy(e.baseScale);
     e.model.root.rotation.z = 0;
+    if (e.model.frontArmor) e.model.frontArmor.visible = true;
     e.model.root.position.set(e.x, e.y, e.z);
     e.model.root.visible = e.hp > 0;
     e.warning.visible = false;
@@ -107,6 +109,7 @@ export function createEnemyView({ world, project, getCamera, burst }) {
     if (e.batteryWarning) e.batteryWarning.visible = false;
     if (e.charge) e.charge.root.visible = false;
     if (e.flame) e.flame.visible = false;
+    if (e.model.flow) e.model.flow.visible = false;
   }
 
   function deployment(e, time) {
@@ -167,6 +170,8 @@ export function createEnemyView({ world, project, getCamera, burst }) {
       e.warning.visible = true;
       e.warning.geometry.setFromPoints(points);
       e.warning.geometry.setDrawRange(0, points.length);
+    } else if (e.type === 'dredger') {
+      suction(e, time);
     } else if (e.type === 'artillery') {
       e.zone.visible = true;
       e.zone.position.copy(e.lock);
@@ -202,14 +207,53 @@ export function createEnemyView({ world, project, getCamera, burst }) {
     }
   }
 
+  function suction(e, time) {
+    const origin = new T.Vector3(e.x, e.y + 0.15, e.z),
+      points = [origin.clone()];
+    const reach = e.phase === 'bite' ? AQUATIC.biteReach : AQUATIC.suctionReach;
+    for (let i = 0; i <= 12; i++) {
+      const angle = e.aim - AQUATIC.suctionHalfAngle + (i * AQUATIC.suctionHalfAngle) / 6;
+      const dir = new T.Vector3(Math.sin(angle), 0, Math.cos(angle));
+      const hit = world.cast(origin.clone().setY(e.y + 0.6), dir, reach, { targets: false });
+      const length = Math.min(reach, hit?.distance ?? reach);
+      points.push(origin.clone().addScaledVector(dir, length));
+      if (i < 12) {
+        const chip = e.model.flow.children[i],
+          t = (i / 12 + time * (e.phase === 'suction' ? 0.65 : 0.18)) % 1;
+        const a = angle - e.aim,
+          r = 2 + (length - 2) * (1 - t);
+        chip.position.set(Math.sin(a) * r, 0.16, Math.cos(a) * r);
+        chip.visible = length > 2;
+        chip.rotation.y = a;
+      }
+    }
+    points.push(origin.clone());
+    e.warning.visible = e.model.flow.visible = true;
+    e.warning.material.color.setHex(
+      e.phase === 'bite' ? C.red : e.phase === 'suction' ? 0xc9e4d5 : C.orange,
+    );
+    e.warning.geometry.setFromPoints(points);
+    e.warning.geometry.setDrawRange(0, points.length);
+  }
+
   function finish(e, time, dt, active) {
     e.model.root.position.set(e.x, e.y, e.z);
     e.model.turret.rotation.y = e.aim;
-    e.model.body.rotation.y = e.aim;
+    e.model.body.rotation.y = e.type === 'hunter' ? (e.travelHeading ?? e.aim) : e.aim;
     animateEnemy(e, time, dt, active);
+    if (swims(e)) {
+      e.model.wake.visible = !!e.afloat;
+      if (e.afloat) e.model.root.position.y += Math.sin(time * 2.7 + e.x) * 0.055;
+      for (const [i, jaw] of e.model.jaws.entries()) {
+        const bite = Math.max(0, 1 - (time - (e.biteAt ?? -10)) / 0.35);
+        jaw.position.x = (i ? 1 : -1) * (1.05 - 0.75 * bite);
+        jaw.rotation.z = e.phase === 'bite' ? Math.sin(time * 24) * 0.08 : 0;
+      }
+      if (e.model.impeller) e.model.impeller.rotation.z += dt * (e.phase === 'suction' ? 16 : 2);
+    }
     if (e.magneticShield) {
       e.model.frontArmor.visible = !e.shieldRemoved;
-      e.model.frontArmor.position.z = 1.05 + e.shieldPull * 0.9;
+      e.model.frontArmor.position.z = (e.type === 'dredger' ? 1.85 : 1.05) + e.shieldPull * 0.9;
       e.model.frontArmor.rotation.z = Math.sin(time * 40) * e.shieldPull * 0.1;
     }
   }
@@ -229,6 +273,7 @@ export function createEnemyView({ world, project, getCamera, burst }) {
     showBossWarning,
     beam,
     sorterZone,
+    suction,
     sorterArm,
     clearWarnings,
     deployment,

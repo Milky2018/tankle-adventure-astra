@@ -4,7 +4,7 @@ async page=>{
  const result=await page.evaluate(async()=>{
   const g=__game,q=g.debug;const {activeSolid}=await import('/src/folded-layout.js');
   const enemies=Object.fromEntries(q.world.enemies.map(e=>[e.id,0]));
-  const cases=[['rail-repair',-18,0,19],['magnet',-30,-8,-8],['arsenal-return',-106,8,-54],['collimator-drawer',363,32,-80],['dock-cover',75,-8,14.5],['rig-cover',223,-24,108],['yard-cover',213,-8,44]];
+  const cases=[['rail-repair',-18,0,19],['magnet',-30,-8,-8],['arsenal-return',-106,8,-54],['collimator-drawer',363,32,-80]];
   const results=[];
   for(const view of ['overhead','third'])for(const [id,x,y,z]of cases){
    const c=q.world.controls.find(c=>c.id===id);q.setCameraView(view);g.setInput([]);
@@ -15,14 +15,14 @@ async page=>{
    g.step(.5);if(c.pull>.01)throw Error('Released grip did not settle '+id);
    aim();g.setInput(['Mouse2']);g.step(.85);g.setInput([]);
    if(!q.world.signals.active(id))throw Error('Lock did not release '+view+'/'+id+' '+JSON.stringify({pull:c.pull,target:g.snapshot().magnetic}));
-   g.step((q.world.signals.pending(id)?.remaining||0)+1);if(!q.state[id])throw Error("Signal never reached lock "+id);if(c.moving.position.length()<1||c.moving.rotation.x<1)throw Error('Detached piece did not fall '+id);
+   g.step((q.world.signals.pending(id)?.remaining||0)+1);if(!q.state[id])throw Error("Signal never reached lock "+id);const fallen=c.moving.getWorldPosition(new q.T.Vector3());if(Math.abs(fallen.y-c.ground-.65)>.02)throw Error('Detached piece did not settle on its floor '+id+' '+fallen.y);
    if(q.world.controls.find(t=>t.id===id).slide)throw Error('Lock still uses a rail');
    for(const b of q.state.bodies.solids.filter(b=>b.id===id))if(activeSolid(b,q.state))throw Error('Released passage remains solid '+id);
    results.push({view,id,pullOff:true});
   }
   // The one retained ordinary rail cover still moves and can be pulled back.
   const c=q.world.controls.find(c=>c.id==='bench-cover'),body=q.state.bodies.solids.find(b=>b.id===c.id),initial=body.z;
-  q.setCameraView('overhead');g.scenario({player:{x:78.5,y:0,z:-12,magnet:true,heat:0,overheated:false}});
+  q.setCameraView('overhead');g.scenario({player:{x:74,y:0,z:-12,magnet:true,heat:0,overheated:false}});
   for(let i=0;i<60;i++){g.aimAt(c.x,c.z,c.y);g.setInput(['Mouse2']);g.step(1/60,false);}g.setInput([]);
   const forward=body.z;if(forward<=initial)throw Error('Retained cover does not move');
   g.scenario({player:{x:73,y:0,z:-28,heat:0,overheated:false}});

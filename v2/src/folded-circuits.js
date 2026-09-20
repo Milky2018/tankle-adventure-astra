@@ -1,25 +1,25 @@
 import {SIGNAL} from './folded-visibility.js';
 
-export function circuitLinks(controls,solids,lifts,mirrors=[]){
+export function circuitLinks(controls,solids,lifts){
   const links=[];
   for(const c of controls){
     const ids=c.id.startsWith('relay-')?['relay-east','relays']:[c.id];
-    const endpoints=[...solids.filter(s=>ids.includes(s.id)&&!s.permanent||ids.includes(s.rail?.release)||ids.includes(s.rail?.latch)),...lifts.filter(l=>ids.includes(l.lock||l.id)||l.locks?.some(id=>ids.includes(id))),...mirrors.filter(m=>m.index===c.id),...controls.filter(t=>t.requires===c.id).map(t=>({...t,y:t.ground??t.y-1.3}))];
+    const endpoints=[...solids.filter(s=>ids.includes(s.id)&&!s.permanent||ids.includes(s.rail?.release)||ids.includes(s.rail?.latch)),...lifts.filter(l=>ids.includes(l.lock||l.id)||l.locks?.some(id=>ids.includes(id))),...controls.filter(t=>t.requires===c.id).map(t=>({...t,y:t.ground??t.y-1.3}))];
     if(c.id==='signal')endpoints.push({id:'signal-dish',x:204,y:40,z:146});
     if(c.id==='rail-repair')endpoints.push({id:'cargo-rail',x:-18,y:0,z:25});
     if(c.id==='maintenance')endpoints.push({id:'tender',x:110,y:-24,z:31});
     for(const target of endpoints){
+      if(target.localControl===c.id)continue;
       const ground=c.ground??c.y-1.3,end=[target.x+(target.w||0)/2,(target.y??target.stops[0])+.12,target.z+(target.d||0)/2];
       if(target.stops){
         end[0]=Math.max(target.x+.3,Math.min(target.x+target.w-.3,c.x));
         end[2]=Math.max(target.z+.3,Math.min(target.z+target.d-.3,c.z));
         end[1]=target.stops.reduce((best,y)=>Math.abs(y-ground)<Math.abs(best-ground)?y:best)+.12;
       }
-      if(target.n)end[1]=target.y-2;
       let points=[[c.x,ground+.12,c.z],[c.x,ground+.12,end[2]],[end[0],ground+.12,end[2]],end];
       if(['inner-optics','inner-thermal'].includes(c.id)&&target.id==='furnace-service-lift')points=[[c.x,24.12,c.z],[122,24.12,c.z],[122,24.12,30],[94,24.12,30],[94,24.12,46]];
       if(c.id==='sorter')points=[[130,24.12,-100],[126,24.12,-100],[126,24.12,-32],[76,24.12,-32],...(target.y<24?[[76,24.12,-28],[76,.12,44]]:[]),end];
-      if(c.id==='pump'&&target.x<0)points=[[58,-7.88,-4],[58,-7.88,-30],[-26,-7.88,-30],end];
+      if(c.id==='pump'&&target.x<0)points=[[c.x,c.y,c.z],[c.x,ground+4.3,c.z],[c.x,ground+4.3,-11.5],[c.x,-7.88,-11.5],[58,-7.88,-30],[-26,-7.88,-30],end];
       if(c.id==='load'&&target.stops)points=[[90,2.12,-34],[90,8.12,-52],[78,8.12,-52],end];
       if(c.id==='garden-optical'){
         const common=[[232,24.12,-9.5],[242,24.12,-9.5],[242,24.12,6],[230,24.12,6],[230,24.12,12],[230,16.12,36],[202,16.12,36],[202,16.12,6]];
@@ -32,16 +32,13 @@ export function circuitLinks(controls,solids,lifts,mirrors=[]){
         if(target.x===116){end[1]=-15.71;points=[start,[134,-15.88,18],[134,-15.88,30],[122,-15.88,30],end];}
         if(target.x===104)points=[start,[134,-15.88,18],[134,-15.88,30],[122,-15.88,30],[122,-15.88,24],[122,.12,-24],[110,.12,-24],end];
       }
-      if(c.id==='mirror-index')points=[[238,26.4,-4],[238,31.8,-4],[232,31.8,-4],end];
       if(c.kind==='magnet'&&!c.slide){
         const y=ground+.24,start=[c.x,y,c.z];
         if(c.id==='rail-repair')points=[start,[-16.9,y,23],[-16.9,y,25.8],[-17.65,y,25.8],[-17.65,.6,25.8]];
-        else if(['dock-cover','rig-cover','yard-cover'].includes(c.id))points=[start,[c.x,y,target.z+target.d+.65],[target.x+.6,y,target.z+target.d+.65],[target.x+.6,y,target.z+target.d+.2]];
-        else if(c.id==='magnet')points=[start,[c.x,y,-12.8],[-39.3,y,-12.8]];
         else if(c.id==='arsenal-return'&&target.y===0){
           // Cross above the local shutter, then follow the supported return ramp.
           points=[start,[c.x,11.8,-54],[-99.6,11.8,-54],[-99.6,y,-54],[-54,y,-54],[-54,y,-48],[-54,.24,-16],[-54,.24,-15.35]];
-        }else points=[start,[c.x-1.6,y,c.z],[c.x-1.6,y,target.z+.6],[target.x-.2,y,target.z+.6]];
+        }
       }
       links.push({id:c.id,target:target.id,points:c.circuit||points,magnetic:c.kind==='magnet'&&!c.slide});
     }

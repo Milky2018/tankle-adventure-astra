@@ -42,8 +42,8 @@ async page=>{
   }
   async function shoot(x,z,y,id,weapon="cannon"){
     await choose(weapon);
-    const s=await page.evaluate(({x,z,y,id})=>{const g=window.__game;g.setInput([]);if(!["brake","ratchet"].includes(id))g.step(3,false);for(let i=0;i<(id==="brake"?900:180);i++){g.aimAt(x,z,y);g.setInput(['Mouse0']);g.step(1/60,false);if(g.snapshot().state[id])break;}g.setInput([]);g.step(.1);return g.snapshot();},{x,z,y,id});
-    if(!s.state[id])throw Error('Latch '+id+' '+JSON.stringify({p:s.player,aim:s.aim}));
+    const s=await page.evaluate(({x,z,y,id})=>{const g=window.__game,c=g.debug.world.controls.find(c=>c.id===id);if(c?.mount){x=c.x+c.facing.x*.5;y=c.y+c.facing.y*.5;z=c.z+c.facing.z*.5;}g.setInput([]);if(!["brake","ratchet"].includes(id))g.step(3,false);for(let i=0;i<(id==="brake"?900:180);i++){g.aimAt(x,z,y);g.setInput(['Mouse0']);g.step(1/60,false);if(g.snapshot().state[id]||id==='return-index'&&g.snapshot().state.mirrorTurns[id]%2===1)break;}g.setInput([]);g.step(.1);return g.snapshot();},{x,z,y,id});
+    if(!s.state[id]&&!(id==='return-index'&&s.state.mirrorTurns[id]%2===1))throw Error('Latch '+id+' '+JSON.stringify({p:s.player,aim:s.aim}));
   }
   async function fight(id,x0,x1,z){
     const result=await page.evaluate(({id,x0,x1,z})=>{
@@ -160,7 +160,7 @@ async page=>{
       await move(136,-35);await move(136,-30);await settle();await move(228,-30,true);await move(228,-20);await move(242,-20);await move(242,-24);await expedition('lens');await move(242,-24);await move(228,-24);await move(228,-20);
       if(!(await page.evaluate(()=>__game.snapshot())).player.laser)throw Error('Laser acquisition');
       await move(150,-28);await use();await move(202,-28);await move(202,-24);await move(225.2376,-20);await shoot(214,-10,25.3,'optical-screen');await shoot(216,-4,26,'gallery','laser');
-      await move(242,-20);await move(242,-4);await shoot(238,-4,25.3,'mirror-index');await move(242,-20);await move(225.2376,-20);await shoot(216,-4,26,'garden-optical','laser');
+      await move(242,-20);await move(242,-4);await shoot(232,-4,26,'return-index');await move(242,-20);await move(225.2376,-20);await shoot(216,-4,26,'garden-optical','laser');
       await move(242,-20);await move(242,-30);await move(254,-30);await move(254,-98);await move(64,-98,true);await move(64,-86);await shoot(63,-86,25.4,'emitter-cage');
       await move(52,-86);await arrive(-8);await move(52,-72);await move(40,-72);
       if((await page.evaluate(()=>__game.snapshot())).player.y!==-8)throw Error('C08 did not return to loading apron');
@@ -174,7 +174,7 @@ async page=>{
       await move(110,18);await arrive(16);await move(110,6);await move(202,6);await move(202,29);await move(218,29);await move(218,38);await move(230,38);
     }
     async function rigFromYard(){
-      await move((await page.evaluate(()=>__game.snapshot())).player.x,48);await move(242,48);await move(210,48);await move(210,44);await use();await move(210,48);await move(242,48);await move(242,95);await shoot(242,96,-21,'rig');
+      await move((await page.evaluate(()=>__game.snapshot())).player.x,48);await move(242,48);await move(210,48);await move(210,44);await use();await move(210,48);await move(242,48);await move(242,95);
       await move(242,120);await move(222,120);await move(248,120);await move(248,117);await expedition('coolant');
       await move(284,117);await shoot(278,117,-22.7,'coolant-bypass');await move(290,117);await move(290,106);await arrive(24);await move(278,106);await move(278,-28);await move(150,-28);await use();
       if(!(await page.evaluate(()=>__game.snapshot())).player.circulation)throw Error('Circulation acquisition');
@@ -186,7 +186,7 @@ async page=>{
       await getLaser();
       await move(230,6);await move(242,6);await move(242,-28);await move(150,-28);await use();
     }
-    await move(122,-28);await shoot(126,-16,26,'inner-optics','laser');await settle();await move(122,32,true);await shoot(122,35,25.3,'inner-transit');
+    await move(122,-28);await shoot(126,-16,26,'inner-optics','laser');await settle();await move(122,32,true);await move(138,32);await move(138,-8);await shoot(138,-18.4,28.25,'inner-transit');
     await record('optical-and-thermal-convergence');await move(122,30);await move(94,30);await move(94,46);await arrive(-40);await move(82,46);await move(82,6);await move(44,6);await move(44,-10);await use();
     await shoot(40,-12,-38.6,'last-cage');await move(34,-18);await move(22,-18);await arrive(-8);await move(22,-8);await move(18,-8);await move(18,-2);await move(16,-2);await move(16,80);await move(16,86);await move(0,86);await use();
     await record('deep-shaft-returns-to-opening');

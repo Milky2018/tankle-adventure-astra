@@ -29,7 +29,7 @@ export class FactoryAudio {
   }
   event(name, location = 0) {
     if (!this.ctx) return;
-    if (['warn', 'heat', 'unlock', 'boss-lock', 'hurt'].includes(name))
+    if (['warn', 'heat', 'unlock', 'boss-lock', 'hurt', 'sonar-lock', 'pump-warn'].includes(name))
       this.duckUntil = this.ctx.currentTime + 1.2;
     if (!this.sfx) return;
     const spatial =
@@ -39,7 +39,10 @@ export class FactoryAudio {
           ? spatialSound(location.position, this.listener)
           : {};
     // Active threat cues stay legible at range; launch/impact sounds keep full falloff.
-    if (['warn', 'boss-lock', 'clamp-warn', 'press-warn'].includes(name) && spatial.gain > 0)
+    if (
+      ['warn', 'boss-lock', 'clamp-warn', 'press-warn', 'sonar-lock', 'pump-warn'].includes(name) &&
+      spatial.gain > 0
+    )
       spatial.gain = Math.max(0.6, spatial.gain);
     this.effects?.play(name, spatial);
   }

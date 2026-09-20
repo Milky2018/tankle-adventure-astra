@@ -1,3 +1,4 @@
+import {swims} from './folded-aquatic.js';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -29,12 +30,12 @@ test('finds, defenders and added machinery stand on supported, unblocked surface
   assert.equal(explorationPickups.filter(p => p.upgrade === 'armor').length, 5);
   assert.equal(explorationPickups.length, 10);
   for (const p of [...explorationPickups, ...explorationEnemies]) {
-    assert.ok(foldedSupport(p.x, p.z, p.y), p.id);
+    assert.ok(foldedSupport(p.x, p.z, p.y, swims(p)), p.id);
     if(p.requires) state[p.requires]=true;
     assert.equal(foldedBlocked(p.x, p.y, p.z, state), undefined, p.id);
   }
   for (const s of explorationSolids) for (const [x,z] of [[s.x+.1,s.z+.1],[s.x+s.w-.1,s.z+s.d-.1]])
-    assert.ok(foldedSupport(x,z,s.ground??s.y),s.id);
+    assert.ok(foldedSupport(x,z,s.ground??s.y,true),s.id);
 });
 
 const paths = JSON.parse(readFileSync(new URL('../test-fixtures/exploration-routes.json', import.meta.url), 'utf8'));

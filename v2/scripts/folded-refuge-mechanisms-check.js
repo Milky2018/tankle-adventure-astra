@@ -16,7 +16,7 @@ async page => {
     if(!g.snapshot().state['arsenal-return']||gate.rail)throw Error('Workshop lock did not tear free');
     const magnet={x:gate.x,z:gate.z,heat:g.snapshot().player.heat};
     g.scenario({player:{x:376,y:24,z:-20,weapon:'cannon',heat:0,lastShot:-100,lastHeat:-100,overheated:false}});
-    for(let i=0;i<180&&!w.signals.active('scope-drawer');i++){g.aimAt(376,-13,25.3);g.setInput(['Mouse0']);g.step(1/60,false);}
+    for(let i=0;i<180&&!w.signals.active('scope-drawer');i++){const c=w.controls.find(c=>c.id==='scope-drawer');g.aimAt(c.x+c.facing.x*.5,c.z+c.facing.z*.5,c.y+c.facing.y*.5);g.setInput(['Mouse0']);g.step(1/60,false);}
     g.setInput([]);g.step((w.signals.pending('scope-drawer')?.remaining||0)+6,false);
     const screen=g.debug.state.bodies.solids.find(b=>b.id==='scope-screen');
     if(!g.snapshot().state['scope-drawer']||screen.x<387.9)throw Error('Workshop screen failed '+JSON.stringify(screen));

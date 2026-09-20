@@ -20,6 +20,18 @@ const metal = (frequency, gain, delay = 0) => [
 ];
 
 export const SOUND_EFFECTS = {
+  'sonar-lock': [0, 0.3, 0.6].map((delay) => tone(880, 880, 0.13, 0.1, { delay, attack: 0.015 })),
+  'pump-warn': [0, 0.28].map((delay) =>
+    tone(330, 440, 0.22, 0.12, { delay, type: 'triangle', attack: 0.03 }),
+  ),
+  'pump-run': [
+    tone(85, 140, 0.45, 0.15, { type: 'triangle', attack: 0.08, hold: 0.1 }),
+    noise(450, 0.45, 0.09, { attack: 0.08, hold: 0.1, filter: 'bandpass' }),
+  ],
+  'torpedo-shot': [
+    noise(800, 0.28, 0.2, { attack: 0.015 }),
+    tone(180, 90, 0.32, 0.12, { type: 'triangle' }),
+  ],
   shot: [
     noise(4300, 0.055, 0.47, { attack: 0.001 }),
     tone(155, 57, 0.3, 0.48, { hold: 0.045, type: 'triangle', cutoff: 760 }),

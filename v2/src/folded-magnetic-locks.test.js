@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {foldedControls,initialFoldedState,releaseFolded,activeSolid} from './folded-layout.js';
 
-const locks=['rail-repair','magnet','arsenal-return','collimator-drawer','dock-cover','rig-cover','yard-cover'];
+const locks=['rail-repair','magnet','arsenal-return','collimator-drawer'];
 test('ordinary magnetic locks release once without a rail or a pulling-side requirement',()=>{
   for(const id of locks){
     const c=foldedControls.find(c=>c.id===id),state=initialFoldedState();

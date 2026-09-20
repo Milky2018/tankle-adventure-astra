@@ -57,6 +57,7 @@ function fixture(enemies, player = {}) {
     'showBossWarning',
     'beam',
     'sorterZone',
+    'suction',
     'sorterArm',
     'hideWarning',
     'retractArm',
@@ -341,4 +342,96 @@ test('Prototype alternates warned cannon fire with its committed charge', () => 
     f.events.some((event) => event.name === 'warn'),
     'Firing must be telegraphed',
   );
+});
+
+test('hunters commit a spaced pair of water torpedoes and expose stationary recovery', () => {
+  const e = enemy('hunter', { x: -114, y: -8, z: 44, hp: 3, max: 3 });
+  const f = fixture([e], { x: -114, y: -8, z: 36, deployed: true, afloat: true });
+  f.step(0.01);
+  assert.equal(e.phase, 'warn');
+  const lock = { ...e.lock };
+  f.p.x -= 4;
+  f.step(1.31);
+  assert.equal(e.phase, 'vent');
+  assert.equal(f.fired.length, 2);
+  assert.deepEqual(
+    f.fired.map((s) => [s.delay, s.torpedo, s.speed]),
+    [
+      [0, true, 12],
+      [0.65, true, 12],
+    ],
+  );
+  assert.equal(f.fired[0].target.x, lock.x);
+  const at = [e.x, e.z];
+  f.step(0.5);
+  assert.deepEqual([e.x, e.z], at);
+});
+
+test('swimmers cross water and real shore ramps, while land units and water-only dredgers cannot', () => {
+  const hunter = enemy('hunter', { x: 6, y: -16, z: -36 });
+  const dry = enemy('guard', { x: 6, y: -16, z: -36 });
+  const f = fixture([hunter], { x: 6, y: -16, z: -20 });
+  f.ai.moveEnemy(hunter, 0, 6, 0.5);
+  assert.ok(hunter.z > -34);
+  const land = fixture([dry]);
+  land.ai.moveEnemy(dry, 0, 6, 0.5);
+  assert.equal(dry.z, -36);
+  hunter.x = 14;
+  hunter.z = -37;
+  hunter.y = -16;
+  hunter.travelHeading = Math.PI;
+  for (let i = 0; i < 240; i++) f.ai.moveEnemy(hunter, Math.PI, 6, 1 / 60);
+  assert.ok(hunter.y > -9 && hunter.z < -61, JSON.stringify(hunter));
+  const dredger = enemy('dredger', { x: 438, y: -24, z: 50 });
+  const pump = fixture([dredger]);
+  for (let i = 0; i < 120; i++) pump.ai.moveEnemy(dredger, Math.PI, 2.4, 1 / 60);
+  assert.ok(dredger.z > 48);
+});
+
+test('dredger pull has no damage, locks its bearing, respects walls and has a separate one-hit bite', () => {
+  const e = enemy('dredger', { x: -134, y: -8, z: 88, hp: 5, max: 5, radius: 2 });
+  const f = fixture([e], { x: -134, y: -8, z: 95, deployed: true, afloat: true });
+  f.step(0.01);
+  assert.equal(e.phase, 'warn');
+  f.step(1.21);
+  assert.equal(e.phase, 'suction');
+  const locked = e.aim,
+    before = f.p.z;
+  f.step(0.2);
+  assert.ok(f.p.z < before);
+  assert.deepEqual(f.hits, []);
+  assert.equal(e.aim, locked);
+  f.block(true);
+  const covered = f.p.z;
+  f.step(0.2);
+  assert.equal(f.p.z, covered);
+  f.block(false);
+  f.p.x = e.x;
+  f.p.z = e.z + 3;
+  e.phase = 'bite';
+  e.timer = 0.01;
+  f.step(0.02);
+  assert.deepEqual(f.hits, [5]);
+  assert.equal(e.phase, 'vent');
+  f.step(0.1);
+  assert.deepEqual(f.hits, [5]);
+});
+
+test('water enemies share actual sluice currents and stagger their attack warnings', () => {
+  const hunter = enemy('hunter', { id: 'h', x: -116, y: -8, z: 64, timer: 9, encounter: 'water' });
+  const pump = enemy('dredger', { id: 'd', x: -127, y: -8, z: 64, timer: 9, encounter: 'water' });
+  const f = fixture([hunter, pump], { x: -120, y: -8, z: 70, deployed: true, afloat: true });
+  hunter.timer = pump.timer = 100;
+  f.step(0.1);
+  const forward = hunter.x;
+  assert.ok(forward > -116);
+  f.state['reservoir-transfer'] = true;
+  hunter.phase = 'vent';
+  hunter.timer = 100;
+  f.step(0.1);
+  assert.ok(hunter.x < forward);
+  hunter.phase = pump.phase = 'idle';
+  hunter.timer = pump.timer = 0;
+  f.step(0.01);
+  assert.equal([hunter, pump].filter((e) => e.phase === 'warn').length, 1);
 });

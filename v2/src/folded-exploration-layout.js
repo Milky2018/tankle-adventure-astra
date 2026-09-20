@@ -244,7 +244,15 @@ for (const e of explorationEnemies.filter((e) => e.battle === 'stores-trial'))
   e.activation = { x: -173, y: 8, z: -74, radius: 17 };
 
 export const explorationControls = [
-  { id: 'scope-drawer', kind: 'shot', x: 376, y: 25.3, z: -13 },
+  {
+    id: 'scope-drawer',
+    kind: 'shot',
+    x: 376,
+    y: 25.3,
+    z: -13,
+    mount: 'scope-screen',
+    facing: [0, 0, -1],
+  },
   {
     id: 'mortar-cache',
     kind: 'shot',
@@ -271,7 +279,8 @@ export const explorationControls = [
     y: 35.6,
     z: -80,
     ground: 32,
-    yaw: -Math.PI / 2,
+    mount: 'collimator-drawer',
+    facing: [-1, 0, 0],
   },
 ];
 export const explorationMirrors = [
@@ -593,3 +602,44 @@ export const explorationFlags = [
     ].map((c) => c.id),
   ),
 ];
+
+// A later optional basin combines crossfire and suction, with two open banks.
+explorationEnemies.push(
+  {
+    id: 'condensate-hunter',
+    type: 'hunter',
+    hp: 4,
+    x: 440,
+    y: -24,
+    z: 90,
+    encounter: 'condensate-water',
+    swimPatrol: [
+      [436, 92],
+      [458, 92],
+    ],
+  },
+  {
+    id: 'condensate-dredger',
+    type: 'dredger',
+    hp: 5,
+    magneticShield: true,
+    x: 451,
+    y: -24,
+    z: 76,
+    encounter: 'condensate-water',
+    swimPatrol: [
+      [454, 78],
+      [444, 72],
+    ],
+  },
+);
+explorationSolids.push({
+  id: 'condensate-water-pier',
+  x: 445,
+  y: -24,
+  z: 87,
+  w: 3,
+  d: 3,
+  h: 3,
+  permanent: true,
+});

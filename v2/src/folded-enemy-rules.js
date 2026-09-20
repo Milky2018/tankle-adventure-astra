@@ -1,5 +1,7 @@
 // Distinct machines require distinct decisions, not just different health pools.
 export const ENEMY_KINDS = {
+  hunter: { role: 'ranged', speed: 6, reach: 24, warn: 1.3, recovery: 2, attack: 'torpedoes' },
+  dredger: { role: 'pressure', speed: 2.4, reach: 11, warn: 1.2, recovery: 2.4, attack: 'suction' },
   scout: { role: 'pressure', speed: 5.6, reach: 11, warn: 1.1, recovery: 1.5, attack: 'charge' },
   turret: { role: 'ranged', speed: 0, reach: 27, warn: 1.2, recovery: 1.5, attack: 'shot' },
   guard: {

@@ -25,7 +25,7 @@ const routes={
   path:[[-76,31,'repair'],[-104,31],[-104,12],[-136,12],[-136,-24,'arsenal-transfer'],[-136,-54],[-128,-54,'repair'],[-120,-54,'pickup']],
   returns:[[-120,-54,'arsenal-return'],[-54,-54],[-54,28],[-26,28],[0,27]],
   branches:[[[-104,31],[-76,31],[-76,-2],[-104,-2],[-136,-2]],[[-136,-54],[-162,-54],[-162,-66],[-176,-66],[-176,-76]],[[-136,-54],[-82,-54],[-82,-30],[-82,-14],[-82,31]]],
-  controls:[['arsenal-transfer',-136,-28,'shot'],['arsenal-return',-102.1,-54,'magnet',{height:4.1,ground:8,yaw:-Math.PI/2}]],
+  controls:[['arsenal-transfer',-136,-28,'shot',{mount:'arsenal-transfer',facing:[0,0,1]}],['arsenal-return',-102.1,-54,'magnet',{height:4.1,ground:8,mount:'arsenal-return',facing:[-1,0,0]}]],
   gates:[['arsenal-transfer',-142,-35,12,1,{rail:{axis:'x',min:-142,max:-128,release:'arsenal-transfer'}}],['arsenal-return',-101,-60,1,12,{magnetic:true}]],
   cover:[[-123,-10,4,5],[-93,18,4,10],[-152,-48,3,6]],
   enemies:[['sniper',-134,-5,'dispatch'],['guard',-113,9,'dispatch'],['skirmisher',-80,1,'dispatch'],['artillery',-143,-42,'assembly'],['scout',-125,-45,'assembly'],['guard',-82,-20,'return']],
@@ -75,7 +75,7 @@ const routes={
   path:[[68,60,'repair'],[48,60],[48,90,'hearth-transfer'],[20,90],[20,100,'repair'],[24,100,'core-feed']],
   returns:[[24,100,'hearth-return'],[24,58],[24,-10],[28,-10]],
   branches:[],
-  controls:[['hearth-transfer',42,96,'shot',{surface:'top',ground:-40,height:2.6}],['core-feed',12,110,'laser',{height:2,normal:[1,0,0],via:[24,-38,110]}],['hearth-return',20,103,'shot']],
+  controls:[['hearth-transfer',42,96,'shot',{surface:'top',ground:-40,height:2.6}],['core-feed',12,110,'laser',{height:2,normal:[1,0,0],via:[24,-38,110]}],['hearth-return',20,103,'shot',{mount:'hearth-return',facing:[0,0,1]}]],
   gates:[['hearth-transfer',32,76,1,46],['hearth-return',18,58,12,1]],
   cover:[[19,80,3,7]],
   enemies:[['sniper',15,87,'intake'],['guard',10,92,'intake']],
@@ -147,3 +147,9 @@ for(const [id,x,z,w,d,h,y=-40]of [
  ['final-feed-west',8,106,.6,8,4],['final-feed-east',28,106,.6,8,4],
  ['final-feed-partition',20,106,.5,2.5,4]
 ])expansionSolids.push({id,x,z,w,d,h,y,permanent:true,theme:'furnace'});
+
+// The first crossing from the ferry bank remains calm; hunters stay beyond it.
+expansionEnemies.push(
+ {id:'reservoir-patrol-hunter',type:'hunter',hp:3,x:-114,y:-8,z:44,patrol:{x:-128,z:32,w:24,d:24},swimPatrol:[[-122,42],[-110,50]]},
+ {id:'reservoir-pump-dredger',type:'dredger',hp:5,magneticShield:true,x:-134,y:-8,z:88,patrol:{x:-148,z:78,w:26,d:24},swimPatrol:[[-140,86],[-132,96]]}
+);

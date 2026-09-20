@@ -12,7 +12,7 @@ async page=>{
     await page.screenshot({path:`v2/output/playwright/overhaul/${name}.png`});views.push({name,...result});
   }
   const circuits=await page.evaluate(()=>__game.debug.scene.children.filter(c=>c.name.startsWith('folded-circuit:')).map(c=>c.name));
-  if(!circuits.some(n=>n==='folded-circuit:load:carrier')||!circuits.some(n=>n==='folded-circuit:mirror-index:return-index'))throw Error('Missing linked circuits');
+  if(!circuits.some(n=>n==='folded-circuit:load:carrier')||circuits.some(n=>n==='folded-circuit:mirror-index:return-index'))throw Error('Missing linked circuits');
   if(errors.length)throw Error(errors.join('\n'));
   return {views,circuits:circuits.length,errors};
 }

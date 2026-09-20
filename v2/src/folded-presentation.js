@@ -190,7 +190,7 @@ export function makeCityPresentation(scene,aperture){
     const repaired=state['rail-repair'];
     repairArm.rotation.z=-.45+Math.sin(time*(repaired?1.4:2.4))*(repaired?.35:.65);
     eye.material.color.setHex(repaired?0xc5c9ac:0x827f6c);brokenRail.rotation.x=repaired?0:.22;
-    pumpFans.forEach((m,i)=>m.rotation.z=time*(state[i<2?'pump':'rig']?2: .22+.08*Math.sin(time*.7+i)));
+    pumpFans.forEach((m,i)=>m.rotation.z=time*(state[i<2?'pump':'circulation']?2: .22+.08*Math.sin(time*.7+i)));
     hot.color.setHex(state.foundry?0xc77b44:0xffaf62);
     waterFlow.visible=!!state.pump;waterFlow.scale.x=.85+Math.sin(time*2)*.05;waterRipples.forEach((m,i)=>{m.visible=!!state.pump;m.position.x=71+(i*2.4+time*2)%12;});
     if(initialized&&state.signal&&!signalWasOn)signalTime=time;

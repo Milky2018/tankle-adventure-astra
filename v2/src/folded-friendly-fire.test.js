@@ -23,7 +23,10 @@ function enemy(id, x, z, extra = {}) {
 }
 function fixture(enemies, { walls = [], hives = [], controls = [] } = {}) {
   const p = { x: 0, y: 0, z: 20, hp: 50, invincible: 0 },
-    state = { combatArena: enemies.find((e) => BOSS_ARENAS.some((a) => a.id === e.id))?.id },
+    state = {
+      mirrorTurns: {},
+      combatArena: enemies.find((e) => BOSS_ARENAS.some((a) => a.id === e.id))?.id,
+    },
     shots = [],
     events = [],
     sounds = [];
@@ -31,6 +34,7 @@ function fixture(enemies, { walls = [], hives = [], controls = [] } = {}) {
     enemies,
     hives,
     controls,
+    mirrors: [],
     lifts: [],
     signalRelease() {},
     cast(origin, dir, range, options = {}) {
@@ -90,7 +94,7 @@ function fixture(enemies, { walls = [], hives = [], controls = [] } = {}) {
     time += dt;
     api.updateShots(dt);
   };
-  return { ...api, p, shots, events, sounds, world };
+  return { ...api, p, state, shots, events, sounds, world };
 }
 function fireThrough(f, shooter) {
   f.shootEnemy(shooter, 0, null, new T.Vector3(f.p.x, 1.2, f.p.z));
@@ -400,4 +404,26 @@ test('horizontal trays accept exposed top blasts but reject explosions underneat
     );
     assert.deepEqual(f.events, expected);
   }
+});
+
+test('mirror impacts repeat, count a direct Mortar hit once and reject blasts through walls', () => {
+  const mirror = { id: 'turntable', turnable: true, x: 0, y: 2, z: 0 };
+  const point = new T.Vector3(0, 2, 0),
+    origin = new T.Vector3(0, 2, 10);
+  const f = fixture([]);
+  f.world.mirrors.push(mirror);
+  for (let i = 1; i <= 8; i++) {
+    f.impact({ mirror, point }, { origin, mortar: i % 2 === 0 });
+    assert.equal(f.state.mirrorTurns[mirror.id], i);
+  }
+  f.impact({ mirror, point }, { origin, hostile: true, mortar: true });
+  assert.equal(f.state.mirrorTurns[mirror.id], 8);
+  f.impact({ point: new T.Vector3(0, 0, 0) }, { origin, mortar: true });
+  assert.equal(f.state.mirrorTurns[mirror.id], 9);
+  const blocked = fixture([], {
+    walls: [new T.Box3(new T.Vector3(-1, 0.8, -1), new T.Vector3(1, 1.2, 1))],
+  });
+  blocked.world.mirrors.push(mirror);
+  blocked.impact({ point: new T.Vector3(0, 0, 0) }, { origin, mortar: true });
+  assert.equal(blocked.state.mirrorTurns[mirror.id], undefined);
 });

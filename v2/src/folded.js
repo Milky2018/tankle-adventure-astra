@@ -1,3 +1,4 @@
+import { torpedoTargets } from './folded-aquatic.js';
 import { pullSlide } from './folded-mechanisms.js';
 import { applyUpgrades, weaponDamage, scopeRange } from './folded-upgrades.js';
 import { predictMortar, mortarGroundTarget, MORTAR_PREVIEW_SEGMENTS } from './folded-ballistics.js';
@@ -482,14 +483,14 @@ function updateAim() {
   picker.setFromCamera(pointer, camera);
   const direct = world.cast(picker.ray.origin, picker.ray.direction, 300, {
     aiming: true,
-    extras: mines,
+    extras: [...mines, ...torpedoTargets(shots)],
   });
   const tray =
     p.weapon === 'mortar'
       ? [direct?.target, direct?.blockedTarget].find((target) => target?.surface === 'top')
       : null;
   const hit =
-    p.weapon === 'mortar' && !direct?.target && !tray
+    p.weapon === 'mortar' && !direct?.target && !direct?.mirror?.turnable && !tray
       ? world.cast(picker.ray.origin, picker.ray.direction, 300, {
           aiming: true,
           terrainOnly: true,
@@ -600,7 +601,10 @@ function updateLaser(dt) {
     if (path[i].reflected) continue;
     if (hit?.target) {
       const t = hit.target;
-      if (t.kind === 'mine') detonateMine(t);
+      if (t.kind === 'torpedo') {
+        t.shot.captured = true;
+        burst(end, SIGNAL.magnet, 5);
+      } else if (t.kind === 'mine') detonateMine(t);
       else if (t.enemy || t.model)
         hitEnemy(
           t.enemy || t,
@@ -920,7 +924,7 @@ function updateMagnet(dt) {
     ),
     ...mines.filter((m) => !m.disarmed),
     ...shots
-      .filter((s) => s.hostile && s.mortar)
+      .filter((s) => s.hostile && (s.mortar || s.torpedo) && !s.captured && !(s.delay > 0))
       .map((s) => ({ kind: 'shell', id: 'shell', shot: s, ...s.position })),
   ];
   const selected = candidates
@@ -933,12 +937,18 @@ function updateMagnet(dt) {
         delta,
         locked: c === magnetLock,
         pointed:
-          c.kind === 'magnet' && picker.ray.distanceSqToPoint(pos) <= (c.radius || 0.75) ** 2,
+          (c.kind === 'magnet' || c.type === 'dredger') &&
+          picker.ray.distanceSqToPoint(pos) <= (c.radius || 0.75) ** 2,
         distance: delta.length(),
         alignment: delta.clone().normalize().dot(aimDir),
       };
     })
-    .filter((q) => q.distance < 13 && (q.pointed || q.alignment > (q.locked ? 0.75 : 0.95)))
+    .filter(
+      (q) =>
+        q.distance < 13 &&
+        (!q.c.mount || q.delta.x * q.c.facing.x + q.delta.z * q.c.facing.z < 0) &&
+        (q.pointed || q.alignment > (q.locked ? 0.75 : 0.95)),
+    )
     .sort(
       (a, b) =>
         Number(b.locked) - Number(a.locked) ||

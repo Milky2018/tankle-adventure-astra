@@ -124,7 +124,7 @@ test('Phoenix alone reaches the dry circulation rig from its roof branch',()=>{
   const s=initialFoldedState(),p=player(166,16,-64,{overdrive:true,phoenix:true});
   travel(p,s,[[166,30]],{boost:true});
   travel(p,s,[[174,30],[174,-18],[190,-18],[190,30],[190,48],[242,48],[242,95]]);
-  assert.ok(s.pressure);assert.ok(releaseFolded('rig','cannon',p,s,[]));
+  assert.ok(s.pressure);
   travel(p,s,[[242,120],[222,120]]);assert.equal(p.y,-24);assert.equal(p.mortar,false);assert.equal(p.flotation,false);assert.equal(p.laser,false);
 });
 
@@ -262,4 +262,10 @@ test('Prototype front armour rewards flanking and recovery without a damage quot
  e.phase='vent';assert.equal(cityDamage(e,5,{x:0,z:8}),5);
  assert.equal(cityDamage(e,9,{x:0,z:8}),9);
  e.phase='charge';assert.equal(cityDamage(e,20,{x:0,z:8},'red'),9);
+});
+
+test('mirror turntable has a Mortar landing floor and a sill that prevents driving into the optical housing',()=>{
+  const state=initialFoldedState();
+  assert.equal(foldedSupport(232,-4,24,false,[])?.height,24);
+  assert.equal(foldedBlocked(235.75,24,-4,state,.8)?.id,'receiver-east-sill');
 });

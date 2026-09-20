@@ -21,14 +21,14 @@ async page=>{
     async function use(){await page.keyboard.press('e');}
     async function settle(t=3){await page.evaluate(t=>{__game.setInput([]);__game.step(t,false);},t);}
     async function shoot(x,z,y,id,weapon='cannon'){
-      await settle();const s=await page.evaluate(({x,z,y,id,weapon})=>{const g=window.__game;g.scenario({player:{weapon}});for(let i=0;i<180;i++){g.aimAt(x,z,y);g.setInput(['Mouse0']);g.step(1/60,false);if(g.snapshot().state[id])break;}g.setInput([]);g.step(.1);return g.snapshot();},{x,z,y,id,weapon});
-      if(!s.state[id])throw Error(first+' latch '+id+' '+JSON.stringify({p:s.player,aim:s.aim}));
+      await settle();const s=await page.evaluate(({x,z,y,id,weapon})=>{const g=window.__game;g.scenario({player:{weapon}});for(let i=0;i<180;i++){g.aimAt(x,z,y);g.setInput(['Mouse0']);g.step(1/60,false);if(g.snapshot().state[id]||id==='return-index'&&g.snapshot().state.mirrorTurns[id]%2===1)break;}g.setInput([]);g.step(.1);return g.snapshot();},{x,z,y,id,weapon});
+      if(!s.state[id]&&!(id==='return-index'&&s.state.mirrorTurns[id]%2===1))throw Error(first+' latch '+id+' '+JSON.stringify({p:s.player,aim:s.aim}));
     }
     async function getLaser(){
       await move(136,-35);await move(136,-30);await settle();await move(228,-30,true);await move(228,-20);await use();
       if(!(await page.evaluate(()=>__game.snapshot())).player.laser)throw Error('Laser acquisition');
       await move(202,-24);await use();await move(216,-20);await shoot(216,-4,26,'gallery','laser');
-      await move(242,-20);await move(242,-4);await shoot(238,-4,25.3,'mirror-index');await move(242,-20);await move(216,-20);await shoot(216,-4,26,'garden-optical','laser');
+      await move(242,-20);await move(242,-4);await shoot(232,-4,26,'return-index');await move(242,-20);await move(216,-20);await shoot(216,-4,26,'garden-optical','laser');
       await move(242,-20);await move(242,-30);await move(254,-30);await move(254,-98);await move(64,-98,true);await move(64,-86);await shoot(63,-86,25.4,'emitter-cage');
       await settle(7);await move(52,-86);await use();await settle(7);await move(52,-72);await move(40,-72);
       if((await page.evaluate(()=>__game.snapshot())).player.y!==-8)throw Error('C08 did not return to loading apron');

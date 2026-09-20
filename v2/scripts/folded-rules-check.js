@@ -23,10 +23,10 @@ async page=>{
  await fixture({x:0,y:-8,z:86});
  result.enemyBelt=await page.evaluate(()=>{const e=__game.debug.world.enemies.find(e=>e.type==='turret');Object.assign(e,{x:0,y:-8,z:67,hp:e.max,stunnedUntil:100000});e.model.root.visible=true;__game.step(.5,false);const live=e.z-67;e.hp=0;e.x=0;e.y=-8;e.z=67;__game.step(.5,false);return {live,wreck:e.z-67};});
  if(Math.abs(result.enemyBelt.live-3.9)>.01||Math.abs(result.enemyBelt.wreck-3.9)>.01)throw Error('Live enemy or wreck ignores conveyor');
- await fixture({x:216,y:24,z:-20,laser:true,weapon:'laser'},{gallery:false,'garden-optical':false,'mirror-index':false});await aim(216,-4,26);await hold('left',.5);
+ await fixture({x:216,y:24,z:-20,laser:true,weapon:'laser'},{gallery:false,'garden-optical':false,mirrorTurns:{'return-index':0}});await aim(216,-4,26);await hold('left',.5);
  result.singleMirror=await page.evaluate(()=>__game.snapshot().state.gallery);if(!result.singleMirror)throw Error('First visible mirror puzzle failed');if((await page.evaluate(()=>__game.snapshot())).state['garden-optical'])throw Error('Unaligned second mirror released the return');
  await page.screenshot({path:'v2/output/playwright/rules-revision/laser-first.png'});
- await fixture({x:238,y:24,z:-13,weapon:'cannon'});await aim(238,-4,25.3);await hold('left',.5);await page.evaluate(()=>__game.step(1.5));if(!(await page.evaluate(()=>__game.snapshot())).state['mirror-index'])throw Error('Mirror indexing mechanism failed');
+ await fixture({x:238,y:24,z:-13,weapon:'cannon'});await aim(232,-4,26);await hold('left',1/60);await page.evaluate(()=>__game.step(1.5));if(!(await page.evaluate(()=>__game.snapshot())).state.mirrorTurns['return-index'])throw Error('Mirror indexing mechanism failed');
  await fixture({x:216,y:24,z:-20,weapon:'laser'});await aim(216,-4,26);await hold('left',.5);
  result.twoMirrors=await page.evaluate(()=>({open:__game.snapshot().state['garden-optical'],segments:__game.snapshot().laserSegments.length/6}));if(!result.twoMirrors.open||result.twoMirrors.segments<3)throw Error('Two-mirror return puzzle failed '+JSON.stringify(result.twoMirrors));
  await page.screenshot({path:'v2/output/playwright/rules-revision/laser-second.png'});

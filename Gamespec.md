@@ -36,7 +36,7 @@ The game combines direct movement and independent aim, a shared Heat budget, abi
 
 ### Current scope
 
-The connected journey contains seven regions organized around exactly four Repair Hives, eight abilities including the starting Cannon, ten ordinary enemy archetypes, the Prototype and four Boss encounters, permanent regional shortcuts, optional restoration scenes, ten dispersed equipment discoveries, and one voluntary ending. The Empty Hoist is machinery distributed through these regions, not an eighth region. The four refuges, regional loops and physical shortcuts define the city; room placement follows their relationships. Reorganizing routes and machinery does not change the agreed movement, Heat, weapon, upgrade or damage values. Main progress never depends on completing all optional repairs or collecting the optional Magnet and Flotation modules.
+The connected journey contains seven regions organized around exactly four Repair Hives, eight abilities including the starting Cannon, twelve ordinary enemy archetypes, the Prototype and four Boss encounters, permanent regional shortcuts, optional restoration scenes, ten dispersed equipment discoveries, and one voluntary ending. The Empty Hoist is machinery distributed through these regions, not an eighth region. The four refuges, regional loops and physical shortcuts define the city; room placement follows their relationships. Reorganizing routes and machinery does not change the agreed movement, Heat, weapon, upgrade or damage values. Main progress never depends on completing all optional repairs or collecting the optional Magnet and Flotation modules.
 
 There is no ammunition economy, currency, experience, corpse retrieval, field healing, limited equipment loadout or mandatory restoration percentage. Acquired abilities remain available. Ordinary movement remains available during Overheat. Hazards do not bounce or teleport the Tank to safety.
 
@@ -525,7 +525,7 @@ The table specifies destinations and opening moments; its names describe geograp
 | Overdrive installation → A | Cross the short reverse belt with the new engine, then release its adjacent ordinary bypass | Immediate recognition and a repeatable return without replaying the belt lesson |
 | A ↔ Overseer approach | Reach the original opposing belt's far side with Overdrive and release a side door before entry | Short Boss retry; the side door cannot grant early passage from A |
 | A ↔ B | Overseer victory opens the Foundry exit and maintenance side passage | Joins the first two refuges without repeating the Foundry |
-| Magnetic workshop ↔ B | Pull the slide beside the Magnet installation out of the maintenance opening | Returns directly toward B and introduces useful object repositioning |
+| Magnetic workshop ↔ B | Pull the blue lock embedded in the workshop-side maintenance door | Returns directly toward B and demonstrates magnetic release |
 | Garden far shore ↔ B | Flotation crosses beneath the familiar bridge; release the dry inspection door from the far bank | Closes the water expedition locally without draining the basin or bypassing first acquisition |
 | Garden ↔ Testworks rear reception; canal ↔ Foundry foundation | Water exploration reaches the rear dock and press-side maintenance latch | Alternative approach and later revisit; the dry route reaches the far bank, not the unearned Flotation installation |
 | Testworks interior ↔ B | Release the inspection return before the proving court, after the shared Mortar load | Permits repair and short challenge retries without granting Phoenix early |
@@ -565,6 +565,7 @@ Door frames and the map do not display the ability required to pass a barrier. T
 | Yellow ready face / green operated lamp | Ordinary mechanism state; fixed jamb lights remain after a shutter retracts |
 | Blue removable plate or U-shaped pull ring; visible rails only on repositionable carts | Magnetic traction; a torn part stays blue beside its empty socket while the fixed status lamp turns green |
 | Framed mirror and circular optical collector | Optical route; contact flare and outgoing beam show the reflection |
+| Mirror on a turntable with four quarter-turn marks | Each Cannon impact or Mortar blast rotates it 90 degrees; Laser only reflects |
 | Horizontal circular pressure tray with an open top and raised rim | A descending impact or exposed blast from above presses it; side and underside hits strike the protective casing |
 | Sprung striped pressure plate | Hull weight maintains an action; leaving releases it |
 | Hinged treadle linked to track blades | One crossing changes the visible detent once; remaining on it does not toggle repeatedly |
@@ -572,11 +573,13 @@ Door frames and the map do not display the ability required to pass a barrier. T
 | Heated load-bearing fasteners | Red contact releases a thermal barrier with steam and visible separation |
 | Mint repair ring | Safe maintenance area and weapon boundary |
 
-A direct-fire switch presents an upright impact face. Every mechanism intended for a lob uses a horizontal circular collecting tray, including the freight platform, freight crossing, Testworks load, final supply load and optional Mortar reinforcement cabinet. Their differing consequences do not change this shared shape. The opening and rim are visible from the intended approach, and a successful impact visibly depresses the tray. A high tray's Mortar landing preview refers to its collecting surface rather than the ground behind it. No standing target quietly demands a particular weapon when an ordinary shot physically reaches its working face.
+A direct-fire switch presents an upright impact face or an inclined panel inset into a door's upper edge; neither resembles an open collecting tray. Every mechanism intended for a lob uses a horizontal circular collecting tray, including the freight platform, freight crossing, Testworks load, final supply load and optional Mortar reinforcement cabinet. Their differing consequences do not change this shared shape. The opening and rim are visible from the intended approach, and a successful impact visibly depresses the tray. A high tray's Mortar landing preview refers to its collecting surface rather than the ground behind it. No standing target quietly demands a particular weapon when an ordinary shot physically reaches its working face.
 
 Shape identifies the action; colour identifies readiness and completion. A closed striped metal cover conceals an unavailable target and opens when its prerequisite is restored. The exposed target is yellow when ready and turns green when operated; blue remains reserved for magnetic fittings. Directional access comes from visible recesses, backplates and protected upper trays. A shot that reaches an exposed working face must not be rejected merely because the Tank stands on another floor or crosses an invisible coordinate boundary.
 
-Mechanisms answer unsuccessful attempts with the appropriate impact, resistance or failed pulse. An inactive target must not feel like a broken input. A connecting cable or pipe leads from the control to its actual consequence. Magnetic retaining locks use the same readable power connection: a yellow line leaves the fixed pedestal, follows exposed floor or wall surfaces and terminates beside the controlled mechanism. The blue detachable grip never carries the cable away. Pedestals stand outside moving covers, and wiring must not terminate inside a box or take an unsupported shortcut between floors. The switch latches immediately while green power advances along the yellow connection. Linked machinery remains locked until that front reaches its endpoint; branches from one switch finish together. Saving and reconstruction retain unfinished transmission, while completed connections stay green without replaying the delay. Direct mechanical paddles still move their attached parts immediately. Power flow does not leave disconnected floating lamps. Distant encountered links remain identifiable on the discovered map.
+Mechanisms answer unsuccessful attempts with the appropriate impact, resistance or failed pulse. An inactive target must not feel like a broken input. Local door latches, magnetic locks and screen releases are embedded in the actual door or machine, without a separate pedestal. They face the usable approach and remain visible in both camera views. Inside-release shortcut doors expose their working face only to the earned side and stay bidirectional after opening. A same-side door with no traversal, discovery or tactical purpose is removed; empty-space cover locks are removed with their unnecessary obstacles.
+
+Direct mechanical releases move their attached parts immediately. A remote connection uses a visible yellow cable or pipe leading to its actual consequence. The source latches immediately while green power advances along the connection; remote machinery waits until that front reaches its endpoint, with branches arriving together. A latch that also serves a remote return opens its own door immediately while the remote gate waits for power. Fixed wiring terminates at the frame and stays behind when the door retracts or a blue grip tears free. It never passes through closed machinery or takes unsupported shortcuts between floors. Saving and reconstruction retain unfinished transmission, while completed connections stay green without replaying the delay. Power flow does not leave disconnected floating lamps. Distant encountered links remain identifiable on the discovered map.
 
 Player shots operate machinery through their actual paths. Earlier walls and cover intercept them. Enemy attacks cannot silently solve progression mechanisms. Decorative panels do not copy usable target shapes. Difficulty comes from space, timing and pressure around simple actions, not written instructions or arbitrary input recipes.
 
@@ -590,7 +593,7 @@ Ordinary shortcut doors can remain one-hit releases. A major machine must do mor
 | Rail carts and hanging loads | Shoot visible track blades or brake paddles; release a supported load through a clear arc | Change docking, cover, bridge support and passage geometry |
 | Magnetic locks and cover | Tear out a blue lock or plate; move the few rail-mounted carts | Permanently release an opening or repeatedly change cover and firing windows |
 | Sluices and water | Shoot a visible latch to change a local diversion plate | Alter actual channel flow and safe approaches to the bank |
-| Mirrors and optical paths | Shoot from another position, release a fixed-detent mirror or move an obstructing screen | Change light paths, machinery access and weak-point firing lines |
+| Mirrors and optical paths | Shoot from another position, shoot a quarter-turn mirror or move an obstructing screen | Change light paths, machinery access and weak-point firing lines |
 | Thermal maintenance | Sustain a hot run and release jammed fasteners with red contact | Establish a maintenance bridge, hot passage and permanent cool return |
 
 The same simple action develops through different spatial situations. A first demonstration permits safe experimentation; later uses change position, timing or tactical consequences. A carriage or screen can be useful in combat without demanding that every fight be solved through machinery. Decoration reinforces these rules rather than pretending to be an additional mechanic.
@@ -662,7 +665,7 @@ The reward is a local change in activity and a story about useful work. The endi
 
 The pre-acquisition route shows receivers behind equipment, framed mirrors, side windows and partitions. After Laser, one broad mirror and a forgiving receiver open the short gallery back toward C. The player can leave by the original approach if the first reflection has not yet been understood.
 
-Later rooms develop two variations: moving a latched inspection screen to a fixed stop reveals a previously blocked light path; walking to a side window changes the incoming direction through familiar rooms. Neither requires shrinking the valid aim area. Exactly one main-route indexing assembly offers two clear horizontal detents with a visible linkage and reliable stops. It changes which path is available rather than asking for free-angle tuning or simultaneous vertical and horizontal calibration.
+Later rooms develop two variations: moving a latched inspection screen to a fixed stop reveals a previously blocked light path; walking to a side window changes the incoming direction through familiar rooms. Neither requires shrinking the valid aim area. One main-route mirror sits on a turntable with four visible quarter-turn marks. Each Cannon impact or unobstructed nearby Mortar blast turns the mirror 90 degrees in the same direction, repeatedly; four hits return it to its original orientation. The mirror itself is the target, with no separate switch or remote linkage. Laser reflects without rotating it. Fixed mirrors retain their orientation. It changes which path is available rather than asking for free-angle tuning or simultaneous vertical and horizontal calibration.
 
 Receivers sit behind real geometry, with useful mirror faces and contact points visible. Mandatory mirrors are fixed or indexed scenery, never a uniquely surviving enemy. Required routes work without Magnet; optional magnetic carriages and reflective enemies extend the established rule. A receiver latches its result, so maintaining the beam while travelling through a distant gate is unnecessary.
 
@@ -686,7 +689,7 @@ Mobile enemies pursue a last sighting for eight seconds and stay within 32 units
 
 The Testworks proving court has one finite reserve pair, with four-second arrival spacing. It is the journey's ordinary endurance encounter, not a template repeated in the Hearth. Its return to B opens before commitment. Once cleared, its exit remains open and its initial and reserve groups remain cleared through rest, death and reload. The optional warehouse reinforcement trial follows the same completion rule. Boss reinforcements follow the separate arena rules below.
 
-### Ten ordinary archetypes
+### Twelve ordinary archetypes
 
 | Archetype | Silhouette and behaviour | Decision it creates |
 | --- | --- | --- |
@@ -700,10 +703,22 @@ The Testworks proving court has one finite reserve pair, with four-second arriva
 | Welder | Paired bottles and a short nozzle; advances while preparing an 18-unit sweeping flame, then pushes forward along a committed bearing | Leave the warned sector, pass behind it or break the flame with solid cover; avoid retreating directly along its approach |
 | Repairer | Tender arms and a green repair beam; restores a living ally at a finite rate and needs a clear line | Interrupt the beam, separate the pair or prioritize the repairer; it never resurrects a destroyed unit |
 | Mirror Inspector | Broad pale reflecting face and paired angled shots; reflection follows its real facing | Flank, lob above it, use red contact or redirect Laser toward another target |
+| Canal Hunter | Low amphibious patrol hull, paired blue torpedo tubes and twin wakes; strafes on water, locks a firing line, launches two spaced torpedoes and pauses | Move across its line, break sight with a pier, intercept its torpedoes or lob at its stationary recovery |
+| Dredger | Broad pontoons, a circular intake and a removable blue grille; warns, draws water along a fixed sector, warns again and bites at the mouth | Exit sideways, keep a solid obstacle between the intake and hull, interrupt with Mortar or tear off the grille |
 
-The opening Foundry introduces scout, turret, guard, skirmisher and welder behaviour. Freight and water routes add long-range aim, artillery and mines. Optical and late industrial routes combine mirrors and repairs with previously learned threats. Elite machinery and Bosses do not count toward the ten archetypes.
+The opening Foundry introduces scout, turret, guard, skirmisher and welder behaviour. Freight and water routes add long-range aim, artillery and mines. Optical and late industrial routes combine mirrors and repairs with previously learned threats. Elite machinery and Bosses do not count toward the twelve archetypes.
 
 The Guard's front reduces damage by **60%**. A pale plate flash, outward sparks and a hard ricochet distinguish armour contact from the orange response of a damaging hit. Blue shields use the same removable-material language as other magnetic objects. No enemy has a hidden maximum damage allowance per vulnerability window.
+
+### Water encounters
+
+Both water machines remain visible and damageable at the surface. Neither submerges into an invulnerable waiting phase. Water movement follows connected surfaces and real shores, with the same sluice currents as the Tank. The Hunter can reach land through low banks and ramps; its land travel and turning are slower, and it fires ordinary straight shots there. The Dredger stays afloat. Ordinary pursuit remains local, and all repair-refuge boundaries still apply.
+
+The Hunter warns for 1.3 seconds, then sends two straight, non-homing torpedoes down the committed line, 0.65 seconds apart, at 12 units per second. Blue shells and pale wakes show their paths. Solid cover and dry banks stop them. Cannon or Laser can destroy a torpedo, and Magnet can intercept it. The Hunter pauses for two seconds after launching, giving Mortar a predictable target. Its first appearances have three HP; the late condensate Hunter has four.
+
+The Dredger has five HP. A 1.2-second intake warning precedes 2.8 seconds of suction in an eleven-unit forward sector. It cannot turn during suction. Water streaks and floating fragments travel toward the mouth, and floating wrecks can be drawn in. Pull speed is 2.4 units per second, weaker than ordinary water cruise; suction does not deal damage, disable steering or require Boost to escape. Dry ground, another floor and intervening solid cover block the effect. A separate 0.8-second warning precedes one close bite, followed by a 2.4-second recovery. Mortar damage interrupts the current attack. Magnet tears off the blue grille and causes a longer stagger; the grille stays absent until the encounter resets, while subsequent pump cycles can resume. No magnetic ability is required to defeat it.
+
+Introduce a patrol visible from the reservoir bank before Flotation without blocking its dry acquisition route. Preserve the first short crossing from the ferry bank. A later water lane introduces a lone Hunter with a pier; the reservoir pump pocket introduces a lone Dredger away from that first crossing. The optional condensate basin combines one of each around cover and two possible banks. Warnings start in sequence rather than simultaneously: suction can draw the Tank out of cover before the Hunter commits its line. Calm canals remain between encounters, and no required water passage becomes an extermination gate. Sluices change actual approach and drift for both the Tank and swimmers.
 
 ### Durability and cadence
 
@@ -721,6 +736,8 @@ Opening scouts have one HP, turrets two and guards three. Transit and reservoir 
 | Welder | 6.8 | 0.9 s |
 | Repairer | 4.5 | 2.0 s |
 | Mirror Inspector | 3.2 | 1.9 s |
+| Canal Hunter | 6 in water / 3.3 on land | 2 s |
+| Dredger | 2.4 in water | 2.4 s |
 
 The Welder closes and tracks during the first 0.55 seconds of its 0.9-second warning, then stops and locks its bearing for the final 0.35 seconds. Its 1.8-second sweep advances at 55% of movement speed along that bearing without tracking the Tank. Both the warning sector and flame stop at solid cover. Flame damage remains one health segment; pressure comes from reach and movement, not increased damage.
 
@@ -742,6 +759,8 @@ Damage to the Tank is expressed in whole hull segments; one segment is five HP. 
 | Boss homing missile | 2 |
 | Boss aimed barrage, direct hit or blast | 2 |
 | Boss sweeping beam and Sorter sweep | 2 |
+| Hunter torpedo or land shot; Dredger bite | 1 |
+| Dredger suction | 0 |
 | Ordinary enemy body contact, including a failed ram into a shield | 0 |
 | Scout, Elite or Prototype during a committed charge | 1 |
 
@@ -831,7 +850,7 @@ Each region develops a distinct spatial activity around real machinery. The [fou
 
 **Observe before acquisition.** From C, the upper loop shows a receiver behind equipment, then leads through side galleries to the Laser installation. Windows, partitions and mirror positions establish relationships between rooms before the player can complete their light paths. Reflective inspectors and partners differ from the moving flank that contests a sniper line; combat uses the same readable architecture.
 
-**First use and development.** One large mirror and broad receiver open a short corridor back toward C. Later rooms separately develop moving an inspection screen to a fixed stop and approaching a familiar space through another side window. Only one main-route indexing assembly changes between two fixed mirror detents. No free-angle calibration, tiny valid aim point or simultaneous movement, traction and Laser hold is required. Optical service access connects the cooling building before Guardian, while the original approach remains available if a reflection has not yet been solved.
+**First use and development.** One large mirror and broad receiver open a short corridor back toward C. Later rooms separately develop moving an inspection screen to a fixed stop and approaching a familiar space through another side window. One main-route turntable mirror rotates 90 degrees on every Cannon impact or Mortar blast and can be turned repeatedly, with no separate switch. No free-angle calibration, tiny valid aim point or simultaneous movement, traction and Laser hold is required. Optical service access connects the cooling building before Guardian, while the original approach remains available if a reflection has not yet been solved.
 
 **Optional climax and exit.** Guardian's two broad mirrors, clear firing areas and committed facing make rear attacks understandable. Main returns precede its arena. After victory, the tower gives a quiet view and a legible single transmission, wait and settled working state; nobody replies. The adjacent descent joins a previously seen garden upper inspection walk. The tower supplies both a short narrative conclusion and the other end of an optional loop, rather than an isolated ramp to retrace. The maintenance mezzanine, rangefinding workshop and optical housing distribute optional discoveries across separate visits.
 

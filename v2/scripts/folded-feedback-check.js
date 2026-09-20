@@ -6,7 +6,7 @@ async page=>{
   const g=__game,q=g.debug,w=q.world,{activeSolid}=await import('/src/folded-layout.js');
   g.scenario({enemies:Object.fromEntries(w.enemies.map(e=>[e.id,0])),player:{x:94,y:-8,z:31,hp:25,invincible:1e9}});
   const cases=[];
-  for(const id of ['gangway','load','cage','bridge-crane','mortar-cache']){
+  for(const id of ['freight','load','cage','bridge-crane','mortar-cache']){
    const c=w.controls.find(c=>c.id===id),duration=w.signals.duration(id);
    if(c.requires)q.state[c.requires]=true;
    const point=new q.T.Vector3(c.x,c.y,c.z);
@@ -53,7 +53,7 @@ async page=>{
  await page.evaluate(()=>{const q=__game.debug;q.setCameraView('third');__game.look(Math.PI,.267);__game.step(0);});
  await page.screenshot({path:'v2/output/playwright/phoenix-exhaust-third.png'});
  // Saving halfway through a real signal must not silently unlock its destination.
- const pending=await page.evaluate(()=>{const g=__game,q=g.debug,c=q.world.controls.find(c=>c.id==='gangway');q.state[c.id]=false;const point=new q.T.Vector3(c.x,c.y,c.z);q.impact({point,target:c},{origin:point,hostile:false});g.step(.5,false);g.save();return {id:c.id,remaining:q.state.pendingSignals[c.id]?.remaining};});
+ const pending=await page.evaluate(()=>{const g=__game,q=g.debug,c=q.world.controls.find(c=>c.id==='freight');q.state[c.id]=false;const point=new q.T.Vector3(c.x,c.y,c.z);q.impact({point,target:c},{origin:point,hostile:false});g.step(.5,false);g.save();return {id:c.id,remaining:q.state.pendingSignals[c.id]?.remaining};});
  if(!pending.remaining)throw Error('No pending signal saved');
  await page.reload();await page.waitForFunction(()=>window.__game?.debug);
  await page.evaluate(pending=>{const g=__game,q=g.debug;if(q.state[pending.id]||!q.state.pendingSignals[pending.id])throw Error('Reload skipped signal travel');g.step(pending.remaining+.05,false);if(!q.state[pending.id])throw Error('Restored signal did not arrive');},pending);

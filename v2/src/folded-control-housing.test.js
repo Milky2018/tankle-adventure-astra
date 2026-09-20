@@ -7,7 +7,7 @@ test('resolved hits on exposed controls do not depend on shooter position or flo
   for(const c of foldedControls.filter(c=>c.facing)){
     const state=initialFoldedState(c.requires?{[c.requires]:true}:{});
     assert.ok(controlHousingParts(c).length,c.id);
-    assert.ok(releaseFolded(c.id,'cannon',{x:900,y:900,z:900,phoenix:false},state,[]),c.id);
+    assert.ok(releaseFolded(c.id,c.kind==='magnet'?'magnet':'cannon',{x:900,y:900,z:900,phoenix:false,magnet:true},state,[]),c.id);
   }
 });
 test('every prerequisite has a physical cover and unavailable controls stay closed',()=>{

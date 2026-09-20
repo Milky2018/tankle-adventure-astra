@@ -5,13 +5,13 @@ async page=>{
  const assert=(ok,message)=>{if(!ok)throw Error(message);};
  const cases=[
   {id:'lens-return',from:[324,24,-32],mirror:[324,26,-14],state:{'lens-return':false}},
-  {id:'gallery',from:[225.2376,24,-20],mirror:[216,26,-4],state:{'optical-screen':true,gallery:false,'mirror-index':false,'garden-optical':false}},
-  {id:'garden-optical',from:[225.2376,24,-20],mirror:[216,26,-4],state:{'optical-screen':true,gallery:true,'mirror-index':true,'garden-optical':false}},
+  {id:'gallery',from:[225.2376,24,-20],mirror:[216,26,-4],state:{'optical-screen':true,gallery:false,mirrorTurns:{'return-index':0},'garden-optical':false}},
+  {id:'garden-optical',from:[225.2376,24,-20],mirror:[216,26,-4],state:{pendingSignals:{},'optical-screen':true,gallery:true,mirrorTurns:{'return-index':1},'garden-optical':false}},
   {id:'inner-optics',from:[122,24,-28],mirror:[126,26,-16],state:{'inner-optics':false}}
  ];
  async function fixture(c,view){await page.evaluate(({c,view})=>{
   const a=__game.debug,g=__game;g.setInput([]);a.clearShots();a.setCameraView(view);
-  g.scenario({player:{x:c.from[0],y:c.from[1],z:c.from[2],hp:25,heat:0,lastHeat:-100,overheated:false,speed:1,laser:true,weapon:'laser',deployed:false},state:c.state});g.step(1.6);
+  g.scenario({player:{x:c.from[0],y:c.from[1],z:c.from[2],hp:25,heat:0,lastHeat:-100,overheated:false,speed:1,laser:true,weapon:'laser',deployed:false},state:{pendingSignals:{},...c.state}});g.step(1.6);
  },{c,view});
  if(view==='third'&&!await page.evaluate(()=>!!document.pointerLockElement)){await page.mouse.click(600,427);await page.waitForFunction(()=>!!document.pointerLockElement||__game.snapshot().camera.dragLook);}
  }
@@ -38,7 +38,7 @@ async page=>{
   assert(before.guide&&before.heat===0&&!before.open,`${view}/${c.id}: preview changed heat or the mechanism`);
   await page.screenshot({path:`v2/output/playwright/laser/${c.id}-${view}-preview.png`});
   await page.mouse.down({button:'left'});await page.evaluate(()=>__game.step(1/60));await page.mouse.up({button:'left'});
-  const after=await page.evaluate(id=>({open:__game.debug.state[id],heat:__game.debug.p.heat,path:__game.snapshot().laserSegments,hp:__game.debug.world.enemies.map(e=>e.hp)}),c.id);
+  const after=await page.evaluate(id=>({open:__game.debug.world.signals.active(id),heat:__game.debug.p.heat,path:__game.snapshot().laserSegments,hp:__game.debug.world.enemies.map(e=>e.hp)}),c.id);
   assert(after.open,`${view}/${c.id}: firing along the guide did not operate the receiver: ${JSON.stringify({before,after})}`);
   assert(Math.abs(after.heat-.4)<1e-8,'Laser heat cost changed');
   assert(after.path.length===before.path.length&&after.path.every((n,i)=>Math.abs(n-before.path[i])<.001),`${view}/${c.id}: Preview and live beam diverged ${JSON.stringify({before:before.path,after:after.path})}`);
@@ -47,10 +47,10 @@ async page=>{
  const mechanics=await page.evaluate(()=>{
   const a=__game.debug,g=__game,check=(ok,msg)=>{if(!ok)throw Error(msg);};
   const trace=(from,to)=>a.traceFoldedLaser(new a.T.Vector3(...from),new a.T.Vector3(...to).sub(new a.T.Vector3(...from)),(o,d,r)=>a.castWeapon(o,d,r));
-  g.setInput([]);g.scenario({player:{x:225.2376,y:24,z:-20,weapon:'laser',heat:0,overheated:false},state:{'optical-screen':true,gallery:true,'mirror-index':false,'garden-optical':false}});g.step(2);
+  g.setInput([]);g.scenario({player:{x:225.2376,y:24,z:-20,weapon:'laser',heat:0,overheated:false},state:{pendingSignals:{},'optical-screen':true,gallery:true,mirrorTurns:{'return-index':0},'garden-optical':false}});g.step(2);
   check(trace([225.2376,26,-20],[216,26,-4]).at(-1).hit?.target?.id!=='garden-optical','Unindexed mirror solved the return');
   for(const from of [[232,26,-16],[238,26,-9.5],[232,26,6]])check(trace(from,[232,26,-9.5]).at(-1).hit?.target?.id!=='garden-optical','A direct shot bypasses the receiver housing');
-  a.state['mirror-index']=true;g.step(2);
+  a.state.mirrorTurns['return-index']=1;g.step(2);
   const areas=[];
   // Find physically valid aim points from a broad supported strip. The game
   // never uses this inverse construction: it only verifies authored tolerance.

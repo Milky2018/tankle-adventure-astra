@@ -5,7 +5,7 @@ import {batchRigidParts} from './rigid-batching.js';
 import {SORTER_REACH} from './folded-attacks.js';
 
 export function prepareEnemyMaterials(model,{batching=true}={}){
-  if(batching)batchRigidParts(model.root,[...model.tracks,...(model.moving||[]),model.arm,model.frontArmor,model.radiator]);
+  if(batching)batchRigidParts(model.root,[...model.tracks,...(model.moving||[]),...(model.flow?.children||[]),model.arm,model.frontArmor,model.radiator]);
   const owned=new Set(model.phaseMaterials),copies=new Map(),materials=[];
   model.root.traverse(mesh=>{
     if(!mesh.isMesh||!mesh.material.color)return;
@@ -37,8 +37,35 @@ export function foldedEnemyModel(type){
   const root=new T.Group(),body=new T.Group(),turret=new T.Group(),barrel=new T.Group();root.add(body,turret);turret.add(barrel);
   const tracks=[],moving=[],lamp=mat(C.orange,true);
   const wheel=(x,z,r=.38)=>{const w=cylinder(body,r,.2,x,.45,z,C.track,10);w.rotation.z=Math.PI/2;tracks.push(w);};
-  let arm=null,armSignal=null,driveShutter=null;
-  if(type==='sorter'){
+  let arm=null,armSignal=null,driveShutter=null,frontArmor=null,flow=null,wake=null,impeller=null;const jaws=[];
+  if(type==='hunter'||type==='dredger'){
+    const heavy=type==='dredger',width=heavy?1.35:.95;
+    for(const x of [-width,width]){
+      box(body,.65,.65,heavy?3.6:3.2,x,.45,0,heavy?0x9c9676:0x587d79,.28);
+      for(const z of [-.9,.9])wheel(x,z,.32);
+      const jet=cylinder(body,.24,.55,x,.55,-1.7,C.dark,10);jet.rotation.x=Math.PI/2;
+    }
+    box(body,heavy?2.1:1.5,.6,2.4,0,.95,0,C.metal,.2);
+    if(heavy){
+      const mouth=cylinder(turret,1.1,.65,0,1.25,1.25,C.dark,16);mouth.rotation.x=Math.PI/2;
+      ring(turret,1.1,.16,0,1.25,1.65,C.metal).rotation.x=Math.PI/2;
+      impeller=new T.Group();impeller.position.set(0,1.25,1.7);turret.add(impeller);moving.push(impeller);
+      for(let i=0;i<4;i++){const tooth=box(impeller,.22,1.5,.12,0,0,0,C.orange,0);tooth.rotation.z=i*Math.PI/4;}
+      for(const side of [-1,1]){const jaw=box(turret,.3,1.6,.4,side*1.05,1.25,1.95,C.orange,0);jaws.push(jaw);moving.push(jaw);}
+      frontArmor=box(body,1.8,1.4,.12,0,1.25,1.85,SIGNAL.magnet,0);
+      for(const x of [-.6,0,.6])box(frontArmor,.08,1.2,.1,x,0,.1,0xa9dcff,0);
+      flow=new T.Group();body.add(flow);moving.push(flow);
+      for(let i=0;i<12;i++)box(flow,.11,.035,.34,0,.16,0,0xcce5db,0);
+    }else{
+      cylinder(turret,.65,.6,0,1.35,0,0x7fafa3,12);
+      for(const x of [-.65,.65]){const tube=cylinder(turret,.25,1.7,x,.9,.8,C.dark,10);tube.rotation.x=Math.PI/2;ring(turret,.27,.07,x,.9,1.65,SIGNAL.magnet).rotation.x=Math.PI/2;}
+      box(turret,.1,.8,.1,0,2,-.3,C.dark,0);box(turret,.5,.12,.12,0,2.4,-.3,lamp,0);
+    }
+    wake=new T.LineSegments(new T.BufferGeometry().setFromPoints([
+      new T.Vector3(-width,.12,-1),new T.Vector3(-width-1,.12,-4),
+      new T.Vector3(width,.12,-1),new T.Vector3(width+1,.12,-4),
+    ]),new T.LineBasicMaterial({color:0xb6d9d2,transparent:true,opacity:.45}));body.add(wake);moving.push(wake);
+  }else if(type==='sorter'){
     cylinder(body,1.5,.6,0,.3,0,C.dark,12);box(body,2,2,1.8,0,1.4,0,C.metal);
     box(body,1.2,.7,.15,0,1.5,1,mat(C.orange,true));
     driveShutter=box(body,1.4,.85,.15,0,1.5,1.13,C.metal);moving.push(driveShutter);
@@ -88,7 +115,7 @@ export function foldedEnemyModel(type){
   box(turret,.45,.18,.15,0,1.5,1.1,lamp);
   const radiator=box(body,.65,.5,.15,0,.9,-1.25,lamp);
   const restHeights=moving.map(m=>m.position.y);
-  return {root,body,turret,barrel,tracks,radiator,moving,arm,phaseMaterials:armSignal?[lamp,armSignal]:[lamp],rollWheels:a=>tracks.forEach(w=>w.rotateY(-a)),
+  return {root,body,turret,barrel,tracks,radiator,moving,arm,frontArmor,flow,wake,impeller,jaws,phaseMaterials:armSignal?[lamp,armSignal]:[lamp],rollWheels:a=>tracks.forEach(w=>w.rotateY(-a)),
     animate(phase,timer,time,dt,active){lamp.color.setHex(phase==='warn'?C.lightYellow:phase==='vent'?C.orange:active?C.red:C.dark);if(armSignal)armSignal.color.setHex(phase==='warn'?C.lightYellow:phase==='sweep'?C.red:phase==='vent'?0x8f6854:C.yellow);body.position.y=Math.sin(time*3)*.025;moving.forEach((m,i)=>m.position.y=restHeights[i]+Math.sin(time*20)*(phase==='warn'?.04:0));if(driveShutter)driveShutter.position.y=1.5+(phase==='vent'?1:0);}
   };
 }

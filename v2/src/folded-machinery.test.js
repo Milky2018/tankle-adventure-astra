@@ -60,9 +60,9 @@ test('the aperture changes continuously inside one floor mesh and leaves distant
   assert.ok(apertureOpacity({x:102.16162,y:24,z:-28.73838},{x:90.32,y:1.9678,z:-33.9033})<APERTURE_AIM_THRESHOLD,'the visible load receiver stays selectable from the side of its ramp');
 });
 
-test('ten ordinary archetypes exist in the world with distinct attack rules and models',()=>{
+test('twelve ordinary archetypes exist in the world with distinct attack rules and models',()=>{
   const ordinary=[...new Set(foldedEnemies.filter(e=>!e.persistent).map(e=>e.type))];
-  assert.equal(ordinary.length,10);assert.equal(new Set(ordinary.map(t=>ENEMY_KINDS[t].attack)).size,10);
+  assert.equal(ordinary.length,12);assert.equal(new Set(ordinary.map(t=>ENEMY_KINDS[t].attack)).size,12);
   for(const type of ordinary){const model=foldedEnemyModel(type);assert.ok(model.root.children.length);model.animate('warn',.5,1,1/60,true);model.rollWheels(.1);assert.ok(Number.isFinite(model.body.position.y));}
 });
 

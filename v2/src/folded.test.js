@@ -1,3 +1,4 @@
+import {swims} from './folded-aquatic.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
@@ -98,7 +99,7 @@ test('the actual aim point stops at forty degrees while reachable vertical targe
 
 test('defenders start on supported floor outside machinery and cover',()=>{
   const state=initialFoldedState();
-  for(const e of foldedEnemies){assert.ok(foldedSupport(e.x,e.z,e.y));assert.equal(foldedBlocked(e.x,e.y,e.z,state,1),undefined,e.id);}
+  for(const e of foldedEnemies){assert.ok(foldedSupport(e.x,e.z,e.y,swims(e)));assert.equal(foldedBlocked(e.x,e.y,e.z,state,1),undefined,e.id);}
 });
 
 test('the shared carrier screen closes the whole ramp before either approach reaches Phoenix',()=>{

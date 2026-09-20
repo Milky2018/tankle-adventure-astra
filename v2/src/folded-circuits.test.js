@@ -2,14 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {circuitLinks,circuitColor} from './folded-circuits.js';
 import {foldedControls,foldedSolids,foldedLiftDefs,initialFoldedState} from './folded-layout.js';
-import {cityMirrors} from './folded-city-layout.js';
 import {SIGNAL} from './folded-visibility.js';
 
-test('circuits include linked shutters, remote returns, carrier and rotating mirror',()=>{
-  const links=circuitLinks(foldedControls,foldedSolids,foldedLiftDefs,cityMirrors);
-  assert.equal(links.filter(l=>l.id==='pump').length,2);
+test('circuits include linked shutters, remote returns, carrier and optical returns',()=>{
+  const links=circuitLinks(foldedControls,foldedSolids,foldedLiftDefs);
+  assert.equal(links.filter(l=>l.id==='pump').length,1);
   assert.equal(links.filter(l=>l.id==='pressure-return').length,4);
-  for(const [source,target]of [['load','carrier'],['relay-east','relays'],['mirror-index','return-index'],['garden-optical','garden-lift'],['bridge-crane','freight-platform']])assert.ok(links.some(l=>l.id===source&&l.target===target));
+  for(const [source,target]of [['load','carrier'],['relay-east','relays'],['garden-optical','garden-lift'],['bridge-crane','freight-platform']])assert.ok(links.some(l=>l.id===source&&l.target===target));
 });
 
 test('activation changes the cable behind the traveling front, not the entire cable at once',()=>{
@@ -34,11 +33,11 @@ test('the switch latches immediately but its mechanism waits for every cable end
   assert.deepEqual(restored.pendingSignals,{});
 });
 
-test('every pull-off magnetic lock has a visible cable outside its closed machinery',()=>{
+test('remote magnetic connections retain visible cables outside their closed machinery',()=>{
   const controls=foldedControls.filter(c=>c.kind==='magnet'&&!c.slide);
   for(const c of controls){
     const links=circuitLinks([c],foldedSolids,foldedLiftDefs);
-    assert.ok(links.length,c.id);
+    if(!links.length){assert.ok(c.mount,c.id);continue;}
     for(const link of links){
       let length=0;
       for(let i=1;i<link.points.length;i++){
