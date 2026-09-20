@@ -903,9 +903,9 @@ This is the only ending. It restores operation without promising permanent salva
 
 ### Presentation and continuation
 
-The HUD withdraws after commitment. The coupled engine and returning network lead the sound before the second exploration theme returns. Camera direction is permitted during this committed sequence. Pause remains available; losing focus pauses the sequence. Skip becomes available after the brief coupling beat and reaches the same completed state as watching.
+The HUD withdraws after commitment. The coupled engine and returning network lead the sound before the final exploration theme returns. Camera direction is permitted during this committed sequence. Pause remains available; losing focus pauses the sequence. Skip becomes available after the brief coupling beat and reaches the same completed state as watching.
 
-The completion card reads exactly **Mission Accomplished**. Its main choices are Continue Exploration and Return to Journey Menu; the menu retains a completion mark. The second exploration theme can continue beneath this card.
+The completion card reads exactly **Mission Accomplished**. Its main choices are Continue Exploration and Return to Journey Menu; the menu retains a completion mark. The final exploration theme can continue beneath this card.
 
 Continue Exploration returns to D, the Furnace Service Room, with the Keeper defeated, acquired abilities retained and opened routes intact. This is an exploration continuation from before final docking, not a literal reversal of the cinematic's events. Reloading a completed journey resumes exploration rather than automatically replaying the film. Returning to the socket allows the ending to be viewed again.
 
@@ -975,18 +975,23 @@ Ambient rhythm reflects purpose: Foundry clatter, hollow transit movement, water
 
 ### Musical direction
 
-The soundtrack uses exactly four recordings from the owner's RPG Maker MZ collection: two exploration themes and two Boss themes. The first half is restrained and mysterious; obtaining the Phoenix Engine changes the musical identity to a more expansive, forward-moving adventure. These must feel like distinct phases of the journey, not variations of one arrangement.
+The soundtrack uses nine recordings from the owner's RPG Maker MZ collection: four exploration phases tied to permanent ability acquisitions and one distinct recording for each of the five Bosses.
 
-| Situation | Recording | Duration |
-| --- | --- | ---: |
-| Before obtaining Phoenix Engine, in every region | Dungeon2 | 91.43 s |
-| After obtaining Phoenix Engine, including return visits to earlier regions | Theme1 | 92.25 s |
-| Prototype, Overseer, Optical Guardian and Sorter arenas | Battle4 | 107.37 s |
-| Final Keeper arena | Battle8 | 107.43 s |
+| Situation | Recording |
+| --- | --- |
+| Initial hull, before acquiring Boost / Overdrive | Castle3 |
+| After acquiring Boost, before Phoenix | Scene5 |
+| After acquiring Phoenix, before Water Circulation | Scene7 |
+| After acquiring Water Circulation, including earlier regions | Dungeon1 |
+| Prototype arena | Battle1 |
+| Foundry Overseer arena | Battle3 |
+| Sorter arena | Battle4 |
+| Optical Guardian arena | Battle6 |
+| Final Keeper arena | Battle8 |
 
-The Phoenix transition follows permanent acquisition, not whether the engine is currently boosting. Geography, ordinary encounters and backtracking do not change or restart the main theme. A committed Boss fight overrides exploration until victory or death. Afterwards, exploration uses the player's current Phoenix ownership. The final quiet approach remains silent; the ending reuses Theme1 rather than introducing a fifth piece.
+Exploration priority is Water Circulation, then Phoenix, then Overdrive, then the initial hull. Transitions follow permanent ownership, not active Boost, speed, Heat or weapon selection. Geography, ordinary encounters and backtracking do not change or restart the current phase's theme. A committed Boss fight overrides exploration until victory or death. Afterwards, exploration restores the latest acquired phase, including after reload. The final quiet approach remains silent; the ending reuses Dungeon1 without adding another piece.
 
-Preserve each recording's original loop: Theme1 returns to 1.5 seconds, Battle4 returns to approximately 11.368 seconds, and Dungeon2 and Battle8 loop from their beginnings. Introductions are not replayed at every loop. Track transitions crossfade without a sudden volume jump. Pause preserves musical position; death discards the defeated encounter's continuation. Important warnings briefly lower the music. Music and effects keep independent mute controls. The former regional suite and separate ending composition are no longer used.
+Preserve each recording's original duration and loop, including the selected pieces shorter than 90 seconds. Battle1 returns to approximately 2.824 seconds and Battle4 to approximately 11.368 seconds; the other seven loop from their beginnings. Introductions are not replayed at every loop. Track transitions crossfade without a sudden volume jump. Pause preserves musical position; death discards the defeated encounter's continuation. Important warnings briefly lower the music. Music and effects keep independent mute controls.
 
 ## 13. Experience requirements and open scope
 

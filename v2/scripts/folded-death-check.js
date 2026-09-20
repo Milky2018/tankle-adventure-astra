@@ -3,16 +3,16 @@ async page => {
   await page.goto('http://127.0.0.1:5174/?chapter=folded&test&manual');
   await page.waitForFunction(()=>window.__game?.debug);
   await page.locator('#game').click();
-  await page.evaluate(async()=>{const q=__game.debug;q.audio.start();q.setPause(false);await q.audio.score.load('mz-dungeon2');await q.audio.score.load('mz-battle4');});
+  await page.evaluate(async()=>{const q=__game.debug;q.audio.start();q.setPause(false);await q.audio.score.load('mz-castle3');await q.audio.score.load('mz-battle6');});
   const results=[];
   for(const view of ['overhead','third']){
     await page.evaluate(async view=>{
       const g=__game,q=g.debug;q.setCameraView(view);
       g.scenario({player:{x:202,y:16,z:54,hp:1,invincible:0},state:{anchor:'awakening'}});
       q.audio.update(q.time,q.p,true,'r4-optics',false,false,{boss:'guardian'});
-      await q.audio.score.select('mz-battle4');
+      await q.audio.score.select('mz-battle6');
     },view);
-    await page.waitForFunction(()=>__game.snapshot().music.track==='mz-battle4');
+    await page.waitForFunction(()=>__game.snapshot().music.track==='mz-battle6');
     const early=await page.evaluate(()=>{
       const g=__game,q=g.debug;q.hurt(100);g.step(.15);
       return {hp:q.p.hp,music:g.snapshot().music,tilt:q.model.turret.rotation.z,drop:q.model.turret.position.y,
@@ -31,7 +31,7 @@ async page => {
     if(iris.display==='none')throw Error('Death iris never closed');
     await page.screenshot({path:`v2/output/playwright/regression/death-${view}-iris.png`});
     await page.evaluate(()=>__game.step(.35));
-    await page.waitForFunction(()=>__game.snapshot().music.track==='mz-dungeon2');
+    await page.waitForFunction(()=>__game.snapshot().music.track==='mz-castle3');
     const respawn=await page.evaluate(()=>{
       const g=__game,q=g.debug;return {hp:q.p.hp,x:q.p.x,y:q.p.y,z:q.p.z,heat:q.p.heat,
         tilt:q.model.turret.rotation.z,smoke:q.scene.getObjectByName('player-death-smoke').visible,music:g.snapshot().music};

@@ -1,4 +1,4 @@
-"""Import four user-owned MZ tracks without altering their arrangements or loop timing."""
+"""Import the selected user-owned MZ tracks without altering arrangements or loop timing."""
 from pathlib import Path
 import argparse
 import hashlib
@@ -9,9 +9,14 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[2]
 PUBLIC = ROOT / 'public/music'
 SELECTION = [
-    ('mz-dungeon2', 'Dungeon2', 'exploration', 'Before Phoenix', 'A restrained, mysterious first half.'),
-    ('mz-theme1', 'Theme1', 'exploration', 'After Phoenix', 'An open, forward-moving adventure theme after the engine awakens.'),
-    ('mz-battle4', 'Battle4', 'battle', 'Boss Battle', 'The shared battle cue for Prototype, Overseer, Guardian and Sorter.'),
+    ('mz-castle3', 'Castle3', 'exploration', 'Initial Hull', 'Exploration before acquiring Boost.'),
+    ('mz-scene5', 'Scene5', 'exploration', 'After Boost', 'Exploration after acquiring Overdrive, before Phoenix.'),
+    ('mz-scene7', 'Scene7', 'exploration', 'After Phoenix', 'Exploration after acquiring Phoenix, before Water Circulation.'),
+    ('mz-dungeon1', 'Dungeon1', 'exploration', 'After Water Circulation', 'The final exploration phase, including earlier regions and the ending.'),
+    ('mz-battle1', 'Battle1', 'battle', 'Prototype', 'Reserved for the Prototype encounter.'),
+    ('mz-battle3', 'Battle3', 'battle', 'Foundry Overseer', 'Reserved for the Foundry Overseer encounter.'),
+    ('mz-battle4', 'Battle4', 'battle', 'Sorter', 'Reserved for the Sorter encounter.'),
+    ('mz-battle6', 'Battle6', 'battle', 'Optical Guardian', 'Reserved for the Optical Guardian encounter.'),
     ('mz-battle8', 'Battle8', 'battle', 'Final Keeper', 'Reserved for the final confrontation.'),
 ]
 
@@ -39,21 +44,22 @@ def main():
         start = int(tags['LOOPSTART'])
         end = start + int(tags['LOOPLENGTH'])
         original = 'mz/' + name + '.ogg'
-        playback = 'mz/' + name + '.flac'
+        playback = 'mz/' + name + '.webm'
         shutil.copy2(source, PUBLIC / original)
         analysis = subprocess.run([
             'ffmpeg', '-hide_banner', '-i', str(source), '-af', 'loudnorm=print_format=json',
             '-f', 'null', '-'
         ], capture_output=True, text=True, check=True).stderr
         loudness = json.JSONDecoder().raw_decode(analysis[analysis.rfind('{'):])[0]
-        # A constant gain retains dynamics; no compressor, limiter, reverb or resynthesis.
+        # Apply this constant gain at playback; keep the compressed Vorbis packets intact.
         gain_db = min(-19 - float(loudness['input_i']), -3 - float(loudness['input_tp']))
         subprocess.run([
-            'ffmpeg', '-v', 'error', '-y', '-i', str(source), '-af', f'volume={gain_db:.6f}dB',
-            '-c:a', 'flac', '-sample_fmt', 's32', str(PUBLIC / playback)
+            'ffmpeg', '-v', 'error', '-y', '-i', str(source),
+            '-c:a', 'copy', str(PUBLIC / playback)
         ], check=True)
         rendered = probe(PUBLIC / playback)
-        frames = int(rendered['duration_ts'])
+        # WebM timestamps use milliseconds; loop positions retain the OGG sample clock.
+        frames = int(info['duration_ts'])
         assert 0 <= start < end <= frames, (name, start, end, frames)
         assert int(rendered['sample_rate']) == rate
         assert digest(source) == digest(PUBLIC / original)
@@ -64,11 +70,11 @@ def main():
             original=original, assets={'mix': playback}, preview=playback,
             sampleRate=rate, frames=frames, duration=frames / rate,
             loopStartFrame=start, loopEndFrameExclusive=end, loopStart=start / rate, loopEnd=end / rate,
-            gainDb=round(gain_db, 6), sourceLufs=float(loudness['input_i']),
+            gain=10 ** (gain_db / 20), gainDb=round(gain_db, 6), sourceLufs=float(loudness['input_i']),
             peakDbfs=round(float(loudness['input_tp']) + gain_db, 3),
         ))
         print(f'{role}: {name}, {frames / rate:.2f}s, loop {start / rate:.3f}–{end / rate:.3f}s', flush=True)
-    manifest = dict(title='Tankle Adventure — Astra', version=3,
+    manifest = dict(title='Tankle Adventure — Astra', version=5,
                     attribution='KADOKAWA / RPG Maker MZ. Imported from the owner-provided local resource collection.',
                     tracks=tracks)
     old_path.write_text(json.dumps(manifest, indent=2) + '\n')

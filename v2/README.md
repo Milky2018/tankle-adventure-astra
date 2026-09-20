@@ -29,7 +29,7 @@ npm run build
 npm run preview
 ```
 
-`dist/` can be served by any static web server. Assets, music and dependencies are served locally without runtime CDN requests. The four imported MZ music cues can be auditioned at `/music/index.html`; source details and reimport instructions are in [scripts/music/README.md](scripts/music/README.md).
+`dist/` can be served by any static web server. Assets, music and dependencies are served locally without runtime CDN requests. The nine imported MZ music cues can be auditioned at `/music/index.html`; source details and reimport instructions are in [scripts/music/README.md](scripts/music/README.md).
 
 ## Controls and settings
 

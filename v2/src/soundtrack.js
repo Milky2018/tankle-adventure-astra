@@ -1,9 +1,9 @@
 // Imported MZ recordings; exploration follows permanent progression, not geography.
-export const EXPLORATION_TRACKS={beforePhoenix:'mz-dungeon2',afterPhoenix:'mz-theme1'};
-export const BATTLE_TRACKS={prototype:'mz-battle4',foundry:'mz-battle4',sorter:'mz-battle4',guardian:'mz-battle4',keeper:'mz-battle8'};
-export function scoreTrack({phoenix=false,boss,endingTime=0}){
-  if(endingTime>0)return EXPLORATION_TRACKS.afterPhoenix;
-  return BATTLE_TRACKS[boss]||EXPLORATION_TRACKS[phoenix?'afterPhoenix':'beforePhoenix'];
+export const EXPLORATION_TRACKS={initial:'mz-castle3',afterBoost:'mz-scene5',afterPhoenix:'mz-scene7',afterCirculation:'mz-dungeon1'};
+export const BATTLE_TRACKS={prototype:'mz-battle1',foundry:'mz-battle3',sorter:'mz-battle4',guardian:'mz-battle6',keeper:'mz-battle8'};
+export function scoreTrack({overdrive=false,phoenix=false,circulation=false,boss,endingTime=0}){
+  if(endingTime>0)return EXPLORATION_TRACKS.afterCirculation;
+  return BATTLE_TRACKS[boss]||EXPLORATION_TRACKS[circulation?'afterCirculation':phoenix?'afterPhoenix':overdrive?'afterBoost':'initial'];
 }
 export function loopOffset(track,offset){
   if(track.loopStart==null)return Math.min(offset,track.duration);

@@ -7,7 +7,7 @@
 <style>
 :root{color-scheme:dark;font:16px/1.6 system-ui,sans-serif;background:#102124;color:#e8e3cf}body{max-width:960px;margin:auto;padding:48px 24px}header{border-bottom:1px solid #52605a;padding-bottom:28px;margin-bottom:28px}.eyebrow{letter-spacing:.25em;color:#a7b6a5;font-size:.75rem}h1{font-size:clamp(1.6rem,4vw,2.5rem);margin:10px 0 0;letter-spacing:.04em}h1 small{font-weight:400;color:#dab979}p{color:#abbab3}#tracks{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{border:1px solid #425653;background:#182d30;padding:24px}.card.active{border-color:#e1bd72;background:#233637}.role{font-size:.75rem;color:#e1bd72;letter-spacing:.12em;text-transform:uppercase}h2{margin:8px 0;font-size:1.5rem}.meta{font-variant-numeric:tabular-nums;font-size:.85rem;color:#b5c2ba}.actions{display:flex;gap:16px;align-items:center;margin-top:20px}button{font:inherit;border:1px solid #bca96e;background:#cbb77f;color:#11272a;padding:8px 20px;cursor:pointer}button:disabled{opacity:.4;cursor:default}button:focus-visible,a:focus-visible{outline:2px solid #fff;outline-offset:4px}a{color:#cbb77f;font-size:.85rem}footer{margin-top:32px;padding-top:24px;border-top:1px solid #425653}footer .actions{flex-wrap:wrap}#status{min-height:1.6em}label{display:flex;align-items:center;gap:12px;font-size:.85rem}#credit{font-size:.75rem} @media(max-width:620px){#tracks{grid-template-columns:1fr}body{padding:24px 16px}h1 small{display:block}}
 </style>
-<header><div class="eyebrow">SOUNDTRACK / FOUR THEMES</div><h1>Tankle Adventure <small>Astra</small></h1><p>Two stages of the journey. Two scales of confrontation.</p></header>
+<header><div class="eyebrow">SOUNDTRACK / NINE THEMES</div><h1>Tankle Adventure <small>Astra</small></h1><p>Four stages of the journey. Five distinct Boss encounters.</p></header>
 <main id="tracks"></main>
 <footer><div class="actions"><button id="stop" disabled>Stop</button><button id="seam" disabled>Hear loop transition</button><label>Volume <input id="volume" type="range" min="0" max="1" step=".01" value=".7"></label></div><p id="status" role="status">Select a recording to listen.</p><p id="credit">KADOKAWA · RPG Maker MZ. Imported from the owner's local music collection. Original loops preserved.</p><a href="/?chapter=folded">Return to the game</a></footer>
 <script type="module">
@@ -18,7 +18,7 @@ function stop(){if(source){source.stop();source.disconnect();source=null;}docume
 async function play(track,seam=false){
  const token=++serial;stop();selected=track;
  if(!ctx){ctx=new AudioContext({sampleRate:44100});master=ctx.createGain();master.connect(ctx.destination);}
- await ctx.resume();master.gain.value=Number($('volume').value);$('status').textContent=`Loading ${track.title}…`;
+ await ctx.resume();master.gain.value=Number($('volume').value)*(track.gain??1);$('status').textContent=`Loading ${track.title}…`;
  try{
   let buffer=cache.get(track.id);
   if(!buffer){const response=await fetch(`./${track.assets.mix}`);if(!response.ok)throw Error('Recording unavailable');buffer=await ctx.decodeAudioData(await response.arrayBuffer());cache.set(track.id,buffer);while(cache.size>2)cache.delete(cache.keys().next().value);}
@@ -35,7 +35,7 @@ for(const track of manifest.tracks){
 }
 $('stop').onclick=()=>{serial++;stop();$('status').textContent='Stopped.';};
 $('seam').onclick=()=>selected&&play(selected,true);
-$('volume').oninput=()=>{if(master)master.gain.value=Number($('volume').value);};
+$('volume').oninput=()=>{if(master)master.gain.value=Number($('volume').value)*(selected?.gain??1);};
 addEventListener('pagehide',()=>{serial++;stop();ctx?.close();});
 </script>
 </html>

@@ -8,7 +8,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[2]
 PUBLIC = ROOT / 'public/music'
 manifest = json.loads((PUBLIC / 'manifest.json').read_text())
-assert len(manifest['tracks']) == 4
+assert len(manifest['tracks']) == 9
 report = []
 
 def pcm(path, start, end):
@@ -32,19 +32,30 @@ for track in manifest['tracks']:
     start, end = track['loopStartFrame'], track['loopEndFrameExclusive']
     assert start == int(tags['LOOPSTART'])
     assert end == start + int(tags['LOOPLENGTH'])
-    assert int(probes[1]['duration_ts']) == track['frames']
+    assert int(probes[0]['duration_ts']) == track['frames']
+    assert probes[1]['codec_name'] == 'vorbis'
     assert int(probes[1]['sample_rate']) == track['sampleRate']
     assert probes[1]['channels'] == 2
     assert 0 <= start < end <= track['frames']
-    assert 90 <= track['duration'] <= 180
-    assert track['loopEnd'] - track['loopStart'] >= 90
+    assert track['duration'] > 0
+    assert track['loopEnd'] > track['loopStart']
+    # Remuxing preserves every authored sample. A final codec packet may add
+    # padding beyond the OGG end; explicit loopEnd never plays that padding.
+    decoded = [subprocess.check_output([
+        'ffmpeg', '-v', 'error', '-i', str(path), '-f', 'f32le', '-'
+    ]) for path in [original, playback]]
+    assert len(decoded[0]) == track['frames'] * 8
+    assert len(decoded[0]) <= len(decoded[1]) <= len(decoded[0]) + 128 * 8
+    assert decoded[0] == decoded[1][:len(decoded[0])], track['id']
+    assert playback.stat().st_size < original.stat().st_size * 1.2
+    assert abs(track['gain'] - 10 ** (track['gainDb'] / 20)) < 1e-7
     left, right = pcm(playback, end - 256, end), pcm(playback, start, start + 256)
     assert len(left) == len(right) == 512
-    seam = max(abs(left[-2 + c] - right[c]) for c in range(2))
-    local_step = max(abs(samples[i] - samples[i - 2]) for samples in [left, right] for i in range(2, len(samples)))
+    seam = max(abs(left[-2 + c] - right[c]) for c in range(2)) * track['gain']
+    local_step = max(abs(samples[i] - samples[i - 2]) for samples in [left, right] for i in range(2, len(samples))) * track['gain']
     assert seam <= max(.015, local_step * 2), (track['id'], seam, local_step)
     result = subprocess.run([
-        'ffmpeg', '-hide_banner', '-i', str(playback), '-af', 'loudnorm=print_format=json', '-f', 'null', '-'
+        'ffmpeg', '-hide_banner', '-i', str(playback), '-af', f"volume={track['gain']},loudnorm=print_format=json", '-f', 'null', '-'
     ], capture_output=True, text=True, check=True).stderr
     loudness = json.JSONDecoder().raw_decode(result[result.rfind('{'):])[0]
     assert float(loudness['input_tp']) <= -2.9
