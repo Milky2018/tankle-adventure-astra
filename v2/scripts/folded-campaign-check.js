@@ -35,9 +35,9 @@ async page=>{
   await move(-40,86);await move(-40,49);await shoot(-35,44,-14.5,'relay-west');
   await move(-57,52);await move(-57,76);await page.keyboard.press('e');await move(-57,118);await shoot(-65,114,-14.5,'relay-east');
   await move(-57,128);await move(-43,132);const prototype=await fight('prototype',-43,-20,132);
-  await move(-30,136);await page.keyboard.press('e');
+  await move(-28,124);await page.keyboard.press('e');
   if(!(await page.evaluate(()=>window.__game.snapshot())).player.overdrive)throw Error('Overdrive was not acquired');
-  await move(-20,128);await move(-20,86,true);await move(0,86);await page.keyboard.press('e');
+  await move(-28,100,true);await move(-28,52);await move(-40,52);await move(-40,86,true);await move(0,86);await page.keyboard.press('e');
   await move(0,54,true);const foundry=await fight('foundry',-10,10,55);
   await move(6,48);await page.keyboard.press('e');await move(24,48);await move(24,4);await move(36,4);await move(36,30);await move(22,30);await move(0,27);await page.keyboard.press('e');
   await page.screenshot({path:'v2/output/playwright/city-foundry-complete.png'});

@@ -18,6 +18,8 @@ The current game boots through `src/entry.js` and `src/folded.js`. The latter cr
 | `folded-upgrades.js` | Saved discovery IDs, derived equipment bonuses and weapon damage scaling |
 | `folded-exploration-layout.js` | Optional finds, collision-backed workshop infill and local patrols |
 | `folded-materials.js` | Cached seamless surface colour and normal maps |
+| `folded-architecture.js` | Region-specific wall openings, roof profiles, shared-ceiling clipping and collision-backed structural envelopes |
+| `folded-regional-scenery.js` | Envelope-attached regional detail and a bounded pool of local task lights |
 | `folded-laser.js` | Read-only trajectory shared by preview and live Laser |
 | `folded-settings.js` | Preference defaults and persistence, control rebinding, quality/audio settings and camera-tuning UI |
 | `folded-effects.js` | Spark/shield-fragment motion, blast rings and projectile visuals with scene-local material cleanup |

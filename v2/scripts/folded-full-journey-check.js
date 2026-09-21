@@ -1,10 +1,11 @@
 async page=>{
 
  return await (async()=>{
+ const routeAudit=page.url().includes('routeAudit');
  const errors=[];page.on('pageerror',e=>errors.push(e.message));const runs=[];
  try { for(const [approach,first]of [['dry','laser'],['dry','circulation'],['water','circulation']]){
   await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test&manual');await page.waitForFunction(()=>window.__game);
-  await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');localStorage.removeItem('furnace-born-v2-settings');});await page.reload();await page.waitForFunction(()=>window.__game);await page.evaluate(()=>__game.manual(true));
+  await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');localStorage.removeItem('furnace-born-v2-settings');});await page.reload();await page.waitForFunction(()=>window.__game);await page.evaluate(routeAudit=>{__game.manual(true);if(routeAudit)Object.defineProperty(__game.debug.p,'invincible',{configurable:true,get:()=>1e9,set:()=>{}});},routeAudit);
   const legs=[],milestones=[];
   async function choose(weapon){
     for(let i=0;i<3;i++){
@@ -42,7 +43,7 @@ async page=>{
   }
   async function shoot(x,z,y,id,weapon="cannon"){
     await choose(weapon);
-    const s=await page.evaluate(({x,z,y,id})=>{const g=window.__game,c=g.debug.world.controls.find(c=>c.id===id);if(c?.mount){x=c.x+c.facing.x*.5;y=c.y+c.facing.y*.5;z=c.z+c.facing.z*.5;}g.setInput([]);if(!["brake","ratchet"].includes(id))g.step(3,false);for(let i=0;i<(id==="brake"?900:180);i++){g.aimAt(x,z,y);g.setInput(['Mouse0']);g.step(1/60,false);if(g.snapshot().state[id]||id==='return-index'&&g.snapshot().state.mirrorTurns[id]%2===1)break;}g.setInput([]);g.step(.1);return g.snapshot();},{x,z,y,id});
+    const s=await page.evaluate(({x,z,y,id})=>{const g=window.__game,c=g.debug.world.controls.find(c=>c.id===id);if(c?.mount){x=c.x+c.facing.x*.5;y=c.y+c.facing.y*.5;z=c.z+c.facing.z*.5;}g.setInput([]);if(!["brake","ratchet"].includes(id))g.step(3,false);for(let i=0;i<(id==="brake"?900:180);i++){g.aimAt(x,z,y);g.setInput(['Mouse0']);g.step(1/60,false);if(g.snapshot().state[id]||g.snapshot().state.pendingSignals?.[id]||id==='return-index'&&g.snapshot().state.mirrorTurns[id]%2===1)break;}g.setInput([]);g.step(.4,false);const pending=g.snapshot().state.pendingSignals?.[id];if(pending)g.step(pending.remaining+.1,false);return g.snapshot();},{x,z,y,id});
     if(!s.state[id]&&!(id==='return-index'&&s.state.mirrorTurns[id]%2===1))throw Error('Latch '+id+' '+JSON.stringify({p:s.player,aim:s.aim}));
   }
   async function fight(id,x0,x1,z){
@@ -92,6 +93,7 @@ async page=>{
           }return {error:'wave timeout',s:g.snapshot()};
         },{id,x,z});if(result.error)throw Error(JSON.stringify(result));await record(id+'-waves');return;
       }
+      if(name==='hearth-return')await move(24,64);
       const c=await page.evaluate(async name=>(await import('/src/folded-layout.js')).foldedControls.find(c=>c.id===name),name);
       if(c.slide){
         await move(-106,-54);
@@ -106,7 +108,7 @@ async page=>{
     for(const [x,z,name]of route.path){
       await move(x,z);await action(name,x,z);
       if(id==='proving'&&z===-158){
-        await shoot(65,-154,17.3,'proving-inspection');await move(77,-154);await move(6,-154);await move(6,-34);
+        await move(77,-154);await move(6,-154);await shoot(65,-154,17.3,'proving-inspection');await move(6,-34);
         if(!(await page.evaluate(()=>__game.snapshot())).state['bridge-crane']){await move(0,-34);await shoot(0,-24,6.8,'bridge-crane','mortar');}
         await move(0,-34);await move(0,27);await use();await record('proving-refuge-return');
         await move(0,-34);await move(6,-34);await move(6,-154);await move(77,-154);await move(x,z);
@@ -120,9 +122,9 @@ async page=>{
   await move(-40,86);await move(-40,49);await shoot(-35,44,-14.5,'relay-west');
   await move(-57,52);await move(-57,76);await page.keyboard.press('e');await move(-57,118);await shoot(-65,114,-14.5,'relay-east');
   await move(-57,128);await move(-43,132);const prototype=await fight('prototype',-43,-20,132);
-  await move(-30,136);await page.keyboard.press('e');
+  await move(-28,124);await page.keyboard.press('e');
   if(!(await page.evaluate(()=>window.__game.snapshot())).player.overdrive)throw Error('Overdrive was not acquired');
-  await move(-20,128);await move(-20,86,true);await move(0,86);await page.keyboard.press('e');
+  await move(-28,100,true);await move(-28,52);await move(-40,52);await move(-40,86,true);await move(0,86);await page.keyboard.press('e');
   await move(0,54,true);const foundry=await fight('foundry',-10,10,55);
   await move(6,48);await page.keyboard.press('e');await move(24,48);await move(24,4);await move(36,4);await move(36,30);await move(22,30);await move(0,27);await page.keyboard.press('e');
 
@@ -212,6 +214,6 @@ async page=>{
   await page.evaluate(run=>sessionStorage.setItem('completed-journey-'+run.approach+'-'+run.first,JSON.stringify(run)),run);
  }
  } catch(error) { throw Error(JSON.stringify({completedRuns:runs,error:error.message})); }
- if(errors.length)throw Error(JSON.stringify(errors));return {runs,errors};
+ if(errors.length)throw Error(JSON.stringify(errors));return {runs,errors,routeAudit};
  })();
 }

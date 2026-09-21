@@ -39,14 +39,14 @@ async page=>{
   async function fight(id,x0,x1,z){
    const r=await page.evaluate(({id,x0,x1,z})=>{const g=__game;let destination=x0;for(let i=0;i<5400;i++){const s=g.snapshot(),p=s.player,e=s.enemies.find(e=>e.id===id);if(!e.hp){g.setInput([]);return {hp:p.hp};}if(!p.hp)return {error:'died',p,e};if(Math.abs(p.x-destination)<.8)destination=destination===x0?x1:x0;const t=e.parts.find(t=>t.hp>0)||{x:e.x,y:e.y+1.5,z:e.z};__flowAim(t.x,t.y,t.z);const keys=__flowKeys(destination-p.x,z-p.z);keys.push('Mouse0');g.setInput(keys);g.step(1/30,false);}return {error:'timeout',s:g.snapshot()};},{id,x0,x1,z});if(r.error)throw Error(view+' fight '+JSON.stringify(r));
   }
-  await capture('awakening');await move(0,72);
-  const rejection=await page.evaluate(()=>{const p=__game.snapshot().player;__game.setInput(__flowKeys(0,-1));__game.step(4,false);__game.setInput([]);return {z:__game.snapshot().player.z,overdrive:__game.snapshot().player.overdrive};});
-  if(rejection.overdrive||rejection.z<64)throw Error('Walking bypasses first ability lock');await capture('belt-rejection');await move(0,86);
-  await move(-40,86);await capture('first-fight');await move(-40,53);await capture('workshop');await move(-40,49);await shoot('relay-west',-35,-14.5,44);await capture('first-door');
-  await move(-57,52);await move(-57,76);await page.keyboard.press('e');await capture('refuge');await move(-57,96);await capture('sorting-entry');await move(-57,118);await shoot('relay-east',-65,-14.5,114);await capture('prototype-door');
+  await capture('awakening');await move(-40,86);await move(-40,52);
+  const rejection=await page.evaluate(()=>{__game.setInput(__flowKeys(0,1));__game.step(4,false);__game.setInput([]);return {z:__game.snapshot().player.z,overdrive:__game.snapshot().player.overdrive};});
+  if(rejection.overdrive||rejection.z>64.5)throw Error('Walking escapes the inward conveyor');await capture('belt-rejection');
+  await move(-40,53);await capture('entry-landing');await move(-40,53);await capture('workshop');await move(-40,49);await shoot('relay-west',-35,-14.5,44);await capture('first-door');
+  await move(-57,52);await move(-57,76);await capture('reclaim-track');await move(-57,96);await capture('sorting-entry');await move(-57,118);await shoot('relay-east',-65,-14.5,114);await capture('prototype-door');
   await move(-57,126);await move(-43,126);await capture('prototype-entry');await fight('prototype',-43,-20,132);
-  await move(-30,136);await page.keyboard.press('e');if(!(await page.evaluate(()=>__game.snapshot())).player.overdrive)throw Error('Engine was missed');await capture('engine');
-  await move(-20,128);await page.evaluate(()=>{__game.setInput([]);__game.step(3,false);});await move(-20,86,true);await move(0,86);await page.keyboard.press('e');await capture('returned');
+  await move(-28,124);await page.keyboard.press('e');if(!(await page.evaluate(()=>__game.snapshot())).player.overdrive)throw Error('Engine was missed');await capture('engine');
+  await move(-28,100,true);await move(-28,52);await move(-40,52);await move(-40,86,true);await move(0,86);await page.keyboard.press('e');await capture('returned');
   await move(0,54,true);await fight('foundry',-10,10,55);await move(6,48);await page.keyboard.press('e');await move(24,48);await move(24,4);await move(36,4);await move(36,30);await move(22,30);await move(0,27);await page.keyboard.press('e');await capture('hub');
   await move(0,12);if(!(await page.evaluate(()=>__game.snapshot())).player.mortar)throw Error('Hub Mortar was missed');await capture('mortar');
   await move(0,-6);await page.keyboard.press('q');await shoot('bridge-crane',0,4.2,-24);await capture('bridge-open');

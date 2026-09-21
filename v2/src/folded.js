@@ -119,10 +119,10 @@ function updateOverheadAngle() {
 updateOverheadAngle();
 let thirdPerson = (params.get('view') || prefs.cameraView || 'third') !== 'overhead',
   camera = thirdPerson ? follow.camera : overheadCamera;
-scene.add(new T.HemisphereLight(0xf6ead3, 0x7e948b, 1.8));
+scene.add(new T.HemisphereLight(0xe8edf1, 0x85877e, 1.8));
 // Indirect fill keeps undersides and shaded routes readable from either camera.
-scene.add(new T.AmbientLight(0xdce7df, 1.2));
-const sun = new T.DirectionalLight(0xffe3b1, 3.2);
+scene.add(new T.AmbientLight(0xe2e7e8, 1.2));
+const sun = new T.DirectionalLight(0xf0e8d5, 2.6);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 sun.shadow.camera.left = sun.shadow.camera.bottom = -45;

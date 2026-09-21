@@ -25,8 +25,6 @@ export const refugeDecks = [
   deck('sorter-fast-track', 72, -28, 8, 72, 24, { rise: -24, region: 'transit' }),
   deck('sorter-track-foot', 30, 44, 50, 8, 0, { region: 'transit' }),
   deck('sorter-track-transit', 30, 32, 12, 20, 0, { region: 'transit' }),
-  deck('prototype-inspection-ramp', -34, 92, 8, 24, -8, { rise: -8, region: 'foundry' }),
-  deck('prototype-inspection-foot', -62, 106, 36, 10, -16, { region: 'foundry' }),
   deck('overseer-service-door', -14, 58, 8, 28, -8, { region: 'foundry' }),
   deck('foundry-transit-neck', 6, 80, 24, 8, -8, { region: 'foundry' }),
   deck('foundry-transit-rise', 22, 36, 8, 44, 0, { rise: -8, region: 'foundry' }),
@@ -65,9 +63,6 @@ export const refugeSolids = [
   { id: 'optical-screen', x: 219.2, y: 24, z: -5.5, w: 1, d: 3, h: 3, rail: { axis: 'z', min: -5.5, max: 2.5, release: 'optical-screen' } },
   gate('sorter', 72, -28, 8, 1, 24),
   gate('sorter', 72, 43, 8, 1, 0),
-  gate('prototype-inspection', -34, 95, 8, 1, -9),
-  gate('relays', -50.5, 106, 1, 10, -16),
-  gate('arena-prototype-inspection', -50, 115.5, 36, 1, -16, { arena: 'prototype' }),
   gate('overseer-service', -14, 68, 8, 1, -8),
   gate('arena-foundry-service', -14, 57.5, 8, 1, -8, { arena: 'foundry' }),
   gate('arsenal-return', -60, -15, 12, 1, 0),
@@ -85,11 +80,9 @@ export const refugeControls = [
   { id: 'coolant-bypass', x: 278, y: -22.7, z: 117, kind: 'shot', requires: 'coolant-return' },
   { id: 'inner-transit', x: 122, y: 25.3, z: 35, kind: 'shot', mount: 'inner-transit', requires: 'inner-thermal', facing: [0,0,1] },
   { id: 'proving-inspection', x: 65, y: 17.3, z: -154, kind: 'shot', requires: 'load', mount: 'proving-inspection', facing: [0,0,-1] },
-  { id: 'prototype-inspection', x: -40, y: -14.7, z: 112, kind: 'shot', requires: 'relays', mount: 'prototype-inspection', facing: [0,0,1] },
   { id: 'overseer-service', x: -10, y: -6.7, z: 61, kind: 'shot', mount: 'overseer-service', facing: [0,0,-1] },
-  { id: 'overdrive-bypass', x: -20, y: -6.7, z: 87, kind: 'shot', requires: 'overdrive', facing: [1,0,0] },
 ];
-export const refugeFlags = ['optical-screen','coolant-bypass', 'proving-inspection', 'prototype-inspection', 'overseer-service', 'overdrive-bypass', 'phoenix-departure'];
+export const refugeFlags = ['optical-screen','coolant-bypass', 'proving-inspection', 'overseer-service', 'phoenix-departure'];
 
 export const refugeLifts = [
   { id: 'foundry-loading-frame', x: -61, z: 44, w: 12, d: 12, stops: [-16, -10], lock: 'relay-west', settle: true },

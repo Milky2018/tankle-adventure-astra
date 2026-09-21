@@ -5,9 +5,9 @@ let cached;
 // water ripples, rolled sheet seams and fine mineral grain.
 export function cityMaterials() {
   if (cached) return cached;
-  const size = 512,
-    tau = Math.PI * 2;
+  const tau = Math.PI * 2;
   function texture(kind) {
+    const size = ['water', 'panel', 'concrete'].includes(kind) ? 512 : 256;
     const canvas = document.createElement('canvas');
     canvas.width = canvas.height = size;
     const ctx = canvas.getContext('2d'),
@@ -35,6 +35,35 @@ export function cityMaterials() {
           height = seam < 2 ? -0.12 : rivet ? 0.12 : grain * 0.008;
           shade =
             215 + cloud * 4 + grain * 5 - (seam < 2 ? 35 : seam < 5 ? 9 : 0) - (rivet ? 26 : 0);
+        } else if (kind === 'brick') {
+          const course = Math.floor(y / 64),
+            joint = Math.min(y % 64, (x + (course % 2) * 64) % 128);
+          shade = 218 + cloud * 6 + grain * 9 - (joint < 3 ? 34 : 0);
+          height = joint < 3 ? -0.12 : grain * 0.018;
+        } else if (kind === 'steel') {
+          const joint = Math.min(x % 128, y % 256),
+            brush = Math.sin(v * 64) * 1.5;
+          shade = 218 + grain * 4 + brush - (joint < 2 ? 22 : 0);
+          height = joint < 2 ? -0.06 : grain * 0.004;
+        } else if (kind === 'stone') {
+          const edge = Math.min((x + (Math.floor(y / 128) % 2) * 64) % 128, y % 128);
+          shade = 216 + cloud * 11 + grain * 6 - (edge < 2 ? 21 : 0);
+          height = cloud * 0.04 + grain * 0.012 - (edge < 2 ? 0.07 : 0);
+        } else if (kind === 'enamel') {
+          const joint = Math.min(x % 256, y % 128);
+          shade = 231 + cloud * 2 + grain * 2 - (joint < 2 ? 28 : 0);
+          height = joint < 2 ? -0.05 : 0;
+        } else if (kind === 'optical') {
+          const border = Math.min(x, 255 - x, y, 255 - y);
+          shade = 231 + cloud * 2 - (border > 5 && border < 8 ? 18 : 0);
+          height = border > 5 && border < 8 ? -0.03 : 0;
+        } else if (kind === 'ceramic') {
+          const joint = Math.min(x % 64, y % 128);
+          shade = 214 + cloud * 4 + grain * 3 - (joint < 2 ? 20 : 0);
+          height = joint < 2 ? -0.08 : grain * 0.005;
+        } else if (kind === 'ash') {
+          shade = 211 + cloud * 10 + grain * 8;
+          height = cloud * 0.02 + grain * 0.01;
         } else {
           height = grain * 0.025 + cloud * 0.03;
           shade = 214 + cloud * 7 + grain * 9;
@@ -76,6 +105,19 @@ export function cityMaterials() {
     }
     return { map, normalMap };
   }
-  cached = { water: texture('water'), concrete: texture('concrete'), panel: texture('panel') };
+  cached = Object.fromEntries(
+    [
+      'water',
+      'concrete',
+      'panel',
+      'brick',
+      'steel',
+      'stone',
+      'enamel',
+      'optical',
+      'ceramic',
+      'ash',
+    ].map((kind) => [kind, texture(kind)]),
+  );
   return cached;
 }

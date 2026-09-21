@@ -8,7 +8,7 @@ export const BOSS_ARENAS=[
 ];
 const gate=(arena,name,x,z,w,d,y)=>({id:`arena-${arena}-${name}`,arena,x,z,w,d,y,h:5});
 export const arenaGates=[
- gate('prototype','entry',-50.5,120,1,12,-16),gate('prototype','return',-26,115.5,12,1,-16),
+ gate('prototype','entry',-50.5,120,1,12,-16),gate('prototype','return',-34,115.5,12,1,-16),
  gate('foundry','entry',-6,57.5,12,1,-8),
  gate('guardian','entry',196,43.5,12,1,16),
  gate('sorter','entry',112,-104.5,36,1,24),

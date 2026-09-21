@@ -40,16 +40,6 @@ test('retired anchors migrate to a reachable refuge without losing equipment or 
   assert.equal(initialFoldedState().anchor,'awakening');
 });
 
-test('Prototype inspection return opens before combat and provides a supported route to A',()=>{
-  const s=initialFoldedState({relays:true}),p={...newPlayer(),x:-55,y:-16,z:110};
-  assert.ok(foldedControls.find(c=>c.id==='prototype-inspection').facing); // Physical housing blocks premature rays; exercised in the browser suite.
-  assert.equal(releaseFolded('prototype-inspection','cannon',p,s,[]),true);
-  walk(p,s,[[-40,110],[-40,115.8],[-30,115.8],[-30,86],[0,86]]);
-  assert.equal(p.y,-8);assert.equal(s.prototype,false);
-  const seconds=walk(p,s,[[-30,86],[-30,115.8],[-40,115.8],[-40,110],[-55,110],[-55,126]]);
-  assert.ok(seconds<25);assert.equal(p.y,-16);
-});
-
 test('the Overseer side release faces its approach and bypasses the opposing belt on retry',()=>{
   const s=initialFoldedState(),p={...newPlayer(),x:-10,y:-8,z:61,overdrive:true};
   assert.ok(foldedControls.find(c=>c.id==='overseer-service').facing); // Physical housing blocks premature rays; exercised in the browser suite.

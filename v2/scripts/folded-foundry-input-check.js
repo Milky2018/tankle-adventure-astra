@@ -14,7 +14,7 @@ async page=>{
  await page.keyboard.down('s');await page.keyboard.down('d');await page.waitForTimeout(1900);await page.keyboard.up('d');await page.keyboard.up('s');await page.evaluate(()=>__game.manual(true));
  const entered=await page.evaluate(()=>__game.snapshot().player);if(entered.x<-49||entered.y!==-16)throw Error('Opened door cannot be walked through '+JSON.stringify(entered));
  await page.screenshot({path:'v2/output/playwright/rooms/input-entered.png'});
- await page.evaluate(()=>{__game.scenario({player:{x:-30,y:-16,z:136,overdrive:false},state:{prototype:false,overdrive:false}});__game.step(.1);});
+ await page.evaluate(()=>{__game.scenario({player:{x:-28,y:-16,z:124,overdrive:false},state:{prototype:false,overdrive:false}});__game.step(.1);});
  await page.keyboard.press('e');
  const locked=await page.evaluate(()=>{const p=__game.debug.world.pickups.find(p=>p.id==='overdrive');return {visible:p.root.visible,cage:p.cage.visible,acquired:__game.snapshot().player.overdrive};});
  if(!locked.visible||!locked.cage||locked.acquired)throw Error('Engine preview is hidden or collectible before release');

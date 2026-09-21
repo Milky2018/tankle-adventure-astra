@@ -39,7 +39,7 @@ test('awakening, local relay sequence, Overdrive return and foundry exit connect
   travel(p,s,[[-57,52],[-57,118]]);releaseFolded('relay-east','cannon',p,s,[]);s.relays=true;
   travel(p,s,[[-57,128],[-30,128]]);assert.equal(p.y,-16);
   s.prototype=s['overdrive-return']=true;p.overdrive=true;
-  travel(p,s,[[-20,128],[-20,86],[0,86]],{boost:true});assert.equal(p.y,-8);
+  travel(p,s,[[-28,128],[-28,100]],{boost:true});travel(p,s,[[-28,52],[-40,52]]);travel(p,s,[[-40,86]],{boost:true});travel(p,s,[[0,86]]);assert.equal(p.y,-8);
   for(let i=0;i<240;i++){p.clock+=1/60;updateHeat(p,1/60,p.clock,false,false);}
   travel(p,s,[[0,49]],{boost:true});s.foundry=true;
   travel(p,s,[[24,49],[24,4],[10,4],[10,27]]);assert.equal(p.y,0);

@@ -150,6 +150,6 @@ for(const [id,x,z,w,d,h,y=-40]of [
 
 // The first crossing from the ferry bank remains calm; hunters stay beyond it.
 expansionEnemies.push(
- {id:'reservoir-patrol-hunter',type:'hunter',hp:3,x:-114,y:-8,z:44,patrol:{x:-128,z:32,w:24,d:24},swimPatrol:[[-122,42],[-110,50]]},
+ {id:'reservoir-patrol-hunter',type:'hunter',hp:3,x:-114,y:-8,z:44,patrol:{x:-128,z:32,w:24,d:24},swimPatrol:[[-114,47],[-126,47],[-126,56],[-110,56],[-110,47]]},
  {id:'reservoir-pump-dredger',type:'dredger',hp:5,magneticShield:true,x:-134,y:-8,z:88,patrol:{x:-148,z:78,w:26,d:24},swimPatrol:[[-140,86],[-132,96]]}
 );

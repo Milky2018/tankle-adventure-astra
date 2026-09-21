@@ -20,7 +20,7 @@ async page=>{
    if(c.requires){q.state[c.requires]=false;g.step(.6,false);if(cast(target.clone().addScaledVector(n,2.2))?.target?.id===c.id)throw Error('Closed cover passed '+c.id);q.state[c.requires]=true;}
    results.push({id:c.id,front:true,backBlocked:true,covered:!!c.cover});q.state[c.id]=true;
   }
-  const premature=[['prototype-inspection',-30,-8,86],['overseer-service',-10,-8,86],['last-cage',22,-8,-8],['pump',-26,-8,-8],['gangway',56,-8,20],['emitter-cage',52,-8,-86],['cage',10,0,16]];
+  const premature=[['overseer-service',-10,-8,86],['last-cage',22,-8,-8],['pump',-26,-8,-8],['gangway',56,-8,20],['emitter-cage',52,-8,-86],['cage',10,0,16]];
   for(const [id,x,y,z]of premature){const c=controls.find(c=>c.id===id);q.state[id]=false;if(c.requires)q.state[c.requires]=true;g.step(.6,false);
    const origin=new T.Vector3(x,y+1.6,z),target=new T.Vector3(c.x,c.y,c.z);if(c.facing)target.addScaledVector(c.facing,.5);const dir=target.clone().sub(origin);
    const hit=q.world.cast(origin,dir.normalize(),origin.distanceTo(target)+1,{targets:true});

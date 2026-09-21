@@ -1,3 +1,4 @@
+import {makeRegionalScenery,makeRegionalLights} from './folded-regional-scenery.js';
 import {currentVelocity} from './folded-mechanisms.js';
 import {makeCityBackdrop} from './folded-backdrop.js';
 import {cityMaterials} from './folded-materials.js';
@@ -21,10 +22,10 @@ export function makeCityPresentation(scene,aperture){
   function material(region,part){
     const key=`${region}/${part}`;if(materials.has(key))return materials.get(key);
     // Ceilings use a baked ambient colour; avoid lighting each translucent roof layer.
-    const m=part==='roof'?new T.MeshBasicMaterial({color:new T.Color(REGION_STYLE[region].roof).multiplyScalar(1.4)}):new T.MeshToonMaterial({color:REGION_STYLE[region][part],shadowSide:T.FrontSide,...(part==='wall'?surfaces[['garden','furnace'].includes(region)?'concrete':'panel']:{})});aperture.apply(m,{radius:ARCHITECTURE_APERTURE});materials.set(key,m);return m;
+    const m=part==='roof'?new T.MeshBasicMaterial({color:new T.Color(REGION_STYLE[region].roof).multiplyScalar(1.12)}):new T.MeshToonMaterial({color:REGION_STYLE[region][part],shadowSide:T.FrontSide,...(part==='wall'?surfaces[REGION_STYLE[region].surface]:{})});aperture.apply(m,{radius:ARCHITECTURE_APERTURE});materials.set(key,m);return m;
   }
   for(const s of foldedArchitecture.solids){
-    const part=['wall','foundation'].includes(s.kind)?'wall':s.kind==='roof'?'roof':'frame';
+    const part=['wall','foundation','lintel','buttress'].includes(s.kind)?'wall':s.kind==='roof'?'roof':'frame';
     const mesh=box(architecture,s.w,s.h,s.d,s.x+s.w/2,s.y+s.h/2,s.z+s.d/2,material(s.region,part),0);
     mesh.name=s.id;mesh.castShadow=mesh.receiveShadow=s.kind!=='roof';
     if(part==='wall'){
@@ -42,29 +43,11 @@ export function makeCityPresentation(scene,aperture){
   for(const root of [architecture,depth]){root.updateWorldMatrix(true,true);root.traverse(o=>{o.matrixAutoUpdate=false;o.matrixWorldAutoUpdate=false;});}
   // The excavation walls sit beyond every playable floor, anchoring the city in earth.
   const rock=mat(0x53615a),iron=mat(0x384c49),pale=mat(0xa8ada0),copper=mat(0xa98b69);
-  // Separate construction vocabularies: trusses, inspection rings, and insulated ribs.
-  for(const room of foldedArchitecture.rooms){
-    if(room.roof){
-      const light=mat(room.region==='garden'?0xc3d9bb:room.region==='optics'?0xc4dce0:0xe4ce9d,true);
-      for(let z=room.z+4;z<room.z+room.d;z+=12){
-        const x=room.x+room.w/2,y=room.y+room.h-.18;
-        if(!foldedArchitecture.solids.some(s=>s.room===room.id&&s.kind==='roof'&&x>=s.x&&x<=s.x+s.w&&z>=s.z&&z<=s.z+s.d))continue;
-        // Emissive fixtures provide a lighting source without per-room lights.
-        box(scenery,Math.min(7,room.w-2),.12,.6,x,y,z,light,0);
-      }
-    }
-    if(room.region==='transit'&&room.roof)for(let z=room.z+3;z<room.z+room.d;z+=10){
-      box(scenery,room.w,.35,.35,room.x+room.w/2,room.y+room.h-1,z,iron,0);
-      for(let x=room.x+3;x<room.x+room.w;x+=6){const brace=box(scenery,6.2,.18,.18,x,room.y+room.h-2,z,pale,0);brace.rotation.z=(Math.floor(x/6)%2?1:-1)*.35;}
-    }
-    if(room.region==='circulation')for(let z=room.z+3;z<room.z+room.d;z+=8){
-      cylinder(scenery,.6,room.h,room.x-1.8,room.y+room.h/2,z,copper,8);
-      for(const y of [2,6,10].filter(y=>y<room.h-.5))ring(scenery,.68,.12,room.x-1.8,room.y+y,z,iron);
-    }
-  }
+  const lightSources=makeRegionalScenery(scenery,foldedArchitecture.rooms,foldedArchitecture.solids);
+  lightSources.push({x:-4,y:-3,z:38,ground:-8,color:0xffb780},{x:0,y:-49,z:-8,ground:-56,color:0xffb780});
+  const localLights=makeRegionalLights(scene,lightSources);
   const hot=mat(0xffaf62,true);box(scenery,8,3.4,.12,-4,-5,34.05,hot,0);
   for(const x of [-8,-6,-4,-2,0])box(scenery,.22,3.8,.25,x,-5,34.2,iron,0);
-  for(const [x,y,z]of [[-4,-3,38],[0,-49,-8]]){const glow=new T.PointLight(0xffa55b,32,27,2);glow.position.set(x,y,z);scene.add(glow);}
   // District machines occupy authored work positions, rather than the same
   // decorative strip behind every room. Their bounds are in the level layout.
   makeDistrictMachinery(scenery);
@@ -124,11 +107,6 @@ export function makeCityPresentation(scene,aperture){
     box(bay,6,.18,.4,x,-34,-12.2,mat(0xbfb69b,true),0);
   }
   for(const x of [-30,30])for(const z of [18,38,58]){box(scenery,3,23,4,x,-45,z,rock,0);box(scenery,4,1,5,x,-33.5,z,copper,0);}
-  // Quiet practical lamps mark door heights, never use the control/target colors.
-  const lampMaterial=mat(0xbfb69b,true);aperture.apply(lampMaterial,{radius:ARCHITECTURE_APERTURE});
-  for(const s of foldedArchitecture.solids.filter(s=>s.kind==='wall'&&s.h>=4)){
-    box(scenery,s.w>s.d?1.2:.14,.15,s.w>s.d?.14:1.2,s.x+s.w/2+(s.w<s.d?s.w/2+.03:0),s.y+Math.min(3.5,s.h-.5),s.z+s.d/2+(s.w>s.d?s.d/2+.03:0),lampMaterial,0);
-  }
   // Small mechanisms share the same animation clock as their environmental sounds.
   const moving=new T.Group();moving.name='city-working-machines';scene.add(moving);
   const districts=makeWorkingDistricts(scenery,moving);
@@ -173,7 +151,7 @@ export function makeCityPresentation(scene,aperture){
   const bounds=()=>({solids:colliders.size,rooms:foldedArchitecture.rooms.length});
   let frameRegion='foundry',previousTime=0,signalTime=-Infinity,signalWasOn=false,initialized=false;
   function update(time,p,state){
-    districts.update(time,state);backdrop.update(time,p,state);
+    districts.update(time,state);backdrop.update(time,p,state);localLights.update(time,p);
     frameRegion=expansionDecks.find(d=>d.region&&Math.abs(d.y-p.y)<.5&&p.x>=d.x&&p.x<=d.x+d.w&&p.z>=d.z&&p.z<=d.z+d.d)?.region||regionAt(p,foldedArchitecture.rooms);
     const flowDt=Math.min(.1,Math.max(0,time-previousTime));previousTime=time;
     for(const item of currents){
@@ -211,7 +189,7 @@ export function makeCityPresentation(scene,aperture){
     }return hit;
   }
   const viewCamera=new T.Vector3(),viewPlayer=new T.Vector3(),viewDirection=new T.Vector3();
-  return {update,cast,bounds,carrier,pumpFans,finale,backdrop,get region(){return frameRegion;},
+  return {update,cast,bounds,carrier,pumpFans,finale,backdrop,localLights,get region(){return frameRegion;},
     setCamera(c){viewCamera.copy(c);},setView(value){third=value;backdrop.setView(value);depth.visible=true;for(const m of visualMaterials){m.transparent=true;m.depthWrite=sceneryMaterials.has(m);m.needsUpdate=true;}},
     sight(p,d){viewPlayer.set(p.x,p.y,p.z);viewDirection.copy(d);}
   };

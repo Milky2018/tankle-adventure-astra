@@ -4,10 +4,12 @@ import {expansionProps,expansionPickups} from './folded-expansion-layout.js';
 import {currentVelocity} from './folded-mechanisms.js';
 import {expansionCurrents} from './folded-expansion-layout.js';
 import {SIGNAL} from './folded-visibility.js';
+import {REGION_STYLE} from './folded-architecture.js';
 
 export function makeDistrictMachinery(parent){
  const iron=mat(C.dark),metal=mat(C.metal),brass=mat(0xbfa16d),blue=mat(SIGNAL.magnet),glass=mat(0x91c7b5,true),warm=mat(0xd39550,true);
  for(const p of expansionProps){
+  const style=REGION_STYLE[p.region],iron=mat(style.frame),metal=mat(style.wall),brass=mat(style.accent),glass=mat(0xc6d2d0,true);
   const g=new T.Group();g.position.set(p.x,p.y,p.z);parent.add(g);
   if(p.kind==='gantry'){
    for(const x of [-7,7])box(g,.6,9,.8,x,4.5,0,metal,0);

@@ -5,7 +5,7 @@ import {cityMaterials} from './folded-materials.js';
 import {stepTransport} from './folded-transport.js';
 import {groundPatches} from './folded-ground.js';
 import {makeSidePuzzles} from './folded-side-puzzles.js';
-import {architectureIndex,REGION_STYLE} from './folded-architecture.js';
+import {architectureIndex,REGION_STYLE,regionAt} from './folded-architecture.js';
 import {magnetPullable} from './folded-combat.js';
 import {REFUGE_RADIUS} from './folded-refuges.js';
 import {SORTER_REACH,BARRAGE} from './folded-attacks.js';
@@ -20,7 +20,7 @@ import {cityBelts,cityMirrors} from './folded-city-layout.js';
 import * as T from 'three';
 import {box,cylinder,ring,mat,C,tankModel,batchStatic as batchGeometry,chargeWarning} from './world.js';
 import {renderDecks} from './hoist-layout.js';
-import {foldedBattles,foldedDecks,foldedLiftDefs,foldedControls,foldedHives,foldedPickups,foldedEnemies,foldedSupport,activeSolid,inRect,deckHeight} from './folded-layout.js';
+import {foldedArchitecture,foldedBattles,foldedDecks,foldedLiftDefs,foldedControls,foldedHives,foldedPickups,foldedEnemies,foldedSupport,activeSolid,inRect,deckHeight} from './folded-layout.js';
 
 export function makeFoldedWorld(scene,state,{batching=true}={}){
   const batchStatic=batching?batchGeometry:()=>{};
@@ -32,13 +32,8 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
   const fixed=new T.Group();scene.add(fixed);
   const surfaces=[],walls=[],controls=[],hives=[],pickups=[],lifts=[],enemies=[],pillars=[],floorDetails=[],mirrors=[],belts=[];
   const raycaster=new T.Raycaster();
-  const foundryFloor=d=>d.id.startsWith('foundry')||['press-working-floor','press-service-link','reclaim-entry-verge','reclaim-sorting-bay','prototype-court','prototype-return','recycling-furnace','exit-terrace'].includes(d.id);
-  const palette=d=>d.water?0x477a7b:d.region?REGION_STYLE[d.region].wall:foundryFloor(d)?0x566365:d.y<=-40?0x394e50:d.y<=-24?0x485b5e:d.y<0?0x5b7069:d.y>=16?0x7c7c70:0x647572;
-  const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
-  const ctx=canvas.getContext('2d');ctx.fillStyle='#d8dad0';ctx.fillRect(0,0,128,128);
-  ctx.fillStyle='#cdd0c7';ctx.fillRect(0,0,128,1);ctx.fillRect(0,0,2,128);
-  const texture=new T.CanvasTexture(canvas);texture.wrapS=texture.wrapT=T.RepeatWrapping;texture.colorSpace=T.SRGBColorSpace;
-  const waterMaterial=cityMaterials().water,waterTexture=waterMaterial.map;
+  const deckRegions=new Map(foldedDecks.map(d=>[d.id,d.region||regionAt({x:d.x+d.w/2,y:d.y+(d.rise||0)/2,z:d.z+d.d/2},foldedArchitecture.rooms)]));
+  const surfaceMaterials=cityMaterials(),waterMaterial=surfaceMaterials.water,waterTexture=waterMaterial.map;
   const trims=new Map(foldedDecks.map(d=>{const g=new T.Group();scene.add(g);return [d.id,g];}));
   const patches=renderDecks([...foldedDecks].sort((a,b)=>Number(!!a.water)-Number(!!b.water)),foldedLiftDefs.map(l=>({...l,recess:Math.max(.6,l.recess||0)}))).flatMap(d=>{
     if(d.rise)return [d];
@@ -49,8 +44,8 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
   const floorDepthBatches=new T.Group(),floorMeshes=new T.Group(),floorBatches=new T.Group(),floorMaterials=new Map();
   scene.add(floorMeshes,floorBatches,floorDepthBatches);
   for(const d of patches){
-    const key=d.water?'water':palette(d);
-    if(!floorMaterials.has(key))floorMaterials.set(key,d.water?new T.MeshPhongMaterial({color:0x397d9d,specular:0x658581,shininess:40,normalMap:waterMaterial.normalMap,normalScale:new T.Vector2(.32,.32)}):mat(key));
+    const key=d.water?'water':deckRegions.get(d.id),style=REGION_STYLE[deckRegions.get(d.id)];
+    if(!floorMaterials.has(key))floorMaterials.set(key,d.water?new T.MeshPhongMaterial({color:0x397d9d,specular:0x658581,shininess:40,normalMap:waterMaterial.normalMap,normalScale:new T.Vector2(.32,.32)}):new T.MeshToonMaterial({color:style.floor,...surfaceMaterials[style.paving]}));
     const mesh=box(floorMeshes,d.w,.65,Math.hypot(d.d,d.rise||0),d.x+d.w/2,d.y+(d.rise||0)/2-.325-(d.recess||0),d.z+d.d/2,floorMaterials.get(key),0);
     aperture.apply(mesh.material,{terrain:true});mesh.userData.aperture=true;mesh.userData.supportSurface=true;
     // The opaque depth pass handles other floors. Draw translucent floor color
@@ -60,7 +55,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     {
       mesh.geometry=mesh.geometry.clone();const pos=mesh.geometry.attributes.position,uv=mesh.geometry.attributes.uv;
       for(let i=0;i<pos.count;i++)uv.setXY(i,(pos.getX(i)+mesh.position.x)/8,-(pos.getZ(i)+mesh.position.z)/8);
-      mesh.material.map=d.water?waterTexture:texture;
+      mesh.material.map=d.water?waterTexture:surfaceMaterials[style.paving].map;
     }
     // Opaque floor fragments must occlude lower structures regardless of transparent sorting.
     // The matching aperture in the depth pass keeps the lower room visible.
@@ -117,18 +112,33 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
   }
   const signs=routeSigns.map(sign=>{
     const root=new T.Group();root.position.set(sign.x,sign.y,sign.z);root.rotation.y=sign.yaw;scene.add(root);
+    const region=sign.region||regionAt(sign,foldedArchitecture.rooms),style=REGION_STYLE[region];
     // One quiet lintel and two low lamps frame the opening, leaving its center clear.
     for(const side of [-1,1]){
-      box(root,.3,4,.3,side*4.5,2,0,C.metal,0);
-      box(root,.4,.16,.4,side*4.5,.3,0,mat(C.lightYellow,true),0);
+      if(region==='circulation'){
+        cylinder(root,.2,4,side*4.5,2,0,style.accent,10);
+        for(const y of [1,3])ring(root,.25,.06,side*4.5,y,0,style.frame);
+      }else box(root,.3,4,.3,side*4.5,2,0,style.frame,0);
+      box(root,.4,.16,.4,side*4.5,.3,0,mat(0xcbd0bf,true),0);
+      if(region==='transit'){const brace=box(root,1.5,.14,.2,side*3.85,3.6,0,style.accent,0);brace.rotation.z=side*.5;}
     }
-    box(root,9.3,.25,.35,0,4,0,C.dark,0);
+    box(root,9.3,['foundry','furnace'].includes(region)?.6:.25,.35,0,4,0,style.wall,0);
+    if(region==='optics')box(root,8.6,.08,.14,0,3.8,.2,style.accent,0);
     floorDetails.push({root,x:sign.x,y:sign.y,z:sign.z,radius:5});return {...sign,root};
   });
   const massDepth=new T.Group();massDepth.name='folded-mass-depth';scene.add(massDepth);
   const massDepthMaterial=new T.MeshBasicMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});aperture.apply(massDepthMaterial,{depthOnly:true,radius:STRUCTURE_APERTURE_RADIUS});
   for(const d of foldedSolids){
     const mesh=box(scene,d.w,d.h,d.d,d.x+d.w/2,d.y+d.h/2,d.z+d.d/2,mat(d.magnetic?(d.rail?SIGNAL.magnet:C.dark):d.mass?0x294b48:d.theme?REGION_STYLE[d.theme].frame:d.permanent?C.teal:d.red?0x9e573b:['launch','optics','pressure'].includes(d.id)?C.orange:C.dark),.08);
+    if(d.masonry){
+      mesh.material.color.setHex(REGION_STYLE[d.theme].wall);
+      Object.assign(mesh.material,surfaceMaterials[REGION_STYLE[d.theme].surface]);
+      const g=mesh.geometry.clone(),pos=g.attributes.position,uv=g.attributes.uv;
+      for(let i=0;i<pos.count;i++)uv.setXY(i,(d.w>d.d?pos.getX(i)+d.x:pos.getZ(i)+d.z)/8,(pos.getY(i)+d.y)/4);
+      mesh.geometry=g;
+      box(mesh,d.w+.08,.16,d.d+.08,0,d.h/2+.08,0,REGION_STYLE[d.theme].accent,0);
+      box(mesh,d.w+.04,.1,d.d+.04,0,-d.h/2+.45,0,REGION_STYLE[d.theme].frame,0);
+    }
     if(d.mass){
       aperture.apply(mesh.material,{radius:STRUCTURE_APERTURE_RADIUS});mesh.userData.massAperture=true;
       const prepass=new T.Mesh(mesh.geometry,massDepthMaterial);prepass.position.copy(mesh.position);massDepth.add(prepass);
@@ -394,7 +404,8 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     if(magnetPullable(e)){for(const side of [-1,1])box(model.body,.2,.38,1,side*.75,1.1,0,mat(SIGNAL.magnet,true),0);}
     if(e.magneticShield&&model.frontArmor){model.frontArmor.material=mat(SIGNAL.magnet);for(const x of [-.7,.7])box(model.frontArmor,.3,.55,.12,x,0,.34,mat(0xa9dcff,true));}
     const materials=prepareEnemyMaterials(model,{batching});
-    const warningGeometry=new T.BufferGeometry().setAttribute('position',new T.BufferAttribute(new Float32Array(['welder','dredger'].includes(e.type)?45:6),3).setUsage(T.DynamicDrawUsage));warningGeometry.setDrawRange(0,2);
+    // Prototype's three rays each contain an origin, endpoint and return vertex.
+    const warningGeometry=new T.BufferGeometry().setAttribute('position',new T.BufferAttribute(new Float32Array(e.id==='prototype'?27:['welder','dredger'].includes(e.type)?45:6),3).setUsage(T.DynamicDrawUsage));warningGeometry.setDrawRange(0,2);
     const warning=new T.Line(warningGeometry,new T.LineBasicMaterial({color:e.type==='sniper'?0xff263c:C.orange,transparent:true,opacity:.95}));scene.add(warning);warning.visible=false;warning.frustumCulled=false;
     if(e.type==='boss')model.root.scale.setScalar(1.8);
     const charge=['scout','elite'].includes(e.type)?chargeWarning(e.type):null;if(charge)scene.add(charge.root);
@@ -505,7 +516,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
       for(let i=0;i<count;i++){dummy.position.set(horizontal?i*travel/count-travel/2:0,.15,horizontal?0:i*travel/count-travel/2);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);mesh.setColorAt(i,new T.Color(i%6===0?0xb6a578:0x485956));}
       mesh.boundingBox=new T.Box3(new T.Vector3(horizontal?-travel/2-.32:-(cross-.65)/2,.1,horizontal?-(cross-.65)/2:-travel/2-.32),new T.Vector3(horizontal?travel/2+.32:(cross-.65)/2,.2,horizontal?(cross-.65)/2:travel/2+.32));
       mesh.boundingSphere=mesh.boundingBox.getBoundingSphere(new T.Sphere());
-      segments.push({root,mesh,count,travel,rollers,heaters});
+      segments.push({root,mesh,count,travel,rollers,heaters,beltSurface:b});
     }
     belts.push({...b,horizontal,length,stretch,segments,mesh:segments[0].mesh,phase:0});
   }
@@ -584,8 +595,13 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     wreck.root.traverse(m=>{if(m.isMesh&&m.material.color){m.material=m.material.clone();m.material.color.lerp(new T.Color(C.dark),.7);}});
   }
   const press=new T.Group();press.position.set(-46,-16,40);scene.add(press);
-  for(const x of [-5,5])box(press,1.1,x<0?17:12,1.3,x,x<0?8.5:6,0,C.dark);
-  box(press,12,1.3,2,0,17,0,C.metal);const ram=box(press,7,2,3,0,8,0,mat(C.metal));
+  for(const x of [-5,5]){
+    box(press,1.1,24,1.3,x,12,0,C.dark);
+    for(const y of [1,11,22])box(press,1.5,.7,1.7,x,y,0,C.metal,0);
+  }
+  const pressHead=box(press,13,2.4,3.5,0,23.3,0,0x87958a);pressHead.rotation.z=-.06;
+  cylinder(press,1.1,11,0,16,0,C.dark,12);
+  const ram=box(press,8,2.5,3.5,0,8,0,mat(C.metal));
   floorDetails.push({root:press,x:-46,y:-16,z:40,radius:8});
   const pipeLights=[];
   // The same three vertical mains can be seen from optics, the pump and the rig.
@@ -622,7 +638,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
         if(!cache.has(material)){
           const result=clone?material.clone():material;
           if(clone)delete result.userData.aperture;
-          aperture.apply(result,{cameraOnly:!owner?.floorMark,radius:owner?.mass?STRUCTURE_APERTURE_RADIUS:13});result.depthWrite=!owner?.mass&&!owner?.floorMark;cache.set(material,result);
+          aperture.apply(result,{cameraOnly:!owner?.floorMark,terrain:!!owner?.beltSurface,radius:owner?.mass?STRUCTURE_APERTURE_RADIUS:13});result.depthWrite=!owner?.mass&&!owner?.floorMark;cache.set(material,result);
         }
         const result=cache.get(material);result.transparent=true;if(owner?.floorMark)aperture.apply(result);return result;
       });
@@ -657,7 +673,8 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
       if(object.dynamic){object.root.updateWorldMatrix(true,false);object.bounds.copy(object.local).applyMatrix4(object.root.matrixWorld);}
       sightBounds.copy(object.bounds);sightBounds.min.x-=1.6;sightBounds.max.x+=1.6;sightBounds.min.z-=1.6;sightBounds.max.z+=1.6;
       // Keep same-floor threats and inset controls legible while tall scenery fades.
-      const eligible=object.owner?.mount?Math.abs(object.owner.ground-p.y)>3:object.owner?.model||object.owner?.enemy||object.owner?.arms?Math.abs(object.owner.y-p.y)>3:true;
+      const supportingBelt=object.owner?.beltSurface&&supportPatches.some(d=>inRect(object.root.position.x,object.root.position.z,d)&&Math.abs(deckHeight(d,object.root.position.z)-object.root.position.y)<.3);
+      const eligible=!supportingBelt&&(object.owner?.mount?Math.abs(object.owner.ground-p.y)>3:object.owner?.model||object.owner?.enemy||object.owner?.arms?Math.abs(object.owner.y-p.y)>3:true);
       const hit=eligible&&sightBounds.max.y>p.y+2.4&&sight.intersectBox(sightBounds,sightPoint);
       const distance=hit?sightPoint.distanceTo(sight.origin):Infinity;
       const obscures=!!hit&&distance>1.8&&distance<58;

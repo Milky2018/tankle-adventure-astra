@@ -154,6 +154,7 @@ export function initialFoldedState(saved={}){
     solids:foldedSolids.map(body=>({...body})),
   },enumerable:false});
   for(const id of ['magnet','freight','gangway','load','brake','cage','launch','optics','pressure','flotation','phoenix','rail-repair',...refugeFlags,...cityFlags,...expansionFlags,...explorationFlags,...UPGRADE_IDS])state[id]=saved[id]===true;
+  if(state.prototype||state.overdrive)state['overdrive-return']=true;
   if(state.load)state.brake=true;
   if(state.ballast)state.ratchet=true;
   if(state['pressure-return'])state['pressure-thermal']=true;
@@ -170,6 +171,8 @@ export function initialFoldedState(saved={}){
   // Preserve the old indexed orientation, including an in-flight switch signal.
   state.mirrorTurns={'return-index':saved.mirrorTurns?.['return-index']??(saved['mirror-index']||saved.pendingSignals?.['mirror-index']?1:0)};
   delete state.pendingSignals['mirror-index'];
+  delete state.pendingSignals['prototype-inspection'];
+  delete state.pendingSignals['overdrive-bypass'];
   state['rail-crossing']=!!(saved.sidePuzzles?.rail?.solved||saved.sidePuzzles?.rail?.secured);
   for(const p of explorationPickups)if(p.requires&&state[p.id])state[p.requires]=true;
   state.anchor=migrateRefuge(saved.anchor,state);
