@@ -15,15 +15,15 @@ const hp={sniper:3,guard:5,skirmisher:3,artillery:5,scout:2,turret:4,welder:5,mi
 const roomData={
  arsenal:[['dispatch',-146,-12,82,54],['armature',-158,-70,46,30],['rail-shop',-192,-98,60,56],['inspection',-94,-68,20,66]],
  reservoir:[['east-bank',-84,46,16,72],['filter-bank',-172,106,104,16],['drydock',-174,54,20,52],['pump-island',-130,70,14,16]],
- proving:[['receiving',64,-146,32,32],['recoil',64,-176,24,20],['impact',108,-196,94,42],['observation',102,-150,96,10],['repair',208,-154,24,30],['engine',204,-118,28,28]],
+ proving:[['receiving',64,-146,32,32],['recoil',64,-176,24,20],['impact',108,-196,94,42],['observation',102,-150,96,10],['repair',202,-164,42,40],['engine',204,-118,28,28]],
  lens:[['vestibule',264,-38,28,28],['west-gallery',264,-96,14,70],['north-gallery',264,-100,80,18],['east-gallery',328,-100,20,68],['emitter',308,-46,40,28]],
  coolant:[['intake',274,106,28,30],['west-service',282,136,20,56],['separator',292,176,76,20],['east-service',350,136,20,56],['jacket',352,94,36,34]],
  hearth:[['receiving',52,50,28,22],['mounts',8,76,54,28],['feed',4,100,64,22]]
 };
 const routes={
  arsenal:{
-  path:[[-76,31,'repair'],[-104,31],[-104,12],[-136,12],[-136,-24,'arsenal-transfer'],[-136,-54],[-128,-54,'repair'],[-156,-54],[-156,-68,'pickup']],
-  returns:[[-156,-68],[-156,-54],[-120,-54,'arsenal-return'],[-54,-54],[-54,28],[-26,28],[0,27]],
+  path:[[-76,31,'repair'],[-104,31],[-104,12],[-136,6],[-136,-24,'arsenal-transfer'],[-136,-54],[-128,-54,'repair'],[-156,-54],[-156,-68,'pickup']],
+  returns:[[-156,-68],[-156,-54],[-110,-54,'arsenal-return'],[-54,-54],[-54,28],[-26,28],[0,27]],
   branches:[[[-104,31],[-76,31],[-76,-2],[-104,-2],[-136,-2]],[[-136,-54],[-162,-54],[-162,-66],[-176,-66],[-176,-76]],[[-136,-54],[-82,-54],[-82,-30],[-82,-14],[-82,31]]],
   controls:[['arsenal-transfer',-136,-28,'shot',{mount:'arsenal-transfer',facing:[0,0,1]}],['arsenal-return',-102.1,-54,'magnet',{height:4.1,ground:8,mount:'arsenal-return',facing:[-1,0,0]}]],
   gates:[['arsenal-transfer',-142,-35,12,1,{rail:{axis:'x',min:-142,max:-128,release:'arsenal-transfer'}}],['arsenal-return',-101,-60,1,12,{magnetic:true}]],
@@ -42,13 +42,13 @@ const routes={
   props:[['pump',-123,78],['sluice',-107,118],['wreck',-167,60],['planter',-169,74],['planter',-72,114]],
  },
  proving:{
-  path:[[77,-124,'repair'],[77,-150],[77,-158,'proving-transfer'],[94,-158],[94,-180],[112,-180],[130,-172],[152,-172,'battle'],[182,-172],[182,-182],[218,-182],[218,-136,'repair'],[218,-114,'pickup']],
-  returns:[[218,-114],[238,-114],[238,-62,'boost'],[238,-28],[150,-28,'cage']],
+  path:[[77,-124,'repair'],[77,-150],[77,-158,'proving-transfer'],[94,-158],[94,-180],[112,-180],[130,-172],[152,-172,'battle'],[182,-172],[182,-182],[218,-182],[218,-170,'repair'],[218,-132,'overseer'],[218,-114,'pickup']],
+  returns:[[218,-114],[238,-114],[238,-82],[180,-82,'boost'],[62,-82],[62,-74],[-22,-74],[-22,2],[38,2],[38,6],[140,6,'boost'],[154,6],[154,-98],[126,-98],[126,-32],[150,-28,'cage']],
   branches:[[[112,-176],[106,-176],[106,-146],[192,-146],[192,-176],[188,-176]]],
   controls:[['proving-transfer',77,-170,'shot',{ground:16,height:1.3,counterweight:true}]],
-  gates:[['proving-transfer',100,-196,1,42],['proving-endurance',201,-196,1,54]],
+  gates:[['proving-transfer',100,-196,1,46],['proving-endurance',201,-196,1,54]],
   cover:[[122,-187,4,8],[156,-168,9,3],[176,-190,3,8]],
-  enemies:[['turret',82,-148,'receiving'],['artillery',169,-183,'endurance'],['skirmisher',133,-178,'endurance'],['scout',178,-166,'endurance'],['guard',192,-184,'endurance',1],['skirmisher',190,-178,'endurance',1],['scout',238,-64,'return'],['guard',238,-48,'return',0,{y:20}]],
+  enemies:[['turret',82,-148,'receiving'],['artillery',169,-183,'endurance'],['skirmisher',133,-178,'endurance'],['scout',178,-166,'endurance'],['guard',192,-184,'endurance',1],['skirmisher',190,-178,'endurance',1],['scout',180,-82,'return'],['guard',172,-82,'return']],
   props:[['test-bed',86,-139],['test-bed',145,-190],['engine',225,-103],['wreck',207,-110]],
  },
  lens:{
@@ -105,7 +105,7 @@ for(const plan of districtPlans){
   if(kind==='gantry')for(const side of [-7,7])expansionSolids.push({id:`${id}-gantry-${side}`,x:x+side-.3,y,z:z-.4,w:.6,d:.8,h:9,permanent:true,invisible:true});
   else {const size=kind==='separator'?14:kind==='pump'?7:4;expansionSolids.push({id:`${id}-${kind}-${x}`,x:x-size/2,y,z:z-size/2,w:size,d:size,h:kind==='separator'?12:kind==='pump'?8:kind==='boiler'?6:['lens','emitter','rack'].includes(kind)?3.8:3.5,permanent:true,invisible:true});}
  }
- if(plan.pickup){const [x,z]=r.path.find(p=>p[2]==='pickup');expansionPickups.push({id:plan.pickup,ability:plan.ability,x,y,z,...(id==='arsenal'?{y:14,lift:'rail-inspection-bridge'}:{})});}
+ if(plan.pickup){const [x,z]=r.path.find(p=>p[2]==='pickup');expansionPickups.push({id:plan.pickup,ability:plan.ability,x,y,z,...(id==='arsenal'?{y:14,lift:'rail-inspection-bridge'}:id==='proving'?{requires:'foundry',preview:true}:{})});}
  if(id==='proving'){const [x,z]=r.path.find(p=>p[2]==='battle');expansionBattles.push({id:`${id}-endurance`,battle:`${id}-endurance`,x:x+5,y:y+1.3,z});}
  for(const c of expansionControls.filter(c=>c.id.startsWith(id)&&c.surface==='top'))expansionSolids.push({id:c.id+'-tray',x:c.x-2,y,z:c.z-2,w:4,d:4,h:1.9,permanent:true});
  expansionRoutes.push({...plan,returnY:id==='proving'?24:id==='arsenal'?0:y,path:r.path,returns:r.returns,rooms:rooms.map(r=>({...r,x:r.x+r.w/2,z:r.z+r.d/2})),trial:`${id}-transfer`});

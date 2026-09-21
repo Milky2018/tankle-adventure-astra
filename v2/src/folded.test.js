@@ -16,12 +16,12 @@ function drive(p,x,z,state,boost=false){
 }
 const player=()=>Object.assign(newPlayer(),{x:0,y:0,z:27,overdrive:true,magnet:true});
 
-test('the garden route descends continuously and acquisition remains on dry ground',()=>{
-  const p=player(),s=initialFoldedState();drive(p,-26,27,s);drive(p,-26,-8,s);assert.equal(p.y,-8);
-  for(let i=0;i<80;i++)moveFolded(p,-.2,0,s);assert.ok(p.x>-39,'magnetic panel blocks dry access');
-  assert.equal(releaseFolded('magnet','cannon',p,s,[]),false);assert.ok(releaseFolded('magnet','magnet',p,s,[]));
-  drive(p,-46,-8,s);assert.equal(p.y,-8);assert.equal(p.afloat,false);
+test('the garden dry approach is accessible before Magnet and Mortar',()=>{
+ const p={...player(),magnet:false,mortar:false},s=initialFoldedState();
+ drive(p,-26,27,s);drive(p,-26,-8,s);drive(p,-46,-8,s);
+ assert.equal(p.y,-8);assert.equal(p.afloat,false);assert.equal(s.magnet,false);
 });
+
 
 test('Flotation crosses below the real bridge and reaches the bank without selecting an upper floor',()=>{
   const s=initialFoldedState({magnet:true}),p=Object.assign(player(),{x:-46,y:-8,z:-8,deployed:true,flotation:true});
@@ -47,20 +47,23 @@ test('the pump return reveals its closed gate at the machine and reconnects dry 
   assert.equal(restored.pump,true);
 });
 
-test('the dry freight approach reaches common benches without Magnet or Flotation',()=>{
-  const p=Object.assign(player(),{magnet:false,mortar:true}),s=initialFoldedState({freight:true,'bridge-crane':true});
-  for(const [x,z]of [[0,-34],[59,-34],[59,-63],[67,-63],[67,-34],[70,-34],[70,-19],[90,-19]])drive(p,x,z,s);
-  assert.equal(p.y,0);assert.equal(p.flotation,false);assert.equal(p.magnet,false);
-  s.load=true;drive(p,90,-59,s);assert.equal(p.y,8);
+test('the freight frontage previews the combined grille without giving access to the carrier',()=>{
+ const p={...player(),magnet:false,mortar:true},s=initialFoldedState({freight:true,'bridge-crane':true});
+ for(const [x,z]of [[0,-34],[59,-34],[59,-63],[67,-63],[67,-34],[74,-34],[74,-26]])drive(p,x,z,s);
+ for(let i=0;i<120;i++)moveFolded(p,0,.1,s);
+ assert.ok(p.z<-23);assert.equal(s.magnet,false);assert.equal(s.load,false);
+ drive(p,74,-34,s);
 });
 
-test('ordinary Overdrive cannot break the launch shutter, while the supported Phoenix run can',()=>{
-  const s=initialFoldedState(),p=Object.assign(player(),{x:85,y:16,z:-86});
-  for(let i=0;i<400;i++){updateHeat(p,1/60,i/60,true,true);moveFolded(p,BASE_SPEED*p.speed/60,0,s);}
-  assert.equal(s.launch,false);assert.ok(p.x<140);
-  Object.assign(p,{x:85,heat:0,overheated:false,speed:1,phoenix:true});drive(p,164,-86,s,true);assert.equal(s.launch,true);
-  drive(p,166,-86,s);drive(p,166,-32,s);assert.equal(p.y,24);
+
+test('ordinary Boost cannot break the original orange bulkhead, while Phoenix resolves it permanently',()=>{
+ const s=initialFoldedState(),p={...player(),x:32,y:0,z:6,magnet:false};
+ for(let i=0;i<400;i++){updateHeat(p,1/60,i/60,true,true);moveFolded(p,BASE_SPEED*p.speed/60,0,s);}
+ assert.equal(s.pressure,false);assert.ok(p.x<92);
+ Object.assign(p,{x:32,heat:0,overheated:false,speed:1,phoenix:true});drive(p,140,6,s,true);assert.equal(s.pressure,true);
+ p.phoenix=false;drive(p,32,6,s);
 });
+
 
 test('the roof coupling stays covered before Phoenix and preserves its release on reload',()=>{
   const p=player(),s=initialFoldedState();assert.equal(releaseFolded('cage','cannon',p,s,[]),false);
@@ -80,12 +83,7 @@ test('rendered flat surfaces never overlap at the same height and the shared cag
   assert.ok(decks.some(d=>d.id==='turntable'&&d.recess>.55));
 });
 
-test('both onward Phoenix shutters have sufficient supported runup and remain open for ordinary return',()=>{
-  const state=initialFoldedState(),p=Object.assign(player(),{x:136,y:24,z:-30,phoenix:true});
-  drive(p,190,-30,state,true);assert.equal(p.y,24);p.phoenix=false;drive(p,150,-30,state);
-  Object.assign(p,{x:166,y:16,z:-64,phoenix:true,heat:0,overheated:false,speed:1});
-  drive(p,166,-3,state,true);assert.ok(state.pressure);p.phoenix=false;drive(p,166,-40,state);
-});
+
 
 test('the actual aim point stops at forty degrees while reachable vertical targets remain unchanged',()=>{
   const p={x:0,y:8,z:0};
@@ -100,15 +98,4 @@ test('the actual aim point stops at forty degrees while reachable vertical targe
 test('defenders start on supported floor outside machinery and cover',()=>{
   const state=initialFoldedState();
   for(const e of foldedEnemies){assert.ok(foldedSupport(e.x,e.z,e.y,swims(e)));assert.equal(foldedBlocked(e.x,e.y,e.z,state,1),undefined,e.id);}
-});
-
-test('the shared carrier screen closes the whole ramp before either approach reaches Phoenix',()=>{
-  for(const x of [85.2,90,94.8]){
-    const p=Object.assign(player(),{x,y:0,z:-18}),s=initialFoldedState();
-    for(let i=0;i<300;i++)moveFolded(p,0,-.15,s);
-    assert.ok(p.z>-27,'the hull cannot walk around or under the screened load');
-    assert.ok(releaseFolded('load','mortar',p,s,[]));
-    drive(p,90,p.z,s);drive(p,90,-59,s);assert.equal(p.y,8);
-    assert.ok(initialFoldedState(s).load,'the release survives a reload');
-  }
 });

@@ -43,13 +43,13 @@ test('Mortar release opens a real local return, and the cargo lift cycles withou
  assert.ok(releaseFolded('bridge-crane','mortar',p,s,[]));route(p,s,[[0,27]]);assert.equal(s.foundry,false);
 });
 
-test('the carrier requires the load and Overseer victory, including restores, and has a visible exit shutter',()=>{
+test('the combined load powers the carrier before Overseer, while victory seals the reward approach',()=>{
  const def=foldedLiftDefs.find(l=>l.id==='carrier'),a=BOSS_ARENAS.find(a=>a.id==='foundry');
- assert.ok(foldedSolids.some(g=>g.id==='foundry'&&g.z===a.z-.5));
+ assert.ok(foldedSolids.some(g=>g.id==='foundry'&&g.z>a.z+a.d));
  for(const saved of [{load:true},{foundry:true},{load:true,foundry:true}]){
   const s=initialFoldedState(saved),l={...def,y:8,destination:8,wait:0},p={x:0,y:0,z:0};
   for(let i=0;i<240;i++)stepLifts([l],s,p,1/60);
-  assert.equal(l.y>8,!!(saved.load&&saved.foundry));
+  assert.equal(l.y>8,!!saved.load);
  }
  assert.ok(foldedSupport(def.x+6,def.z+6,16));
 });

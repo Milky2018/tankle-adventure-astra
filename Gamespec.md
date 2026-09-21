@@ -36,7 +36,7 @@ The game combines direct movement and independent aim, a shared Heat budget, abi
 
 ### Current scope
 
-The connected journey contains seven regions organized around exactly four Repair Hives, eight abilities including the starting Cannon, twelve ordinary enemy archetypes, the Prototype and four Boss encounters, permanent regional shortcuts, optional restoration scenes, ten dispersed equipment discoveries, and one voluntary ending. The Empty Hoist is machinery distributed through these regions, not an eighth region. The four refuges, regional loops and physical shortcuts define the city; room placement follows their relationships. Reorganizing routes and machinery does not change the agreed movement, Heat, weapon, upgrade or damage values. Main progress never depends on completing all optional repairs or collecting the optional Magnet and Flotation modules.
+The connected journey contains seven regions organized around exactly four Repair Hives, eight abilities including the starting Cannon, twelve ordinary enemy archetypes, the Prototype and four Boss encounters, permanent regional shortcuts, optional restoration scenes, ten dispersed equipment discoveries, and one voluntary ending. The Empty Hoist is machinery distributed through these regions, not an eighth region. The four refuges, regional loops and physical shortcuts define the city; room placement follows their relationships. Reorganizing routes and machinery does not change the agreed movement, Heat, weapon, upgrade or damage values. All seven acquired abilities belong to main progression. Magnet, Mortar and Flotation can be acquired in any order within the middle stage; all three have physical roles in reaching Phoenix. Optional repairs, equipment reinforcements, Sorter and Guardian remain outside the completion requirement.
 
 There is no ammunition economy, currency, experience, corpse retrieval, field healing, limited equipment loadout or mandatory restoration percentage. Acquired abilities remain available. Ordinary movement remains available during Overheat. Hazards do not bounce or teleport the Tank to safety.
 
@@ -59,13 +59,13 @@ The player is a rejected experimental chassis that can accept modules from incom
 | Stage | Immediate purpose | What the world reveals |
 | --- | --- | --- |
 | Escape | Avoid reclamation and leave the Foundry | The factory rejects the Tank; Repair Hives preserve it |
-| Find passage | Cross an empty transit network and its blocked approaches | The factory belonged to a much larger connected city |
-| Restore local movement | Reach new banks, freight layers and service routes | Small repairs still let individual machines do useful work |
-| Recognize earlier attempts | Recover the test engine and explore optical or circulation machinery | Failed vehicles share the Tank's sockets and intended destination |
+| Find passage | Reach the freight hub and encounter the orange bulkhead blocking the deeper city | The factory belonged to a larger connected system; the visible destination cannot yet be reached |
+| Restore local movement | Explore the magnetic workshop, cargo works and filter gardens in a chosen order | Freight, water and testing occupy different layers of the same working structure |
+| Recognize earlier attempts | Recover Phoenix, return to the orange bulkhead, then penetrate the observatory and circulation works | Failed vehicles share the Tank's sockets; optical regulation and coolant both served the core glimpsed from above |
 | Inhabit the completed machine | Keep moving through Overheat and reopen old infrastructure | Heat can be carried, and the inner furnace approach is now possible |
 | Choose | Defeat the keeper, inspect the socket and decide whether to dock | The familiar repair-shaped interface needs the Tank's drive to sustain the city |
 
-Mandatory transit, Testworks and predecessor spaces carry the essential story. The optional Gardens and the independently ordered optical and circulation visits provide complementary evidence. No scene assumes that every optional region has already been visited.
+The Foundry establishes escape, the interwoven freight, garden and Testworks stage reveals the city's connected work, and the ordered observatory, circulation and predecessor descent reveals its failing regulation. The three middle acquisitions do not assume an order; their evidence complements rather than repeats itself. Optional care scenes, hidden equipment, Sorter and Guardian deepen that reading without carrying essential plot information.
 
 ### Recurring wordless motifs
 
@@ -191,11 +191,11 @@ Incomplete moving-object puzzles retain a supported local retry, never a strande
 | Standard Cannon | Starting equipment | Break exposed supports, scrap and impact mechanisms | Reliable direct fire and exposed weak-point hits |
 | Overdrive | R1 Prototype | Reverse familiar conveyors and operate momentum machinery | Reposition, evade and ram suitable ordinary enemies |
 | Magnetic Traction | R2 loading workshop | Tear out blue locks and plates; reposition the few movable cover carts | Strip blue shields, pull light enemies, disarm mines and intercept shells |
-| Flotation Chassis | R3 ferry cradle | Traverse the connected water network and reach new banks | Change firing angle and bypass suitable floor hazards |
+| Flotation Chassis | R3 dry filter-work ferry berth | Traverse the connected water network and reach new banks | Change firing angle and bypass suitable floor hazards |
 | Mortar | R2 lower cargo installation | Reach protected targets through a clear overhead arc | Delayed attacks over low cover against clusters or committed targets |
-| Phoenix Engine | R5 test building | Break momentum shutters and open express routes | Destroy ordinary enemies at full speed while preserving travel momentum |
-| Laser | R4 emitter, after Phoenix | Reach distant receivers and route through mirrors | Sustained precise fire and indirect weak-point attacks |
-| Water Circulation | R6 cooling rig, after Phoenix | Continue hot travel and open thermal-contact routes | Double contact damage against every enemy category during Overheat |
+| Phoenix Engine | R4 test building, after the three middle expeditions | Break momentum shutters and open express routes | Destroy ordinary enemies at full speed while preserving travel momentum |
+| Laser | R5 emitter, after Phoenix | Reach distant receivers and route through mirrors | Sustained precise fire and indirect weak-point attacks |
+| Water Circulation | R6 cooling rig, after Laser opens internal maintenance access | Continue hot travel and open thermal-contact routes | Double contact damage against every enemy category during Overheat |
 
 Phoenix upgrades Overdrive's speed ceiling and shares its input; it still counts as an acquisition. Circulation is passive. There is no ninth ability or general-purpose heat-transfer, resonance, electrical-link or player-reflection tool.
 
@@ -282,7 +282,7 @@ Weapons retain their normal Heat rules while afloat. Projectiles, beams, blasts 
 
 The aimed landing surface is fixed at launch and determines the ballistic arc; it is not a timed detonation trigger. Player, ordinary-enemy and Boss Mortars explode only on actual contact with terrain, walls, ceilings, machinery or a damage volume. If a supporting platform moves away or a target is in empty space, the shell continues forward and falls under gravity until contact. A shell lost outside the playable space disappears without a blast. Elevated pressure trays retain their physical contact surface as the aiming reference. A visible arc clears low cover but strikes roofs and sufficiently high walls. Blasts respect intervening solid cover. An overhead hit bypasses an ordinary guard's frontal plate; it does not become a rear hit against a Boss with an armoured roof. Surviving ordinary machines are briefly staggered, providing a follow-up opening without suppressing Boss attacks.
 
-Mortar is discovered at the far end of a cargo expedition from B, after moving freight, a small combined encounter and opposing conveyors have given Overdrive room to develop. It is not handed out beside the refuge or immediately after Prototype. From the quiet installation apron, a horizontal tray behind a low screen invites a safe first lob. A descending shot or nearby blast operates it; a level or rising shot from underneath does not. The release retracts the local screen and starts the return lift. On the way back toward B, a second load release settles a freight platform onto visible supports and completes the transport crossing. The freight battery then develops low-cover geometry in combat. Before Phoenix, a shared Testworks hanging load changes cover and opens a side passage rather than repeating an isolated tray-and-door arrangement. Optional and final uses develop an approach behind a latch and an opened optical sightline.
+Mortar is discovered at the far end of a cargo expedition from B, after moving freight, a small combined encounter and opposing conveyors have given Overdrive room to develop. It is not handed out beside the refuge or immediately after Prototype. From the quiet installation apron, a horizontal tray behind a low screen invites a safe first lob. A descending shot or nearby blast operates it; a level or rising shot from underneath does not. The release retracts the local screen and starts the return lift. On the way back toward B, a second load release settles a freight platform onto visible supports and completes the transport crossing. The freight battery then develops low-cover geometry in combat. Before Phoenix, the Testworks hanging load is approached through a magnetic grille and a flooded inspection passage. Mortar reaches its protected top from the far landing, changing cover and forming the ascent rather than repeating an isolated tray-and-door arrangement. Optional and final uses develop an approach behind a latch and an opened optical sightline.
 
 A ground ring marks the estimated landing and blast radius while aiming, alongside the curved flight guide. A premature collision with machinery or a ceiling shortens the guide and turns the landing ring amber. The forecast follows the same continuing arc to its first predicted collision, including a lower floor beyond the intended landing point. No landing ring is shown when no collision is predicted. It does not promise a hit beyond a wall or lock onto moving enemies.
 
@@ -296,7 +296,7 @@ At the same full-speed threshold that lights the Phoenix HUD indicator, twin pal
 
 The finite high contact tier is 12 damage before Circulation's multiplier; ordinary full-speed destruction remains guaranteed rather than weakened by later ordinary-enemy HP. Cold Phoenix does not grant a required Boss attack or bypass special-enemy armour. Its combat purpose is overwhelming ordinary opposition during travel.
 
-The Phoenix installation, first test runway, breakthrough, refuge C and B–C roof-cage release form one continuous exit. The player does not return to the old installation entrance to find a second demonstration track.
+The Phoenix installation opens directly onto a test runway and safe braking apron. Its roof return reveals B's familiar flywheel and rejoins the approach to the orange bulkhead seen on first entering the middle stage. The player breaks that original barrier with Phoenix before reaching refuge C and releasing the B–C roof cage from its far side. The lesson and roof return form one continuous route; no retracing of the installation entrance or new substitute wall resolves the stage.
 
 Express tracks have long visible run-ups, broad turns, physical guide rails and safe braking aprons. They connect actual neighboring places through player-controlled movement. Initial shutters stay broken and service returns stay open. Normal express routes fit the pre-Circulation Heat budget; they do not demand repeated mandatory cooling stops or a new jumping ability.
 
@@ -336,7 +336,7 @@ These are twice the positive base contact tiers, applied once. **Every enemy cat
 
 The first hot run starts from a cold, safe approach. Visible grilles add 28 Heat/s to engine use, bringing the Tank into Overheat before a jammed maintenance-bridge lock. Red contact releases its hot fasteners; the supported bridge settles and connects to the return lift toward refuge C. A cold impact gives solid recoil. The far side releases an ordinary permanent cool bypass, so the lesson need not be repeated on every return.
 
-Later work lanes let the player stay red to cross ordinary opposition or cool in a side room to regain ranged fire; both choices lead to the same local exit. The inner route combines continued hot movement with a thermal release and retains the ordinary opposing-belt speed. Its optical control and hot passage are both visible from the Furnace Vestibule near C before commitment. Each completed part stays restored while the player leaves to find the other ability. Physically consistent alternate solutions to optional thermal machinery are allowed; required route boundaries must be established by observable hardware rather than an unexplained immunity.
+Later work lanes let the player stay red to cross ordinary opposition or cool in a side room to regain ranged fire; both choices lead to the same local exit. The inner route combines continued hot movement with a thermal release and retains the ordinary opposing-belt speed. The player has already restored the optical maintenance route with Laser and seen this unsustainable hot passage on entering R6. Water Circulation resolves that remembered boundary and reaches the furnace descent. Completed optical and thermal work persists in this progression order; the vestibule is not a two-key collection hub. Physically consistent alternate solutions to optional thermal machinery are allowed; required route boundaries must be established by observable hardware rather than an unexplained immunity.
 
 Circulation must have an exploration interval through familiar reopened infrastructure before the final descent. Staying hot trades ranged fire for contact combat and travel; cooling restores the other choices. It changes neither engine maximum nor acceleration and adds no mandatory Phoenix Boss phase.
 
@@ -350,56 +350,78 @@ Each major ability needs a visible acquisition, a forgiving first use, a later v
 
 Regions have layers: preview, initial access and deeper access. Seeing the observatory from transit does not grant access to its upper optical loop or Laser. Seeing water before Flotation establishes a remembered place and another bank, not merely an inaccessible strip.
 
+### Three scales of progression
+
+The journey has three structural stages, with region IDs matching their geography: R1 is the introductory commitment loop; R2 Freight Exchange, R3 Sunken Gardens and R4 Proving Grounds form one nested middle stage; R5 Silent Observatory, R6 Circulation Works and R7 Central Furnace form an ordered penetration of the same eastern structure. Regions are not individual item rooms or a prescribed sequence of scene transitions.
+
+| Stage | Earlier boundary | Interior development | Recognizable payoff |
+| --- | --- | --- | --- |
+| R1: commitment | The entrance conveyor prevents ordinary reverse travel | Foundry exploration, Prototype and Overdrive | Learn reverse movement on a short belt, then reverse the original entrance belt to A |
+| R2–R4: nested exploration | A distinctive orange structural bulkhead near B blocks the visible deeper city; ordinary Boost cannot break it | Three acquisition loops for Magnet, Mortar and Flotation, with flexible order and cross-connections; a combined approach reaches the Phoenix facility | Phoenix's roof return reaches the original bulkhead from the starting side; break it to reach C |
+| R5–R7: progressive penetration | An optical maintenance route is unreachable, a lower hot passage is unsustainable, and the core is seen before entry | Laser opens the internal descent; Circulation opens the remembered hot route; existing abilities restore the final feed | Enter successive layers of the same building, reopen lateral returns, and recognize A's foundation before the final commitment |
+
 ### Required dependencies
 
-**Cannon → Overdrive → Mortar → Phoenix → Laser and Water Circulation, in either order → inner route → final feed → Keeper → voluntary docking.**
+**Cannon → Overdrive → Magnet, Mortar and Flotation in any acquisition order → their combined physical approach → Overseer → Phoenix → original orange bulkhead → Laser → Water Circulation → inner route → final feed → Keeper → voluntary docking.**
 
-**Magnetic Traction → Flotation** is an optional exploration branch from B. Its water approach and the dry freight approach reach the same Testworks reception hall and required Mortar-operated load and Overseer arena before Phoenix. A player may explore the water branch before collecting Mortar, but cannot obtain Phoenix without it. Optional Sorter and Guardian victories never gate this sequence.
+Magnet and Flotation are required main abilities. Their acquisition approaches, and Mortar's, are independently reachable with Cannon and Overdrive. Magnet may open a convenient garden connection but never owns the only first entrance to Flotation. All six acquisition orders are supported. Partial progress can be left and resumed; none of the three loops requires an uncollected middle ability to escape. Sorter, Guardian, care activities and the ten equipment discoveries remain optional.
 
 ```mermaid
 flowchart TD
-    A["A: Old Repair Room / Foundry"] --> O["Prototype → Overdrive → return to A"]
-    O --> B["B: Central Transit"]
-    B --> CARGO["Cargo expedition / Boost use → Mortar"]
-    CARGO -.->|Safe lob / return lift| B
-    CARGO --> DR["Dry freight / indirect-fire encounter"]
-    B --> M["Optional workshop / Magnet"]
-    M --> F["Dry filter works / Flotation"]
-    F --> WR["Water flanks / Testworks rear dock"]
-    DR --> T["Shared Testworks load / Mortar"]
-    WR --> T
-    T -.->|Before endurance court| B
-    T --> OV["Overseer / carrier hall"]
-    OV --> P["Testworks exploration / proving court / Phoenix installation"]
-    P --> C["Test runway → C: Eastern Distribution Hall"]
-    C -.->|Roof cage| B
-    C --> L["Upper optical loop / Laser"]
-    C --> W["Lower cooling loop / Water Circulation"]
-    L -.->|Safe first reflection / short return| C
-    W -.->|Hot bridge / lift and cool bypass| C
-    L --> V["Furnace Vestibule: optical AND thermal restoration"]
-    W --> V
-    V --> D["Predecessor rooms / D: Furnace Service Room"]
-    D -.->|Old maintenance shaft| A
-    D --> FEED["Hanging load → opened sightline → final feed"]
+    A["A: Old Repair Room"] --> F["R1 commitment → Prototype → Overdrive"]
+    F -->|"Reverse the original conveyor"| A
+    A --> B["B: Freight Exchange / preview orange bulkhead"]
+    B --> M["Workshop loop → Magnet"]
+    B --> O["Cargo loop → Mortar"]
+    B --> W["Dry filter loop → Flotation"]
+    M -.->|"Near-door return / workshop-water connection"| B
+    O -.->|"Local load and return platform"| B
+    W -.->|"Under the familiar bridge / dry return"| B
+    W -.->|"Care court inside-release door"| A
+    M --> X["Grille → flooded passage → protected load / all three tools"]
+    O --> X
+    W --> X
+    X --> T["R4 developed trial / relief / Overseer → Phoenix"]
+    T --> R["Roof return → original orange bulkhead"]
+    R --> C["C: Eastern Distribution Hall"]
+    C -.->|"Far-side roof-cage release"| B
+    C --> L["R5 optical loop → Laser / remembered receiver"]
+    L --> H["R6 internal descent → Circulation / remembered hot passage"]
+    L -.->|"Optical return"| C
+    H -.->|"Lift and permanent cool bypass"| C
+    H -.->|"Inside-release industrial outlet"| G["Earlier Gardens"]
+    H --> D["R7 predecessors / D: Furnace Service Room"]
+    D -.->|"Old maintenance shaft"| A
+    D --> FEED["Load → opened sightline → final feed"]
     FEED --> K["Keeper → voluntary docking"]
 ```
 
-Solid arrows show progression; dotted arrows show earned returns. Region numbers identify places, not a fixed visit order. The two Testworks approaches are alternatives; Laser and Circulation form an AND condition at the same recognizable vestibule. A visitor with only one late ability can restore its corresponding part and leave safely.
+Solid arrows describe progression, not a demand to return to B between acquisitions. Dotted arrows are earned returns. The three middle loops share actual spaces and lateral links: workshop windows overlook the water passage, cargo routes reveal the lower Testworks, and the garden circuit reaches a workshop rear opening. Optional exploration and ordinary encounters occupy these connections; no new mandatory ability or extra control is added to justify them.
 
-| Acquisition or boundary | Required physical approach | First use and guaranteed return |
-| --- | --- | --- |
-| Overdrive | Inward entrance conveyor, Foundry workshop route and Prototype; no living return to A before acquisition | A level reverse-belt lesson joins the foot of the shared entrance ramp; reverse its downhill belt to return to A |
-| Mortar | Cargo expedition from B: freight cover, ordinary combat and opposing conveyors | A safe lob releases the local screen and return lift; use the freight platform on the return toward B |
-| Magnet | Optional loading workshop reached with existing abilities | Tear out a blue retaining lock to open the short return toward B; later reposition a cover cart to change a firing window |
-| Flotation | Magnet opens the dry filter-work approach | Calm visible crossing, then alternative bank approaches; the bridge-underpass route opens a dry door back to B |
-| Phoenix | Either freight/water approach, the common Mortar load and Overseer; a B return opens before the finite court | Installation exits directly through the runway to C and the B–C cage |
-| Laser | Upper optical loop from C, after Phoenix | One broad reflection opens a short return to C; the main return and cooling connection precede Guardian |
-| Water Circulation | Lower cooling loop from C, after Phoenix, independently of Laser | Red contact releases a maintenance bridge toward the C lift; a permanent cool bypass follows |
-| Inner route | Optical and thermal restoration at the vestibule near C | Reach D and open the D–A shaft before final commitment; no Magnet or Flotation requirement |
-| Final feed and docking | Local load-and-light restoration loop from D, Keeper victory, deliberate coupling | The loop returns to another door of D; retries do not repeat it |
+### Middle-stage boundaries and partial progress
 
-Magnet and Flotation remain useful through shield removal, movable cover, water flanks, the Foundry foundation connection and later equipment revisits. The dry journey remains complete without them.
+The orange bulkhead is encountered before the player commits to a middle expedition. Its heavy orange bracing, visible continuation, failed-impact response and usable future run-up make it memorable. It is a forward boundary for the stage, not a seal trapping the player away from A. Until Phoenix, no roof cage, upper walkway, water tunnel, optional Boss reward or far-side latch enters the later side of that boundary.
+
+All three acquisition routes remain distinct local loops. Their rewards first resolve their own earlier obstruction; their containing stage remains unfinished. An acquired tool can also improve another expedition's approach or combat without becoming a prerequisite for that expedition's acquisition. Nearby connections mean the player may move from one loop into another directly.
+
+The final Testworks approach is one coherent installation. Magnet tears the blue retaining grille from the lower inspection entrance. Flotation carries the Tank through the exposed water passage to a dry landing behind the freight bulkhead. From there, Mortar reaches the load's protected horizontal collecting surface; the released load settles onto supports, opening a usable upper ascent and changing the approach's cover. The top target has no early direct firing line or shorter dry reach. The dry frontage and water outlook are previews of this same machine, not separate paths that bypass its requirements.
+
+Each completed action has an immediate visible consequence and persists. With a partial loadout, the Tank can reverse the approach to the established routes; it is not stranded after pulling the grille or reaching the landing. Once the ascent is complete, an inside-release maintenance return reconnects to B before the proving court and Overseer, bypassing repeated swimming and puzzle work on retries. The route uses the three tools because of its geometry, not because a final door counts collected modules.
+
+### Acquisition loops and returns
+
+| Ability or boundary | Encountered before acquisition | Expedition and first use | Return and larger role |
+| --- | --- | --- | --- |
+| Overdrive | The inward entrance conveyor defeats reverse travel | Foundry workshop and Prototype; safe short reverse-belt lesson | Rejoin and reverse the original ramp to A; enter the middle stage |
+| Magnet | A blue fitting holds the near workshop door; the raised module is visible deeper inside | Cannon and Boost reach the shunting task; the carrier lowers Magnet; tear out the remembered door fitting | Return to the workshop entrance near B; later remove the Testworks inspection grille |
+| Mortar | A horizontal tray lies behind the cargo screen, reachable from above but not by direct fire | Moving freight, cover and opposing belts lead to the installation; a safe lob releases the local return | Revisit the original screened crossing from the other side; later release the Testworks load |
+| Flotation | Water, drifting freight and a visible far bank beneath B's bridge | Cannon and Boost reach the dry filter route without Magnet; safe launch then varied bank approaches | Pass under the known bridge, open the dry B return and garden-to-A door; later traverse the Testworks inspection channel |
+| Phoenix | The orange bulkhead by B remains closed throughout the three loops | Combine the three abilities, develop them in R4, then defeat Overseer; safe engine runway and roof return | Break the original bulkhead to C, then open express connections |
+| Laser | R5's inaccessible maintenance receiver overlooks the lower circulation system | Side galleries reach the emitter; a broad reflection restores the remembered optical route | Reconnect to C and enter R6 through the internal descent; Guardian remains optional |
+| Water Circulation | The hot passage is visible on the cold approach into R6, before the cooling-jacket installation | Service work and encounters lead to the module; a safe hot operation establishes the bridge and cool bypass | Return through the remembered hot route, reconnect to C and the Gardens, then reach the core descent |
+| Final feed and docking | The core and its supply apparatus were visible from higher layers | Reach D; restore the load-and-light supply loop using existing tools | Return through another door of D; Keeper retries omit the completed work; docking remains voluntary |
+
+The three middle installations have different approaches, local consequences and return geometry. Their safe first-use spaces are not followed immediately by another ability or Boss. The later sequence is ordered, but returns and sightlines continually reuse known geography rather than treating R5, R6 and R7 as disconnected scenes.
 
 ### Ability locks and alternative solutions
 
@@ -476,11 +498,11 @@ The R2 turntable is the reference height. Neighboring authoring bands begin abou
 | Region | Height envelope | Physical relationship |
 | --- | --- | --- |
 | R1 Recycling Foundry | -2 to 0 | Under R2's south side; press foundation borders the garden canal; maintenance gallery faces loading works |
-| R2 Empty Transit Hub | -1 to +1 | Turntable at 0; bridge underside frames water travel; its roof lies below the Testworks exit |
+| R2 Freight Exchange | -1 to +1 | B and its orange bulkhead frame the middle stage; the workshop, cargo decks and bridge underside overlap the garden and Testworks approaches |
 | R3 Sunken Gardens | -3 to -1 | Western basin; connected water near -2; upper pump terrace meets the eastern retaining wall |
-| R5 Prototype Testworks | -1 to +3 | Water dock and dry freight join one reception hall; the installation runway exits at C above R2 |
-| R4 Silent Observatory | +1 to +5 | Upper loop from C in the eastern stack; upper apparatus defines the skyline |
-| R6 Circulation Works | -5 to -1 | Inside and below that stack; dry service descent, cooling rig, garden industrial terrace and inner approach |
+| R4 Proving Grounds | -1 to +3 | Freight and water reveal the same lower installation; the three-tool approach rises to the proving floor, and the Phoenix roof return descends toward B's original bulkhead |
+| R5 Silent Observatory | +1 to +5 | Upper loop beyond the orange bulkhead; galleries overlook R6 and the core, and Laser restores the internal maintenance descent |
+| R6 Circulation Works | -5 to -1 | Below the same optical stack; reached through its restored internal descent, with a remembered hot passage, a garden-side outlet and the core approach |
 | R7 Predecessors / Central Furnace | -7 to -5 | Deep beneath the city; D connects upward to A beneath the familiar press foundation |
 
 The overlaps do not imply free travel between all surfaces at the same height. Actual floors, walls, water, bridge ends and supported landings define access. R1's recycling furnace and R7's central furnace are different machines, connected by material and heat infrastructure.
@@ -490,61 +512,65 @@ The overlaps do not imply free travel between all surfaces at the same height. A
 | Refuge | Place and recognizable feature | Expedition coverage |
 | --- | --- | --- |
 | **A — Old Repair Room** | Inside the Foundry, looking onto the bent press; the Tank awakens here | Foundry exploration, Prototype and the Boost return; later foundation revisits |
-| **B — Central Transit** | Beside the split flywheel, with the roof cage above and canal below | Mortar, the magnetic workshop, Gardens and early Testworks |
-| **C — Eastern Distribution Hall** | Upper service junction where three coolant mains meet the Testworks roof exit | Phoenix aftermath, optical and cooling loops, optional Sorter and Guardian |
+| **B — Central Transit** | Beside the split flywheel, before the orange bulkhead, with the roof cage above and canal below | The three middle acquisition loops and the earned direct retry to R4 |
+| **C — Eastern Distribution Hall** | Beyond the orange bulkhead, where three coolant mains meet the eastern service junction | Phoenix payoff, the optical expedition, subsequent circulation returns, and optional late revisits |
 | **D — Furnace Service Room** | Deep beside the central furnace, with an empty predecessor berth | Final supply restoration, Keeper preparation and post-ending exploration |
 
 Each refuge supports multiple expeditions and recognizable returns. They are complete protected rooms, not exposed repair posts sprinkled along corridors. No other object grants a respawn or repeatable refill. A few visibly broken service fixtures may remain as scenery, without usable-Hive cues.
 
 ```mermaid
 flowchart LR
-    A["A: Old Repair Room"] <-->|"After Boost: maintenance side passage"| B["B: Central Transit"]
-    B <-->|"After Phoenix: roof freight cage"| C["C: Eastern Distribution Hall"]
-    C <-->|"Laser + Circulation: furnace passage"| D["D: Furnace Service Room"]
+    A["A: Old Repair Room"] <-->|"After Boost: original workroom ascent"| B["B: Central Transit"]
+    B <-->|"Flotation circuit / inside-release returns"| G["Garden far bank"]
+    G <-->|"Garden-side maintenance door"| A
+    B <-->|"Phoenix breaks original bulkhead / far-side cage release"| C["C: Eastern Distribution Hall"]
+    C <-->|"Laser descent, then Circulation opens the inner route"| D["D: Furnace Service Room"]
     D <-->|"Released from below: old maintenance shaft"| A
 ```
 
-These are progressively earned permanent connections, not open travel at the start. Local loops and cross-region links supplement the ring; the player need not pass a refuge between every activity. The C–D route remains physical and supported, and completed optical and thermal releases persist for return travel.
+These are progressively earned permanent connections, not open travel at the start. Local loops and cross-region links supplement the ring; the player need not pass a refuge between every activity. The C–D route is progressively established through the optical descent and later thermal passage; both remain physical, supported and permanently restored for return travel.
 
 ### Shared landmarks and recognition
 
 The distant furnace exhaust spine supplies broad orientation. Three structures are recognized from ordinary play:
 
 - **Bent press:** first seen from A and the Foundry working floor, heard under the garden canal, then recognized from below before opening D–A.
-- **Split flywheel:** seen beside B, from the water beneath its bridge, and from the Phoenix roof exit beside C and the B–C cage.
+- **Split flywheel:** seen beside B, from the water beneath its bridge, from the Phoenix roof return toward the orange bulkhead, and later from the released B–C cage.
 - **Three coolant pipes:** connect C, the optical and cooling building, and the garden retaining wall; restoration changes the flow along this same structure.
 
-Use the actual structure across these views, not duplicate scenic substitutes. Overdrive's first return visibly faces the known press. Phoenix's first runway ends at the recognized flywheel overlook. Guardian's tower descends to a previously seen garden inspection walk. The final maintenance shaft arrives inside the city the player left at the beginning.
+Use the actual structure across these views, not duplicate scenic substitutes. Overdrive's first return visibly faces the known press. Phoenix's roof return reveals the recognized flywheel before descending to the original orange bulkhead. Guardian's tower descends to a previously seen garden inspection walk. The final maintenance shaft arrives inside the city the player left at the beginning.
 
 Major regions need an internal height change and visible relationship to another region. A lift at each end does not by itself create a connected building. No gameplay camera cut is needed to explain recognition.
 
 ### Permanent connector allocation
 
-The table specifies destinations and opening moments; its names describe geography, not instructions displayed on gates. All earned releases survive repair, death and reload. Inside-release doors generally become bidirectional. Lift unlocks start automatic service rather than a manual call or destination menu.
+The table specifies destinations and opening moments; its names describe geography, not instructions displayed on gates. Earned releases survive repair, death and reload. Inside-release doors generally become bidirectional. Lift unlocks start automatic service rather than a manual call or destination menu.
 
 | Connection | First opening | What the return accomplishes |
 | --- | --- | --- |
-| A → Foundry workshop | Enter on the downhill conveyor on the shared ramp; ordinary movement cannot reverse it | A single clear commitment, without parallel ramp access to Prototype |
-| Overdrive installation → entrance → A | Prototype victory opens its exit shutter; use Boost on a short level reverse belt, follow the lower passage to the shared ramp foot, then reverse its entrance belt | An earned short loop that reveals the familiar entrance from inside; both belts retain their physical rule |
-| A ↔ transit approach | Reach the original opposing belt's far side with Overdrive and release a service door | Complete the Boost lesson and make ordinary return possible; no second Boss waits here |
-| Garden care court ↔ A | Reach the far-bank care court, follow its south maintenance walk and shoot the latch on the garden side of A's east door | Garden exploration returns directly to the starting refuge; the released door remains bidirectional, without a parallel transit ramp |
-| Cargo installation ↔ B | The first Mortar lob retracts the screen and starts the return lift; the next release completes the freight platform | Return and repair before the next combat application |
-| B ↔ Overseer approach | Open the inside freight return before entering the carrier hall | Boss retries use the direct freight corridor and omit the acquisition circuit |
-| Magnetic workshop ↔ B | Pull the blue lock embedded in the workshop-side maintenance door | Returns directly toward B and demonstrates magnetic release |
-| Garden far shore ↔ B | Flotation crosses beneath the familiar bridge; release the dry inspection door from the far bank | Closes the water expedition locally without draining the basin or bypassing first acquisition |
-| Garden ↔ Testworks rear reception; canal ↔ Foundry foundation | Water exploration reaches the rear dock and press-side maintenance latch | Alternative approach and later revisit; the dry route reaches the far bank, not the unearned Flotation installation |
-| Testworks interior ↔ B | Release the inspection return before the proving court, after the shared Mortar load | Permits repair and short challenge retries without granting Phoenix early |
-| B ↔ C | Phoenix's installation runway ends at C and the upper cage coupling | Immediate world shortcut; the initial lift landing at B cannot release it from below |
-| Optical installation ↔ C | The safe first reflected shot opens the nearby short gallery | Return precedes Guardian and does not require traversing a long bridge |
-| Optical gallery ↔ cooling works | A local optical connection, before Guardian | Direct cross-region travel; the initial cooling approach from C still works without Laser |
-| Cooling installation ↔ C; industrial side route ↔ Gardens | Red contact releases the supported maintenance bridge to the C lift; release the cool bypass from its far side | Removes repeat hot runs and opens a useful industrial return without granting inner-furnace access |
-| C ↔ D | Restore both parts of the Furnace Vestibule with Laser and Circulation | Opens the deep journey with a persistent return; one completed part is never lost while seeking the other |
-| D ↔ A | Open the old maintenance shaft from D before the final feed and Keeper | Recognize and revisit the starting repair room; A cannot open the deep route early |
-| D → final supply room → D | Dropped load exposes the side passage and optical connection; restore the feed | Returns through another nearby door, permanently bypassing the completed task on Boss retries |
-| Optional Sorter fast line between B and C | Defeat Sorter to release the parallel transport track | Additional travel benefit; the ordinary B–C cage remains available without the fight |
-| Guardian tower → garden upper inspection walk | Guardian victory allows tower access and release of its descent | Closes the optional exploration loop; main optical and cooling returns already exist |
+| A → Foundry workshop | Enter on the downhill conveyor on the shared ramp | One readable commitment, without a parallel route to Prototype |
+| Overdrive installation → original entrance → A | Prototype opens its exit; reverse the short lesson belt, rejoin the ramp and reverse its original belt | Resolve the remembered reverse lock without disabling either conveyor |
+| A ↔ B through the workroom | Boost crosses the northward opposing belt; release its local service door from inside | Ordinary return on the original ascent; no duplicate transit ramp or immediate second Boss |
+| Magnetic workshop ↔ its near entrance / B | Pull the remembered blue lock after the shunting reward | Complete Magnet's local loop and reconnect to the stage's reference landmark |
+| Cargo installation ↔ its screened approach / B | A first lob releases the return platform; a subsequent load settles the freight crossing | Revisit the original obstacle from its other side, with relief before later combat |
+| B ↔ dry filter works | The existing dry approach is available with Cannon and Boost | Flotation acquisition is independent of Magnet and Mortar; a blue latch elsewhere offers convenience, not exclusive access |
+| Garden far bank ↔ B | Float under the familiar bridge and open the dry inspection return from the far bank | Close the water loop without draining the basin |
+| Garden care court ↔ A | Follow the south maintenance walk and shoot A's embedded east-door latch from the garden side | Return directly to the starting refuge without passing B; the gutter plant is not a prerequisite |
+| Workshop rear ↔ garden circuit | Reach and release the rear opening from the water circuit; Magnet offers an additional nearby workshop access | Interleave two expeditions and allow a different next destination without a forced hub visit |
+| Freight frontage / garden channel → R4 interior | Pull the inspection grille, float to the rear landing, then lob onto the protected load | One coherent three-tool ascent; the frontage and channel do not provide a shortcut around required abilities |
+| R4 interior ↔ B | Open the maintenance return after completing that ascent, before the proving court and Overseer | Paired freight lanes support both directions; the earned inspection connection omits the water passage, machinery sequence and cleared finite court on repair trips and Boss retries |
+| Phoenix installation → B's original orange bulkhead | Follow the engine runway and roof return to the starting-side acceleration approach | Complete the containing stage by breaking its original forward boundary |
+| B ↔ C | Break that bulkhead, reach C and release the roof cage from the later side | Permanent stage crossing and an additional vertical connection; neither is an early bypass |
+| R5 optical circuit ↔ C / R6 internal descent | Laser restores the receiver previewed at the optical entrance | Close the local loop and open the next depth of the same building before Guardian |
+| R6 installation ↔ cold entry / C | Red contact establishes the bridge; a far-side latch opens a cool return and lift service | Resolve the earlier hot boundary and avoid repeating the heating lesson |
+| R6 industrial outlet ↔ Gardens | Open the latch from inside the cooling works | Cross-region revisit; the garden side cannot enter the unearned circulation interior |
+| R6 inner hot passage → R7 / D | Use Circulation on the deeper remembered thermal route after the optical descent is already restored | Reach the core through a progressive physical route, not a final two-key hub |
+| D ↔ A | Open the deep shaft from D before the final feed and Keeper | Recognize the starting room from below; A cannot open the deep route early |
+| D → final supply room → D | A load release exposes a side passage and a useful optical line; restore the feed | Return through another door; Boss retries omit completed supply work |
+| Optional Sorter line between B and C | Defeat Sorter from its later-side access after the orange-bulkhead breakthrough | An additional express route; the early end cannot bypass Phoenix |
+| Optional Guardian tower → upper Gardens | Victory permits transmission and release of the tower descent | Close a narrative and exploration loop without gating Laser's return or the R6 descent |
 
-Shafts, ramps and supported landings must fit their buildings. Shortcuts must not become unintended earlier entrances through long shots, movable objects or an exposed far-side control. Water access and dry return doors remain distinct. Local combat retry routes use doors or ramps, avoiding mandatory lift waits.
+Every secondary approach preserves the stage boundary it overlooks. Far-side door housings, closed carrier couplings, water edges and real walls prevent premature entry without hidden ownership checks. Repeated local combat retries use doors or ramps rather than compulsory lift waits. The main return and the original approach must differ in traversal cost or discovery; two equivalent slopes do not constitute a shortcut.
 
 ### Architectural composition
 
@@ -557,8 +583,8 @@ Buildings differ first in their masses, empty spaces and routes, then in materia
 | R1 Foundry | A bent press spans sunken work pits; belts cross between thick machine housings | Move between production and maintenance levels; use moving cargo and machine cycles to cross firing lines |
 | R2 Transit | A broad trussed station spans parallel freight lanes around the split flywheel | Read long destinations, then choose exposed lanes or lateral freight cover |
 | R3 Gardens | Flooded lower rooms connect beneath broken greenhouse ribs and raised banks | Compare dry landings with current-driven water routes; approach buildings through former lower rooms |
-| R5 Testworks | Compact preparation bays open onto a long runway and its braking court | Observe from the side, fight across the test floor, then accelerate along its full length |
-| R4 Observatory | Galleries and side chambers face a tall calibration void | Understand equipment across open space and find useful viewing and firing angles |
+| R4 Testworks | Compact preparation bays open onto a long runway and its braking court | Observe from the side, fight across the test floor, then accelerate along its full length |
+| R5 Observatory | Galleries and side chambers face a tall calibration void | Understand equipment across open space and find useful viewing and firing angles |
 | R6 Circulation | Large cylindrical vessels divide a dense network of work lanes and sheltered pockets | Fight around vessels, change exposure at junctions and alternate hot movement with cool refuge |
 | R7 Central Furnace | Heavy radial foundations converge on one deep furnace well | Read the remaining service connections through intimate predecessor rooms before entering the immense core |
 
@@ -580,12 +606,12 @@ Transitions belong to the existing connections, not extra travel corridors. A th
 | --- | --- |
 | Foundry ↔ Transit | The enclosed discharge opening leads beneath the station truss. Dense press strokes give way to hollow freight movement; the material line continues into the loading hall. The maintenance return looks back toward the same press. |
 | Transit ↔ Gardens | Descending below the bridge reveals watermarks on its actual piers, then broken greenhouse roofs. Rail sounds remain overhead while water becomes foreground. The dry return emerges beside the familiar flywheel. |
-| Transit / Gardens → Testworks | Dry freight enters a battered loading aperture; water reaches a stained rear dock. Both converge on the same clean-lined reception and supported load, with the observation gallery and runway beyond. |
-| Testworks → C and roof cage | The runway leaves its test enclosure for a generous braking apron with a sky view. The flywheel below and three coolant mains at C identify the new height and the immediate return. |
+| Transit / Gardens → Testworks | The freight frontage overlooks the raised load and trial hall; the adjoining water channel reaches their underside behind a blue inspection grille. Both views identify the same combined installation before its ascent opens. |
+| Testworks → B's bulkhead → C | The runway leaves the test enclosure for a braking apron; the roof return shows the familiar flywheel and original orange barrier. The breach then exposes the three coolant mains at C, connecting the stage payoff to the next structure. |
 | C ↔ Observatory | A broad service landing narrows the view through a thick equipment doorway, then reveals the calibration void between pale gallery edges. The coolant mains remain visible outside the optical apparatus. |
-| C / Observatory ↔ Circulation | The upper service structure continues into a dry descent alongside the same three pipes. Rectangular gallery bays give way to vessel walls and pump bases; low vibration replaces the optical room's sparse ticks. C's descent needs neither Laser nor Guardian victory; the optical connection becomes a return when locally released. |
+| Observatory → Circulation / C return | The restored optical apparatus opens the internal descent along the three pipes seen from the upper gallery. Vessel walls and pump bases replace gallery bays; the direct C landing is released from inside R6 and cannot precede Laser. Guardian victory is unnecessary. |
 | Observatory / Circulation ↔ Gardens | The tower walk looks down through broken greenhouse ribs; the lower industrial terrace follows the pipes to mineral-stained banks. These are two recognizable heights of the same retaining wall. |
-| C → D through the restored vestibule | Optical and thermal services visibly converge before the descent. Deep foundations replace the upper wall panels; smaller predecessor rooms precede the first full furnace-well view. |
+| Circulation → D through the inner hot passage | Following the previously seen pipes leads past the thermal boundary into the same core glimpsed from the observatory. Deep foundations replace the upper panels; smaller predecessor rooms precede the full furnace-well view. |
 | D ↔ A | The old shaft runs beside the actual bent press foundation and emerges inside A. Familiar press sounds arrive before the repair-room view, making the first location recognizable from below. |
 
 Shortcuts retain these spatial cues without replaying an entire regional entrance sequence. Neither a new ability nor a Boss victory repaints a whole region: changed machinery, flow, opened views and working transport show the player's specific actions.
@@ -656,7 +682,7 @@ A partly boarded hull pauses departure. A fully supported hull near the edge tra
 
 A lift's visible far-side coupling releases the whole service. Remove redundant ballast, upper-ratchet and arrival-confirmation steps that merely open the next door. A first ride can teach boarding and support without adding a second switch at the destination. Boss retries have a door or ramp route rather than compulsory lift waiting.
 
-Suspended loads obey visible supports and safe catch zones. B's first Mortar shot releases a freight platform onto supports to complete a crossing. The Testworks load changes cover and opens a side passage; the final supply load exposes both a passage and an optical sightline. These are different consequences of the same readable action, not separate trays connected to interchangeable doors. Players cannot be stranded by dropping a load, and a wrong or interrupted attempt retains a local recovery.
+Suspended loads obey visible supports and safe catch zones. The cargo loop's first Mortar shot starts its local return; a subsequent freight-platform release settles onto supports to complete the remembered crossing. The Testworks load changes cover and establishes the supported upper ascent; the final supply load exposes both a passage and an optical sightline. These are different consequences of the same readable action, not separate trays connected to interchangeable doors. Players cannot be stranded by dropping a load, and a wrong or interrupted attempt retains a local recovery.
 
 ### Magnetic locks and moving cover
 
@@ -664,9 +690,9 @@ Most magnetic mechanisms release by tearing out a recognizable blue part. The fi
 
 Rails are reserved for repeated positioning. The Testworks cover cart remains a physical obstacle and can change a firing window in either direction. Its stops leave supported access and recovery space.
 
-Movable combat cover changes both hostile and player lines. Sorter's rail cover remains a developed example: placement can interrupt its committed sweep and expose the drive, while its barrage discourages permanent shelter. The Tank can still win without Magnet. Any optional mirror carriage is positioned and secured before firing; no mandatory task requires simultaneous traction and Laser use.
+Movable combat cover changes both hostile and player lines. Sorter's rail cover remains a developed example: placement can interrupt its committed sweep and expose the drive, while its barrage discourages permanent shelter. The Tank can still win without using Magnet. Any optional mirror carriage is positioned and secured before firing; no mandatory task requires simultaneous traction and Laser use.
 
-### Optional maintenance shunting yard — R2
+### Magnetic workshop shunting yard — R2
 
 The two-branch rail puzzle occupies one readable workshop space within the already accessible freight layer. The start, track junctions, destination berth and neighboring reward lift can be inspected locally; no distant unexplained control is required. Shooting an impact paddle or crossing its hull treadle flips the visible track blades once. Remaining on the plate does not toggle repeatedly. A fixed yellow linkage ends at each junction pivot; paired metal rail tongues rotate to show the selected route. The linkage itself never acts as a direction arrow.
 
@@ -674,7 +700,7 @@ A Cannon hit releases the parked maintenance carrier's brake. It travels along t
 
 The signal recalls a moving carrier; nearby deliberate use remains an alternative. Recall does not launch a parked carrier, and shooting a moving carrier does not reverse or repeatedly restart it. Track changes lock during travel. The carrier pauses for a Tank or living enemy in its way.
 
-An unfinished delivery can restart locally while track settings remain recognizable; a correctly docked carrier stays secured. The reward is Magnetic Traction, an optional exploration ability. The installation is visible overhead before solving the puzzle; there is no duplicate module elsewhere in the workshop. The puzzle does not gate the regional entrance or main route.
+An unfinished delivery can restart locally while track settings remain recognizable; a correctly docked carrier stays secured. The reward is Magnetic Traction, one of the three required middle-stage acquisitions. The installation is visible overhead before solving the puzzle; there is no duplicate module elsewhere in the workshop. The puzzle does not gate entry into R2 or the other two acquisition loops; its reward is physically needed for the later Testworks approach.
 
 ### Sluices, flow and the bridge-underpass return — R3
 
@@ -682,7 +708,7 @@ Before Flotation, dry filter walks reveal moving water, drifting debris and a vi
 
 The dry walk reaches the Flotation installation without requiring the reward. The first crossing is short, calm and faces a clear bank. Later the direct landing is covered by a turret, while a longer route around the filter wall permits approaching a blue shield from its side or rear. Both remain understandable supported routes, with safe places to land.
 
-Following the current beneath B's familiar bridge reaches the far-bank latch of a dry inspection door back to B. It is a simple permanent release, not another pressure-plate-and-shot procedure. The main water route continues to the Testworks rear reception. Gates never drain the entire Gardens, grant ordinary tracks unsupported-water travel or bypass the first Flotation acquisition. The restored flow is part of the same place seen during the ending.
+Following the current beneath B's familiar bridge reaches the far-bank latch of a dry inspection door back to B. It is a simple permanent release, not another pressure-plate-and-shot procedure. A water branch reveals the Testworks inspection channel; its entrance grille needs Magnet and its rear load needs Mortar before the upper ascent is established. The Flotation loop itself returns independently. Gates never drain the entire Gardens, grant ordinary tracks unsupported-water travel or bypass the first Flotation acquisition. The restored flow is part of the same place seen during the ending.
 
 ### Optional gutter garden — R3
 
@@ -700,11 +726,11 @@ The reward is a local change in activity and a story about useful work. The endi
 
 ### Optical machinery
 
-The pre-acquisition route shows receivers behind equipment, framed mirrors, side windows and partitions. After Laser, one broad mirror and a forgiving receiver open the short gallery back toward C. The player can leave by the original approach if the first reflection has not yet been understood.
+The pre-acquisition route shows receivers behind equipment, framed mirrors, side windows and partitions. After Laser, one broad mirror and a forgiving receiver restore the remembered optical machinery, opening the short gallery back toward C and the internal descent into R6. The player can leave by the original approach if the first reflection has not yet been understood.
 
 Later rooms develop two variations: moving a latched inspection screen to a fixed stop reveals a previously blocked light path; walking to a side window changes the incoming direction through familiar rooms. Neither requires shrinking the valid aim area. One main-route mirror sits on a turntable with four visible quarter-turn marks. Each Cannon impact or unobstructed nearby Mortar blast turns the mirror 90 degrees in the same direction, repeatedly; four hits return it to its original orientation. The mirror itself is the target, with no separate switch or remote linkage. Laser reflects without rotating it. Fixed mirrors retain their orientation. It changes which path is available rather than asking for free-angle tuning or simultaneous vertical and horizontal calibration.
 
-Receivers sit behind real geometry, with useful mirror faces and contact points visible. Mandatory mirrors are fixed or indexed scenery, never a uniquely surviving enemy. Required routes work without Magnet; optional magnetic carriages and reflective enemies extend the established rule. A receiver latches its result, so maintaining the beam while travelling through a distant gate is unnecessary.
+Receivers sit behind real geometry, with useful mirror faces and contact points visible. Mandatory mirrors are fixed or indexed scenery, never a uniquely surviving enemy. Required optical shots work from stable scenery and do not demand simultaneous traction. Optional magnetic carriages and reflective enemies extend the established rule; having acquired Magnet earlier does not make every reflection a magnetic task. A receiver latches its result, so maintaining the beam while travelling through a distant gate is unnecessary.
 
 Guardian's arena uses two broad mirrors, recognizable firing areas and committed Boss facing. Its main approach and return exist before combat. After victory, the tower offers one legible outward transmission, a brief wait and a settled quiet working state, with no reply or explanatory text. A neighboring descent connects to the previously seen upper garden inspection walk. The tower closes an optional exploration loop rather than ending in a long retraced ramp.
 
@@ -712,7 +738,7 @@ Guardian's arena uses two broad mirrors, recognizable firing areas and committed
 
 Water Circulation's first hot run leads to a jammed maintenance-bridge lock. Red contact releases the fasteners and the bridge settles on visible supports, connecting the lift return toward C. The far side opens an ordinary cool bypass. Later routes offer a choice between continued red contact through ordinary opposition and cooling in a sheltered side room before restoring ranged fire; these local choices meet at the same exit.
 
-Near C, the Furnace Vestibule presents the unpowered optical control and unsustainable hot passage together, before a long descent. Laser and Circulation restore distinct physical parts in either order. Each result persists while the player leaves to obtain the other. The completed route remains usable in both directions; thermal restoration is not a repeated toll on late-game travel.
+The observatory's optical restoration opens the internal descent first. On entering the cooling works, the Tank sees the unsustainable hot passage leading toward the core; Circulation later resolves that boundary. These are successive parts of one building, not two independently collected prerequisites at C. The established route and its cool bypass remain usable in both directions; thermal restoration is not a repeated toll on late-game travel.
 
 ## 8. Combat and enemies
 
@@ -724,7 +750,7 @@ Most ordinary groups use two or three complementary roles. Their arrival and sig
 
 Mobile enemies pursue a last sighting for eight seconds and stay within 32 units of their home position. Guards and welders advance during recovery; skirmishers strafe during bursts; ranged specialists reposition between attacks; repairers follow damaged allies. Fixed turrets and heavy machinery stay fixed. Retreat to a Repair Hive ends ordinary pursuit. Ordinary encounters leave retreat available and do not all require extermination.
 
-The Testworks proving court has one finite reserve pair, with four-second arrival spacing. It is the journey's ordinary endurance encounter, not a template repeated in the Hearth. Its return to B opens before commitment. Once cleared, its exit remains open and its initial and reserve groups remain cleared through rest, death and reload. The optional warehouse reinforcement trial follows the same completion rule. Boss reinforcements follow the separate arena rules below.
+The Testworks proving court has one finite reserve pair, with four-second arrival spacing. It develops the three middle abilities after their combined approach, before Overseer. An observation and recovery interval separates the court from the Boss; it is not another arena placed immediately after a major victory. Its direct return to B opens before commitment, and the cleared court lies outside the later Boss retry. It is not a template repeated in the Hearth. Once cleared, its exit remains open and its initial and reserve groups remain cleared through rest, death and reload. The optional warehouse reinforcement trial follows the same completion rule. Boss reinforcements follow the separate arena rules below.
 
 ### Twelve ordinary archetypes
 
@@ -817,16 +843,16 @@ Shallow furnace spill is traversable but deals five damage every 0.5 seconds, in
 
 ### Committed Boss arenas
 
-Prototype, Recycling Foundry, Optical Guardian, Sorter and Final Keeper each occupy a bounded arena. When the Tank has entered completely, visible striped shutters close with a mechanical cue. A dormant Boss cannot be damaged from outside; hits produce protected-metal feedback.
+Prototype, the Testworks Overseer, Optical Guardian, Sorter and Final Keeper each occupy a bounded arena. When the Tank has entered completely, visible striped shutters close with a mechanical cue. A dormant Boss cannot be damaged from outside; hits produce protected-metal feedback.
 
-The seal persists through venting, exposed phases and reinforcement deployment. Victory retracts the shutters and ends active arena hazards. Death or reload resets the encounter lock. Optional fights remain optional until entry. The ordinary B–C cage and essential travel pass outside the Sorter's inner court; its victory unlocks an additional parallel fast line. Ordinary encounters do not inherit these seals, and a sealed fight cannot be escaped by reaching a nearby refuge.
+The seal persists through venting, exposed phases and reinforcement deployment. Victory retracts the shutters and ends active arena hazards. Death or reload resets the encounter lock. Optional fights remain optional until entry. The ordinary B–C cage and essential travel pass outside the Sorter's inner court; its later-side entrance is reached after the orange-bulkhead breakthrough, and victory unlocks an additional fast line. Ordinary encounters do not inherit these seals, and a sealed fight cannot be escaped by reaching a nearby refuge.
 
 Projectile warnings last at least 0.85 seconds, lock before release and show both battery origins when both will fire. Barrages retain visible landing areas throughout flight. Reinforcement hatches light for two seconds before a reserve can attack. Main projectile Bosses provide at least one second of recovery. Reserves are finite. An active Boss health bar remains visible throughout the fight, including when cover hides its body.
 
 | Boss | Structure and pressure | Player response and reward |
 | --- | --- | --- |
 | Prototype | Nine HP; a pressing carriage with a broad ram, readable radiator lids and alternating Cannon volleys and committed charges. Each Cannon volley has a fixed warning followed by three spread shots and a recovery opening. Below roughly half health, the charge becomes two charges, each with a fresh warning | Bait an impact into solid cover to cancel the follow-up and expose the drive. Defeat opens the visible Overdrive cradle and return route. No damage quota limits a successful punish |
-| Cargo carrier hall / Overseer | Four HP per side battery and six in the core, fourteen total. Alternating batteries release staggered fans and aimed ground barrages. One finite pair of light reserves enters below 60% health | Use cover and side routes, then exploit open drive windows. Destroying a battery cancels its unreleased volley and stops its associated machinery, creating a flank. Ordinary Overdrive is not a Boss ram solution |
+| R4 carrier hall / Overseer | Four HP per side battery and six in the core, fourteen total. Alternating batteries release staggered fans and aimed ground barrages. One finite pair of light reserves enters below 60% health | Use cover and side routes, then exploit open drive windows. Destroying a battery cancels its unreleased volley and stops its associated machinery, creating a flank. Ordinary Overdrive is not a Boss ram solution. Victory exposes the Phoenix installation after the three developed acquisition loops; a short quiet approach separates combat from its safe engine lesson |
 | Optical Guardian | Forty-eight HP; armour protects front, sides and roof. Tracks between attacks, then holds its facing through warning, attack and recovery. Five-lane fast fans alternate with paired seeking shells whose turning is limited and ends before impact | Dodge the committed attack and use the stable recovery to find a reflected rear shot through broad mirrors and a clearly exposed rear aperture. Red contact is an alternative. No per-window quota. Victory gives access to the optional outward transmission and tower descent to the upper Gardens; the main optical returns precede the fight |
 | Sorter | An optional roof machine that moves rail cover and alternates a committed arm sweep with ground barrages. Hiding behind cargo invites a barrage | Read the pale-to-red-to-dark sweep warning and use its cover interaction to interrupt the arm and expose the drive. Magnet adds control of rail cover, but ordinary movement and Cannon remain viable. Victory releases a parallel B–C fast track; no ability reward or requirement for the ordinary B–C cage |
 | Final Keeper | Two nine-HP feed assemblies and a sixty-six-HP core, eighty-four total. Alternates batteries, seeking pairs, barrages and an exposed-core sweep. Below 40% health, tighter fans overlap a delayed ground strike | Destroy feeds to stop their local belts and open flanks. Both destroyed feeds leave the core continuously vulnerable, including during its attacks. Reserve pairs become eligible at 65% and 32%; no more than two reserves may be alive or deploying |
@@ -855,7 +881,7 @@ The opening view frames the press from A's protected doorway. The journey altern
 
 **Aftermath.** The former Overseer workroom is a transit space, not another arena. Crossing into B gives the first ability loop a clear end, without adding a post-Boss Hive or an end-of-level modal. The player leaves knowing how the Foundry folds around the starting room. Only the original workroom ascent connects this approach to Transit; no parallel return ramp duplicates it. A later visit from the Gardens opens the starting room's east maintenance door. Preservation and reclamation remain an observed contradiction, not an explained backstory.
 
-### R2 — Empty Transit Hub and magnetic workshop
+### R2 — Freight Exchange
 
 **Purpose and character.** The split flywheel, turntable, loading galleries, warehouses and sidings form one freight system. Oxidized machinery and hollow carrier sounds contrast with B's sheltered room. Empty inward-facing cargo clamps reveal distribution turning into reclamation.
 
@@ -863,13 +889,17 @@ The opening view frames the press from A's protected doorway. The journey altern
 
 The main hall gives early destination views, but crossings between shelter are short enough to read an enemy's warning and choose a response. Freight racks have solid bases that actually stop fire; open upper frames preserve orientation. The magnetic workshop feels like an adjoining assembly bay, with suspended fittings and occupied work berths around the installation, rather than a new empty hall. Stores use close rack corners, the shunting yard uses a locally visible open junction, and the roof return reveals the station's whole span. These spaces have different tactical purposes without multiplying parallel empty tracks.
 
-**First junction and cargo expedition.** B offers repair and a pause after the Boost return. The roof cage remains inaccessible, the magnetic workshop lies to the side, and water is visible below. Ahead, the raised freight platform previews a target behind cover. The adjacent cargo passage remains traversable with Cannon and Boost: a moving load interrupts a turret line while a skirmisher approaches, followed by a descent and two short opposing conveyors with a cooling apron. The Mortar installation is in the quiet far apron, with no enemy pressure during acquisition. Its first lob releases a screened tray, retracts the screen and starts a return lift. From the upper return, the familiar freight platform is now solvable; it settles onto supports. This loop ends back at B before the freight battery develops indirect fire around actual cover. No Boss is placed between the Boost return and this expedition.
+**Stage entrance and remembered boundary.** B provides repair and a pause after the Foundry return. The first exit frames the distinctive orange bulkhead on the main line toward the eastern city, with its continuation visible through a structural opening. An ordinary Boost impact produces a clear failed-force response. A readable acceleration approach remains available for the later Phoenix return. The roof cage is visibly secured from the far side, so it cannot turn the same obstruction into a lift bypass. The workshop opening, cargo screen and dry descent toward water then offer local leads; there is no ability-name sign or three-item completion display.
 
-The freight return folds back at a half-height landing to reach the inside of its maintenance door. Only one ramp continues upward toward the outer ring. Opening the door removes the initial climb-and-return detour; there are no two equivalent full-height ramps advertising a false route choice.
+**Mortar loop.** The cargo approach first shows a horizontal collecting tray behind a screen. Cannon hits its casing; the open top and freight above suggest a different approach. A lateral cargo route remains traversable with Cannon and Boost: a moving load interrupts a turret line while a skirmisher approaches, followed by a descent and opposing conveyors with a cooling apron. The quiet far installation gives Mortar. Its first safe lob releases the local return platform and retracts the screen; the upper return now gives access to the originally previewed freight load, which settles onto supports. The player recognizes the screened crossing from its other side. The loop reconnects near B and to the workshop frontage, while a later freight encounter develops indirect fire around real cover. Neither Magnet nor Flotation is required, and no Boss lies between this acquisition and its first-use return.
 
-**Workshop expedition.** A divided assembly hall combines a sniper line interrupted by moving freight with an advancing shield carrier and a separate close route. Existing Cannon actions can release a small cart to a new berth, providing cover or an alternate approach before Magnet is owned. The installation waits above the shunting bay on its reward lift; routing the cart to its berth delivers it, without a separate ballast-and-ratchet checklist. After acquisition, tearing out the neighboring blue retaining lock opens the short maintenance exit toward B. Later, the Testworks cover cart develops repeated positioning and changes a firing window.
+The freight maintenance release removes the acquisition detour and exposes the Testworks frontage, where the raised load and observation windows can be inspected. This dry outlook does not climb around the three-tool inspection route. There is only one earned local return at this boundary; a second equivalent full-height ramp would erase the distinction between preview and access.
 
-**Branches and rewards.** The optional shunting route keeps its cart, switches and destination locally visible. Securing the cart lowers the adjacent lift carrying Magnetic Traction. The visible reward gives the shunting task a clear purpose; the newly acquired tool then opens the blue return lock. A separate stores encounter combines racks, freight, distant aim and close pressure; its finite reserves permanently end when the Cannon reinforcement is earned. Restoring the small maintenance arm and rail remains a short optional act, distinct from both challenges. Water advertises the Gardens and dry freight leads to the Testworks. The later Phoenix cage reaches this same flywheel from above.
+**Magnet loop.** Near the workshop entrance, a blue retaining fitting holds the short door back to the freight side. Its casing is visible before the player takes the longer assembly route. A sniper lane interrupted by moving freight and an advancing shield carrier develop positioning; Cannon, Boost and flanking suffice without either other middle acquisition. Interior windows reveal the garden water route below and the raised Magnet installation across the shunting bay. The two track junctions, parked cart, destination and reward lift occupy one readable space. Routing the cart to its berth lowers the module. Pulling the earlier door's blue fitting then completes the local loop rather than introducing a new exit with no prior context. The acquired tool later opens the lower Testworks inspection grille and offers a workshop-side convenience connection to the Gardens.
+
+**Interleaving and optional activity.** The workshop rear opening faces the water circuit seen through its windows; the Flotation return can release it from that side. Cargo inspection openings reveal the Testworks machinery before the combined ascent is usable. These links let the next expedition begin from the last one's return instead of requiring a stop at B. A separate stores encounter combines racks, freight, distant aim and close pressure; its finite reserves stay cleared when the optional Cannon reinforcement is earned. The small maintenance arm and rail remain an optional act of care, separate from the required Magnet shunting reward.
+
+**Stage payoff.** After completing R4, the roof return frames B's flywheel and brings the Tank back to the starting side of this same orange bulkhead. Phoenix breaks it, opening the eastern continuation and C. The bulkhead remains broken and the far-side cage can now be released. Freight Exchange has changed from the place that exposed a limit into the place where the player understands and overcomes it; it is not merely a lobby passed once on the way to another item room.
 
 ### R3 — Sunken Gardens
 
@@ -879,13 +909,15 @@ The freight return folds back at a half-height landing to reach the inside of it
 
 Before Flotation, windows and bank turns expose connections through flooded rooms that dry walls separate. The installation sits in a recognizable ferry maintenance berth beside a calm launch basin, with its first landing visible. Later water routes pass through the old room boundaries and use filter walls as cover, while dry walks reach distinct firing positions above the banks. Bank edges remain broad and legible rather than balancing challenges. Calm pools, moving channels and enclosed filter passages vary the journey; hunters and dredgers occupy later water encounters, not the safe launch basin. Water movement, landing geometry and actual shelter carry the distinction, not a green tint over an ordinary corridor.
 
-**Before Flotation.** Magnet opens a dry filter-work approach. The player sees water carrying debris and an inspection island that cannot yet be reached. An exposed sluice latch changes a diversion plate: one channel becomes calmer while another remains fast, changing actual flow as well as its appearance. The dry route reaches the ferry installation without needing Flotation to solve its own acquisition.
+**Independent approach and preview.** A dry filter-work approach from the freight stage is traversable with Cannon and Boost, without Magnet or Mortar. Before reaching the installation, bank turns frame water carrying debris, the far inspection landing, and B's bridge overhead. A blue workshop-side fitting offers another connection once Magnet is owned, but does not seal this original dry route. An exposed sluice latch changes a diversion plate and actual local flow. The player can experiment from safety without needing the water ability to acquire itself.
 
-**Crossing and choice.** The first crossing is brief, calm and ends at an unmistakable landing. Beyond it, a short approach is covered by a bank turret; a longer route around the filter wall reaches the side or rear of a blue-shield defender. Water supplies different firing positions rather than a long empty transit strip. The current carries a branch beneath B's recognizable bridge to a far-side dry inspection release back to B. The main water route reaches the Testworks rear entrance and joins the dry approach before the shared Mortar load.
+**Flotation loop.** The maintenance berth gives the pontoons beside a calm launch basin; the first crossing ends at the landing previewed on the approach. A later bank turret covers the short route, while the longer side of a filter wall reaches a different firing position. Canal hunters and dredgers develop water movement only after the safe first crossing. Neither encounter design nor the return assumes that the player already has Magnet or Mortar. Passing beneath B's familiar bridge reveals the same station from below; a far-side latch establishes a dry inspection return, while the workshop rear opening permits continuing directly into the magnetic expedition.
+
+**Role in the containing loop.** Another visible channel follows the workshop foundations to R4's inspection grille. With Magnet the grille can be removed; with Flotation the Tank reaches the dry rear landing; with Mortar the protected load can be lowered to form the ascent. Before all three actions are possible, this branch remains a readable preview with a reversible approach. It neither replaces the independent Flotation return nor provides an alternate route around the Phoenix requirement.
 
 **Revisits and quiet activity.** The canal follows the real press foundation and supports its maintenance return to the completed Foundry. The island armour rewards a visible Flotation revisit. The gutter plant and stranded foundation tender provide short, readable acts of care with no equipment or ending requirement. From the far-bank care court, a southbound maintenance walk turns west into A's east door. Its latch is embedded on the garden face: it cannot be shot from the starting room. Opening it permanently connects the Gardens to A without returning through Transit, and does not depend on growing the plant. The door spans the full walkway and preserves the initial Foundry commitment. Later optical descent reaches an upper inspection walk, while cooling access reveals the returning pipes. Local flow changes never drain the whole region. There is no regional Boss or separate garden Repair Hive.
 
-### R5 — Prototype Testworks
+### R4 — Proving Grounds
 
 **Purpose and character.** Pale enamel, bare steel, rubber stops and scorched mounts surround test runways, buffer courts and an observation gallery. Enclosed approaches contrast with the eventual roof reveal. The player first watches how machines tested earlier hulls, then drives through the facility's full-speed test.
 
@@ -893,13 +925,17 @@ Before Flotation, windows and bank turns expose connections through flooded room
 
 Compression belongs to reception and observation, not the proving court: that floor allows lateral responses to artillery and flankers. The Phoenix cradle faces the actual launch axis, so its new purpose can be understood before driving. The uninterrupted acceleration segment retains at least 40 units before its required full-speed collision, followed by a generous stopping area before any edge or junction. Failed chassis sit in test berths or the intended breakthrough, never as arbitrary obstacles in the braking apron. The crash-recovery pocket and lateral Sorter chamber provide different scales around this one defining long space; additional identical runways would dilute it.
 
-**Reception and pressure.** Dry freight and water dock entrances join one reception hall. Mortar releases a hanging load onto safe supports, changing cover and exposing the ascent. The inside freight return opens before commitment. The raised carrier hall contains Overseer: low cover permits lobs at exposed batteries, while direct fire exploits brief core openings. Feed assemblies alter the side belts when destroyed. Victory starts the automatic carrier to Testworks; the completed Mortar machinery stays restored on retries. The carrier is visibly held until the hall is cleared. Testworks then provides observation and exploration before its finite proving court, rather than immediately chaining another arena. This develops the first load lesson rather than opening another remote door. The observation gallery shows failed hulls, buffering equipment and the actual runway before the player enters its working floor. A maintenance return to B opens before the main finite court. Artillery and moving flankers contest the floor while loading carriers create usable intervals in their sightlines; the finite reserve pair enters after its warning and breathing room. Cleared waves stay cleared.
+**Preview and combined entrance.** The freight outlook shows the upper load, observation gallery and inaccessible trial floor; the garden channel approaches the same foundation below. The blue inspection grille, water passage and overhead collecting tray are visible parts of one installation. Using Magnet, Flotation and Mortar in that physical sequence forms the upper ascent. Each intermediate state allows retreat. The inside maintenance return opens toward B immediately after the ascent, before any finite court or Boss. Acquiring Mortar alone cannot advance through this reception to Phoenix.
 
-**Acquisition and release.** The Phoenix installation, runway, breakthrough, braking apron, C and upper B–C cage coupling form one continuous exit. The player accelerates through discarded ordinary hulls and a weakened partition, stops safely at C and recognizes B's flywheel below. There is no return to the old installation entrance followed by a second distant runway. The nearby crash-recovery branch offers an optional armour loop without stretching the return.
+**Development before the climax.** Compact preparation rooms and observation windows show failed hulls, buffering equipment and the actual runway. A movable cover cart, shielded pressure and indirect firing positions develop the three acquired tools without prescribing one solution to every enemy. The proving court combines artillery and moving flankers around passing freight, with its established finite reserve pair and warning intervals. It is followed by a quiet observation passage with a view back toward B and access to the earned repair return. The court stays cleared and is bypassed on later Boss retries; it is not placed immediately after Overseer as another compulsory combat climax.
 
-**Optional challenge and meaning.** Sorter occupies a lateral arena. Its magnetic rail cover can interrupt a sweep; ordinary movement and Cannon also remain viable. Victory releases a parallel fast transport line between B and C, while the ordinary cage and main journey remain available without it. Failed test chassis establish modular construction and the purpose of the installations before the deep predecessor rooms reveal its cost. Phoenix is never a required Boss ramming solution.
+**Overseer.** The carrier hall is the culmination of the middle expeditions. Low cover permits Mortar attacks on exposed batteries, direct fire exploits core openings, and changing approach prevents permanent safety behind one obstacle. Destroyed feed assemblies alter their associated belts. The entrance offers the direct return to B before commitment. Victory releases the Phoenix installation and its supported access; a brief quiet approach lets the combat settle before the new engine is introduced. There is no second ordinary wave sequence between the Boss and its reward.
 
-### R4 — Silent Observatory
+**Phoenix and the stage return.** The cradle faces a safe test runway with full acceleration distance, a weakened test partition and a generous braking apron. The new speed, impact and exhaust are experienced before the main return. The roof route then reveals the flywheel and orange bulkhead encountered at the beginning of R2–R4, and descends to that barrier's original approach. It stays on the middle-stage side of the wall: a high walkway or test exit cannot enter C early. A calm connecting apron permits natural cooling before the final run. Breaking the original bulkhead completes the large loop and reaches C; only then can the far-side roof cage be released. The installation exit, local lesson and return are a continuous route with no retracing to find a second runway. The nearby crash-recovery branch offers an optional armour revisit without interrupting the main recognition.
+
+**Optional challenge and meaning.** Sorter's lateral roof court is entered from the later side after the orange-bulkhead breakthrough. Its rail cover changes the sweep and barrage problem; ordinary movement and Cannon remain viable as well as Magnet. Victory releases an additional express line between B and C, whose early end cannot be used to skip Phoenix. Failed test chassis establish modular construction and the installations' purpose before the deep predecessor rooms reveal their cost. Phoenix's main combat value remains ordinary opposition and travel, not a required Boss ram.
+
+### R5 — Silent Observatory
 
 **Purpose and character.** Dark glass, pale cladding, brass fittings and narrow warm light surround a calibration shaft above C. Galleries show the garden retaining wall and familiar infrastructure below. Framed mirrors and collectors belong to the working equipment; unrelated floors do not cut through a puzzle or fight's central view.
 
@@ -907,11 +943,11 @@ Compression belongs to reception and observation, not the proving court: that fl
 
 An entrance opening first frames an unreachable receiver across the void. The route then passes behind the apparatus into the installation chamber and returns to a useful firing position. Height changes reveal relationships; actual required shots use stable supported positions and generous targets, within Laser range and the existing elevation limit. The Laser cradle occupies a calibration station with an obvious emitter-to-mirror-to-receiver relationship, not a pedestal in empty floor space. Smaller side-window and screen rooms develop that language before the broad Guardian court. Its essential reflection paths stay in one legible combat space; the shaft's height and distant garden view remain scenery around those paths, never an excuse for off-screen precision aiming.
 
-**Observe before acquisition.** From C, the upper loop shows a receiver behind equipment, then leads through side galleries to the Laser installation. Windows, partitions and mirror positions establish relationships between rooms before the player can complete their light paths. Reflective inspectors and partners differ from the moving flank that contests a sniper line; combat uses the same readable architecture.
+**First penetration and preview.** Beyond the original orange bulkhead, C anchors the upper optical expedition. Its initial gallery frames a maintenance receiver across the calibration void, then follows the same coolant mains toward a view of the circulation vessels below and the furnace farther down. The inner descent is visibly present but its optical machinery is not restored. Side galleries lead around the apparatus to the Laser installation; no alternate C stair or garden outlet reaches the unearned cooling interior. Reflective inspectors and supporting enemies contest useful observation and firing positions rather than conceal the next opening.
 
 At the west gallery, the exposed approach faces the reflective inspector directly. The inner maintenance passage passes behind a solid screen and opens a side firing window at its far end. Both approaches reconnect before the same gallery shutter: the choice changes the firing angle and exposure, without another switch or reward inserted merely to justify the branch.
 
-**First use and development.** One large mirror and broad receiver open a short corridor back toward C. Later rooms separately develop moving an inspection screen to a fixed stop and approaching a familiar space through another side window. One main-route turntable mirror rotates 90 degrees on every Cannon impact or Mortar blast and can be turned repeatedly, with no separate switch. No free-angle calibration, tiny valid aim point or simultaneous movement, traction and Laser hold is required. Optical service access connects the cooling building before Guardian, while the original approach remains available if a reflection has not yet been solved.
+**Laser loop and onward descent.** A broad mirror and forgiving receiver let the player restore the optical path previewed at the entrance. Its machinery opens both a short return toward C and the usable internal maintenance descent. The player recognizes the original void from the new firing side before following the pipes downward. Subsequent rooms develop a screen moved to a visible stop, a side window that changes the incoming line, and an indexed mirror rotated directly by Cannon or Mortar. These are spatial variations with generous aim areas; no free-angle calibration or simultaneous movement, traction and Laser hold is required. The Laser return and R6 access are complete before the optional Guardian arena. An unresolved first reflection still permits retreat along the original approach.
 
 **Optional climax and exit.** Guardian's two broad mirrors, clear firing areas and committed facing make rear attacks understandable. Main returns precede its arena. After victory, the tower gives a quiet view and a legible single transmission, wait and settled working state; nobody replies. The adjacent descent joins a previously seen garden upper inspection walk. The tower supplies both a short narrative conclusion and the other end of an optional loop, rather than an isolated ramp to retrace. The maintenance mezzanine, rangefinding workshop and optical housing distribute optional discoveries across separate visits.
 
@@ -923,13 +959,13 @@ At the west gallery, the exposed approach faces the reflective inspector directl
 
 Vessels provide real cover and changing approaches, but their silhouettes must leave the next opening readable in both views. Larger pockets at lane junctions allow a turn, a retreat and sight of advancing enemies; density must not trap the Tank behind a translucent cylinder. The Circulation installation is housed in a cooling-jacket service bay whose cold approach opens directly toward the hot bridge operation. Warm and cool work spaces make the next choice visible without adding decorative red barriers or extra thermal locks. A quiet condensate recess and the exposed garden terrace interrupt the enclosed lanes, giving the region relief without another long empty connecting passage.
 
-**Spatial choice.** The dry descent from C is available after Phoenix without Laser. Two maintenance lanes face one another around machinery: distant fire covers one while a welder advances along the other. A side latch releases a rail-mounted maintenance screen to another supported stop. It blocks the distant line but opens the nearer route and lower access, making the benefit and cost visible together. Cooling jackets and dismantled assemblies lead toward the Circulation installation. Intermediate returns use C rather than another repair post.
+**Second penetration and remembered heat.** Laser's restored optical machinery provides the first internal descent. The Tank passes the same pipes and vessels seen from R5, then looks along the hot maintenance passage toward the deeper core. Ordinary Phoenix cannot sustain that passage under its physical Heat and contact conditions. A cold service route leads around the vessels to the cooling-jacket installation; it does not cross the hot boundary or demand Circulation before acquisition. Two maintenance lanes face one another around machinery: distant fire covers one while a welder advances along the other. Moving a screen changes both shelter and access. A return landing toward C is released from inside, so it supports repair without allowing an earlier Laser bypass.
 
 The separator's outer work lane exposes the Tank to the distant lobber. A screened inner passage interrupts that observer's direct sight but brings the Tank into the welder's close approach. The screen does not promise protection from a Mortar already aimed at a known position: keep moving after its landing warning. Both lanes remain traversable in reverse, and the moved maintenance screen retains its local opening and blocking consequences.
 
-**First hot operation.** From a safe cold approach, heating grilles bring the Tank into red contact naturally. The impact releases jammed maintenance-bridge fasteners; the bridge settles and connects the lift return toward C. A far-side release opens the ordinary cool bypass. Later work lanes offer continued hot contact through ordinary opposition or cooling in a sheltered side room to recover ranged fire. Both choices reach the same local exit. The lesson is a usable operating state, not a series of red keys.
+**Circulation loop.** The safe cold installation apron leads into a short hot operation. Heating grilles bring the Tank into red contact naturally; releasing the jammed fasteners settles the maintenance bridge onto supports and connects the return lift toward C. The far-side release establishes an ordinary cool bypass. A following work lane offers sustained red contact through opposition or a sheltered cooling route that restores ranged fire. This application and a familiar overlook separate the last ability from the final descent; the player does not receive Circulation beside the Keeper's door.
 
-**Exploration and convergence.** Industrial returns reach the garden side, and the condensate-island revisit uses Flotation to bypass the pump room's defended front. Near C, the Furnace Vestibule shows its unpowered optical control and unsustainable hot passage together. Restore the matching part with either acquired ability and return safely for the other; progress is retained. The last ability therefore has time to change familiar exploration before the deep descent.
+**Return and deeper access.** The industrial outlet opens from inside the cooling works to the previously known garden retaining wall; the garden-side latch housing prevents premature entry. The condensate-island revisit develops Flotation as a combat approach. The main route then returns to the hot passage observed on arrival. Circulation now carries the Tank through it and releases the inner maintenance connection toward R7. The optical descent already restored above remains visible in the same pipe network. This is successive penetration, not a return to C to present two independent keys. Thermal restoration and the cool return persist, making later travel ordinary.
 
 ### R7 — Predecessors and Central Furnace
 
@@ -939,7 +975,7 @@ The separator's outer work lane exposes the Tank to the distant lobber. A screen
 
 Predecessor rooms use restrained task pools on mounts and familiar hull fittings, with enough reflected light to understand the supporting floor and next opening. The arena takes broad indirect light from the core; readable cover silhouettes and projectile warnings remain stronger than decorative glow. The first full core view includes its feeding routes, so the supply repair and Keeper's role belong to the same machine. After victory, stillness and the now-quiet feed frame the vehicle-shaped socket. The final scale change is from an immense working system to one familiar berth, without adding a throne, inscription or spectacle that explains away the wordless ending.
 
-**Recognition and preparation.** With both vestibule restorations complete, descend into the predecessor facilities and recognize A's press foundation from below. Reach D and release the D–A maintenance shaft before the final supply task or Keeper. The retired service room near D offers quiet armour exploration with a nearby return. No additional refuge or mandatory restoration checklist appears.
+**Third penetration and recognition.** Enter through the deeper thermal route after the observatory descent and Circulation loop. The furnace well is the one glimpsed from R5 and R6; its feed structures and the predecessor rooms now become reachable. Recognize A's press foundation from below, reach D, and release the D–A maintenance shaft before the final supply task or Keeper. The retired service room near D offers quiet armour exploration with a nearby return. No new ability, additional refuge or independent restoration-key checklist interrupts this descent.
 
 **Final repair.** One coherent supply room contains a hanging load blocking maintenance access and an obscured optical interface. A Mortar release settles the load on safe supports, exposing a side passage and a firing window. From that window, the Tank uses a fixed mirror to reconnect the feed. The opened maintenance exit returns through another door of D. These familiar actions create a connected physical result in one space, instead of a sequence of isolated weapon checks. Restoration stays complete, and the short Keeper retry repeats neither it nor an endurance court.
 
@@ -958,7 +994,7 @@ Holding contextual use for two seconds aligns the Tank with the socket. A circul
 | Time | Image and action | Meaning |
 | --- | --- | --- |
 | 0–9 s | Clamps couple; wheels settle; the engine joins the furnace rhythm. Circulation connects, red heat becomes a steadier light, and power travels outward. One small turret or antenna motion remains | The Tank participates in the machine; its precise consciousness or fate remains unstated |
-| 9–15 s | Transit returns to view. Useful cargo movement resumes if the player repaired its rail | A previous act of repair now has a larger consequence |
+| 9–15 s | Transit returns to view. Useful cargo movement resumes if the player repaired the optional maintenance rail | A previous act of repair now has a larger consequence |
 | 15–20 s | The Gardens receive power. Restored pumping and water activity reflect the player's actual sluice restoration | Recovery belongs to the places the player affected |
 | 20–26 s | At the opening bay, the previously dormant cargo machine's eyes light; it rolls a short distance and stops | Something else can begin |
 
@@ -1007,8 +1043,8 @@ The upper-left corner of the minimap and full map displays the current region's 
 | R1 | Recycling Foundry |
 | R2 | Freight Exchange |
 | R3 | Sunken Gardens |
-| R4 | Silent Observatory |
-| R5 | Proving Grounds |
+| R4 | Proving Grounds |
+| R5 | Silent Observatory |
 | R6 | Circulation Works |
 | R7 | Central Furnace |
 
@@ -1082,16 +1118,16 @@ The design succeeds when the player learns understandable physical rules, uses t
 
 - **Four safe homes.** Exactly A, B, C and D provide repair and respawn. Long regions earn intermediate returns rather than extra Hives. Each refuge and its entrances remain safe from spawns, pursuit and incoming fire.
 - **Meaningful rooms.** Each major room presents something to notice, a safe experiment, a usable change, a decision and a legible result. Unnecessary switches and empty connections are removed; quiet rooms retain worthwhile observations.
-- **Abilities change familiar space.** Obstructions precede solutions. Every acquisition has a safe first use, combat value and lasting exploration effect. Overdrive and Phoenix first-use exits are naturally visible, not routes that only a knowledgeable player can locate.
+- **Abilities change familiar space.** Obstructions precede solutions. Every acquisition has a safe first use, combat value and lasting exploration effect. Overdrive resolves the original conveyor; each middle ability resolves its own local obstacle; Phoenix resolves the original orange bulkhead. The entry barrier, the first-use lesson and the return are naturally visible rather than recoverable only through prior coordinates. Laser and Circulation resolve successive remembered layers of the same building.
 - **Short, earned retries.** Discovered major Boss entrances target 10–25 seconds from their refuge; Keeper targets 10–15 seconds from D. Neither requires a lift wait or a repeated puzzle or finite court. A first-use exit targets 15–35 seconds to a refuge or clear transport junction. Shortcut savings compare the same endpoints and include normal waiting, aiming and traversal costs.
 - **Physical consequences.** Cables explain causality but do not replace it. Water controls alter flow, slides change cover or openings, and loads change support or sightlines. A failed action gives local feedback. Simple shortcut doors remain simple.
-- **Legal route orders.** Dry and water approaches, Laser-first and Circulation-first orders, and skipping both optional Bosses all support complete journeys. No main route requires Magnet, Flotation, a hidden upgrade, written instructions, pixel-perfect aim or an extra input.
+- **Legal route orders.** All six orders of Magnet, Mortar and Flotation acquisition support their own first use and return with the equipment actually owned. All three are physically required for the combined Testworks approach. After Phoenix, Laser precedes Circulation and Circulation precedes the inner furnace route. Skipping Sorter, Guardian and every optional equipment upgrade still permits completion. No required action needs written instructions, pixel-perfect aim or a new input.
 - **Controlled pressure.** First understanding is safe; later familiar rules combine with combat. Ordinary encounters allow retreat. Bosses seal properly and retain readable responses. Finite courts stay completed through repair, death and reload; endless waves and hidden damage caps are not substitutes for design.
 - **Recoverable machinery.** Movable objects have supported stops and local recovery. A missed lift, an interrupted interaction, death immediately after release and acquisition followed by reload cannot strand the Tank or reconstruct permanent barriers.
 - **Readable space.** Both camera views preserve the Tank, its support, meaningful firing lines and usable exits. Architecture establishes floors and route relationships before transparency assists visibility. No unrelated floor obscures the Guardian's essential reflection paths.
 - **Recognizable regions.** With region names, map and music absent, ordinary approach, combat and return views identify their building through form, light and material. Recognition cannot rely on a single landmark screenshot or a colour tint. The main spatial distinction remains apparent without colour.
 - **Variety within a building.** Adjacent spaces vary enclosure, sightline and activity without losing their regional construction. A repeated six-room loop, another empty ability hall or symmetrical routes with equivalent exposure fails this requirement. Architecture must change a meaningful choice of movement, cover, observation or firing position.
-- **Connected places.** Regional thresholds explain their physical connection, and shared landmarks remain the same structures seen from useful new positions. A shortcut exposes that relationship while shortening travel; an optional branch does not exist solely to display a different material. Acquisitions occupy working installations with a visible first use and return.
+- **Connected places.** R2–R4 interleave their workshop, water and freight spaces; changing acquisition order does not force a hub visit between every loop. R5–R7 progressively expose one connected eastern structure instead of three independent item corridors. Shared landmarks remain the same objects seen from useful new positions. A shortcut exposes that relationship while shortening travel; acquisitions occupy working installations with a visible first use and return.
 - **Dispersed discoveries.** The ten optional finds occupy different stages and kinds of detour rather than prescribed coordinate gaps. No pickup requires a long empty return merely to appear remote. Acquisition benefits remain identifiable in the HUD.
 - **A complete final act.** The last ability changes exploration before the Keeper; its fight targets 20–40 seconds without a forced timer. Victory leaves the voluntary connection and existing ending. Restoration and continued exploration preserve the player's actual progress.
 
@@ -1099,4 +1135,4 @@ Judge expedition and retry pacing with the starting five-segment hull as well as
 
 Judge regional composition from normal play at the default third-person settings and in the overhead view, including the approach, an encounter, the ability installation and an earned return. The Tank's support, the immediate threat and a usable response must remain clear without changing camera mode. If a ceiling, vessel or upper gallery requires most of the view to become transparent, change its placement or the room's composition. Preserve supported travel, required weapon arcs, Phoenix run-up and braking, and the four-refuge returns while shaping architecture; visual identity cannot be bought by weakening those relationships.
 
-Exact campaign duration and final room counts remain open. Travel-time and spatial targets in this document guide composition rather than demanding uniform rooms or a particular amount of floor area. Additional abilities, currencies, mandatory collectibles, alternate endings and new control schemes are outside the current agreed scope.
+Exact campaign duration and final room counts remain open. Travel-time and spatial targets in this document guide composition rather than demanding uniform rooms or a particular amount of floor area. Additional abilities, currencies, mandatory collection of equipment upgrades, alternate endings and new control schemes are outside the current agreed scope.

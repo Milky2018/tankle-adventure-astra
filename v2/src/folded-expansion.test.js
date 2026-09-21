@@ -21,7 +21,8 @@ for(const route of expansionRoutes)test(`${route.id} acquisition and onward exit
   for(const [x,z]of route.approach)walk(p,s,x,z);
   for(const [x,z,action]of route.path){
     walk(p,s,x,z);
-    if(action==='battle')s[`${route.id}-endurance`]=true;
+    if(action==='overseer')s.foundry=true;
+    else if(action==='battle')s[`${route.id}-endurance`]=true;
     else if(action==='pickup'){
       const q=expansionPickups.find(q=>q.id===route.pickup);assert.ok(Math.hypot(p.x-q.x,p.z-q.z)<.2);
       p[q.ability]=true;s[q.id]=true;
@@ -97,9 +98,9 @@ test('new return routes reject unearned engines, Magnet, Laser and water crossin
   const gate=foldedSolids.find(w=>w.id===id);assert.ok(foldedBlocked(gate.x+gate.w/2,gate.y,gate.z+gate.d/2,s));
   p[ability]=true;assert.equal(releaseFolded(id,kind,p,s,[]),true);
  }
- const ordinary={x:238,y:16,z:-74,speed:1.6,overdrive:true,boosting:true},a=initialFoldedState();
- moveFolded(ordinary,0,12,a);assert.ok(ordinary.z< -70);assert.equal(a['phoenix-departure'],false);
- const phoenix={...ordinary,z:-74,speed:3.2,phoenix:true};moveFolded(phoenix,0,12,a);assert.ok(phoenix.z> -69);assert.equal(a['phoenix-departure'],true);
+ const ordinary={x:202,y:16,z:-82,speed:1.6,overdrive:true,boosting:true},a=initialFoldedState();
+ moveFolded(ordinary,-12,0,a);assert.ok(ordinary.x>197);assert.equal(a['phoenix-departure'],false);
+ const phoenix={...ordinary,x:202,speed:3.2,phoenix:true};moveFolded(phoenix,-12,0,a);assert.ok(phoenix.x<195);assert.equal(a['phoenix-departure'],true);
  const cold={x:330,y:-24,z:106,speed:3.2,phoenix:true,boosting:true,circulation:true,overheated:false},b=initialFoldedState();
  moveFolded(cold,-12,0,b);assert.ok(cold.x>325);assert.equal(b['coolant-return'],false);
  const red={...cold,x:330,speed:3.2,heat:100,overheated:true};moveFolded(red,-12,0,b);assert.ok(red.x<323);assert.equal(b['coolant-return'],true);

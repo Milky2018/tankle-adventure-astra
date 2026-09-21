@@ -1,11 +1,15 @@
 async page=>{
 
  return await (async()=>{
- const routeAudit=page.url().includes('routeAudit');
+ const resume=await page.evaluate(()=>sessionStorage.getItem('nestedJourneyResume'));
+ const routeAudit=!!resume||page.url().includes('routeAudit');
  const errors=[];page.on('pageerror',e=>errors.push(e.message));const runs=[];
- try { for(const [approach,first]of [['dry','laser'],['dry','circulation'],['water','circulation']]){
-  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test&manual');await page.waitForFunction(()=>window.__game);
-  await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');localStorage.removeItem('furnace-born-v2-settings');});await page.reload();await page.waitForFunction(()=>window.__game);await page.evaluate(routeAudit=>{__game.manual(true);if(routeAudit)Object.defineProperty(__game.debug.p,'invincible',{configurable:true,get:()=>1e9,set:()=>{}});},routeAudit);
+ try { for(const [approach,first]of [['nested','laser']]){
+  if(!resume){
+    await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test&manual');await page.waitForFunction(()=>window.__game);
+    await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');localStorage.removeItem('furnace-born-v2-settings');});await page.reload();await page.waitForFunction(()=>window.__game);
+  }
+  await page.evaluate(({routeAudit,resume})=>{__game.manual(true);if(resume)__game.respawn();if(routeAudit)Object.defineProperty(__game.debug.p,'invincible',{configurable:true,get:()=>1e9,set:()=>{}});},{routeAudit,resume});
   const legs=[],milestones=[];
   async function choose(weapon){
     for(let i=0;i<3;i++){
@@ -23,10 +27,10 @@ async page=>{
     if(result!==true)throw Error('Automatic lift failed to reach '+y+' '+JSON.stringify(result));
   }
   async function record(label){const s=await page.evaluate(()=>__game.snapshot());milestones.push({label,hp:s.player.hp,time:s.time,abilities:['overdrive','mortar','magnet','flotation','phoenix','laser','circulation'].filter(k=>s.player[k])});}
-  async function move(x,z,boost=false){
+  async function move(x,z,boost=false,axis=null){
     const equipment=(await page.evaluate(()=>__game.snapshot())).player;
     await choose(equipment.laser?"laser":equipment.mortar?"mortar":"cannon");
-    const result=await page.evaluate(({x,z,boost})=>{
+    const result=await page.evaluate(({x,z,boost,axis})=>{
       const g=window.__game,start=g.snapshot().time;let last=null,blocked=0,detour=false;
       for(let i=0;i<3600;i++){
         const s=g.snapshot(),p=s.player,dx=x-p.x,dz=z-p.z;
@@ -34,12 +38,13 @@ async page=>{
         if(last&&Math.hypot(p.x-last.x,p.z-last.z)<.002)blocked++;else blocked=0;last={x:p.x,z:p.z};
         if(blocked>8&&Math.abs(dx)>.4&&Math.abs(dz)>.4)detour=true;
         if(Math.min(Math.abs(dx),Math.abs(dz))<.4)detour=false;
-        const alongX=Math.abs(dx)>Math.abs(dz),keys=(detour?!alongX:alongX)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD'];if(boost)keys.push('ShiftLeft');
+        const beltCrossing=g.debug.world.belts.some(b=>b.vx&&Math.abs(p.y-b.y)<1&&p.x>=b.x&&p.x<=b.x+b.w&&p.z>=b.z&&p.z<=b.z+b.d&&(z<b.z||z>b.z+b.d));
+        const alongX=(axis==='z'||beltCrossing)&&Math.abs(dz)>.4?false:Math.abs(dx)>Math.abs(dz),keys=(detour?!alongX:alongX)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD'];if(boost)keys.push('ShiftLeft');
         const e=s.enemies.find(e=>e.hp>0&&e.readable&&Math.abs(e.y-p.y)<3&&Math.hypot(e.x-p.x,e.z-p.z)<24);
         if(e&&!boost){const t=e.parts.find(part=>part.hp>0)||{x:e.x,z:e.z,y:e.y+1.5};g.aimAt(t.x,t.z,t.y);keys.push('Mouse0');}
         g.setInput(keys);g.step(Math.hypot(dx,dz)<2?1/120:1/30,false);if(g.snapshot().player.hp<=0)return {error:'died',at:g.snapshot().player,lifts:g.debug.world.lifts.map(l=>({id:l.id,y:l.y,destination:l.destination,wait:l.wait})),near:g.snapshot().enemies.filter(e=>e.hp>0&&Math.hypot(e.x-x,e.z-z)<100)};
       }return {error:'stuck',at:g.snapshot().player,rails:g.debug.state.bodies.solids.filter(b=>b.rail&&Math.hypot(b.x-x,b.z-z)<50).map(b=>({id:b.id,x:b.x,z:b.z,rail:b.rail}))};
-    },{x,z,boost});if(result.error)throw Error(JSON.stringify({target:[x,z],...result}));legs.push(result);
+    },{x,z,boost,axis});if(result.error)throw Error(JSON.stringify({target:[x,z],...result}));legs.push(result);
   }
   async function shoot(x,z,y,id,weapon="cannon"){
     await choose(weapon);
@@ -59,19 +64,6 @@ async page=>{
       }return {error:'fight timeout',s:g.snapshot()};
     },{id,x0,x1,z});if(result.error)throw Error(id+' '+JSON.stringify(result));return result;
   }
-  async function opticalFight(){
-    await choose('laser');
-    const result=await page.evaluate(()=>{
-      const g=__game,orbit=[[222,37],[222,29],[216,29],[216,37]];let corner=0;
-      for(let i=0;i<3600;i++){
-        const s=g.snapshot(),p=s.player,enemies=s.enemies.filter(e=>['gallery-repairer','gallery-sentry','gallery-scout'].includes(e.id)&&e.hp>0);
-        if(!enemies.length){g.setInput([]);return {hp:p.hp};}if(p.hp<=0)return {error:'optical fight death',p};
-        if(Math.hypot(p.x-orbit[corner][0],p.z-orbit[corner][1])<.6)corner=(corner+1)%orbit.length;
-        const dx=orbit[corner][0]-p.x,dz=orbit[corner][1]-p.z,keys=Math.abs(dx)>Math.abs(dz)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD'];
-        const e=enemies.sort((a,b)=>['gallery-repairer','gallery-sentry','gallery-scout'].indexOf(a.id)-['gallery-repairer','gallery-sentry','gallery-scout'].indexOf(b.id))[0];g.aimAt(e.x,e.z,e.y+1.5);keys.push('Mouse0');g.setInput(keys);g.step(1/30,false);
-      }return {error:'optical fight timeout',s:g.snapshot()};
-    });if(result.error)throw Error(JSON.stringify(result));await record('optical-gallery-cleared');
-  }
   async function expedition(id){
     const route=await page.evaluate(async id=>(await import('/src/folded-expansion-layout.js')).expansionRoutes.find(r=>r.id===id),id);
     for(const [x,z]of route.approach)await move(x,z);
@@ -80,6 +72,7 @@ async page=>{
       if(name==='repair')return;
       if(name==='pickup'){await use();return;}
       if(name==='float'){await page.keyboard.press('f');return;}
+      if(name==='overseer'){await choose('cannon');await fight('foundry',210,236,-132);await record('overseer');return;}
       if(name==='battle'){
         await choose('mortar');
         const result=await page.evaluate(({id,x,z})=>{
@@ -101,16 +94,17 @@ async page=>{
         if(!opened)throw Error('Magnetic workshop return did not open');
         await move(-106,-54);await move(x,z);
       }else if(c.kind==='magnet'){
-        await page.evaluate(c=>{__game.aimAt(c.x,c.z,c.y);__game.setInput(['Mouse2']);__game.step(1.2);__game.setInput([]);},c);
+        await page.evaluate(c=>{__game.aimAt(c.x,c.z,c.y);__game.setInput(['Mouse2']);__game.step(1.2);__game.setInput([]);__game.step(12,false);},c);
       }else{const [cx,cy,cz]=c.via||[c.x,c.y,c.z];await shoot(cx,cz,cy,c.id,c.kind==='laser'?'laser':c.surface==='top'?'mortar':'cannon');}
       if(!(await page.evaluate(()=>__game.snapshot())).state[name])throw Error('District mechanism '+name);
     }
     for(const [x,z,name]of route.path){
       if(id==='arsenal'&&name==='pickup'){
         await choose('cannon');
-        for(const [tx,tz]of [[-170,-54],[-176,-54],[-176,-88]])await move(tx,tz);
-        for(const [switchId,sx,sz]of [['rail-a',-166,-88],['rail-b',-154,-88],['rail-carrier',-176,-84]]){
-          await move(sx,-88);await move(sx,sz);
+        for(const [tx,tz]of [[-170,-54],[-168,-54],[-168,-88]])await move(tx,tz);
+        for(const [switchId,sx,sz]of [['rail-a',-166,-88],['rail-b',-154,-76],['rail-carrier',-176,-83]]){
+          const approach=switchId==='rail-a'?[[-166,-88]]:switchId==='rail-b'?[[-166,-94],[-154,-94],[-154,-76]]:[[-154,-94],[-166,-94],[-166,-83],[-176,-83]];
+          for(const [x,z]of approach)await move(x,z);await choose('cannon');
           await page.evaluate(id=>{
             const g=__game,q=g.debug.world.sidePuzzles,t=q.targets.find(t=>t.id===id),index=id==='rail-a'?0:1;
             if(id!=='rail-carrier'&&q.rail.state.switches[index])return;
@@ -122,11 +116,11 @@ async page=>{
         for(const [tx,tz]of [[-180,-84],[-180,-60],[-156,-60]])await move(tx,tz);
       }
       await move(x,z);await action(name,x,z);
-      if(id==='proving'&&z===-158){
-        await move(77,-154);await move(6,-154);await shoot(65,-154,17.3,'proving-inspection');await move(6,-34);
+      if(id==='proving'&&name==='proving-transfer'){
+        await move((await page.evaluate(()=>__game.snapshot())).player.x,-152,false,'z');await move(77,-152);await move(9,-152);await move(6,-154);await shoot(65,-154,17.3,'proving-inspection');await move(9,-152);await move(9,-34);
         if(!(await page.evaluate(()=>__game.snapshot())).state['bridge-crane']){await move(0,-34);await shoot(0,-24,6.8,'bridge-crane','mortar');}
         await move(0,-34);await move(0,27);await use();await record('proving-refuge-return');
-        await move(0,-34);await move(6,-34);await move(6,-154);await move(77,-154);await move(x,z);
+        await move(0,-34);await move(3,-34);await move(3,-154.5);await move(77,-154.5);await move(x,z);
       }
     }
     if(route.ability&&!(await page.evaluate(()=>__game.snapshot())).player[route.ability])throw Error('Missing module '+id);
@@ -134,7 +128,9 @@ async page=>{
     await record('district-'+id);
   }
 
-  await move(-40,86);await move(-40,49);await shoot(-35,44,-14.5,'relay-west');
+  if(!['east','thermal'].includes(resume)){
+  if(!resume){
+  await move(-40,86);await move(-40,53);await shoot(-35,44,-14.5,'relay-west');
   await move(-57,52);await move(-57,76);await page.keyboard.press('e');await move(-57,118);await shoot(-65,114,-14.5,'relay-east');
   await move(-57,128);await move(-43,132);const prototype=await fight('prototype',-43,-20,132);
   await move(-28,124);await page.keyboard.press('e');
@@ -148,51 +144,31 @@ async page=>{
   if(!(await page.evaluate(()=>__game.snapshot())).player.mortar)throw Error('Cargo Mortar missed');await record('cargo-mortar');
   await shoot(32,-58,-2,'loading-return','mortar');await move(28,-58);await move(28,-46);await move(18,-46);await arrive(0);await move(18,-34);await move(0,-34);await shoot(0,-24,6.8,'bridge-crane','mortar');await move(0,27);await use();
   await page.screenshot({path:`v2/output/playwright/completion/${approach}-pickup.png`});
-  if(approach==='water'){
-
-  await move(0,27);await move(-26,27);await shoot(-29,27,1.3,'ballast');await move(-38,27);await arrive(8);
-  await move(-50,27);await move(-50,33);await move(-50,31);await expedition('arsenal');
-  await use();await move(-26,27);
-  await move(-26,-8);await move(-30,-8);await settle();
-  await page.evaluate(()=>{__game.aimAt(-39.7,-8,-6.6);__game.setInput(['Mouse2']);__game.step(1.2);__game.setInput([]);});
-  if(!(await page.evaluate(()=>__game.snapshot())).state.magnet)throw Error('Ferry panel');
-  await move(-46,-8);await expedition('reservoir');await move(-46,-8);
-  await move(-26,-8);await move(-26,27);await move(0,27);await use();await record('water-refuge-return');
-  await move(-26,27);await move(-26,-8);await move(-46,-8);await page.keyboard.press('f');
-  for(const [x,z]of [[-46,27],[-36,27],[-36,-4],[0,-4],[30,-7],[36,-7],[36,-16],[46,-16],[46,20],[56,20]])await move(x,z);
-  await use();await move(86,20);await page.keyboard.press('f');await move(89,30);await shoot(86,31,-6.6,'gangway');await move(88,-19);await move(94,-18);await use();
-  await record('water-approach');
-  await choose('mortar');await fight('bench-guard',72,94,-18);await fight('bench-scout',72,94,-18);await record('water-reception-cleared');
-
-  }else{
-
-  await move(0,-6);await shoot(0,-24,6.8,'bridge-crane','mortar');await move(0,-34);await move(18,-34);await shoot(32,-34,4.2,'freight','mortar');
-  for(const [x,z]of [[59,-34],[59,-63],[67,-63],[67,-34],[70,-34],[70,-19],[94,-18]])await move(x,z);
-  await use();await record('dry-approach');
-
   }
-
-  await move(90,-23);await shoot(90,-34,7,'load','mortar');await record('mortar-reuse');
-  await move(90,-56);await choose('cannon');const foundry=await fight('foundry',70,106,-56);await record('overseer');
-  await move(82,-56);await move(82,-76);await move(78,-84);
-  for(let i=0;i<20&&(await page.evaluate(()=>__game.snapshot())).player.y<15.99;i++)await settle(.5);
-  await move(77,-87);await expedition('proving');await use();await record('phoenix');
+  if(!['water','combined','proving'].includes(resume)){
+  await move(-26,27);await shoot(-29,27,1.3,'ballast');await move(-38,27);await arrive(8);
+  await move(-50,31);await expedition('arsenal');await use();
+  }
+  if(!['combined','proving'].includes(resume)){
+  await move(-26,27);await move(-26,-8);await move(-46,-8);await expedition('reservoir');
+  await move(-26,-8);await move(-26,27);await move(0,27);await use();await record('three-middle-loops');
+  }
+  if(resume!=='proving'){
+  await move(0,-34);await move(18,-34);await shoot(32,-34,4.2,'freight','mortar');
+  for(const [x,z]of [[59,-34],[59,-63],[67,-63],[67,-34],[74,-34],[74,-26]])await move(x,z);
+  await page.evaluate(()=>{const g=__game,c=g.debug.world.controls.find(c=>c.id==='magnet');g.setInput([]);g.step(3,false);for(let i=0;i<90;i++){g.aimAt(c.x,c.z,c.y);g.setInput(['Mouse2']);g.step(1/60,false);}g.setInput([]);});
+  if(!(await page.evaluate(()=>__game.snapshot())).state.magnet)throw Error('Inspection grille');
+  await page.keyboard.press('f');for(const [x,z]of [[74,-16],[98,-16],[98,-5],[110,-5]])await move(x,z);await page.keyboard.press('f');
+  await shoot(123,-13,6.8,'load','mortar');await record('combined-inspection');
+  for(const [x,z]of [[110,-24],[110,-48],[110,-62],[78,-62],[78,-84]])await move(x,z);await arrive(16);
+  await move(77,-94);
+  }else{await move(0,-34);await move(3,-34);await move(3,-154.5);await move(77,-154.5);await move(77,-164,false,'z');}
+  await expedition('proving');await use();await record('phoenix-original-boundary');
+  }
     async function getLaser(){
-      await move(136,-35);await move(136,-30);await settle();await move(228,-30,true);await move(228,-20);await move(242,-20);await move(242,-24);await expedition('lens');await move(242,-24);await move(228,-24);await move(228,-20);
+      await move(202,-28);await move(242,-24);await expedition('lens');
       if(!(await page.evaluate(()=>__game.snapshot())).player.laser)throw Error('Laser acquisition');
-      await move(150,-28);await use();await move(202,-28);await move(202,-24);await move(225.2376,-20);await shoot(214,-10,25.3,'optical-screen');await shoot(216,-4,26,'gallery','laser');
-      await move(242,-20);await move(242,-4);await shoot(232,-4,26,'return-index');await move(242,-20);await move(225.2376,-20);await shoot(216,-4,26,'garden-optical','laser');
-      await move(242,-20);await move(242,-30);await move(254,-30);await move(254,-98);await move(64,-98,true);await move(64,-86);await shoot(63,-86,25.4,'emitter-cage');
-      await move(52,-86);await arrive(-8);await move(52,-72);await move(40,-72);
-      if((await page.evaluate(()=>__game.snapshot())).player.y!==-8)throw Error('C08 did not return to loading apron');
-      await move(52,-72);await move(52,-86);await arrive(24);await move(64,-86);await move(64,-98);await move(254,-98,true);await move(254,-30);await move(242,-30);await move(242,-20);await move(228,-20);
-      await move(150,-28);await use();await move(202,-28);await move(202,-24);await move(216,-20);await move(228,-20);await move(242,-20);await move(242,6);await move(230,6);await move(230,38);await opticalFight();
-      await shoot(228,38,17.5,'yard-optical','laser');
-      // Both returns open before the tracking guardian.
-      if((await page.evaluate(()=>__game.snapshot())).state.guardian)throw Error('Guardian was unexpectedly required');
-      await move(218,38);await move(218,29);await move(202,29);await move(202,6);await move(110,6);await move(110,18);await arrive(-8);await move(98,18);
-      if((await page.evaluate(()=>__game.snapshot())).player.y!==-8)throw Error('C09 did not reach the garden bank');
-      await move(110,18);await arrive(16);await move(110,6);await move(202,6);await move(202,29);await move(218,29);await move(218,38);await move(230,38);
+      await move(242,-24);await move(202,-28);await move(150,-28);await use();await record('laser-reopens-optical-descent');
     }
     async function rigFromYard(){
       await move((await page.evaluate(()=>__game.snapshot())).player.x,48);await move(242,48);await move(210,48);await move(210,44);await use();await move(210,48);await move(242,48);await move(242,95);
@@ -200,15 +176,16 @@ async page=>{
       await move(284,117);await shoot(278,117,-22.7,'coolant-bypass');await move(290,117);await move(290,106);await arrive(24);await move(278,106);await move(278,-28);await move(150,-28);await use();
       if(!(await page.evaluate(()=>__game.snapshot())).player.circulation)throw Error('Circulation acquisition');
     }
-    if(first==='laser'){
-      await getLaser();await settle(5);await move(242,38);await move(242,30);await arrive(-8);await move(242,42);await rigFromYard();
-    }else{
-      await move(166,-30);await move(166,-64);await settle();await move(166,30,true);await move(174,30);await move(174,-18);await move(190,-18);await move(190,30);await rigFromYard();
-      await getLaser();
-      await move(230,6);await move(242,6);await move(242,-28);await move(150,-28);await use();
+    if(resume!=='thermal'){
+    await getLaser();
+    for(const [x,z]of [[162,-28],[162,30],[174,30],[174,-18],[190,-18],[190,48]])await move(x,z);
+    await rigFromYard();
     }
-    await move(122,-28);await shoot(126,-16,26,'inner-optics','laser');await settle();await move(122,32,true);await move(138,32);await move(138,-8);await shoot(138,-18.4,28.25,'inner-transit');
-    await record('optical-and-thermal-convergence');await move(122,30);await move(94,30);await move(94,46);await arrive(-40);await move(82,46);await move(82,6);await move(44,6);await move(44,-10);await use();
+    for(const [x,z]of [[162,-28],[162,30],[174,30],[174,-18],[190,-18],[190,46],[154,46]])await move(x,z);
+    await settle();await move(154,108,true);await move(170,108);await move(170,58);await shoot(170,56,-6.7,'inner-transit');await move(170,108);
+    await record('progressive-inner-route');
+    for(const [x,z]of [[154,108],[106,108],[94,108]])await move(x,z);await arrive(-40);
+    for(const [x,z]of [[82,108],[82,6],[44,6],[44,-10]])await move(x,z);await use();
     await shoot(40,-12,-38.6,'last-cage');await move(34,-18);await move(22,-18);await arrive(-8);await move(22,-8);await move(18,-8);await move(18,-2);await move(16,-2);await move(16,80);await move(16,86);await move(0,86);await use();
     await record('deep-shaft-returns-to-opening');
     await move(16,80);await move(16,-2);await move(18,-2);await move(18,-8);await move(22,-8);await move(22,-18);await arrive(-40);await move(34,-18);await move(34,-10);await expedition('hearth');await move(34,-10);await move(44,-10);await use();await record('last-refuge-repaired');await move(34,-10);await move(34,6);await move(34,68);await move(0,68);await move(0,52);
@@ -223,13 +200,12 @@ async page=>{
 
   await page.evaluate(()=>__game.step(27));const end=await page.evaluate(()=>__game.snapshot());
   if(!await page.getByRole('heading',{name:'Mission Accomplished'}).isVisible())throw Error('Completion screen missing');
-  if(!end.state.endingSeen||!end.state['inner-optics']||!end.state.load||!end.player.mortar)throw Error('Missing progression milestone');
-  if(approach==='water'&&(!end.player.flotation||!end.player.magnet))throw Error('Water acquisitions missing');
-  if(approach==='dry'&&(end.player.flotation||end.player.magnet))throw Error('Dry run unexpectedly granted water equipment');
-  await record('completed');await page.screenshot({path:`v2/output/playwright/completion/${approach}-${first}-ending.png`});
+  if(!end.state.endingSeen||!end.state['lens-return']||!end.state['inner-thermal']||!end.state.load||!end.player.mortar)throw Error('Missing progression milestone');
+  if(['overdrive','magnet','mortar','flotation','phoenix','laser','circulation'].some(id=>!end.player[id]))throw Error('Required ability missing');
+  await record('completed');await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('#ending')).opacity)>.99);await page.screenshot({path:`v2/output/playwright/completion/${approach}-${first}-ending.png`});
   await page.reload();await page.waitForFunction(()=>window.__game);await page.evaluate(()=>__game.manual(true));const saved=await page.evaluate(()=>__game.snapshot());
-  if(!saved.state.endingSeen||!saved.state['inner-optics']||!saved.player.mortar)throw Error('Reload lost progression');
-  const run={approach,first,legs:legs.length,milestones,reload:true};runs.push(run);
+  if(!saved.state.endingSeen||!saved.state['lens-return']||!saved.state['inner-thermal']||!saved.player.mortar)throw Error('Reload lost progression');
+  const run={approach,first,resume,legs:legs.length,milestones,reload:true};runs.push(run);
   await page.evaluate(run=>sessionStorage.setItem('completed-journey-'+run.approach+'-'+run.first,JSON.stringify(run)),run);
  }
  } catch(error) { throw Error(JSON.stringify({completedRuns:runs,error:error.message})); }

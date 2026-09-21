@@ -129,7 +129,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
   const massDepth=new T.Group();massDepth.name='folded-mass-depth';scene.add(massDepth);
   const massDepthMaterial=new T.MeshBasicMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});aperture.apply(massDepthMaterial,{depthOnly:true,radius:STRUCTURE_APERTURE_RADIUS});
   for(const d of foldedSolids){
-    const mesh=box(scene,d.w,d.h,d.d,d.x+d.w/2,d.y+d.h/2,d.z+d.d/2,mat(d.magnetic?(d.rail?SIGNAL.magnet:C.dark):d.mass?0x294b48:d.theme?REGION_STYLE[d.theme].frame:d.permanent?C.teal:d.red?0x9e573b:['launch','optics','pressure'].includes(d.id)?C.orange:C.dark),.08);
+    const mesh=box(scene,d.w,d.h,d.d,d.x+d.w/2,d.y+d.h/2,d.z+d.d/2,mat(d.magnetic?(d.rail?SIGNAL.magnet:C.dark):d.mass?0x294b48:d.theme?REGION_STYLE[d.theme].frame:d.permanent?C.teal:d.red?0x9e573b:(d.phoenix||['launch','optics','pressure'].includes(d.id))?C.orange:C.dark),.08);
     if(d.masonry){
       mesh.material.color.setHex(REGION_STYLE[d.theme].wall);
       Object.assign(mesh.material,surfaceMaterials[REGION_STYLE[d.theme].surface]);
@@ -286,7 +286,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     for(const x of [-.6,.6])cylinder(root,.35,2.5,x,1.25,0,C.metal,8);
     floorDetails.push({root,x:b.x,y:b.y-1.3,z:b.z,radius:3});
   }
-  for(const link of circuitLinks([...foldedControls,...foldedBattles,{id:'inner-thermal',x:122,y:25.3,z:22},{id:'sorter',x:130,y:25.3,z:-100},{id:'rail-crossing',x:-162,y:9.3,z:-66}],foldedSolids,foldedLiftDefs)){
+  for(const link of circuitLinks([...foldedControls,...foldedBattles,{id:'inner-thermal',x:154,y:-6.7,z:96},{id:'sorter',x:130,y:25.3,z:-100},{id:'rail-crossing',x:-162,y:9.3,z:-66}],foldedSolids,foldedLiftDefs)){
     const points=link.points.map(p=>new T.Vector3(...p)),root=new T.Group(),lamps=[];scene.add(root);root.name=`folded-circuit:${link.id}:${link.target}`;
     let length=0;for(let i=1;i<points.length;i++)length+=points[i].distanceTo(points[i-1]);
     if(length<.01){scene.remove(root);continue;}

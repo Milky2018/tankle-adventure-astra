@@ -27,14 +27,13 @@ export const foldedDecks=[
   deck('garden-bank',32,12,32,16,-8),deck('sluice',64,12,12,16,-8,{water:true}),
   deck('rear-dock',76,12,18,16,-8),deck('gangway-west',54,24,10,14,-8),
   deck('gangway',58,30,30,8,-8),deck('gangway-east',82,24,12,14,-8),
-  deck('dock-ascent',82,-12,12,24,0,{rise:-8}),
-  deck('common-benches',68,-28,32,16,0),
+
+  deck('common-benches',104,-10,24,8,0),deck('inspection-front',68,-28,12,6,0),deck('inspection-turn',92,-22,12,20,0,{water:true,region:'garden'}),deck('inspection-channel',68,-22,36,12,0,{water:true,region:'garden'}),deck('inspection-load-bed',104,-18,12,8,0),deck('inspection-tray-plinth',118,-18,10,8,0),
   deck('loading',-6,-40,42,12,0),deck('freight',36,-40,40,12,0),
-  deck('bench-ascent',84,-52,12,24,8,{rise:-8}),
-  deck('carrier-landing',64,-78,48,26,8),
+  deck('bench-ascent',104,-42,12,24,8,{rise:-8}),deck('bench-head',104,-56,12,14,8),
+  deck('carrier-landing',64,-78,52,26,8),
   deck('phoenix-cradle',64,-94,28,16,16),
-  deck('launch-track',92,-92,64,12,16),deck('launch-landing',156,-92,16,28,16),
-  deck('roof-ascent',160,-64,12,24,16,{rise:8}),
+  deck('bulkhead-ascent',148,-92,12,90,24,{rise:-24,region:'transit'}),
   deck('roof-junction',132,-40,40,18,24),deck('roof-return',26,-38,118,6,24),
   deck('roof-walk',29,-32,6,30,24),deck('cage-landing',16,-2,22,16,24),
   deck('observatory-outlook',172,-36,24,12,24),
@@ -42,33 +41,35 @@ export const foldedDecks=[
   ...cityDecks,...expansionDecks,...sideDecks,...explorationDecks,...refugeDecks
 ];
 export const foldedLiftDefs=[
-  {id:'carrier',x:72,z:-90,w:12,d:12,stops:[8,16],lock:'load',locks:['load','foundry']},
+  {id:'carrier',x:72,z:-90,w:12,d:12,stops:[8,16],lock:'load'},
   {id:'cage',x:4,z:10,w:12,d:12,stops:[0,24],recess:.6},
   ...cityLifts,...refugeLifts
 ];
 // Bounds describe solid material, including the moving shutters while closed.
 export const foldedSolids=[
-  {id:'magnet',x:-40.5,z:-14,w:1,d:12,y:-8,h:3},
+  {id:'magnet',x:68,z:-23,w:12,d:1,y:0,h:4,magnetic:true},
   {id:'freight',x:25.5,z:-40,w:1,d:12,y:0,h:3.2},
   {id:'gangway',x:69.5,z:30,w:1,d:8,y:-8,h:3},
-  {id:'load',x:84,z:-29,w:12,d:1.4,y:0,h:6.2},
+  {id:'inspection-north-wall',x:80,z:-23,w:24,d:1,y:0,h:5,permanent:true},
+  {id:'inspection-ascent-west',x:103.8,z:-42,w:.2,d:24,y:0,h:9,permanent:true},
+  {id:'inspection-ascent-east',x:115.8,z:-42,w:.2,d:24,y:0,h:9,permanent:true},
+  {id:'inspection-tray',x:120,z:-16,w:6,d:6,y:0,h:4.8,permanent:true},
   {id:'brake',x:72,z:-78.5,w:12,d:1,y:16,h:2.5},
-  {id:'launch',x:139.5,z:-92,w:1,d:12,y:16,h:3},
-  {id:'pressure',x:156,z:-16.5,w:12,d:1,y:24,h:3},
+  {id:'lens-return',x:156,z:-16.5,w:12,d:1,y:24,h:4},
   {id:'bank-cover',x:34,z:-5,w:3,d:3,y:-16,h:2,permanent:true},
   {id:'canal-cover',x:29,z:-13,w:2,d:2,y:-16,h:1.6,permanent:true},
-  {id:'bench-cover',x:77,z:-25,w:3,d:4,y:0,h:2,magnetic:true},
+  {id:'bench-cover',x:124,z:-7,w:3,d:4,y:0,h:2,magnetic:true},
   {id:'gangway-casing',x:84.4,z:28,w:.5,d:6,y:-8,h:3,permanent:true},
   ...explorationSolids,...citySolids,...expansionSolids,...sideGates,...transportSolids,...arenaGates,...refugeSolids
 ];
 export const foldedControls=[
   {id:'rail-repair',x:-18,y:1.4,z:23,kind:'magnet',ground:0},
-  {id:'magnet',x:-38.4,y:-6.6,z:-8,kind:'magnet',ground:-8,mount:'magnet',facing:[1,0,0]},
+  {id:'magnet',x:74,y:1.4,z:-24,kind:'magnet',ground:0,mount:'magnet',facing:[0,0,-1]},
   {id:'freight',x:32,y:4.2,z:-34,ground:0,kind:'shot',surface:'top'},
   {id:'gangway',x:86,y:-6.6,z:31,kind:'shot',mount:'gangway',facing:[1,0,0]},
-  {id:'load',x:90,y:7,z:-34,ground:2,kind:'shot',surface:'top'},
+  {id:'load',x:123,y:6.8,z:-13,ground:0,kind:'shot',surface:'top'},
   {id:'cage',x:150,y:25.4,z:-23,kind:'shot',requires:'phoenix',facing:[0,0,-1],circuit:[[150,24.12,-23],[150,24.12,-35],[32,24.12,-35],[32,24.12,8],[16,24.12,8],[10,24.12,16]]},
-  {id:'bench-cover',x:78.5,y:2.4,z:-23,kind:'magnet',ground:0},
+  {id:'bench-cover',x:117.5,y:2.4,z:-3,kind:'magnet',ground:0},
   ...cityControls,...expansionControls,...explorationControls,...refugeControls
 ];
 export const foldedHives=refugeHives;
@@ -76,18 +77,18 @@ export const foldedPickups=[
   ...explorationPickups,...cityPickups.filter(p=>!expansionPickups.some(q=>q.id===p.id)),...expansionPickups
 ];
 export const foldedEnemies=[
-  {id:'bank-gunner',x:31,y:-16,z:-18,hp:2,type:'turret',encounter:'garden-bank'},
+  {id:'bank-gunner',x:35,y:-16,z:-20,hp:2,type:'turret',encounter:'garden-bank'},
   {id:'bank-scout',x:44,y:-16,z:-19,hp:3,type:'guard',magneticShield:true,encounter:'garden-bank'},
   {id:'dock-gunner',x:89,y:-8,z:17,hp:3,type:'artillery',encounter:'rear-dock'},
   {id:'dock-scout',x:87,y:-8,z:25,hp:2,type:'skirmisher',encounter:'rear-dock'},
-  {id:'bench-guard',magneticShield:true,x:73,y:0,z:-24,hp:3,type:'guard',encounter:'test-benches'},
-  {id:'bench-scout',x:74,y:0,z:-20,hp:3,type:'welder',encounter:'test-benches'},
-  {id:'track-scout',x:148,y:16,z:-86,hp:2,type:'scout'},
+  {id:'bench-guard',magneticShield:true,x:86,y:8,z:-61,hp:3,type:'guard',encounter:'test-benches'},
+  {id:'bench-scout',x:99,y:8,z:-66,hp:3,type:'welder',encounter:'test-benches'},
+  {id:'track-scout',x:142,y:16,z:-82,hp:2,type:'scout'},
   ...explorationEnemies,...cityEnemies,...expansionEnemies,...sideEnemies,...bossReserves
 ];
 
 // The test-bench cover remains repositionable; ordinary access locks tear free.
-for(const [id,axis,min,max]of [['bench-cover','z',-25,-17]]){
+for(const [id,axis,min,max]of [['bench-cover','x',116,124]]){
   const body=foldedSolids.find(s=>s.id===id);body.rail={axis,min,max};
   const c=foldedControls.find(c=>c.id===id);c.slide=id;c.mount=id;c.facing=[-1,0,0];
 }
@@ -172,6 +173,12 @@ export function initialFoldedState(saved={}){
   delete state.pendingSignals['overdrive-bypass'];
   state['rail-crossing']=!!(saved.sidePuzzles?.rail?.solved||saved.sidePuzzles?.rail?.secured);
   for(const p of explorationPickups)if(p.requires&&state[p.id])state[p.requires]=true;
+  // Preserve earned access in legacy saves without granting missing modules.
+  if(saved.progressionRevision!==2&&saved.anchor&&(state.phoenix||state.laser||state.circulation)){
+    state.pressure=true;state['phoenix-departure']=true;state['proving-inspection']=true;
+    if(state.circulation)state['lens-return']=true;
+  }
+  state.progressionRevision=2;
   state.anchor=migrateRefuge(saved.anchor,state);
   state.discovered=Array.isArray(saved.discovered)?saved.discovered.filter(id=>foldedDecks.some(d=>d.id===id)):['turntable'];
   state.slidePositions=restoreSlidePositions(state.bodies.solids,saved.slidePositions,state);

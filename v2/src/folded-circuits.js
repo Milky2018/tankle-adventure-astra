@@ -17,10 +17,13 @@ export function circuitLinks(controls,solids,lifts){
         end[1]=target.stops.reduce((best,y)=>Math.abs(y-ground)<Math.abs(best-ground)?y:best)+.12;
       }
       let points=[[c.x,ground+.12,c.z],[c.x,ground+.12,end[2]],[end[0],ground+.12,end[2]],end];
-      if(['inner-optics','inner-thermal'].includes(c.id)&&target.id==='furnace-service-lift')points=[[c.x,24.12,c.z],[122,24.12,c.z],[122,24.12,30],[94,24.12,30],[94,24.12,46]];
+      if(c.id==='load'){
+        points=[[123,.12,-13],[123,.12,-9],[110,.12,-9],[110,.12,-14],end];
+        if(target.id==='carrier')points=[[123,.12,-13],[123,.12,-9],[110,.12,-9],[110,.12,-18],[110,8.12,-42],[110,8.12,-62],[78,8.12,-62],end];
+      }
+      if(c.id==='lens-return'&&target.x===156)points=[[308,24.12,-14],[308,24.12,-28],[276,24.12,-28],[248,24.12,-28],[196,24.12,-28],[162,24.12,-28],end];
       if(c.id==='sorter')points=[[130,24.12,-100],[126,24.12,-100],[126,24.12,-32],[76,24.12,-32],...(target.y<24?[[76,24.12,-28],[76,.12,44]]:[]),end];
       if(c.id==='pump'&&target.x<0)points=[[c.x,c.y,c.z],[c.x,ground+4.3,c.z],[c.x,ground+4.3,-11.5],[c.x,-7.88,-11.5],[58,-7.88,-30],[-26,-7.88,-30],end];
-      if(c.id==='load'&&target.stops)points=[[90,2.12,-34],[90,8.12,-52],[78,8.12,-52],end];
       if(c.id==='garden-optical'){
         const common=[[232,24.12,-9.5],[242,24.12,-9.5],[242,24.12,6],[230,24.12,6],[230,24.12,12],[230,16.12,36],[202,16.12,36],[202,16.12,6]];
         points=[...common,[end[0],16.12,6],end];

@@ -25,7 +25,7 @@ export const ROOM_PLAN=[
   ['turntable','transit',16,true],['roof-junction','transit',16,true],['hub-entry','transit',16,true],['loading-descent-top','transit',16,true],['loading','transit',16,true],['mortar-apron','transit',16,true],['training-gallery','transit',16,true],['freight','transit',16,true],
   ['ferry-cradle','garden',5,false],['bridge-underside','garden',3.5,false],['canal-landing','garden',4,false],
   ['garden-bank','garden',5,false],['pump-terrace','garden',5,false],['rear-dock','garden',5,false],
-  ['common-benches','testworks',16,true],['carrier-landing','transit',24,true],['phoenix-cradle','testworks',16,true],
+  ['common-benches','testworks',5,false],['carrier-landing','transit',24,true],['phoenix-cradle','testworks',16,true],
   ['calibration','optics',16,true],['mirror-service-gallery','optics',16,true],['guardian-court','optics',10,false],
   ['circulation-yard','circulation',16,true],['circulation-rig','circulation',16,true],['pressure-release-court','circulation',16,true],
   ['predecessor-gallery','furnace',7,false],['predecessor-mount','furnace',16,true],['predecessor-cooling','furnace',16,true],['predecessor-dock','furnace',16,true],['last-refuge','furnace',16,true],['keeper-court','furnace',24,true],['central-furnace','furnace',24,true]
@@ -33,8 +33,8 @@ export const ROOM_PLAN=[
 // Authored receiving bays frame the first route. Openings correspond to the
 // service ramp, local shutter and later engine return.
 const roomWalls={
-  'common-benches':[[76.1,-28.85,7.8,.8],[96.1,-28.85,3.9,.8],[68,-11.95,13.9,.8],[94.1,-11.95,5.9,.8]],
-  'carrier-landing':[[63.15,-78,.8,26],[112.05,-78,.8,26],[64,-78.85,7.9,.8],[84.1,-78.85,27.9,.8],[64,-51.95,19.9,.8],[96.1,-51.95,15.9,.8]],
+  'common-benches':[[128.05,-10,.8,8],[104,-1.95,24,.8]],
+  'carrier-landing':[[63.15,-78,.8,26],[116.05,-78,.8,26],[64,-78.85,7.9,.8],[84.1,-78.85,31.9,.8],[64,-51.95,39.9,.8]],
   'phoenix-cradle':[[64,-94.85,28,.8],[63.15,-94,.8,16],[64,-77.95,7.9,.8],[84.1,-77.95,7.9,.8]],
   'calibration':[[224.1,-36.85,11.8,.8],[196,-36.85,15.9,.8],[196,-11.95,7.9,.8]],
   'mirror-service-gallery':[[208.1,23.15,15.8,.8],[208.1,40.05,27.9,.8]],

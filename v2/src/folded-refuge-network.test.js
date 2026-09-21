@@ -48,15 +48,7 @@ test('the Overseer side release faces its approach and bypasses the opposing bel
   assert.equal(s.foundry,false);
 });
 
-test('Phoenix acquisition exits directly through its own breakthrough to the distribution room',()=>{
-  const s=initialFoldedState({'proving-endurance':true,phoenix:true}),p={...newPlayer(),x:218,y:16,z:-114,overdrive:true,phoenix:true};
-  walk(p,s,[[238,-114]]);
-  const seconds=walk(p,s,[[238,-62]],{boost:true});
-  assert.ok(s['phoenix-departure']);assert.ok(seconds<10);
-  walk(p,s,[[238,-28],[150,-28]]);
-  assert.equal(p.y,24);assert.equal(s.cage,false);
-  assert.ok(releaseFolded('cage','cannon',p,s,[]));
-});
+
 
 test('the deep maintenance shaft has a housed control and reaches the Foundry',()=>{
   const shaft=foldedLiftDefs.find(l=>l.id==='last-cage'),s=initialFoldedState({foundry:true});
@@ -87,26 +79,24 @@ test('sluice diversion changes the actual force on an afloat tank but never crea
 });
 
 test('magnetic slides remain solid, stop for occupants, and restore an unfinished rail position',()=>{
-  const s=initialFoldedState(),body=s.bodies.solids.find(b=>b.id==='bench-cover'),p={x:78.5,y:0,z:-12};
+  const s=initialFoldedState(),body=s.bodies.solids.find(b=>b.id==='bench-cover'),p={x:111,y:0,z:-5};
   for(let i=0;i<30;i++)pullSlide(body,p,1/60,[],(x,z,y)=>!!foldedSupport(x,z,y));
-  assert.ok(body.z> -25&&body.z< -17);
-  s.slidePositions[body.id]=body.z;
+  assert.ok(body.x>116&&body.x<124);
+  s.slidePositions[body.id]=body.x;
   const restored=initialFoldedState(JSON.parse(JSON.stringify(s))).bodies.solids.find(b=>b.id===body.id);
-  assert.equal(restored.z,body.z);assert.ok(foldedBlocked(body.x+1,body.y,body.z+1,s));
-  const obstacle={x:body.x,y:body.y,z:body.z+body.d+1,w:3,d:2};
-  pullSlide(body,p,2,[obstacle],()=>true);assert.ok(body.z+body.d<=obstacle.z);
+  assert.equal(restored.x,body.x);assert.ok(foldedBlocked(body.x+1,body.y,body.z+1,s));
+  const obstacle={x:body.x-4,y:body.y,z:body.z,w:3,d:4};
+  pullSlide(body,p,2,[obstacle],()=>true);assert.ok(body.x>=obstacle.x+obstacle.w);
 });
 
-test('both vestibule restorations are required in either order and survive reloading',()=>{
-  const d=foldedLiftDefs.find(l=>l.id==='furnace-service-lift');
-  for(const order of [['inner-optics','inner-thermal'],['inner-thermal','inner-optics']]){
-    const first=initialFoldedState({[order[0]]:true}),lift={...d,y:d.stops[0],destination:d.stops[0],wait:0},p={x:0,y:0,z:0};
-    stepLifts([lift],first,p,10);assert.equal(lift.y,d.stops[0]);
-    const restored=initialFoldedState(JSON.parse(JSON.stringify(first)));restored[order[1]]=true;
-    stepLifts([lift],restored,p,4);assert.equal(lift.y,d.stops[0]+5);
-    assert.ok(restored[order[0]]);
-  }
+test('the deep lift belongs to the inner thermal passage, not an optical AND vestibule',()=>{
+ const d=foldedLiftDefs.find(l=>l.id==='furnace-service-lift');
+ assert.deepEqual(d.stops,[-40,-8]);assert.equal(d.locks,undefined);
+ const s=initialFoldedState({'inner-optics':true}),l={...d,y:-8,destination:-8,wait:0},p={x:0,y:0,z:0};
+ stepLifts([l],s,p,10);assert.equal(l.y,-8);
+ s['inner-thermal']=true;stepLifts([l],initialFoldedState(JSON.parse(JSON.stringify(s))),p,4);assert.ok(l.y<-8);
 });
+
 
 test('Keeper retry from D is a short supported walk without a lift or repeated feed restoration',()=>{
   const s=initialFoldedState({'core-feed':true}),p={...newPlayer(),x:44,y:-40,z:-10};

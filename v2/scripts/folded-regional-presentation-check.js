@@ -5,7 +5,7 @@ async page=>{
   await page.evaluate(()=>localStorage.clear());
   for(const view of ['overhead','third']){
     await page.goto(`http://127.0.0.1:5174/?chapter=folded&view=${view}&test&manual`);await page.waitForFunction(()=>window.__game?.debug);
-    for(const [name,x,y,z]of [['foundry',0,-8,86],['transit',0,0,27],['garden',48,-8,20],['testworks',90,0,-18],['optics',218,24,-20],['circulation',231,-24,125],['furnace',0,-56,53]]){
+    for(const [name,x,y,z]of [['foundry',0,-8,86],['transit',0,0,27],['garden',48,-8,20],['testworks',218,16,-170],['optics',218,24,-20],['circulation',231,-24,125],['furnace',0,-56,53]]){
       await page.evaluate(({x,y,z})=>{__game.scenario({player:{x,y,z,hp:100,invincible:1e9}});__game.look(Math.PI,.18);__game.step(.2);},{x,y,z});
       const s=await page.evaluate(()=>({camera:__game.snapshot().camera,region:__game.debug.world.presentation.region,bounds:__game.debug.world.presentation.bounds(),depth:__game.debug.scene.getObjectByName('city-architecture-depth').visible}));
       if(s.region!==name||s.bounds.rooms!==72||s.bounds.solids===0||!s.depth)throw Error('Regional presentation '+JSON.stringify({name,view,s}));

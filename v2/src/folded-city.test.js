@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {applyFloorHeat} from './folded-machinery.js';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
-import {initialFoldedState,moveFolded,foldedSupport,foldedBlocked,foldedDecks,foldedEnemies,foldedPickups,foldedLiftDefs,foldedHives,releaseFolded,inRect,deckHeight} from './folded-layout.js';
+import {initialFoldedState,moveFolded,foldedSupport,foldedBlocked,foldedDecks,foldedEnemies,foldedPickups,foldedLiftDefs,foldedHives,foldedControls,releaseFolded,inRect,deckHeight} from './folded-layout.js';
 import {cameraMovement} from './folded-camera.js';
 import {cityBelts,cityControls,citySolids} from './folded-city-layout.js';
 import {cityDamage,cityContact} from './folded-combat.js';
@@ -95,22 +95,16 @@ test('Magnet training and the unassisted Mortar route preserve dry access',()=>{
   travel(p,s,[[34,-72]],{boost:true});assert.equal(p.y,-8);
 });
 
-test('Mortar opens the outer ring and its inside return without giving the emitter before Phoenix',()=>{
-  const s=initialFoldedState({freight:true,'bridge-crane':true}),p=player(0,0,-34,{overdrive:true,mortar:true});
-  travel(p,s,[[59,-34],[59,-63],[67,-63],[67,-34],[70,-34],[70,-18],[90,-18]]);
-  assert.equal(p.y,0);assert.ok(releaseFolded('freight-return','cannon',p,s,[]));
-  travel(p,s,[[70,-18],[70,-34],[59,-34],[59,-106],[76,-106]]);
-  for(let i=0;i<300;i++){updateHeat(p,1/60,i/60,true,true);moveFolded(p,BASE_SPEED*p.speed/60,0,s);}
-  assert.ok(p.x<104,'the Phoenix lock is visible near the entrance, before the long span');
-  assert.equal(s['optics-outer'],false);
-  travel(p,s,[[59,-106]]);p.phoenix=true;p.heat=0;p.overheated=false;
-  travel(p,s,[[206,-106]],{boost:true});
-  assert.equal(s['optics-outer'],true);
-  travel(p,s,[[206,-90],[218,-90],[218,-84],[218,-50]]);
-  assert.ok(p.y>16&&p.y<24);
+test('the cargo outlook previews the eastern city without a physical bypass of the original bulkhead',()=>{
+ const s=initialFoldedState({freight:true,'bridge-crane':true}),p=player(0,0,-34,{overdrive:true,mortar:true});
+ travel(p,s,[[59,-34],[59,-106],[88,-106]]);
+ for(let i=0;i<300;i++)moveFolded(p,.15,0,s);assert.ok(p.x<94);
+ p.phoenix=true;for(let i=0;i<300;i++){updateHeat(p,1/60,i/60,true,true);moveFolded(p,.3,0,s);}
+ assert.ok(p.x<94);travel(p,s,[[59,-106],[59,-34],[53,-34],[53,-32],[43,-32],[43,-34],[0,-34]]);
 });
 
-test('Phoenix opens independent optical and circulation paths and all pre-guardian optical returns',()=>{
+
+test('the eastern optical route and its returns precede the optional Guardian',()=>{
   const s=initialFoldedState(),p=player(136,24,-30,{overdrive:true,phoenix:true});
   travel(p,s,[[228,-30]],{boost:true});assert.equal(p.y,24);
   travel(p,s,[[242,-20],[242,-30],[254,-30],[254,-98],[64,-98],[64,-86]]);assert.equal(p.y,24);
@@ -120,26 +114,22 @@ test('Phoenix opens independent optical and circulation paths and all pre-guardi
   assert.ok(s['garden-optical']&&s['yard-optical']);assert.equal(s.guardian,false);
 });
 
-test('Phoenix alone reaches the dry circulation rig from its roof branch',()=>{
-  const s=initialFoldedState(),p=player(166,16,-64,{overdrive:true,phoenix:true});
-  travel(p,s,[[166,30]],{boost:true});
-  travel(p,s,[[174,30],[174,-18],[190,-18],[190,30],[190,48],[242,48],[242,95]]);
-  assert.ok(s.pressure);
-  travel(p,s,[[242,120],[222,120]]);assert.equal(p.y,-24);assert.equal(p.mortar,false);assert.equal(p.flotation,false);assert.equal(p.laser,false);
+test('the optical return opens a supported internal descent to the dry circulation approach',()=>{
+ const s=initialFoldedState(),p=player(162,24,-26,{overdrive:true,phoenix:true});
+ for(let i=0;i<120;i++)moveFolded(p,0,.15,s);assert.ok(p.z<-16.5);
+ p.laser=true;assert.ok(releaseFolded('lens-return','laser',p,s,[]));
+ travel(p,s,[[162,30],[174,30],[174,-18],[190,-18],[190,48],[242,48],[242,120],[222,120]]);
+ assert.equal(p.y,-24);assert.equal(p.circulation,false);
 });
 
-test('Circulation opens its industrial return and the vestibule preserves the optical requirement',()=>{
-  const s=initialFoldedState(),p=player(214,-24,128,{overdrive:true,phoenix:true,circulation:true});
-  travel(p,s,[[211,128],[211,25],[211,13],[218,13]],{boost:true});
-  assert.ok(releaseFolded('pressure-return','cannon',p,s,[]));
-  const upper=player(122,24,-28,{overdrive:true,phoenix:true,circulation:true});
-  assert.equal(releaseFolded('inner-optics','cannon',upper,s,[]),false);
-  assert.equal(releaseFolded('inner-optics','mortar',upper,s,[]),false);
-  travel(upper,s,[[122,32]],{boost:true});assert.ok(s['inner-thermal']);
-  assert.ok(releaseFolded('inner-transit','cannon',upper,s,[]));
-  assert.equal(s['inner-optics'],false);
-  assert.ok(releaseFolded('inner-optics','laser',upper,s,[]));
+
+test('Circulation opens its local industrial return without requiring a second optical key',()=>{
+ const s=initialFoldedState(),p=player(214,-24,128,{overdrive:true,phoenix:true,circulation:true});
+ travel(p,s,[[211,128],[211,25],[211,13],[218,13]],{boost:true});
+ assert.ok(releaseFolded('pressure-return','cannon',p,s,[]));
+ assert.equal(foldedControls.some(c=>c.id==='inner-optics'),false);
 });
+
 
 test('the ordinary Phoenix heat budget cannot cross the industrial sustained belt even with repeated cooling',()=>{
   for(const [x,z,y,end]of [[211,128,-24,28]]){
@@ -192,12 +182,11 @@ test('full-speed Phoenix contact crushes ordinary armor without bypassing boss a
   assert.equal(cityContact(p,{type:'boss'}),0);
 });
 
-test('the water route reaches the same Mortar apron and the pressure loop returns to both old layers',()=>{
+test('the water approach reaches cargo and the industrial outlet returns to the remembered Gardens',()=>{
   const s=initialFoldedState({'pressure-return':true,pump:true,pressure:true}),p=player(6,-16,-4,{flotation:true,deployed:true});
   travel(p,s,[[6,-34],[14,-34],[14,-78],[34,-78],[34,-70]]);assert.equal(p.y,-8);
   const q=player(200,-16,18,{overdrive:true,circulation:true});
   travel(q,s,[[134,18],[134,30],[110,30],[110,18],[70,18],[70,-28],[56,-28],[-26,-28],[-26,-8]]);assert.equal(q.y,-8);
-  const r=player(134,-16,30);travel(r,s,[[122,30],[122,-30],[110,-30],[110,4],[10,4],[10,27]]);assert.equal(r.y,0);
 });
 
 test('every lift has an unobstructed shaft between its stops',()=>{
@@ -210,7 +199,7 @@ test('every lift has an unobstructed shaft between its stops',()=>{
 test('the southern canal return opens into an already completed foundry',()=>{
   const p=player(-72,-16,-4,{flotation:true,deployed:true}),s=initialFoldedState();
   travel(p,s,[[-72,50]]);assert.equal(releaseFolded('press-return','cannon',p,s,[]),false);
-  s.foundry=true;assert.ok(releaseFolded('press-return','cannon',p,s,[]));travel(p,s,[[-55,50]]);assert.equal(p.y,-16);
+  s.prototype=true;assert.ok(releaseFolded('press-return','cannon',p,s,[]));travel(p,s,[[-55,50]]);assert.equal(p.y,-16);
 });
 
 test('overlapping ramp landings work in both directions and do not admit the hull underneath',()=>{
@@ -220,11 +209,11 @@ test('overlapping ramp landings work in both directions and do not admit the hul
 });
 
 test('the early industrial spur exposes its Phoenix lock before the long approach',()=>{
-  const s=initialFoldedState(),p=player(30,0,4,{overdrive:true});
+  const s=initialFoldedState(),p=player(36,0,6,{overdrive:true});
   for(let i=0;i<600;i++){updateHeat(p,1/60,i/60,true,true);moveFolded(p,BASE_SPEED*p.speed/60,0,s);}
-  assert.ok(p.x<76);assert.equal(s.pressure,false);
-  travel(p,s,[[30,4]]);p.phoenix=true;p.heat=0;p.overheated=false;
-  travel(p,s,[[88,4]],{boost:true});assert.equal(s.pressure,true);
+  assert.ok(p.x<92);assert.equal(s.pressure,false);
+  travel(p,s,[[36,6]]);p.phoenix=true;p.heat=0;p.overheated=false;
+  travel(p,s,[[140,6]],{boost:true});assert.equal(s.pressure,true);
 });
 
 

@@ -7,7 +7,7 @@ async page=>{
   {id:'lens-return',from:[324,24,-32],mirror:[324,26,-14],state:{'lens-return':false}},
   {id:'gallery',from:[225.2376,24,-20],mirror:[216,26,-4],state:{'optical-screen':true,gallery:false,mirrorTurns:{'return-index':0},'garden-optical':false}},
   {id:'garden-optical',from:[225.2376,24,-20],mirror:[216,26,-4],state:{pendingSignals:{},'optical-screen':true,gallery:true,mirrorTurns:{'return-index':1},'garden-optical':false}},
-  {id:'inner-optics',from:[122,24,-28],mirror:[126,26,-16],state:{'inner-optics':false}}
+  {id:'lens-return',from:[324,24,-28],mirror:[324,26,-14],state:{'lens-return':false}}
  ];
  async function fixture(c,view){await page.evaluate(({c,view})=>{
   const a=__game.debug,g=__game;g.setInput([]);a.clearShots();a.setCameraView(view);

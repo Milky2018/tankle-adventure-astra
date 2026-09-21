@@ -26,10 +26,12 @@ test('the observation gallery is a real alternative at a different height, trave
  assert.ok(route.rooms.some(r=>r.y===20));
 });
 test('Phoenix has physical acceleration distance before the runout shutter and its first defenders',()=>{
- const p={...newPlayer(),x:238,y:16,z:-114,overdrive:true,phoenix:true},s=initialFoldedState({'proving-transfer':true,'proving-endurance':true});
- let time=0;while(p.z< -68&&time<10){time+=1/60;updateHeat(p,1/60,time,true,true);moveFolded(p,0,BASE_SPEED*p.speed/60,s);}
- assert.ok(s['phoenix-departure']);assert.ok(p.z> -68);assert.equal(p.overheated,false);
+ const p={...newPlayer(),x:238,y:16,z:-82,overdrive:true,phoenix:true},s=initialFoldedState({foundry:true});
+ let time=0;while(p.x>190&&time<10){time+=1/60;updateHeat(p,1/60,time,true,true);moveFolded(p,-BASE_SPEED*p.speed/60,0,s);}
+ assert.ok(s['phoenix-departure']);assert.ok(p.x<190);assert.equal(p.overheated,false);
 });
+
+
 test('the coolant runout delivers red contact from a cold start using the unchanged heat rules',()=>{
  const hotFloor=expansionHeat[0],p={...newPlayer(),x:374,y:-24,z:106,overdrive:true,phoenix:true,circulation:true},s=initialFoldedState();
  for(let i=0;i<600&&p.x>320;i++){
