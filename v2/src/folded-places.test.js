@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {stepTransport,transportSolids} from './folded-transport.js';
 import {expansionRoutes,expansionPickups,expansionSolids,expansionHeat} from './folded-expansion-layout.js';
-import {initialFoldedState,moveFolded,foldedSupport,foldedBlocked,foldedHives,foldedSolids,foldedArchitecture} from './folded-layout.js';
+import {initialFoldedState,moveFolded,foldedSupport,foldedLiftDefs,foldedBlocked,foldedHives,foldedSolids,foldedArchitecture} from './folded-layout.js';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
 
 function walk(p,state,x,z){
@@ -12,7 +12,7 @@ function walk(p,state,x,z){
  assert.ok(Math.hypot(p.x-x,p.z-z)<.15,`blocked at ${p.x},${p.y},${p.z} toward ${x},${z}`);
 }
 test('moving freight cover stops before occupants and resumes without teleporting or crushing them',()=>{
- const s=structuredClone(transportSolids[1]),p={x:s.x+s.w+2,y:s.y,z:s.z+1,hp:50};
+ const s=structuredClone(transportSolids.find(s=>s.id==='dispatch-carrier-a')),p={x:s.x+s.w+2,y:s.y,z:s.z+1,hp:50};
  const initial=s.x;stepTransport([s],2,[p]);assert.ok(s.x>initial);assert.ok(s.x+s.w<=p.x-1);
  const stopped=s.x;stepTransport([s],10,[p]);assert.equal(s.x,stopped);assert.equal(p.hp,50);
  p.z+=10;stepTransport([s],1,[p]);assert.ok(s.x>stopped);
@@ -41,7 +41,7 @@ test('the coolant runout delivers red contact from a cold start using the unchan
 });
 test('relocated acquisition and recovery points remain clear for an old saved anchor',()=>{
  for(const q of [...expansionPickups,...foldedHives.filter(h=>h.id.includes('-hive-'))]){
-  const s=initialFoldedState({anchor:q.id});assert.ok(foldedSupport(q.x,q.z,q.y),q.id);assert.equal(foldedBlocked(q.x,q.y,q.z,s),undefined,q.id);
+  const s=initialFoldedState({anchor:q.id});assert.ok(foldedSupport(q.x,q.z,q.y,false,foldedLiftDefs.map(l=>({...l,y:l.id===q.lift?q.y:l.stops[0]}))),q.id);assert.equal(foldedBlocked(q.x,q.y,q.z,s),undefined,q.id);
  }
 });
 // Sweep every cross-section of the route gates; testing only their centre would
@@ -52,7 +52,7 @@ test('full-width transfer and return shutters cover their supporting lane',()=>{
   const fixed=alongX?gate.z:gate.x,start=(alongX?gate.x:gate.z)-3,end=start+(alongX?gate.w:gate.d)+6;
   for(let v=start;v<=end;v+=.5){
    const p={x:alongX?v:fixed-2,y:gate.y,z:alongX?fixed-2:v,speed:1};
-   if(!foldedSupport(p.x,p.z,p.y)||foldedBlocked(p.x,p.y,p.z,s))continue;
+   if(!foldedSupport(p.x,p.z,p.y,false,foldedLiftDefs.map(l=>({...l,y:l.id===p.lift?p.y:l.stops[0]})))||foldedBlocked(p.x,p.y,p.z,s))continue;
    const support=foldedSupport(alongX?v:fixed+2,alongX?fixed+2:v,gate.y);
    if(!support)continue;
    moveFolded(p,alongX?0:4,alongX?4:0,s);

@@ -27,7 +27,13 @@ export function makeSidePuzzles(scene,state){
  const a=paddle('rail-a',-166,8,-80,true),b=paddle('rail-b',-158,8,-76,true);paddle('rail-signal',-176,8,-71);
  const edges=new Map();for(const switches of [[false,false],[true,false],[true,true]]){const route=carrierRoute(switches);for(let i=1;i<route.length;i++){const points=[route[i-1],route[i]],key=points.map(p=>p.join(',')).sort().join(':');edges.set(key,points);}}
  for(const [a,b]of edges.values())for(const side of [-.65,.65]){const horizontal=a[1]===b[1];segment(fixed,[a[0]+offset.x+(horizontal?0:side),8.08,a[1]+offset.z+(horizontal?side:0)],[b[0]+offset.x+(horizontal?0:side),8.08,b[1]+offset.z+(horizontal?side:0)]);}
- const blades=[-170,-162].map(x=>{const root=new T.Group();root.position.set(x,8.2,-76);scene.add(root);roots.push(root);box(root,.2,.1,3,0,0,-1.5,C.yellow,0);return root;});
+ const blades=[-170,-162].map((x,i)=>{
+  box(fixed,2.6,.08,2.6,x,8.04,-76,C.dark,0);
+  ring(fixed,.3,.06,x,8.2,-76,C.yellow);
+  const root=new T.Group();root.name=`rail-switch-${i}`;root.position.set(x,8.18,-76);scene.add(root);roots.push(root);
+  for(const side of [-.65,.65])box(root,.2,.14,2.2,side,0,-1.1,C.metal,0);
+  return root;
+ });
  for(const [t,x]of [[a,-170],[b,-162]])segment(fixed,[t.x,8.15,t.z],[x,8.15,-76],.09,C.yellow);
  const cart=new T.Group();scene.add(cart);roots.push(cart);owners.set(cart,carBounds);box(cart,2,.6,2,0,.65,0,C.metal);const wheels=[];for(const x of [-1,1])for(const z of [-.7,.7]){const wheel=cylinder(cart,.3,.2,x,.3,z,C.dark,8);wheel.rotation.z=Math.PI/2;wheels.push(wheel);}
  const brake=paddle('rail-carrier',-176,8,-76);scene.remove(brake.root);cart.add(brake.root);brake.root.position.set(0,.6,0);roots.splice(roots.indexOf(brake.root),1);brake.root=cart;
@@ -78,7 +84,7 @@ export function makeSidePuzzles(scene,state){
   const position=railPoint(rail.position()),dx=position.x-cart.position.x,dz=position.z-cart.position.z,travel=Math.hypot(dx,dz);if(dt>0&&travel>.0001){cart.rotation.y=Math.atan2(dx,dz);for(const wheel of wheels)wheel.rotateY(-travel/.3);}cart.position.set(position.x,position.y,position.z);Object.assign(carBounds,{x:position.x-1.1,z:position.z-1.1});Object.assign(brake,{x:position.x,y:position.y+1.9,z:position.z});
   for(const [i,t]of trays.entries()){t.root.rotation.y=T.MathUtils.damp(t.root.rotation.y,gutter.state.angles[i]*Math.PI/2,8,dt);t.flow.visible=i===0||Math.abs(trays[0].root.rotation.y-Math.PI/2)<.02;t.drip.visible=t.flow.visible;t.drip.scale.set(gutter.state.unplugged?1:.35,i===0?1:2,1);}
   inlet.scale.x=inlet.scale.z=gutter.state.unplugged?1:.35;
-  for(const [i,blade]of blades.entries())blade.rotation.y=rail.state.switches[i]?-Math.PI/2:0;
+  for(const [i,blade]of blades.entries()){const angle=rail.state.switches[i]?(i===0?-Math.PI/2:Math.PI):0;blade.rotation.y=dt>0?T.MathUtils.damp(blade.rotation.y,angle,14,dt):angle;}
   for(const t of targets){if(!t.handle)continue;t.flash=Math.max(0,t.flash-dt);t.handle.rotation.x=-t.flash*1.4;if(t.plate)t.plate.position.y=t.contact?.025:.1;const lit=t.id==='rail-a'?rail.state.switches[0]:t.id==='rail-b'?rail.state.switches[1]:t.id.startsWith('rail')?rail.state.solved:t.id==='gutter-plug'?gutter.state.unplugged:gutter.state.grown;t.lamp.material.color.setHex(lit?SIGNAL.open:SIGNAL.ready);if(t.id==='gutter-plug')t.handle.visible=!gutter.state.unplugged;}
   plant.scale.y=.12+.88*gutter.state.fill;for(const leaf of leaves)leaf.rotation.x=(1-gutter.state.fill)*1.3;bloom.visible=gutter.state.grown;
   for(const root of roots)root.updateWorldMatrix(true,true);

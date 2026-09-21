@@ -31,7 +31,7 @@ export const foldedDecks=[
   deck('common-benches',68,-28,32,16,0),
   deck('loading',-6,-40,42,12,0),deck('freight',36,-40,40,12,0),
   deck('bench-ascent',84,-52,12,24,8,{rise:-8}),
-  deck('carrier-landing',72,-66,28,14,8),
+  deck('carrier-landing',64,-78,48,26,8),
   deck('phoenix-cradle',64,-94,28,16,16),
   deck('launch-track',92,-92,64,12,16),deck('launch-landing',156,-92,16,28,16),
   deck('roof-ascent',160,-64,12,24,16,{rise:8}),
@@ -42,7 +42,7 @@ export const foldedDecks=[
   ...cityDecks,...expansionDecks,...sideDecks,...explorationDecks,...refugeDecks
 ];
 export const foldedLiftDefs=[
-  {id:'carrier',x:72,z:-78,w:12,d:12,stops:[8,16],lock:'load'},
+  {id:'carrier',x:72,z:-90,w:12,d:12,stops:[8,16],lock:'load',locks:['load','foundry']},
   {id:'cage',x:4,z:10,w:12,d:12,stops:[0,24],recess:.6},
   ...cityLifts,...refugeLifts
 ];
@@ -58,7 +58,6 @@ export const foldedSolids=[
   {id:'bank-cover',x:34,z:-5,w:3,d:3,y:-16,h:2,permanent:true},
   {id:'canal-cover',x:29,z:-13,w:2,d:2,y:-16,h:1.6,permanent:true},
   {id:'bench-cover',x:77,z:-25,w:3,d:4,y:0,h:2,magnetic:true},
-  {id:'upper-cover',x:94,z:-58,w:3,d:3,y:8,h:2,permanent:true},
   {id:'gangway-casing',x:84.4,z:28,w:.5,d:6,y:-8,h:3,permanent:true},
   ...explorationSolids,...citySolids,...expansionSolids,...sideGates,...transportSolids,...arenaGates,...refugeSolids
 ];
@@ -83,8 +82,6 @@ export const foldedEnemies=[
   {id:'dock-scout',x:87,y:-8,z:25,hp:2,type:'skirmisher',encounter:'rear-dock'},
   {id:'bench-guard',magneticShield:true,x:73,y:0,z:-24,hp:3,type:'guard',encounter:'test-benches'},
   {id:'bench-scout',x:74,y:0,z:-20,hp:3,type:'welder',encounter:'test-benches'},
-  {id:'upper-gunner',x:96,y:8,z:-61,hp:2,type:'sniper',encounter:'carrier-brake'},
-  {id:'upper-scout',x:88,y:8,z:-63,hp:2,type:'miner',encounter:'carrier-brake'},
   {id:'track-scout',x:148,y:16,z:-86,hp:2,type:'scout'},
   ...explorationEnemies,...cityEnemies,...expansionEnemies,...sideEnemies,...bossReserves
 ];

@@ -26,9 +26,8 @@ export const refugeDecks = [
   deck('sorter-track-foot', 30, 44, 50, 8, 0, { region: 'transit' }),
   deck('sorter-track-transit', 30, 32, 12, 20, 0, { region: 'transit' }),
   deck('overseer-service-door', -14, 58, 8, 28, -8, { region: 'foundry' }),
-  deck('foundry-transit-neck', 6, 80, 24, 8, -8, { region: 'foundry' }),
-  deck('foundry-transit-rise', 22, 36, 8, 44, 0, { rise: -8, region: 'foundry' }),
-  deck('foundry-transit-head', 22, 28, 14, 8, 0, { region: 'transit' }),
+  deck('garden-foundry-walk', 42, 44, 8, 44, -8, { region: 'garden' }),
+  deck('garden-foundry-door', 14, 80, 36, 8, -8, { region: 'garden' }),
   deck('arsenal-transit-head', -66, -60, 18, 12, 8, { region: 'transit' }),
   deck('arsenal-transit-ramp', -60, -48, 12, 32, 8, { rise: -8, region: 'transit' }),
   deck('arsenal-transit-walk', -60, -16, 12, 48, 0, { region: 'transit' }),
@@ -64,25 +63,24 @@ export const refugeSolids = [
   gate('sorter', 72, -28, 8, 1, 24),
   gate('sorter', 72, 43, 8, 1, 0),
   gate('overseer-service', -14, 68, 8, 1, -8),
-  gate('arena-foundry-service', -14, 57.5, 8, 1, -8, { arena: 'foundry' }),
   gate('arsenal-return', -60, -15, 12, 1, 0),
   gate('proving-inspection', 0, -149, 12, 1, 15.75),
-  gate('foundry', 22, 77, 8, 1, -8),
+  // Keep the released-door save key while relocating its approach to the Gardens.
+  gate('transit-return', 30, 80, 1, 8, -8),
   gate('phoenix-departure', 232, -70, 12, 1, 16, { phoenix: true }),
   gate('inner-thermal', 116, 22, 12, 1, 24, { red: true }),
   gate('inner-transit', 132, -20, 12, 1, 24),
   gate('last-cage', 14, 68, 8, 1, -8),
-  gate('arena-foundry-shaft-north', 14, 33.5, 8, 1, -8, { arena: 'foundry' }),
-  gate('arena-foundry-shaft', 14, 57.5, 8, 1, -8, { arena: 'foundry' }),
 ];
 export const refugeControls = [
+  {id:'transit-return',x:33,y:-6.7,z:84,kind:'shot',mount:'transit-return',facing:[1,0,0]},
   { id: 'optical-screen', x: 214, y: 25.3, z: -10, kind: 'shot', mount: 'optical-screen', facing: [0,0,-1] },
   { id: 'coolant-bypass', x: 278, y: -22.7, z: 117, kind: 'shot', requires: 'coolant-return' },
   { id: 'inner-transit', x: 122, y: 25.3, z: 35, kind: 'shot', mount: 'inner-transit', requires: 'inner-thermal', facing: [0,0,1] },
   { id: 'proving-inspection', x: 65, y: 17.3, z: -154, kind: 'shot', requires: 'load', mount: 'proving-inspection', facing: [0,0,-1] },
   { id: 'overseer-service', x: -10, y: -6.7, z: 61, kind: 'shot', mount: 'overseer-service', facing: [0,0,-1] },
 ];
-export const refugeFlags = ['optical-screen','coolant-bypass', 'proving-inspection', 'overseer-service', 'phoenix-departure'];
+export const refugeFlags = ['transit-return','optical-screen','coolant-bypass', 'proving-inspection', 'overseer-service', 'phoenix-departure'];
 
 export const refugeLifts = [
   { id: 'foundry-loading-frame', x: -61, z: 44, w: 12, d: 12, stops: [-16, -10], lock: 'relay-west', settle: true },

@@ -106,6 +106,21 @@ async page=>{
       if(!(await page.evaluate(()=>__game.snapshot())).state[name])throw Error('District mechanism '+name);
     }
     for(const [x,z,name]of route.path){
+      if(id==='arsenal'&&name==='pickup'){
+        await choose('cannon');
+        for(const [tx,tz]of [[-170,-54],[-176,-54],[-176,-88]])await move(tx,tz);
+        for(const [switchId,sx,sz]of [['rail-a',-166,-88],['rail-b',-154,-88],['rail-carrier',-176,-84]]){
+          await move(sx,-88);await move(sx,sz);
+          await page.evaluate(id=>{
+            const g=__game,q=g.debug.world.sidePuzzles,t=q.targets.find(t=>t.id===id),index=id==='rail-a'?0:1;
+            if(id!=='rail-carrier'&&q.rail.state.switches[index])return;
+            g.step(3,false);g.aimAt(t.x,t.z,t.y);g.setInput(['Mouse0']);g.step(.1,false);g.setInput([]);g.step(1,false);
+          },switchId);
+        }
+        await page.evaluate(()=>__game.step(12,false));
+        if(!(await page.evaluate(()=>__game.snapshot())).state['rail-crossing'])throw Error('Shunting reward was not delivered');
+        for(const [tx,tz]of [[-180,-84],[-180,-60],[-156,-60]])await move(tx,tz);
+      }
       await move(x,z);await action(name,x,z);
       if(id==='proving'&&z===-158){
         await move(77,-154);await move(6,-154);await shoot(65,-154,17.3,'proving-inspection');await move(6,-34);
@@ -125,10 +140,13 @@ async page=>{
   await move(-28,124);await page.keyboard.press('e');
   if(!(await page.evaluate(()=>window.__game.snapshot())).player.overdrive)throw Error('Overdrive was not acquired');
   await move(-28,100,true);await move(-28,52);await move(-40,52);await move(-40,86,true);await move(0,86);await page.keyboard.press('e');
-  await move(0,54,true);const foundry=await fight('foundry',-10,10,55);
+  await move(0,54,true);
   await move(6,48);await page.keyboard.press('e');await move(24,48);await move(24,4);await move(36,4);await move(36,30);await move(22,30);await move(0,27);await page.keyboard.press('e');
 
-  await move(0,12);if(!(await page.evaluate(()=>__game.snapshot())).player.mortar)throw Error('Hub Mortar missed');await record('hub-mortar');
+  for(const [x,z]of [[-12,27],[-12,-8],[-12,-24],[-14,-36],[-12,-40],[-12,-72]])await move(x,z);
+  await move(6,-72,true);await settle(2);await move(34,-72,true);await use();
+  if(!(await page.evaluate(()=>__game.snapshot())).player.mortar)throw Error('Cargo Mortar missed');await record('cargo-mortar');
+  await shoot(32,-58,-2,'loading-return','mortar');await move(28,-58);await move(28,-46);await move(18,-46);await arrive(0);await move(18,-34);await move(0,-34);await shoot(0,-24,6.8,'bridge-crane','mortar');await move(0,27);await use();
   await page.screenshot({path:`v2/output/playwright/completion/${approach}-pickup.png`});
   if(approach==='water'){
 
@@ -155,7 +173,8 @@ async page=>{
   }
 
   await move(90,-23);await shoot(90,-34,7,'load','mortar');await record('mortar-reuse');
-  await move(90,-59);await move(78,-59);await move(78,-71);
+  await move(90,-56);await choose('cannon');const foundry=await fight('foundry',70,106,-56);await record('overseer');
+  await move(82,-56);await move(82,-76);await move(78,-84);
   for(let i=0;i<20&&(await page.evaluate(()=>__game.snapshot())).player.y<15.99;i++)await settle(.5);
   await move(77,-87);await expedition('proving');await use();await record('phoenix');
     async function getLaser(){

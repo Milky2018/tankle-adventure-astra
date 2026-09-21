@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createDelivery} from './folded-delivery.js';
-import {foldedSupport,foldedLiftDefs,initialFoldedState,moveFolded} from './folded-layout.js';
+import {foldedSupport,foldedLiftDefs,foldedPickups,initialFoldedState,moveFolded} from './folded-layout.js';
 import {cityContact,cityDamage} from './folded-combat.js';
 
 test('maintenance delivery waits for occupants, follows supported banks, and restores its completed berth',()=>{
@@ -30,4 +30,13 @@ test('the parked shunting carrier leaves the warehouse inspection route reachabl
  const p={x:-136,y:8,z:-54,speed:1};moveFolded(p,-26,0,{});assert.ok(Math.abs(p.x+162)<1e-6);
  moveFolded(p,0,-12,{});assert.ok(Math.abs(p.z+66)<1e-6);
  moveFolded(p,-14,0,{});assert.ok(Math.abs(p.x+176)<1e-6);
+});
+
+test('Magnet is a single raised shunting reward with a reachable lowered berth',()=>{
+ const rewards=foldedPickups.filter(p=>p.id==='magnetModule');assert.equal(rewards.length,1);
+ const reward=rewards[0],lift=foldedLiftDefs.find(l=>l.id===reward.lift);
+ assert.equal(lift.lock,'rail-crossing');assert.equal(reward.y,Math.max(...lift.stops));
+ assert.ok(reward.x>lift.x&&reward.x<lift.x+lift.w&&reward.z>lift.z&&reward.z<lift.z+lift.d);
+ const p={x:-156,y:8,z:-60,speed:1};moveFolded(p,0,-8,{},[{...lift,y:14}]);assert.ok(p.z> -64);
+ p.z=-60;moveFolded(p,0,-8,{'rail-crossing':true},[{...lift,y:8}]);assert.ok(Math.abs(p.z-reward.z)<2);
 });

@@ -94,3 +94,5 @@
 .cooling-module { color: #d7edc5; }
 
 .folded-ui #acquired[data-ability="upgrade"] .ability-reveal { border: 0; padding: 0; min-width: 58px; }
+
+.map-area-name{position:absolute;top:7px;left:7px;right:7px;padding:5px 6px;color:#f3e5bc;background:#102b2ee6;border-left:2px solid #d6bd75;font-size:11px;line-height:1.25;letter-spacing:.025em;pointer-events:none;text-shadow:0 1px 2px #091b1d}

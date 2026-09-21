@@ -1,6 +1,7 @@
 // Freight cover has the same bounds for hull collision, bullets and rendering.
 // Occupied crossings stop the carrier rather than pushing a tank off its floor.
 export const transportSolids=[
+ {id:'intro-cargo',x:-16,y:0,z:-4,w:4,d:3,h:2.8,permanent:true,theme:'transit',motion:{axis:'x',min:-17,max:-11,speed:2.4}},
  {id:'press-carrier',x:-30,y:-16,z:48,w:4,d:2.6,h:2.4,permanent:true,theme:'foundry',motion:{axis:'x',min:-42,max:-29,speed:2.4}},
  {id:'dispatch-carrier-a',x:-125,y:8,z:-2,w:6,d:3,h:2.8,permanent:true,theme:'transit',motion:{axis:'x',min:-138,max:-77,speed:3.2}},
  {id:'dispatch-carrier-b',x:-93,y:8,z:7,w:5,d:3,h:2.8,permanent:true,theme:'transit',motion:{axis:'x',min:-134,max:-74,speed:2.4}}

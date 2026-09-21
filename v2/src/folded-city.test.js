@@ -41,7 +41,7 @@ test('awakening, local relay sequence, Overdrive return and foundry exit connect
   s.prototype=s['overdrive-return']=true;p.overdrive=true;
   travel(p,s,[[-28,128],[-28,100]],{boost:true});travel(p,s,[[-28,52],[-40,52]]);travel(p,s,[[-40,86]],{boost:true});travel(p,s,[[0,86]]);assert.equal(p.y,-8);
   for(let i=0;i<240;i++){p.clock+=1/60;updateHeat(p,1/60,p.clock,false,false);}
-  travel(p,s,[[0,49]],{boost:true});s.foundry=true;
+  travel(p,s,[[0,49]],{boost:true});assert.equal(s.foundry,false);
   travel(p,s,[[24,49],[24,4],[10,4],[10,27]]);assert.equal(p.y,0);
 });
 
@@ -246,12 +246,10 @@ test('combat spawns and ability cradles have a clear camera view without floor c
 test('the relocated freight ramps do not allow boarding the carrier behind the Mortar lock',()=>{
   const s=initialFoldedState({freight:true,'bridge-crane':true}),p=player(67,8,-84);
   const carrier={...foldedLiftDefs.find(l=>l.id==='carrier'),y:8};
-  for(let i=0;i<130;i++){
-    const z=-78+i*.2,spawn=foldedSupport(67,z,8-(z+78)*8/38);
-    if(!spawn)continue;
-    Object.assign(p,{x:67,y:spawn.height,z});
-    for(let step=0;step<120;step++)moveFolded(p,.15,0,s,[carrier]);
-    assert.ok(p.x<72,`ramp reached the carrier at ${p.x},${p.y},${p.z}`);
+  for(const ramp of foldedDecks.filter(d=>['outer-ring-ascent','freight-half-rise','receiving-descent'].includes(d.id)))for(let z=ramp.z+1;z<ramp.z+ramp.d-1;z+=.2){
+    Object.assign(p,{x:ramp.x+ramp.w/2,y:deckHeight(ramp,z),z});
+    for(let j=0;j<120;j++)moveFolded(p,.15,0,s,[carrier]);
+    assert.ok(p.x<84,`ramp bypassed the Mortar approach at ${p.x},${p.y},${p.z}`);
   }
 });
 

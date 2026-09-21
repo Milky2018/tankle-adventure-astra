@@ -38,18 +38,15 @@ async page=>{
   await move(-28,124);await page.keyboard.press('e');
   if(!(await page.evaluate(()=>window.__game.snapshot())).player.overdrive)throw Error('Overdrive was not acquired');
   await move(-28,100,true);await move(-28,52);await move(-40,52);await move(-40,86,true);await move(0,86);await page.keyboard.press('e');
-  await move(0,54,true);const foundry=await fight('foundry',-10,10,55);
+  await move(0,54,true);
   await move(6,48);await page.keyboard.press('e');await move(24,48);await move(24,4);await move(36,4);await move(36,30);await move(22,30);await move(0,27);await page.keyboard.press('e');
   await page.screenshot({path:'v2/output/playwright/city-foundry-complete.png'});
-  await move(0,12);if(!(await page.evaluate(()=>__game.snapshot())).player.mortar)throw Error('Hub Mortar missed');
-  await move(0,-6);await page.keyboard.press('q');await shoot(0,-24,4.2,'bridge-crane');await page.keyboard.press('q');await move(0,27);
-  await move(-26,27);await shoot(-29,27,1.3,'ballast');await move(-38,27);await page.keyboard.press('e');await page.evaluate(()=>window.__game.step(2.5));
-  await shoot(-45.5,27,9.3,'ratchet');await move(-50,27);await move(-50,33);await page.keyboard.press('e');
-  if(!(await page.evaluate(()=>window.__game.snapshot())).player.magnet)throw Error('Magnet was not acquired');
-  await move(-50,27);await move(-38,27);await move(-26,27);await move(0,27);await page.keyboard.press('e');
-  await move(0,-34);await move(-12,-34);await move(-12,-72);await move(-8,-72);await move(34,-72,true);await page.keyboard.press('e');
-  if(!(await page.evaluate(()=>window.__game.snapshot())).player.mortar)throw Error('Mortar was not acquired');
-  await move(34,-58);await shoot(32,-58,-6.7,'loading-return');await move(28,-46);await page.keyboard.press('e');await page.evaluate(()=>window.__game.step(2.5));await move(20,-46);await page.keyboard.press('e');await page.evaluate(()=>window.__game.step(2.5));await move(20,-34);
+  for(const [x,z]of [[-12,27],[-12,-8],[-12,-24],[-14,-36],[-12,-40],[-12,-72]])await move(x,z);
+  await move(6,-72,true);await page.evaluate(()=>__game.step(2,false));await move(34,-72,true);await page.keyboard.press('e');
+  if(!(await page.evaluate(()=>__game.snapshot())).player.mortar)throw Error('Cargo Mortar missed');
+  await page.keyboard.press('q');await shoot(32,-58,-2,'loading-return');await page.evaluate(()=>__game.step(4,false));await move(28,-58);await move(28,-46);await move(18,-46);
+  await page.evaluate(()=>{for(let i=0;i<1800&&__game.snapshot().player.y<0;i++)__game.step(1/60,false);});
+  await move(18,-34);await move(0,-34);await shoot(0,-24,6.8,'bridge-crane');await page.evaluate(()=>__game.step(4,false));await move(0,27);await page.keyboard.press('e');
   const final=await page.evaluate(()=>window.__game.snapshot());if(final.player.y!==0)throw Error('Loading return failed');
-  await page.keyboard.press('Escape');if(errors.length)throw Error(JSON.stringify(errors));return {legs,prototype,foundry,abilities:final.player,state:final.state,errors};
+  await page.keyboard.press('Escape');if(errors.length)throw Error(JSON.stringify(errors));return {legs,prototype,abilities:final.player,state:final.state,errors};
 }

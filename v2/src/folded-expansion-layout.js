@@ -22,8 +22,8 @@ const roomData={
 };
 const routes={
  arsenal:{
-  path:[[-76,31,'repair'],[-104,31],[-104,12],[-136,12],[-136,-24,'arsenal-transfer'],[-136,-54],[-128,-54,'repair'],[-120,-54,'pickup']],
-  returns:[[-120,-54,'arsenal-return'],[-54,-54],[-54,28],[-26,28],[0,27]],
+  path:[[-76,31,'repair'],[-104,31],[-104,12],[-136,12],[-136,-24,'arsenal-transfer'],[-136,-54],[-128,-54,'repair'],[-156,-54],[-156,-68,'pickup']],
+  returns:[[-156,-68],[-156,-54],[-120,-54,'arsenal-return'],[-54,-54],[-54,28],[-26,28],[0,27]],
   branches:[[[-104,31],[-76,31],[-76,-2],[-104,-2],[-136,-2]],[[-136,-54],[-162,-54],[-162,-66],[-176,-66],[-176,-76]],[[-136,-54],[-82,-54],[-82,-30],[-82,-14],[-82,31]]],
   controls:[['arsenal-transfer',-136,-28,'shot',{mount:'arsenal-transfer',facing:[0,0,1]}],['arsenal-return',-102.1,-54,'magnet',{height:4.1,ground:8,mount:'arsenal-return',facing:[-1,0,0]}]],
   gates:[['arsenal-transfer',-142,-35,12,1,{rail:{axis:'x',min:-142,max:-128,release:'arsenal-transfer'}}],['arsenal-return',-101,-60,1,12,{magnetic:true}]],
@@ -105,7 +105,7 @@ for(const plan of districtPlans){
   if(kind==='gantry')for(const side of [-7,7])expansionSolids.push({id:`${id}-gantry-${side}`,x:x+side-.3,y,z:z-.4,w:.6,d:.8,h:9,permanent:true,invisible:true});
   else {const size=kind==='separator'?14:kind==='pump'?7:4;expansionSolids.push({id:`${id}-${kind}-${x}`,x:x-size/2,y,z:z-size/2,w:size,d:size,h:kind==='separator'?12:kind==='pump'?8:kind==='boiler'?6:['lens','emitter','rack'].includes(kind)?3.8:3.5,permanent:true,invisible:true});}
  }
- if(plan.pickup){const [x,z]=r.path.find(p=>p[2]==='pickup');expansionPickups.push({id:plan.pickup,ability:plan.ability,x,y,z});}
+ if(plan.pickup){const [x,z]=r.path.find(p=>p[2]==='pickup');expansionPickups.push({id:plan.pickup,ability:plan.ability,x,y,z,...(id==='arsenal'?{y:14,lift:'rail-inspection-bridge'}:{})});}
  if(id==='proving'){const [x,z]=r.path.find(p=>p[2]==='battle');expansionBattles.push({id:`${id}-endurance`,battle:`${id}-endurance`,x:x+5,y:y+1.3,z});}
  for(const c of expansionControls.filter(c=>c.id.startsWith(id)&&c.surface==='top'))expansionSolids.push({id:c.id+'-tray',x:c.x-2,y,z:c.z-2,w:4,d:4,h:1.9,permanent:true});
  expansionRoutes.push({...plan,returnY:id==='proving'?24:id==='arsenal'?0:y,path:r.path,returns:r.returns,rooms:rooms.map(r=>({...r,x:r.x+r.w/2,z:r.z+r.d/2})),trial:`${id}-transfer`});

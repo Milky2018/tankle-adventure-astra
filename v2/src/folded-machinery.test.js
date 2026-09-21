@@ -38,9 +38,9 @@ test('released lifts cycle repeatedly with endpoint dwell and no second input',(
 });
 
 test('an automatic lift waits for a straddling hull and carries a fully boarded enemy',()=>{
-  const lift={...foldedLiftDefs[0],y:8,destination:16,wait:0},p={x:78,y:8,z:-66.6},s={load:true};
+  const lift={...foldedLiftDefs[0],y:8,destination:16,wait:0},p={x:78,y:8,z:-78.6},s={load:true,foundry:true};
   stepLifts([lift],s,p,1);assert.equal(lift.y,8);
-  p.z=-64;const enemy={hp:2,x:78,y:8,z:-71};stepLifts([lift],s,p,1,[enemy]);assert.equal(lift.y,13);assert.equal(enemy.y,13);
+  p.z=-76;const enemy={hp:2,x:78,y:8,z:-83};stepLifts([lift],s,p,1,[enemy]);assert.equal(lift.y,13);assert.equal(enemy.y,13);
   enemy.x=lift.x+.94;stepLifts([lift],s,p,.2,[enemy]);assert.equal(lift.y,14,'driving to a supported edge must not freeze a lift between floors');
 });
 
@@ -78,8 +78,8 @@ test('the released carrier runs empty without boarding or a brake interaction',(
   const lift={...def,y:8,destination:8,wait:0},p={x:90,y:8,z:-59};
   for(let i=0;i<600;i++)stepLifts([lift],{},p,1/60);
   assert.equal(lift.y,8,'locked carrier stays parked');
-  for(let i=0;i<240;i++)stepLifts([lift],{load:true},p,1/60);
-  assert.ok(lift.y>8,'releasing the screened load starts the empty carrier');
+  for(let i=0;i<240;i++)stepLifts([lift],{load:true,foundry:true},p,1/60);
+  assert.ok(lift.y>8,'the released load and Overseer victory start the empty carrier');
 });
 
 test('unlocked lifts dwell for three seconds at both endpoints without a passenger',()=>{

@@ -15,7 +15,7 @@ export const cityDecks=[
   d('cargo-canal',-78,-10,36,12,-16,{water:true}),d('press-canal',-78,2,12,42,-16,{water:true}),d('press-maintenance',-78,44,16,12,-16),
   d('canal-launch-loop',-78,22,26,12,-16,{water:true}),
   d('training-gallery',-56,22,12,18,8),
-  d('loading-descent-top',-18,-40,12,12,0),d('loading-descent',-18,-64,12,24,-8,{rise:8}),
+  d('loading-descent-top',-18,-40,12,74,0),d('loading-descent',-18,-64,12,24,-8,{rise:8}),
   d('loading-west',-18,-80,14,16,-8),d('loading-conveyor',-4,-76,28,8,-8),d('mortar-apron',24,-80,22,16,-8),
   d('loading-return-top',12,-40,12,12,0),d('loading-return-bottom',24,-64,12,24,-8),d('emitter-cage-foot',44,-80,12,24,-8),
   d('freight-half-rise',56,-60,6,20,4,{rise:-4}),d('freight-half-landing',56,-66,14,6,4),
@@ -82,7 +82,7 @@ export const citySolids=[
   gate('relay-west',-47.5,44,1,12,-16,3),
   gate('relays',-50.5,120,1,12,-16),gate('overdrive-return',-34,114,12,1,-16,5),
   gate('prototype-jamb-north',-50.5,116,1,4,-16,6,{permanent:true}),gate('prototype-jamb-south',-50.5,132,1,8,-16,6,{permanent:true}),
-  gate('foundry',18,33.5,12,1,-8),gate('press-return',-64.5,44,1,12,-16),
+  gate('press-return',-64.5,44,1,12,-16),gate('foundry',72,-78.5,12,1,8,5),
   gate('bridge-crane',-6,-20,12,1,0,3.2),
   gate('bridge-crane',-6,-28,1,8,0,3.2),gate('bridge-crane',5,-28,1,8,0,3.2),
   gate('freight',25.5,-40.5,12,1,0,3.2),gate('freight',25.5,-28,12,1,0,3.2),gate('freight',36.5,-40,1,12,0,3.2),
@@ -112,6 +112,11 @@ export const citySolids=[
   gate('press-cover',-45,39,4,3,-16,2,{permanent:true}),
   gate('freight-shield-wall',48,-40,3,5,0,2.6,{permanent:true}),
   gate('loading-cover',38,-79,4,3,-8,2,{permanent:true}),
+  gate('loading-return',24,-64,12,1,-8,3.2),
+  gate('dispatch-screen',-18,-12,5,3,0,2.5,{permanent:true}),
+  gate('dispatch-cover',-10,-33,3,4,0,2,{permanent:true}),
+  gate('overseer-cover-west',72,-64,4,3,8,2,{permanent:true}),
+  gate('overseer-cover-east',100,-64,4,3,8,2,{permanent:true}),
   gate('outer-cover',210,-99,3,5,8,2,{permanent:true}),
   gate('yard-inlet-cover',164,40,4,3,-8,2,{permanent:true}),
   gate('calibration-cover',223,-26,3,4,24,2,{permanent:true}),
@@ -121,7 +126,7 @@ export const cityControls=[
   control('relay-west',-35,-14.5,44),control('relay-east',-65,-14.5,114),
   control('press-return',-70,-14.6,50,'shot',{requires:'foundry',mount:'press-return',mountAlong:.88,facing:[-1,0,0]}),control('ballast',-29,1.3,27),
   control('bridge-crane',0,6.8,-24,'shot',{ground:5,surface:'top'}),control('inner-optics',126,26,-16,'laser',{ground:24,normal:[0,0,-1]}),
-  control('loading-return',32,-6.7,-58,'shot',{facing:[1,0,0]}),control('freight-return',70,1.3,-34,'shot',{mount:'freight-return',facing:[1,0,0]}),
+  control('loading-return',32,-2,-58,'shot',{ground:-8,surface:'top'}),control('freight-return',70,1.3,-34,'shot',{mount:'freight-return',facing:[1,0,0]}),
   control('emitter-cage',63,25.4,-86,'shot',{facing:[1,0,0]}),control('gallery',228,26,-4,'laser',{ground:24,normal:[-1,0,0]}),
   control('garden-optical',232,26,-9.5,'laser',{ground:24,normal:[0,0,1]}),control('yard-optical',228,18,38,'laser',{ground:16}),
   control('pump',58,-5.5,-4,'shot',{ground:-8,mount:'pump',facing:[0,0,1]}),
@@ -131,7 +136,7 @@ export const cityControls=[
 ];
 export const cityPickups=[
   {id:'overdrive',ability:'overdrive',x:-28,y:-16,z:124,requires:'prototype',preview:true},
-  {id:'magnetModule',ability:'magnet',x:-50,y:8,z:33},{id:'mortarModule',ability:'mortar',x:0,y:0,z:12},
+  {id:'magnetModule',ability:'magnet',x:-50,y:8,z:33},{id:'mortarModule',ability:'mortar',x:34,y:-8,z:-72},
   {id:'laser',ability:'laser',x:228,y:24,z:-20},{id:'circulation',ability:'circulation',x:222,y:-24,z:117}
 ];
 export const cityEnemies=[
@@ -141,11 +146,11 @@ export const cityEnemies=[
   {id:'reclaim-scout',x:-66,y:-16,z:104,hp:3,type:'welder',encounter:'prototype-approach',patrol:{x:-70,z:94,w:18,d:18}},
   {id:'reclaim-guard',x:-55,y:-16,z:110,hp:3,type:'guard',encounter:'prototype-approach',patrol:{x:-70,z:94,w:18,d:18}},
   {id:'prototype',x:-30,y:-16,z:126,hp:9,type:'elite',persistent:true},
-  {id:'foundry',x:0,y:-8,z:42,hp:14,type:'boss',parts:[4,4],core:6,persistent:true},
+  {id:'foundry',x:86,y:8,z:-69,hp:14,type:'boss',parts:[4,4],core:6,persistent:true},
   {id:'freight-lobber',x:55,y:0,z:-36,hp:3,type:'artillery',encounter:'freight-battery'},
   {id:'freight-flanker',x:53,y:0,z:-30,hp:2,type:'skirmisher',encounter:'freight-battery'},
-  {id:'loading-gunner',x:30,y:-8,z:-77,hp:3,type:'artillery',encounter:'mortar-rig'},
-  {id:'loading-scout',x:25,y:-8,z:-69,hp:2,type:'scout',encounter:'mortar-rig'},
+  {id:'dispatch-turret',x:-15,y:0,z:-24,hp:2,type:'turret',encounter:'dispatch-crossing',patrol:{x:-18,z:-36,w:12,d:28}},
+  {id:'dispatch-flanker',x:-9,y:0,z:-18,hp:2,type:'skirmisher',encounter:'dispatch-crossing',patrol:{x:-18,z:-36,w:12,d:28}},
   {id:'outer-sentry',x:202,y:8,z:-86,hp:4,type:'sniper',encounter:'outer-calibration'},
   {id:'outer-scout',x:213,y:8,z:-89,hp:4,type:'miner',encounter:'outer-calibration'},
   {id:'calibration-guard',x:221,y:24,z:-29,hp:5,type:'reflector',mirror:true,encounter:'emitter'},
@@ -175,8 +180,8 @@ export const cityBelts=[
   {id:'loading',x:-4,z:-76,w:8,d:8,y:-8,vx:-9.95,vz:0},
   {id:'loading-final',x:16,z:-76,w:8,d:8,y:-8,vx:-9.95,vz:0},
   {id:'return',x:208,z:28,w:12,d:48,y:-16,rise:-16/3,vx:0,vz:9.95,release:'pressure-return',heat:28},
-  {id:'foundry-feed-left',x:-14,z:40,w:8,d:14,y:-8,vx:-3.2,vz:0},
-  {id:'foundry-feed-right',x:14,z:40,w:8,d:14,y:-8,vx:3.2,vz:0},
+  {id:'foundry-feed-left',x:65,z:-74,w:5,d:18,y:8,vx:-3.2,vz:0},
+  {id:'foundry-feed-right',x:106,z:-74,w:5,d:18,y:8,vx:3.2,vz:0},
   {id:'keeper-feed-left',x:-23,z:24,w:8,d:26,y:-56,vx:0,vz:-3.2},
   {id:'keeper-feed-right',x:15,z:24,w:8,d:26,y:-56,vx:0,vz:-3.2}
 ];
@@ -190,7 +195,7 @@ export const cityMirrors=[
 ];
 export const cityFlags=['pressure-thermal','inner-thermal','bridge-crane','inner-optics','bench-cover','overdrive','magnetModule','mortarModule','laser','circulation','relay-west','relay-east','relays','prototype','overdrive-return','foundry','press-return','ballast','ratchet','loading-return','freight-return','optics-outer','emitter-cage','gallery','garden-optical','yard-optical','guardian','pump','pressure-return','last-cage','keeper','signal','maintenance','endingSeen','inner-transit'];
 
-cityEnemies.push({id:'canal-hunter',type:'hunter',hp:3,x:-20,y:-16,z:-4,swimPatrol:[[-24,-4],[-18,-4]]});
+cityEnemies.push({id:'canal-hunter',type:'hunter',hp:3,x:-72,y:-16,z:26,swimPatrol:[[-72,26],[-72,32]]});
 citySolids.push(gate('canal-hunter-pier',-12,-9,2,2,-16,3,{permanent:true}));
 
 // Match the visible side rails of the shared Foundry ramp with small stepped

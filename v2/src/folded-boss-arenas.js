@@ -1,7 +1,7 @@
 // Fight locks are transient: a save/reload or death never leaves a closed arena.
 export const BOSS_ARENAS=[
  {id:'prototype',x:-50,z:116,w:36,d:24,y:-16},
- {id:'foundry',x:-18,z:34,w:48,d:24,y:-8},
+ {id:'foundry',x:64,z:-78,w:48,d:26,y:8},
  {id:'guardian',x:180,z:44,w:48,d:46,y:16},
  {id:'sorter',x:112,z:-126,w:36,d:22,y:24},
  {id:'keeper',x:-28,z:12,w:56,d:48,y:-56}
@@ -9,7 +9,7 @@ export const BOSS_ARENAS=[
 const gate=(arena,name,x,z,w,d,y)=>({id:`arena-${arena}-${name}`,arena,x,z,w,d,y,h:5});
 export const arenaGates=[
  gate('prototype','entry',-50.5,120,1,12,-16),gate('prototype','return',-34,115.5,12,1,-16),
- gate('foundry','entry',-6,57.5,12,1,-8),
+ gate('foundry','entry',84,-52.5,12,1,8),
  gate('guardian','entry',196,43.5,12,1,16),
  gate('sorter','entry',112,-104.5,36,1,24),
  gate('sorter','west',111.5,-126,1,22,24),gate('sorter','east',147.5,-126,1,22,24),gate('sorter','north',112,-126.5,36,1,24),
@@ -17,8 +17,8 @@ export const arenaGates=[
  gate('keeper','west-exit',-16,11.5,8,1,-56),gate('keeper','east-exit',8,11.5,8,1,-56)
 ];
 export const bossReserves=[
- {id:'foundry-reserve-left',reserveFor:'foundry',reserveAt:.6,type:'skirmisher',x:-12,y:-8,z:50,hp:3},
- {id:'foundry-reserve-right',reserveFor:'foundry',reserveAt:.6,type:'scout',x:10,y:-8,z:50,hp:2},
+ {id:'foundry-reserve-left',reserveFor:'foundry',reserveAt:.6,type:'skirmisher',x:68,y:8,z:-73,hp:3},
+ {id:'foundry-reserve-right',reserveFor:'foundry',reserveAt:.6,type:'scout',x:104,y:8,z:-73,hp:2},
  {id:'keeper-reserve-west',reserveFor:'keeper',reserveAt:.65,type:'skirmisher',x:-23,y:-56,z:30,hp:4},
  {id:'keeper-reserve-east',reserveFor:'keeper',reserveAt:.65,type:'miner',x:22,y:-56,z:44,hp:3},
  {id:'keeper-reserve-flank',reserveFor:'keeper',reserveAt:.32,type:'scout',x:-23,y:-56,z:38,hp:3},

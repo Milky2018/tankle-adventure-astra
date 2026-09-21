@@ -2,6 +2,10 @@ import {explorationRooms} from './folded-exploration-layout.js';
 import {expansionRooms} from './folded-expansion-layout.js';
 // Room envelopes follow existing supporting floors. Open connections are carved
 // from actual neighboring floors and lift shafts, not inventory checks.
+export const REGION_NAMES={
+ foundry:'Recycling Foundry',transit:'Freight Exchange',garden:'Sunken Gardens',
+ testworks:'Proving Grounds',optics:'Silent Observatory',circulation:'Circulation Works',furnace:'Central Furnace'
+};
 export const REGION_STYLE={
   foundry:{wall:0x887569,frame:0x334341,roof:0x625b51,accent:0xbc9263,floor:0x756d62,surface:'brick',paving:'ash'},
   transit:{wall:0x7c8d98,frame:0x344754,roof:0x617581,accent:0xbcb6a2,floor:0x82949c,surface:'steel',paving:'steel'},
@@ -15,13 +19,13 @@ export const REGION_STYLE={
 export const OPEN_ROOMS=new Set(['turntable','garden-bank','pump-terrace','rear-dock','ferry-cradle','bridge-underside','canal-landing','guardian-court','predecessor-gallery','reservoir-east-bank','reservoir-filter-bank','reservoir-pump-island','proving-impact','proving-observation','lens-west-gallery','lens-north-gallery','lens-east-gallery']);
 // [support, region, wall height, roof]. Enclosed halls keep Mortar headroom.
 export const ROOM_PLAN=[
-  ['garden-care','garden',16,true],['sorting-bay','testworks',24,true],
+  ['garden-foundry-walk','garden',5,false],['garden-care','garden',16,true],['sorting-bay','testworks',24,true],
   ['foundry-awakening','foundry',16,true],['foundry-west','foundry',16,true],
   ['press-working-floor','foundry',16,true],['reclaim-sorting-bay','foundry',16,true],['prototype-return','foundry',6,true],['prototype-court','foundry',24,true],['recycling-furnace','foundry',24,true],
-  ['turntable','transit',16,true],['roof-junction','transit',16,true],['hub-entry','transit',16,true],['loading','transit',16,true],['mortar-apron','transit',16,true],['training-gallery','transit',16,true],['freight','transit',16,true],
+  ['turntable','transit',16,true],['roof-junction','transit',16,true],['hub-entry','transit',16,true],['loading-descent-top','transit',16,true],['loading','transit',16,true],['mortar-apron','transit',16,true],['training-gallery','transit',16,true],['freight','transit',16,true],
   ['ferry-cradle','garden',5,false],['bridge-underside','garden',3.5,false],['canal-landing','garden',4,false],
   ['garden-bank','garden',5,false],['pump-terrace','garden',5,false],['rear-dock','garden',5,false],
-  ['common-benches','testworks',16,true],['carrier-landing','testworks',16,true],['phoenix-cradle','testworks',16,true],
+  ['common-benches','testworks',16,true],['carrier-landing','transit',24,true],['phoenix-cradle','testworks',16,true],
   ['calibration','optics',16,true],['mirror-service-gallery','optics',16,true],['guardian-court','optics',10,false],
   ['circulation-yard','circulation',16,true],['circulation-rig','circulation',16,true],['pressure-release-court','circulation',16,true],
   ['predecessor-gallery','furnace',7,false],['predecessor-mount','furnace',16,true],['predecessor-cooling','furnace',16,true],['predecessor-dock','furnace',16,true],['last-refuge','furnace',16,true],['keeper-court','furnace',24,true],['central-furnace','furnace',24,true]
@@ -30,7 +34,7 @@ export const ROOM_PLAN=[
 // service ramp, local shutter and later engine return.
 const roomWalls={
   'common-benches':[[76.1,-28.85,7.8,.8],[96.1,-28.85,3.9,.8],[68,-11.95,13.9,.8],[94.1,-11.95,5.9,.8]],
-  'carrier-landing':[[84.1,-66.85,15.9,.8],[100.05,-66,.8,14],[72,-51.95,11.9,.8],[96.1,-51.95,3.9,.8]],
+  'carrier-landing':[[63.15,-78,.8,26],[112.05,-78,.8,26],[64,-78.85,7.9,.8],[84.1,-78.85,27.9,.8],[64,-51.95,19.9,.8],[96.1,-51.95,15.9,.8]],
   'phoenix-cradle':[[64,-94.85,28,.8],[63.15,-94,.8,16],[64,-77.95,7.9,.8],[84.1,-77.95,7.9,.8]],
   'calibration':[[224.1,-36.85,11.8,.8],[196,-36.85,15.9,.8],[196,-11.95,7.9,.8]],
   'mirror-service-gallery':[[208.1,23.15,15.8,.8],[208.1,40.05,27.9,.8]],

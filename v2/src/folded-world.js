@@ -480,9 +480,9 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     for(let i=0;i<3;i++){const reed=box(fixed,.12,1.2+i*.3,.12,x+i*.35,y+.7,z+(i%2)*.3,0x9d9e64,0);reed.rotation.z=(i-1)*.18;}
   }
   // Suspension cables connect the loading frame and automatic carrier.
-  for(const [x,z,bottom,top]of [[85,-41,6,18],[95,-41,6,18],[73,-78,17,23],[83,-78,17,23]])cylinder(fixed,.06,top-bottom,x,(bottom+top)/2,z,C.metal,6);
+  for(const [x,z,bottom,top]of [[85,-41,6,18],[95,-41,6,18],[73,-90,17,23],[83,-90,17,23]])cylinder(fixed,.06,top-bottom,x,(bottom+top)/2,z,C.metal,6);
   box(fixed,14,.65,1,90,18,-41,C.dark,0);
-  box(fixed,14,.65,1,78,23,-78,C.dark,0);
+  box(fixed,14,.65,1,78,23,-90,C.dark,0);
   // The moving shoe and fixed lamps indicate alignment with the upper landing.
   const carrierGauge=new T.Group();carrierGauge.name='folded-carrier-gauge';scene.add(carrierGauge);
   floorDetails.push({root:carrierGauge,x:78,y:8,z:-77.6,radius:8});
@@ -656,7 +656,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
   }
   for(const root of sidePuzzles.roots)registerOccluder(root,sidePuzzles.owners.get(root),{dynamic:true});
   for(const wall of walls)registerOccluder(wall.mesh,wall,{dynamic:true,clone:!wall.mass});
-  for(const object of [...controls,...hives,...pickups,...lifts,...floorDetails,...mirrors])registerOccluder(object.root,object,{dynamic:object.stops!==undefined||!!object.mount||mirrors.includes(object),cameraSoft:hives.includes(object)||controls.includes(object)||pickups.includes(object),layered:controls.includes(object)||hives.includes(object)||pickups.includes(object)});
+  for(const object of [...controls,...hives,...pickups,...lifts,...floorDetails,...mirrors])registerOccluder(object.root,object,{dynamic:object.stops!==undefined||!!object.lift||!!object.mount||mirrors.includes(object),cameraSoft:hives.includes(object)||controls.includes(object)||pickups.includes(object),layered:controls.includes(object)||hives.includes(object)||pickups.includes(object)});
   for(const object of pillars)registerOccluder(object.mesh,object);
   for(const root of cells.values())registerOccluder(root);
   for(const b of belts)for(const segment of b.segments)registerOccluder(segment.root,segment);
@@ -822,7 +822,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     const carrierLift=lifts.find(l=>l.id==='carrier'),aligned=Math.abs(carrierLift.y-16)<.15;
     for(const shoe of carrierShoes){shoe.position.y=carrierLift.y+.25;shoe.material.color.setHex(aligned?SIGNAL.open:SIGNAL.ready);}
     for(const lamp of brakeFeed)lamp.material.color.setHex(aligned?SIGNAL.open:C.dark);
-    for(const p of pickups){p.root.visible=p.preview||!p.requires||!!state[p.requires];p.item.visible=!state[p.id];if(p.cage)p.cage.visible=!state[p.requires];p.halo.material.color.setHex(state[p.id]?C.dark:p.requires&&!state[p.requires]?C.metal:C.yellow);p.item.position.y=Math.sin(time*2)*.15;p.item.rotation.y=time*.35;}
+    for(const p of pickups){if(p.lift){p.y=lifts.find(l=>l.id===p.lift).y;p.root.position.y=p.y;p.root.updateMatrixWorld();}p.root.visible=p.preview||!p.requires||!!state[p.requires];p.item.visible=!state[p.id];if(p.cage)p.cage.visible=!state[p.requires];p.halo.material.color.setHex(state[p.id]?C.dark:p.requires&&!state[p.requires]?C.metal:C.yellow);p.item.position.y=Math.sin(time*2)*.15;p.item.rotation.y=time*.35;}
     for(const h of hives){
       h.root.visible=!h.requires||!!state[h.requires];h.pulse=Math.max(0,h.pulse-dt);
       const nearby=Math.abs(p.y-h.y)<2&&Math.hypot(p.x-h.x,p.z-h.z)<6,active=state.anchor===h.id;

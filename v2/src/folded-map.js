@@ -1,3 +1,4 @@
+import { REGION_NAMES, regionAt } from './folded-architecture.js';
 import { foldedDecks, foldedArchitecture, inRect, deckHeight } from './folded-layout.js';
 import { abilityIcon } from './folded-hud.js';
 import { clamp } from './mechanics.js';
@@ -5,6 +6,10 @@ import { clamp } from './mechanics.js';
 // Layer selection belongs to the map, not to player position or aiming.
 export function createFoldedMap({ player: p, world, state, discovered, heading }) {
   const $ = (id) => document.getElementById(id);
+  const miniTitle = document.createElement('div');
+  miniTitle.className = 'map-area-name';
+  $('minimap-wrap').append(miniTitle);
+  const titles = [miniTitle, document.querySelector('#region .map-heading h1')];
   let chosenLayer = Math.round(p.y / 8) * 8;
   const layers = document.createElement('div');
   layers.id = 'folded-layers';
@@ -43,6 +48,8 @@ export function createFoldedMap({ player: p, world, state, discovered, heading }
   }
   let mapLinks = [];
   function drawMap(large = false) {
+    const name = REGION_NAMES[regionAt(p, foldedArchitecture.rooms)];
+    for (const title of titles) if (title.textContent !== name) title.textContent = name;
     if (large) mapLinks = [];
     const canvas = large ? $('region-map') : $('minimap'),
       ctx = canvas.getContext('2d');

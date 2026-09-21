@@ -47,13 +47,9 @@ async page=>{
   await move(-57,126);await move(-43,126);await capture('prototype-entry');await fight('prototype',-43,-20,132);
   await move(-28,124);await page.keyboard.press('e');if(!(await page.evaluate(()=>__game.snapshot())).player.overdrive)throw Error('Engine was missed');await capture('engine');
   await move(-28,100,true);await move(-28,52);await move(-40,52);await move(-40,86,true);await move(0,86);await page.keyboard.press('e');await capture('returned');
-  await move(0,54,true);await fight('foundry',-10,10,55);await move(6,48);await page.keyboard.press('e');await move(24,48);await move(24,4);await move(36,4);await move(36,30);await move(22,30);await move(0,27);await page.keyboard.press('e');await capture('hub');
-  await move(0,12);if(!(await page.evaluate(()=>__game.snapshot())).player.mortar)throw Error('Hub Mortar was missed');await capture('mortar');
-  await move(0,-6);await page.keyboard.press('q');await shoot('bridge-crane',0,4.2,-24);await capture('bridge-open');
-  await page.keyboard.press('q');await move(0,-34);await move(18,-34);await page.keyboard.press('q');await shoot('freight',32,4.2,-34);await capture('freight-open');
-  await page.keyboard.press('q');await move(44,-34);await move(54,-34);await capture('freight-fight');await move(18,-34);await move(0,-34);await move(0,27);await page.keyboard.press('e');
-  const final=await page.evaluate(()=>__game.snapshot());if(!final.state.foundry||!final.player.overdrive)throw Error('Opening did not complete');
-  await page.reload();await page.waitForFunction(()=>window.__game);await page.evaluate(()=>__game.manual(true));const saved=await page.evaluate(()=>__game.snapshot());if(!saved.player.overdrive||!saved.state.foundry||!saved.player.mortar||!saved.state['bridge-crane']||!saved.state.freight)throw Error('Opening progress did not persist');runs.push({view,rejection,milestones,reload:true});
+  await move(0,54,true);await move(6,48);await page.keyboard.press('e');await move(24,48);await move(24,4);await move(36,4);await move(36,30);await move(22,30);await move(0,27);await page.keyboard.press('e');await capture('hub');
+  const final=await page.evaluate(()=>__game.snapshot());if(final.state.foundry||final.player.mortar||!final.player.overdrive)throw Error('Opening did not complete');
+  await page.reload();await page.waitForFunction(()=>window.__game);await page.evaluate(()=>__game.manual(true));const saved=await page.evaluate(()=>__game.snapshot());if(!saved.player.overdrive||saved.state.foundry||saved.player.mortar)throw Error('Opening progress did not persist');runs.push({view,rejection,milestones,reload:true});
  }
  if(errors.length)throw Error(JSON.stringify(errors));return {runs,errors};
 }

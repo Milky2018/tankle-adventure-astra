@@ -56,7 +56,12 @@ test('balance preserves the baseline apart from explicitly authored travel, hull
     Object.fromEntries(
       foldedEnemies.filter((e) => e.id in baseline.health).map((e) => [e.id, e.hp]),
     ),
-    { ...baseline.health, keeper: 84 },
+    // These old placements were retired for the Cargo acquisition and Overseer arena.
+    Object.fromEntries(
+      Object.entries({ ...baseline.health, keeper: 84 }).filter(
+        ([id]) => !['loading-gunner', 'loading-scout', 'upper-gunner', 'upper-scout'].includes(id),
+      ),
+    ),
   );
   const bosses = foldedEnemies
     .filter((e) => e.persistent)

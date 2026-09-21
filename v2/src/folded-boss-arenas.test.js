@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {BOSS_ARENAS,createBossArenas,insideArena,bossReserves,arenaGates} from './folded-boss-arenas.js';
 import {initialFoldedState,moveFolded,activeSolid,foldedArchitecture,foldedSupport,foldedBlocked} from './folded-layout.js';
 import {bossPattern,steerSeeker} from './folded-bosses.js';
-const fixtures=[['prototype',-47,-16,126,-8,0],['foundry',0,-8,56,0,10],['guardian',202,16,46,0,-10],['keeper',0,-56,58,0,10],['sorter',126,24,-106,0,10]];
+const fixtures=[['prototype',-47,-16,126,-8,0],['foundry',90,8,-54,0,10],['guardian',202,16,46,0,-10],['keeper',0,-56,58,0,10],['sorter',126,24,-106,0,10]];
 test('every live boss encounter blocks actual movement through its entrance and reopens after release',()=>{
  for(const [id,x,y,z,dx,dz]of fixtures){
   const state={...initialFoldedState(),relays:true,combatArena:id},p={x,y,z,speed:1};moveFolded(p,dx,dz,state);
@@ -13,8 +13,8 @@ test('every live boss encounter blocks actual movement through its entrance and 
  }
 });
 test('locks begin only after entry, clear on death and victory, and never persist in saves',()=>{
- const state=initialFoldedState(),boss={id:'foundry',hp:14,max:14,timer:0},manager=createBossArenas([boss],state),p={x:0,y:-8,z:57,hp:50};
- manager.update(p,0);assert.equal(state.combatArena,null);p.z=53;assert.equal(manager.update(p,1)[0].kind,'seal');
+ const state=initialFoldedState(),boss={id:'foundry',hp:14,max:14,timer:0},manager=createBossArenas([boss],state),p={x:90,y:8,z:-53,hp:50};
+ manager.update(p,0);assert.equal(state.combatArena,null);p.z=-56;assert.equal(manager.update(p,1)[0].kind,'seal');
  assert.equal(state.combatArena,'foundry');assert.equal(JSON.parse(JSON.stringify(state)).combatArena,undefined);
  p.hp=0;manager.update(p,2);assert.equal(state.combatArena,null);
  p.hp=50;manager.update(p,3);boss.hp=0;assert.equal(manager.update(p,4)[0].kind,'release');assert.equal(state.combatArena,null);

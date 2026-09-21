@@ -154,3 +154,17 @@ test('legacy collected rewards keep the pull-off access open after progression m
   assert.equal(s.bodies.solids.find(b=>b.id==='collimator-drawer').rail,undefined);
   assert.equal(s.bodies.solids.find(b=>b.id==='arsenal-transfer').x,-128);
 });
+
+test('the garden care court opens a direct return to A, with no parallel transit ascent',()=>{
+ const s=initialFoldedState(),p={...newPlayer(),x:46,y:-8,z:24};
+ walk(p,s,[[46,46],[46,84],[34,84]]);
+ moveFolded(p,-12,0,s);assert.ok(p.x>31,'The garden door must initially block the whole walk');
+ const c=foldedControls.find(c=>c.id==='transit-return');assert.deepEqual(c.facing,[1,0,0]);
+ assert.ok(releaseFolded(c.id,'cannon',p,s,[]));
+ const restored=initialFoldedState(JSON.parse(JSON.stringify(s)));
+ walk(p,restored,[[0,84],[0,86],[0,84],[46,84],[46,24]]);assert.equal(p.y,-8);
+ assert.equal(foldedSupport(26,54,-36/11),null,'The old parallel slope must be removed');
+ const start={...newPlayer(),x:0,y:-8,z:84};
+ walk(start,initialFoldedState(),[[26,84]]);moveFolded(start,12,0,initialFoldedState());assert.ok(start.x<30,'New saves cannot escape the Foundry through the garden');
+ assert.ok(initialFoldedState({'transit-return':true})['transit-return'],'Existing released doors remain released');
+});
