@@ -4,6 +4,7 @@ import { createFoldedEnemies } from './folded-ai.js';
 import { createEncounterPacing } from './folded-pacing.js';
 import { createBossArenas } from './folded-boss-arenas.js';
 import { initialFoldedState } from './folded-layout.js';
+import { createCircuitSignals } from './folded-circuits.js';
 import { expansionBattles } from './folded-expansion-layout.js';
 import { newPlayer } from './mechanics.js';
 
@@ -43,6 +44,7 @@ function fixture(enemies, player = {}) {
     blocked = false;
   const world = {
     enemies,
+    signals: createCircuitSignals(state, []),
     hives: [],
     lifts: [],
     cast: () => (blocked ? { distance: 4 } : null),
@@ -311,11 +313,12 @@ test('welder sweep still stops at solid cover', () => {
 
 test('completed finite courts keep both the first squad and reserves cleared after reconstruction', () => {
   const group = [
-    enemy('artillery', { battle: 'proving-endurance', wave: 0 }),
-    enemy('guard', { battle: 'proving-endurance', wave: 1 }),
+    enemy('artillery', { battle: 'cargo-battery', wave: 0 }),
+    enemy('guard', { battle: 'cargo-battery', wave: 1 }),
   ];
   const patrol = enemy('scout');
   const f = fixture([...group, patrol]);
+  f.state['cargo-battery'] = true;
   f.ai.resetEnemies();
   assert.ok(group.every((e) => e.hp === 0));
   assert.equal(patrol.hp, patrol.max);
@@ -417,7 +420,7 @@ test('dredger pull has no damage, locks its bearing, respects walls and has a se
   assert.deepEqual(f.hits, [5]);
 });
 
-test('water enemies share actual sluice currents and stagger their attack warnings', () => {
+test('water enemies share the permanent crosscurrent and stagger their attack warnings', () => {
   const hunter = enemy('hunter', { id: 'h', x: -116, y: -8, z: 64, timer: 9, encounter: 'water' });
   const pump = enemy('dredger', { id: 'd', x: -127, y: -8, z: 64, timer: 9, encounter: 'water' });
   const f = fixture([hunter, pump], { x: -120, y: -8, z: 70, deployed: true, afloat: true });
@@ -425,13 +428,34 @@ test('water enemies share actual sluice currents and stagger their attack warnin
   f.step(0.1);
   const forward = hunter.x;
   assert.ok(forward > -116);
-  f.state['reservoir-transfer'] = true;
   hunter.phase = 'vent';
   hunter.timer = 100;
   f.step(0.1);
-  assert.ok(hunter.x < forward);
+  assert.ok(hunter.x > forward);
   hunter.phase = pump.phase = 'idle';
   hunter.timer = pump.timer = 0;
   f.step(0.01);
   assert.equal([hunter, pump].filter((e) => e.phase === 'warn').length, 1);
+});
+
+test('an elevated artillery observer acquires below the breastwork without moving its emplacement', () => {
+  const e = enemy('artillery', { x: -41, y: 0, z: -58, emplacement: true, spotterHeight: 9 });
+  const f = fixture([e], { x: -22, y: -8, z: -69 });
+  const observations = [];
+  f.world.cast = (origin) => {
+    observations.push(origin.y);
+    return origin.y < 8 ? { distance: 3 } : null;
+  };
+  for (let i = 0; i < 70; i++) f.step(0.1);
+  assert.ok(f.fired.length > 0);
+  assert.ok(observations.includes(9));
+  assert.deepEqual([e.x, e.y, e.z], [-41, 0, -58]);
+  f.world.cast = () => ({ distance: 3 });
+  e.alertUntil = 0;
+  e.lastSeen = null;
+  e.phase = 'idle';
+  e.timer = 0;
+  const shots = f.fired.length;
+  for (let i = 0; i < 40; i++) f.step(0.1);
+  assert.equal(f.fired.length, shots, 'A covered observer must not acquire unseen new positions');
 });

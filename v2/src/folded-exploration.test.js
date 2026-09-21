@@ -77,7 +77,7 @@ test('optional cabinets leave the main separator corner clear at off-centre whee
     const state=initialFoldedState(),p={x,y:-24,z:186,speed:1,deployed:false};
     for(let i=0;i<260;i++)moveFolded(p,0,-.1,state);
     assert.ok(p.z<160.1,`blocked through lane at ${p.x},${p.z}`);
-    assert.equal(state['laser-cache'],false);
+    assert.equal(state['signal'],false);
   }
 });
 

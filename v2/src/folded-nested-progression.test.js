@@ -49,9 +49,13 @@ test('all six middle acquisition orders retain independent approaches and escapa
     for(const [x,z,action]of r.returns){walk([[x,z]]);if(action==='arsenal-return')release(action);}
    }else{
     walk([[-12,27],[-12,-8],[-12,-24],[-14,-36],[-12,-40],[-12,-72]]);walk([[6,-72]],true);wait(2);walk([[34,-72]],true);
-    p.mortar=true;s.mortarModule=true;release('loading-return');walk([[28,-58],[28,-46],[18,-46]]);
+    walk([[34,-98],[54,-98],[54,-132]]);
+    assert.equal(s.sorter,false);assert.equal(foldedPickups.find(q=>q.ability==='mortar').requires,'sorter');
+    // Combat is covered by the browser fight; this fixture verifies every legal route order.
+    s.sorter=true;walk([[56,-146],[32,-146],[32,-178]]);p.mortar=true;s.mortarModule=true;
+    walk([[32,-146],[59,-146],[59,-124],[54,-124],[54,-98],[34,-98],[34,-72]]);release('loading-return');walk([[28,-58],[28,-46],[18,-46]]);
     for(let n=0;p.y<0&&n<20;n++)wait(1);assert.equal(p.y,0);
-    walk([[18,-34],[0,-34]]);release('bridge-crane');walk([[0,27]]);
+    walk([[18,-34],[0,-34]]);assert.equal(s['bridge-crane'],true);walk([[0,27]]);
    }
    assert.equal(s.foundry,false);assert.equal(s.phoenix,false);assert.equal(p.y,0);wait(2);
   }
@@ -76,10 +80,10 @@ test('Phoenix teaches impact, then returns to the starting side of the orange bu
  walk([[140,6]],true);assert.ok(s.pressure);walk([[154,6],[154,-98],[126,-98],[126,-32],[150,-28]]);assert.equal(p.y,24);
 });
 
-test('Laser opens the internal descent; the later thermal boundary only opens with red contact',()=>{
+test('Guardian opens the internal descent; the later thermal boundary only opens with red contact',()=>{
  const f=fixtures({phoenix:true,pressure:true},{x:162,y:24,z:-26,phoenix:true}),{p,s,walk,release,wait}=f;
  for(let i=0;i<120;i++)moveFolded(p,0,.1,s);assert.ok(p.z< -16.5);assert.equal(s['lens-return'],false);
- p.laser=true;release('lens-return');walk([[162,30],[174,30],[174,-18],[190,-18],[190,46],[154,46]]);
+ p.laser=true;release('lens-return');for(let i=0;i<120;i++)moveFolded(p,0,.1,s);assert.ok(p.z< -16.5,'Laser alone cannot bypass Guardian');s.guardian=true;walk([[162,30],[174,30],[174,-18],[190,-18],[190,46],[154,46]]);
  assert.equal(p.y,-8);walk([[154,90]],true);assert.equal(s['inner-thermal'],false);
  p.circulation=true;wait(3);walk([[154,108]],true);assert.equal(s['inner-thermal'],true);
  release('inner-transit');walk([[170,108],[170,46]]);assert.equal(p.y,-8);
@@ -128,4 +132,34 @@ test('the original orange run retains clearance beside service machinery',()=>{
   const {s,walk}=fixtures({phoenix:true},{x:38,y:0,z,phoenix:true});
   walk([[140,z]],true);assert.equal(s.pressure,true);
  }
+});
+
+test('the cargo retry is earned before Sorter and skips the artillery corridor in both directions',()=>{
+ const f=fixtures({}, {x:54,y:-8,z:-118}),{s,p,walk,release,wait}=f;
+ function cargoCross(){walk([[-7.1,-8]]);while(s.bodies.solids.find(b=>b.id==='intro-cargo').x>-16.8)wait(.05);walk([[-7.1,3],[-12,3],[-12,27],[0,27]]);}
+ walk([[32,-118]]);release('sorter-retry');walk([[18,-118]]);
+ for(let n=0;p.y<0&&n<20;n++)wait(1);assert.equal(p.y,0);
+ walk([[18,-108],[40,-108],[40,-36],[18,-36],[-14,-36],[-12,-24],[-12,-8]]);
+ cargoCross();assert.equal(s.sorter,false);assert.equal(p.mortar,false);const start=f.time;
+ walk([[-12,27],[-12,3],[-7.1,3]],true);while(s.bodies.solids.find(b=>b.id==='intro-cargo').x>-16.8)wait(.05);walk([[-7.1,-8],[-12,-8],[-12,-24],[-14,-36],[18,-36],[40,-36],[40,-108],[18,-108],[18,-118]],true);
+ for(let n=0;p.y>-8&&n<20;n++)wait(1);assert.equal(p.y,-8);
+ walk([[32,-118],[54,-118],[54,-132]]);assert.ok(f.time-start<30,`Sorter retry took ${f.time-start}s`);
+});
+
+test('Guardian guards its actual downward exit and all earlier lower access',()=>{
+ const f=fixtures({phoenix:true,laser:true,gallery:true,'garden-optical':true,'lens-return':true},{x:222,y:16,z:70,phoenix:true,laser:true}),{p,s,walk,lifts}=f;
+ for(let n=0;n<100;n++)moveFolded(p,.1,0,s,lifts);assert.ok(p.x<228);
+ assert.equal(lifts.find(l=>l.id==='yard-lift').lock,'guardian');
+ s.guardian=true;walk([[254,70],[254,12],[242,12],[242,48],[242,120]]);assert.equal(p.y,-24);
+ const restored=initialFoldedState(JSON.parse(JSON.stringify(s)));assert.equal(restored.guardian,true);
+});
+
+test('Sorter cannot unlock the late roof express on a new journey',()=>{
+ const fresh=fixtures().s;fresh.sorter=true;
+ const restored=initialFoldedState(JSON.parse(JSON.stringify(fresh)));
+ assert.equal(restored['roof-express'],false);
+ const saved={sorter:true,phoenix:true,sidePuzzles:{coverX:128}},old=initialFoldedState(saved);assert.equal(old['roof-express'],true);
+ assert.equal(old.sidePuzzles.coverX,undefined);assert.equal(saved.sidePuzzles.coverX,128);
+ assert.equal(initialFoldedState({bossRouteRevision:1,sidePuzzles:{coverX:36}}).sidePuzzles.coverX,36);
+ assert.equal(foldedControls.find(c=>c.id==='roof-express').ground,24);
 });

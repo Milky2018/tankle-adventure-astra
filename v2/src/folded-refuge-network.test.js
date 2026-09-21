@@ -33,8 +33,8 @@ test('exactly four repair rooms have supported, enemy-free reconstruction positi
 test('retired anchors migrate to a reachable refuge without losing equipment or completed work',()=>{
   const cases={ 'lower-foundry':'awakening','foundry-exit':'awakening','garden-entry':'turntable','bank':'turntable','loading-entry':'turntable','arsenal-hive-3':'turntable','proving-hive-3':'turntable','roof':'distribution','rig':'distribution','lens-hive-3':'distribution','hearth-hive-3':'last-refuge' };
   for(const [anchor,expected]of Object.entries(cases)){
-    const restored=initialFoldedState({anchor,phoenix:true,'cannon-scope':true,'stores-trial':true});
-    assert.equal(restored.anchor,expected);assert.equal(restored['cannon-scope'],true);assert.equal(restored['stores-trial'],true);
+    const restored=initialFoldedState({anchor,phoenix:true,'cannon-scope':true,'cargo-battery':true});
+    assert.equal(restored.anchor,expected);assert.equal(restored['cannon-scope'],true);assert.equal(restored['cargo-battery'],true);
   }
   assert.equal(initialFoldedState({anchor:'roof'}).anchor,'turntable');
   assert.equal(initialFoldedState().anchor,'awakening');
@@ -112,8 +112,8 @@ test('no initial combatant prevents a released maintenance load from settling',(
   }
 });
 
-test('Sorter releases a bidirectional supported express track without a lift wait',()=>{
-  const s=initialFoldedState({sorter:true}),p={...newPlayer(),x:150,y:24,z:-28,overdrive:true,phoenix:true,circulation:true};
+test('The far-side roof latch releases a bidirectional supported express track without a lift wait',()=>{
+  const s=initialFoldedState({'roof-express':true}),p={...newPlayer(),x:150,y:24,z:-28,overdrive:true,phoenix:true,circulation:true};
   const seconds=walk(p,s,[[150,-32],[76,-32],[76,48],[36,48],[36,30],[0,27]],{boost:true});
   assert.equal(p.y,0);assert.ok(seconds<20,`express return took ${seconds}s`);
   walk(p,s,[[36,30],[36,48],[76,48],[76,-32],[150,-32],[150,-28]],{boost:true});
@@ -122,11 +122,11 @@ test('Sorter releases a bidirectional supported express track without a lift wai
   moveFolded(q,0,-8,closed);assert.ok(q.z>43);
 });
 
-test('each sluice retains its own diversion after saving and loading',()=>{
-  const restored=initialFoldedState({'reservoir-transfer':true});
-  assert.equal(restored['reservoir-inlet'],false);
-  assert.deepEqual(currentVelocity(expansionCurrents[0],restored),expansionCurrents[0].current);
-  assert.deepEqual(currentVelocity(expansionCurrents[1],restored),expansionCurrents[1].diverted);
+test('the inlet retains diversion while the crosscurrent has no duplicate switch',()=>{
+  const restored=initialFoldedState({'reservoir-inlet':true});
+  assert.equal(restored['reservoir-inlet'],true);
+  assert.deepEqual(currentVelocity(expansionCurrents[0],restored),expansionCurrents[0].diverted);
+  assert.deepEqual(currentVelocity(expansionCurrents[1],restored),expansionCurrents[1].current);
 });
 
 
@@ -142,7 +142,7 @@ test('legacy collected rewards keep the pull-off access open after progression m
   const s=initialFoldedState({'armor-lens':true,magnetModule:true});
   assert.equal(s['collimator-drawer'],true);
   assert.equal(s.bodies.solids.find(b=>b.id==='collimator-drawer').rail,undefined);
-  assert.equal(s.bodies.solids.find(b=>b.id==='arsenal-transfer').x,-128);
+  assert.equal(s.bodies.solids.find(b=>b.id==='arsenal-transfer'),undefined);
 });
 
 test('the garden care court opens a direct return to A, with no parallel transit ascent',()=>{

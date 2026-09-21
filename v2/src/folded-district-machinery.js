@@ -105,5 +105,5 @@ export function makeWorkingDistricts(fixed,moving){
  // A receiving frame announces the finite reserve's entry side.
  for(const x of [185,198])box(fixed,.6,6,.6,x,19,-193,iron,0);
  box(fixed,14,.6,.6,191.5,22,-193,metal,0);box(fixed,4,.12,.18,191.5,21.5,-192.5,warm,0);
- return {update(time,state){const dt=Math.max(0,Math.min(.1,time-lastTime));lastTime=time;flowPhase+=currentVelocity(expansionCurrents[1],state).x*dt;diversion.rotation.y=state['reservoir-inlet']?-.65:0;pump.rotation.z=time*(state['reservoir-inlet']?1.5:.08);for(const [i,r]of ripples.entries()){r.visible=flow.visible;r.position.x=-120+((i*4+flowPhase)%24+24)%24;}gimbal.rotation.y=state['lens-transfer']?time*.16:0;separator.rotation.y=time*(state['coolant-transfer']?.5:.06);}};
+ return {update(time,state){const dt=Math.max(0,Math.min(.1,time-lastTime));lastTime=time;flowPhase+=currentVelocity(expansionCurrents[1],state).x*dt;diversion.rotation.y=state['reservoir-inlet']?-.65:0;pump.rotation.z=time*(state['reservoir-inlet']?1.5:.08);for(const [i,r]of ripples.entries()){r.visible=flow.visible;r.position.x=-120+((i*4+flowPhase)%24+24)%24;}gimbal.rotation.y=time*.16;separator.rotation.y=time*.5;}};
 }

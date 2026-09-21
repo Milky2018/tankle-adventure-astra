@@ -29,7 +29,7 @@ test('Boost reaches transit and the cargo installation before encountering Overs
  const cradle=foldedPickups.find(p=>p.ability==='mortar');assert.ok(Math.hypot(cradle.x-p.x,cradle.z-p.z)>80);
  route(p,s,[[-12,27],[-12,-8],[-12,-24],[-14,-36],[-12,-40],[-12,-72]]);
  route(p,s,[[6,-72]],true);for(let i=0;i<120;i++)updateHeat(p,1/60,p.clock+=1/60,false,false);
- route(p,s,[[cradle.x,cradle.z]],true);assert.equal(p.y,cradle.y);assert.equal(s.foundry,false);
+ route(p,s,[[34,-72]],true);route(p,s,[[34,-98],[54,-98],[54,-132]]);assert.equal(cradle.requires,'sorter');assert.equal(s.sorter,false);s.sorter=true;route(p,s,[[56,-146],[32,-146],[cradle.x,cradle.z]]);assert.equal(p.y,cradle.y);assert.equal(s.foundry,false);
 });
 
 test('Mortar release opens a real local return, and the cargo lift cycles without another interaction',()=>{
@@ -40,7 +40,7 @@ test('Mortar release opens a real local return, and the cargo lift cycles withou
  const l={...foldedLiftDefs.find(l=>l.id==='loading-return'),y:-8,destination:-8,wait:0};
  route(p,s,[[18,-46]],false,[l]);for(let i=0;i<300;i++)stepLifts([l],s,p,1/60);
  assert.equal(p.y,0);route(p,s,[[18,-34],[0,-34]],false,[l]);
- assert.ok(releaseFolded('bridge-crane','mortar',p,s,[]));route(p,s,[[0,27]]);assert.equal(s.foundry,false);
+ assert.equal(s['bridge-crane'],true);route(p,s,[[0,27]]);assert.equal(s.foundry,false);
 });
 
 test('the combined load powers the carrier before Overseer, while victory seals the reward approach',()=>{

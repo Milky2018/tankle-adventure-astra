@@ -48,14 +48,13 @@ export const foldedLiftDefs=[
 // Bounds describe solid material, including the moving shutters while closed.
 export const foldedSolids=[
   {id:'magnet',x:68,z:-23,w:12,d:1,y:0,h:4,magnetic:true},
-  {id:'freight',x:25.5,z:-40,w:1,d:12,y:0,h:3.2},
   {id:'gangway',x:69.5,z:30,w:1,d:8,y:-8,h:3},
   {id:'inspection-north-wall',x:80,z:-23,w:24,d:1,y:0,h:5,permanent:true},
   {id:'inspection-ascent-west',x:103.8,z:-42,w:.2,d:24,y:0,h:9,permanent:true},
   {id:'inspection-ascent-east',x:115.8,z:-42,w:.2,d:24,y:0,h:9,permanent:true},
   {id:'inspection-tray',x:120,z:-16,w:6,d:6,y:0,h:4.8,permanent:true},
   {id:'brake',x:72,z:-78.5,w:12,d:1,y:16,h:2.5},
-  {id:'lens-return',x:156,z:-16.5,w:12,d:1,y:24,h:4},
+  {id:'guardian',x:156,z:-16.5,w:12,d:1,y:24,h:4},
   {id:'bank-cover',x:34,z:-5,w:3,d:3,y:-16,h:2,permanent:true},
   {id:'canal-cover',x:29,z:-13,w:2,d:2,y:-16,h:1.6,permanent:true},
   {id:'bench-cover',x:124,z:-7,w:3,d:4,y:0,h:2,magnetic:true},
@@ -65,7 +64,6 @@ export const foldedSolids=[
 export const foldedControls=[
   {id:'rail-repair',x:-18,y:1.4,z:23,kind:'magnet',ground:0},
   {id:'magnet',x:74,y:1.4,z:-24,kind:'magnet',ground:0,mount:'magnet',facing:[0,0,-1]},
-  {id:'freight',x:32,y:4.2,z:-34,ground:0,kind:'shot',surface:'top'},
   {id:'gangway',x:86,y:-6.6,z:31,kind:'shot',mount:'gangway',facing:[1,0,0]},
   {id:'load',x:123,y:6.8,z:-13,ground:0,kind:'shot',surface:'top'},
   {id:'cage',x:150,y:25.4,z:-23,kind:'shot',requires:'phoenix',facing:[0,0,-1],circuit:[[150,24.12,-23],[150,24.12,-35],[32,24.12,-35],[32,24.12,8],[16,24.12,8],[10,24.12,16]]},
@@ -151,9 +149,10 @@ export function initialFoldedState(saved={}){
     obstacles:sideObstacles.map(body=>({...body})),
     solids:foldedSolids.map(body=>({...body})),
   },enumerable:false});
-  for(const id of ['magnet','freight','gangway','load','brake','cage','launch','optics','pressure','flotation','phoenix','rail-repair',...refugeFlags,...cityFlags,...expansionFlags,...explorationFlags,...UPGRADE_IDS])state[id]=saved[id]===true;
+  for(const id of ['proving-endurance','magnet','freight','gangway','load','brake','cage','launch','optics','pressure','flotation','phoenix','rail-repair',...refugeFlags,...cityFlags,...expansionFlags,...explorationFlags,...UPGRADE_IDS])state[id]=saved[id]===true;
   if(state.prototype||state.overdrive)state['overdrive-return']=true;
   if(state.load)state.brake=true;
+  if(state['loading-return'])state['bridge-crane']=true;
   if(state.ballast)state.ratchet=true;
   if(state['pressure-return'])state['pressure-thermal']=true;
   if(state['inner-transit'])state['inner-thermal']=true;
@@ -164,8 +163,14 @@ export function initialFoldedState(saved={}){
   }
   state.sorter=saved.sorter===true;
   state['maintenance-started']=saved['maintenance-started']===true;
-  state.sidePuzzles=saved.sidePuzzles||{};
+  state.sidePuzzles=structuredClone(saved.sidePuzzles||{});
+  if(saved.bossRouteRevision!==1){
+    if(saved.sorter)state['roof-express']=true;
+    delete state.sidePuzzles.coverX;
+  }
+  state.bossRouteRevision=1;
   state.pendingSignals=structuredClone(saved.pendingSignals||{});
+  if(state.pendingSignals['loading-return'])state.pendingSignals['loading-return'].changes['bridge-crane']=true;
   // Preserve the old indexed orientation, including an in-flight switch signal.
   state.mirrorTurns={'return-index':saved.mirrorTurns?.['return-index']??(saved['mirror-index']||saved.pendingSignals?.['mirror-index']?1:0)};
   delete state.pendingSignals['mirror-index'];
@@ -193,6 +198,7 @@ export function releaseFolded(id,kind,p,state,lifts,time=0){
   if(c.kind==='magnet'&&(kind!=='magnet'||!p.magnet))return false;
   state[id]=true;
   if(id==='load')state.brake=true;
+  if(id==='loading-return')state['bridge-crane']=true;
   if(id==='ballast')state.ratchet=true;
   return true;
 }

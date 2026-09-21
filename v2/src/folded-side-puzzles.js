@@ -51,11 +51,11 @@ export function makeSidePuzzles(scene,state){
  const bloom=cylinder(plant,.35,.25,0,1.75,0,mat(C.lightYellow,true),6);
  let coverHeldUntil=0;
  const coverBounds=sideObstacles.find(s=>s.id==='sorter-cover'),cover=new T.Group();scene.add(cover);roots.push(cover);owners.set(cover,coverBounds);
- coverBounds.x=Math.max(116,Math.min(138,state.sidePuzzles?.coverX??116));
+ coverBounds.x=Math.max(coverBounds.railMin,Math.min(coverBounds.railMax,state.sidePuzzles?.coverX??coverBounds.railMin));
  const coverMesh=box(cover,5,2.8,2,2.5,1.4,1,C.metal);coverMesh.userData.sortingCover=true;solids.push(coverMesh);
  box(cover,1.4,.8,.2,2.5,1.6,2.2,mat(SIGNAL.magnet),0);
- const coverTarget={id:'sorting-cover',kind:'magnet',sidePuzzle:true,root:cover,x:coverBounds.x+2.5,y:25.6,z:-105.8,radius:.75};targets.push(coverTarget);
- for(const z of [0,2]){box(cover,5,.2,.12,2.5,2.4,z,C.yellow,0);segment(fixed,[116,24.1,-108+z],[143,24.1,-108+z],.14,C.metal);}
+ const coverTarget={id:'sorting-cover',kind:'magnet',sidePuzzle:true,root:cover,x:coverBounds.x+2.5,y:coverBounds.y+1.6,z:coverBounds.z+2.2,radius:.75};targets.push(coverTarget);
+ for(const z of [0,2]){box(cover,5,.2,.12,2.5,2.4,z,C.yellow,0);segment(fixed,[coverBounds.railMin,coverBounds.y+.1,coverBounds.z+z],[coverBounds.railMax+5,coverBounds.y+.1,coverBounds.z+z],.14,C.metal);}
  for(const x of [.5,4.5])for(const z of [0,2])cylinder(cover,.3,.18,x,.3,z,C.dark,8).rotation.x=Math.PI/2;
  // Keep the obstructing chunk local even when the rail and garden are far apart.
  batchStatic(fixed);roots.splice(roots.indexOf(fixed),1,...fixed.children);
@@ -64,8 +64,8 @@ export function makeSidePuzzles(scene,state){
  function persist(){state.sidePuzzles={rail:rail.serialize(),gutter:gutter.serialize(),coverX:coverBounds.x};state['rail-crossing']=rail.state.solved;}
  function act(id){const changed=id.startsWith('rail-')?rail.act(id):id==='gutter-plug'?gutter.unplug():gutter.act(id);const t=targets.find(t=>t.id===id);if(t?.handle)t.flash=.22;if(changed)persist();return changed;}
  function pullCover(dt,p,enemies,time){
-  const desired=Math.max(116,Math.min(138,p.x-2.5)),next=T.MathUtils.damp(coverBounds.x,desired,2,dt);
-  if([p,...enemies.filter(e=>e.hp>0)].some(b=>Math.abs(b.y-24)<3&&b.x>next-1&&b.x<next+6&&b.z>-109&&b.z<-105))return;
+  const desired=Math.max(coverBounds.railMin,Math.min(coverBounds.railMax,p.x-2.5)),next=T.MathUtils.damp(coverBounds.x,desired,2,dt);
+  if([p,...enemies.filter(e=>e.hp>0)].some(b=>Math.abs(b.y-coverBounds.y)<3&&b.x>next-1&&b.x<next+6&&b.z>coverBounds.z-1&&b.z<coverBounds.z+3))return;
   coverBounds.x=next;coverTarget.x=next+2.5;cover.position.x=next;cover.updateWorldMatrix(true,true);coverHeldUntil=time+.2;persist();
  }
  function pushCarrier(p,speed){if(speed<1.3||p.deployed||Math.abs(p.y-8)>.5||Math.hypot(p.x-brake.x,p.z-brake.z)>2.2)return false;return act('rail-carrier');}

@@ -29,7 +29,7 @@ test('ordinary encounters mix close pressure and ranged support outside Hive rec
   const groups=Map.groupBy(foldedEnemies.filter(e=>e.encounter),e=>e.encounter);
   for(const [id,enemies] of groups){
     assert.ok(enemies.length>=2&&enemies.length<=4,`${id} remains a small squad`);
-    assert.ok(enemies.some(e=>ENEMY_KINDS[e.type].role==='pressure'),`${id} has close pressure`);
+    assert.ok(enemies.every(e=>e.emplacement)||enemies.some(e=>ENEMY_KINDS[e.type].role==='pressure'),`${id} has close pressure`);
     assert.ok(enemies.some(e=>['shot','shield-shot','burst','rail','lob','reflect','mine','torpedoes'].includes(ENEMY_KINDS[e.type].attack)),`${id} has ranged support`);
     for(const a of enemies)for(const b of enemies){
       assert.ok(Math.hypot(a.x-b.x,a.z-b.z)<=Math.max(...enemies.map(e=>ENEMY_KINDS[e.type].reach))+8,`${id} can support its own members`);

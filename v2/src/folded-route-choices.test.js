@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { initialFoldedState, moveFolded, foldedSupport, releaseFolded } from './folded-layout.js';
+import { initialFoldedState, moveFolded, foldedSupport, releaseFolded, foldedControls } from './folded-layout.js';
 
 function walk(p,state,points){
   for(const [x,z]of points){
@@ -24,11 +24,11 @@ test('freight return folds at half height and only one supported route continues
   walk(p,s,[[59,-34],[70,-34]]);assert.equal(p.y,0);
 });
 
-test('optical frontal and screened routes both reconnect before the same unopened gallery shutter',()=>{
+test('optical frontal and screened routes both reconnect into the open gallery without a redundant shutter',()=>{
   for(const points of [[[271,-88],[290,-88]],[[290,-62],[290,-88]]]){
     const s=initialFoldedState(),p={x:271,y:24,z:-62,speed:1};
     walk(p,s,points);assert.equal(p.y,24);
-    assert.equal(s['lens-transfer'],false);assert.equal(s['lens-return'],false);
+    assert.equal(foldedControls.find(c=>c.id==='lens-transfer'),undefined);assert.equal(s['lens-return'],false);
     walk(p,s,[[290,-88],[271,-88],[271,-62]]);
   }
 });

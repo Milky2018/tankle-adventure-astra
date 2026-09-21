@@ -22,51 +22,51 @@ const roomData={
 };
 const routes={
  arsenal:{
-  path:[[-76,31,'repair'],[-104,31],[-104,12],[-136,6],[-136,-24,'arsenal-transfer'],[-136,-54],[-128,-54,'repair'],[-156,-54],[-156,-68,'pickup']],
+  path:[[-76,31,'repair'],[-104,31],[-104,12],[-136,6],[-136,-24],[-146,-24],[-146,-38],[-136,-54],[-128,-54,'repair'],[-156,-54],[-156,-68,'pickup']],
   returns:[[-156,-68],[-156,-54],[-110,-54,'arsenal-return'],[-54,-54],[-54,28],[-26,28],[0,27]],
   branches:[[[-104,31],[-76,31],[-76,-2],[-104,-2],[-136,-2]],[[-136,-54],[-162,-54],[-162,-66],[-176,-66],[-176,-76]],[[-136,-54],[-82,-54],[-82,-30],[-82,-14],[-82,31]]],
-  controls:[['arsenal-transfer',-136,-28,'shot',{mount:'arsenal-transfer',facing:[0,0,1]}],['arsenal-return',-102.1,-54,'magnet',{height:4.1,ground:8,mount:'arsenal-return',facing:[-1,0,0]}]],
-  gates:[['arsenal-transfer',-142,-35,12,1,{rail:{axis:'x',min:-142,max:-128,release:'arsenal-transfer'}}],['arsenal-return',-101,-60,1,12,{magnetic:true}]],
+  controls:[['arsenal-return',-102.1,-54,'magnet',{height:4.1,ground:8,mount:'arsenal-return',facing:[-1,0,0]}]],
+  gates:[['arsenal-return',-101,-60,1,12,{magnetic:true}]],
   cover:[[-123,-10,4,5],[-93,18,4,10],[-152,-48,3,6]],
   enemies:[['sniper',-134,-5,'dispatch'],['guard',-113,9,'dispatch'],['skirmisher',-80,1,'dispatch'],['artillery',-143,-42,'assembly'],['scout',-125,-45,'assembly'],['guard',-82,-20,'return']],
   props:[['gantry',-124,-8],['assembly',-151,-58],['rack',-143,24],['rack',-97,-58]],
  },
  reservoir:{
-  path:[[-76,58,'repair'],[-76,82],[-76,102,'reservoir-inlet'],[-76,114],[-104,114,'reservoir-transfer'],[-144,114],[-164,114],[-164,78,'repair'],[-164,64,'pickup']],
+  path:[[-76,58,'repair'],[-76,82],[-76,102,'reservoir-inlet'],[-76,114],[-104,114],[-144,114],[-164,114],[-164,78,'repair'],[-164,64,'pickup']],
   returns:[[-164,64,'float'],[-146,64],[-94,64],[-94,34],[-76,34],[-76,-8],[-52,-8,'float']],
   branches:[[[-104,114],[-104,98],[-122,98],[-122,90]]],
-  controls:[['reservoir-inlet',-72,100,'shot',{rotor:true}],['reservoir-transfer',-104,108,'shot',{rotor:true}]],
+  controls:[['reservoir-inlet',-72,100,'shot',{rotor:true}]],
   gates:[],
   cover:[[-84,72,3,3],[-97,117,3,5],[-149,117,3,5]],
   enemies:[['sniper',-159,107,'banks'],['guard',-77,95,'banks'],['sniper',-142,113,'filter'],['skirmisher',-115,111,'filter']],
   props:[['pump',-123,78],['sluice',-107,118],['wreck',-167,60],['planter',-169,74],['planter',-72,114]],
  },
  proving:{
-  path:[[77,-124,'repair'],[77,-150],[77,-158,'proving-transfer'],[94,-158],[94,-180],[112,-180],[130,-172],[152,-172,'battle'],[182,-172],[182,-182],[218,-182],[218,-170,'repair'],[218,-132,'overseer'],[218,-114,'pickup']],
+  path:[[77,-124,'repair'],[77,-150],[77,-158,'proving-transfer'],[94,-158],[94,-180],[112,-180],[130,-172],[152,-172],[182,-172],[182,-182],[218,-182],[218,-170,'repair'],[218,-132,'overseer'],[218,-114,'pickup']],
   returns:[[218,-114],[238,-114],[238,-82],[180,-82,'boost'],[62,-82],[62,-74],[-22,-74],[-22,2],[38,2],[38,6],[140,6,'boost'],[154,6],[154,-98],[126,-98],[126,-32],[150,-28,'cage']],
   branches:[[[112,-176],[106,-176],[106,-146],[192,-146],[192,-176],[188,-176]]],
   controls:[['proving-transfer',77,-170,'shot',{ground:16,height:1.3,counterweight:true}]],
-  gates:[['proving-transfer',100,-196,1,46],['proving-endurance',201,-196,1,54]],
+  gates:[['proving-transfer',100,-196,1,46]],
   cover:[[122,-187,4,8],[156,-168,9,3],[176,-190,3,8]],
-  enemies:[['turret',82,-148,'receiving'],['artillery',169,-183,'endurance'],['skirmisher',133,-178,'endurance'],['scout',178,-166,'endurance'],['guard',192,-184,'endurance',1],['skirmisher',190,-178,'endurance',1],['scout',180,-82,'return'],['guard',172,-82,'return']],
+  enemies:[['turret',82,-148,'receiving'],['artillery',169,-183,'impact'],['guard',143,-178,'impact'],['scout',180,-82,'return'],['guard',172,-82,'return']],
   props:[['test-bed',86,-139],['test-bed',145,-190],['engine',225,-103],['wreck',207,-110]],
  },
  lens:{
-  path:[[276,-24,'repair'],[271,-62],[271,-88,'lens-transfer'],[304,-88],[338,-88],[338,-58,'repair'],[324,-58],[324,-28,'pickup']],
+  path:[[276,-24,'repair'],[271,-62],[271,-88],[304,-88],[338,-88],[338,-58,'repair'],[324,-58],[324,-28,'pickup']],
   returns:[[324,-28,'lens-return'],[296,-28],[276,-28],[248,-24]],
   branches:[[[271,-62],[290,-62],[290,-88]]],
-  controls:[['lens-transfer',269,-80,'shot'],['lens-return',308,-14,'laser',{height:2,via:[324,26,-14]}]],
-  gates:[['lens-transfer',310,-100,1,18,{rail:{axis:'z',min:-100,max:-80,release:'lens-transfer'}}],['lens-return',302,-34,1,12]],
+  controls:[['lens-return',308,-14,'laser',{height:2,via:[324,26,-14]}]],
+  gates:[['lens-return',302,-34,1,12]],
   cover:[[266,-58,5,3],[295,-99,3,9],[343,-76,4,3],[284,-82,.8,16]],
   enemies:[['reflector',272,-74,'collimator'],['sniper',332,-90,'gallery'],['skirmisher',303,-91,'gallery']],
   props:[['lens',284,-91],['lens',320,-94],['emitter',337,-24]],
  },
  coolant:{
-  path:[[286,117,'repair'],[292,143],[292,166],[292,186,'coolant-transfer'],[325,186],[325,164],[340,164],[340,186],[360,186],[360,160],[374,160,'repair'],[374,116,'pickup']],
+  path:[[286,117,'repair'],[292,143],[292,166],[292,186],[325,186],[325,164],[340,164],[340,186],[360,186],[360,160],[374,160,'repair'],[374,116,'pickup']],
   returns:[[374,116],[374,106],[284,106,'boost'],[284,117],[260,117]],
   branches:[[[292,143],[312,143],[312,164],[340,164],[340,186]]],
-  controls:[['coolant-transfer',287,184,'shot']],
-  gates:[['coolant-transfer',334,158,3,12,{rail:{axis:'z',min:158,max:180,release:'coolant-transfer'}}],['coolant-return',324,100,1,12,{red:true}]],
+  controls:[['coolant-transfer',333,186,'magnet',{slide:'coolant-transfer',mount:'coolant-transfer',facing:[1,0,0]}]],
+  gates:[['coolant-transfer',334,180,3,12,{permanent:true,magnetic:true,rail:{axis:'z',min:166,max:180}}],['coolant-return',324,100,1,12,{red:true}]],
   cover:[[283,150,5,3],[299,177,3,5],[342,188,3,7],[316,146,1,15]],
   enemies:[['welder',312,159,'separator'],['artillery',348,185,'separator'],['miner',325,188,'separator'],['guard',338,106,'return'],['welder',292,103,'return']],
   props:[['separator',326,153],['boiler',352,173],['jacket',379,114]],
@@ -106,7 +106,6 @@ for(const plan of districtPlans){
   else {const size=kind==='separator'?14:kind==='pump'?7:4;expansionSolids.push({id:`${id}-${kind}-${x}`,x:x-size/2,y,z:z-size/2,w:size,d:size,h:kind==='separator'?12:kind==='pump'?8:kind==='boiler'?6:['lens','emitter','rack'].includes(kind)?3.8:3.5,permanent:true,invisible:true});}
  }
  if(plan.pickup){const [x,z]=r.path.find(p=>p[2]==='pickup');expansionPickups.push({id:plan.pickup,ability:plan.ability,x,y,z,...(id==='arsenal'?{y:14,lift:'rail-inspection-bridge'}:id==='proving'?{requires:'foundry',preview:true}:{})});}
- if(id==='proving'){const [x,z]=r.path.find(p=>p[2]==='battle');expansionBattles.push({id:`${id}-endurance`,battle:`${id}-endurance`,x:x+5,y:y+1.3,z});}
  for(const c of expansionControls.filter(c=>c.id.startsWith(id)&&c.surface==='top'))expansionSolids.push({id:c.id+'-tray',x:c.x-2,y,z:c.z-2,w:4,d:4,h:1.9,permanent:true});
  expansionRoutes.push({...plan,returnY:id==='proving'?24:id==='arsenal'?0:y,path:r.path,returns:r.returns,rooms:rooms.map(r=>({...r,x:r.x+r.w/2,z:r.z+r.d/2})),trial:`${id}-transfer`});
 }
@@ -125,8 +124,9 @@ floor('lens-receiver-plinth',304,-20,8,10,24,{region:'optics'});
 // Water occupies the centre of the reservoir, not a corridor hidden after pickup.
 floor('reservoir-basin',-156,28,72,78,-8,{water:true,region:'garden'});
 floor('reservoir-current-exit',-100,28,30,12,-8,{water:true,region:'garden'});
-expansionCurrents.push({id:'reservoir-preview-water',x:-100,z:34,w:16,d:72,y:-8,current:{x:0,z:-4.2},sluice:'reservoir-inlet',diverted:{x:0,z:-.8}},{id:'reservoir-mouth',x:-156,z:58,w:72,d:12,y:-8,current:{x:3,z:0},sluice:'reservoir-transfer',diverted:{x:-1.2,z:0}});
+expansionCurrents.push({id:'reservoir-preview-water',x:-100,z:34,w:16,d:72,y:-8,current:{x:0,z:-4.2},sluice:'reservoir-inlet',diverted:{x:0,z:-.8}},{id:'reservoir-mouth',x:-156,z:58,w:72,d:12,y:-8,current:{x:3,z:0}});
 floor('reservoir-preview-bank',-102,38,34,10,-8,{region:'garden'});
+expansionSolids.push({id:'spillway-filter-wall',x:-88,y:-8,z:40,w:1,d:18,h:3.4,permanent:true,theme:'garden'});
 floor('reservoir-eddy',-102,47,8,9,-8,{region:'garden'});
 expansionHeat.push({id:'coolant-runout',x:284,z:100,w:96,d:12,y:-24,heat:28,stop:'coolant-bypass'});
 expansionSolids.push({id:'core-feed',x:28,z:13,w:12,d:1,y:-40,h:4});
@@ -137,7 +137,7 @@ expansionMirrors.push({id:'lens-first-reflection',x:324,y:26,z:-14,n:[Math.SQRT1
 expansionBelts.push({id:'dispatch-line',x:-138,z:-4,w:70,d:8,y:8,vx:3.2,vz:0});
 // Single demonstration opponents are not coordinated squads.
 for(const e of expansionEnemies)if(['proving-return','coolant-return'].includes(e.encounter)||expansionEnemies.filter(other=>other.encounter===e.encounter).length===1)delete e.encounter;
-expansionEnemies.push({id:'spillway-turret',type:'turret',hp:3,x:-75,y:-8,z:38,encounter:'spillway'}, {id:'spillway-guard',type:'guard',magneticShield:true,hp:3,x:-94,y:-8,z:42,encounter:'spillway'});
+expansionEnemies.push({id:'spillway-turret',type:'turret',hp:3,x:-96,y:-8,z:44,encounter:'spillway'}, {id:'spillway-guard',type:'guard',magneticShield:true,hp:3,x:-94,y:-8,z:42,encounter:'spillway'});
 export const expansionFlags=['proving-return',...new Set([...expansionSolids.filter(s=>!s.permanent).map(s=>s.id),...expansionControls.map(c=>c.id)])];
 
 expansionMirrors.push({id:'final-feed-turn',x:24,y:-38,z:110,n:[Math.SQRT1_2,0,Math.SQRT1_2],size:5});

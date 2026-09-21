@@ -19,7 +19,7 @@ export const REGION_STYLE={
 export const OPEN_ROOMS=new Set(['turntable','garden-bank','pump-terrace','rear-dock','ferry-cradle','bridge-underside','canal-landing','guardian-court','predecessor-gallery','reservoir-east-bank','reservoir-filter-bank','reservoir-pump-island','proving-impact','proving-observation','lens-west-gallery','lens-north-gallery','lens-east-gallery']);
 // [support, region, wall height, roof]. Enclosed halls keep Mortar headroom.
 export const ROOM_PLAN=[
-  ['garden-foundry-walk','garden',5,false],['garden-care','garden',16,true],['sorting-bay','testworks',24,true],
+  ['garden-foundry-walk','garden',5,false],['garden-care','garden',16,true],['sorting-bay','transit',24,false],['mortar-installation','transit',16,true],
   ['foundry-awakening','foundry',16,true],['foundry-west','foundry',16,true],
   ['press-working-floor','foundry',16,true],['reclaim-sorting-bay','foundry',16,true],['prototype-return','foundry',6,true],['prototype-court','foundry',24,true],['recycling-furnace','foundry',24,true],
   ['turntable','transit',16,true],['roof-junction','transit',16,true],['hub-entry','transit',16,true],['loading-descent-top','transit',16,true],['loading','transit',16,true],['mortar-apron','transit',16,true],['training-gallery','transit',16,true],['freight','transit',16,true],
@@ -38,7 +38,7 @@ const roomWalls={
   'phoenix-cradle':[[64,-94.85,28,.8],[63.15,-94,.8,16],[64,-77.95,7.9,.8],[84.1,-77.95,7.9,.8]],
   'calibration':[[224.1,-36.85,11.8,.8],[196,-36.85,15.9,.8],[196,-11.95,7.9,.8]],
   'mirror-service-gallery':[[208.1,23.15,15.8,.8],[208.1,40.05,27.9,.8]],
-  'guardian-court':[[179.15,44,.8,46],[228.05,44,.8,46],[180,43.15,15.9,.8],[208.1,43.15,19.9,.8],[192.1,90.05,35.9,.8]],
+  'guardian-court':[[179.15,44,.8,46],[228.05,44,.8,19.9],[228.05,76.1,.8,13.9],[180,43.15,15.9,.8],[208.1,43.15,19.9,.8],[192.1,90.05,35.9,.8]],
   'circulation-yard':[[148,52.05,87.9,.8],[147.15,36,.8,16],[196.1,35.15,39.8,.8]],
   'circulation-rig':[[208,136.05,52,.8],[207.15,100,.8,36],[220.1,99.15,15.8,.8]],
   'pressure-release-court':[[208,3.15,52,.8],[260.05,4,.8,24],[220.1,28.05,27.8,.8]],

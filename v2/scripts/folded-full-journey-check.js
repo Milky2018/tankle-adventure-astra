@@ -53,14 +53,14 @@ async page=>{
   }
   async function fight(id,x0,x1,z){
     const result=await page.evaluate(({id,x0,x1,z})=>{
-      const g=window.__game;let destination=x0,corner=0;const orbit=[[-39,136],[-23,136],[-23,123],[-39,123]];
+      const g=window.__game;let destination=x0,corner=0;const orbit=id==='sorter'?[[59,-148],[32,-148],[32,-160],[56,-160],[59,-140]]:[[-39,136],[-23,136],[-23,123],[-39,123]];
       for(let i=0;i<3600;i++){
         const s=g.snapshot(),e=s.enemies.find(e=>e.id===id),p=s.player;if(!e.hp){g.setInput([]);return {hp:p.hp,enemy:e};}
         if(p.hp<=0)return {error:'died',p,e};
         if(Math.abs(p.x-destination)<.6)destination=destination===x0?x1:x0;
-        if(id==='prototype'&&Math.hypot(p.x-orbit[corner][0],p.z-orbit[corner][1])<.65)corner=(corner+1)%orbit.length;
-        const dx=(id==='prototype'?orbit[corner][0]:destination)-p.x,dz=(id==='prototype'?orbit[corner][1]:z)-p.z,keys=Math.abs(dz)>Math.abs(dx)?dz>0?['KeyS','KeyA']:['KeyW','KeyD']:dx>0?['KeyS','KeyD']:['KeyW','KeyA'];
-        const t=e.parts.find(part=>part.hp>0)||{x:e.x,y:e.y+1.5,z:e.z};g.aimAt(t.x,t.z,t.y);if(id!=='foundry'||e.phase==='vent')keys.push('Mouse0');g.setInput(keys);g.step(1/30,false);
+        if(['prototype','sorter'].includes(id)&&Math.hypot(p.x-orbit[corner][0],p.z-orbit[corner][1])<.65)corner=(corner+1)%orbit.length;
+        const dx=(['prototype','sorter'].includes(id)?orbit[corner][0]:destination)-p.x,dz=(['prototype','sorter'].includes(id)?orbit[corner][1]:z)-p.z,keys=Math.abs(dz)>Math.abs(dx)?dz>0?['KeyS','KeyA']:['KeyW','KeyD']:dx>0?['KeyS','KeyD']:['KeyW','KeyA'];
+        const t=e.parts.find(part=>part.hp>0)||{x:e.x,y:e.y+1.5,z:e.z};g.aimAt(t.x,t.z,t.y);if(!['foundry','sorter'].includes(id)||e.phase==='vent')keys.push('Mouse0');g.setInput(keys);g.step(1/30,false);
       }return {error:'fight timeout',s:g.snapshot()};
     },{id,x0,x1,z});if(result.error)throw Error(id+' '+JSON.stringify(result));return result;
   }
@@ -116,11 +116,10 @@ async page=>{
         for(const [tx,tz]of [[-180,-84],[-180,-60],[-156,-60]])await move(tx,tz);
       }
       await move(x,z);await action(name,x,z);
-      if(id==='proving'&&name==='proving-transfer'){
-        await move((await page.evaluate(()=>__game.snapshot())).player.x,-152,false,'z');await move(77,-152);await move(9,-152);await move(6,-154);await shoot(65,-154,17.3,'proving-inspection');await move(9,-152);await move(9,-34);
-        if(!(await page.evaluate(()=>__game.snapshot())).state['bridge-crane']){await move(0,-34);await shoot(0,-24,6.8,'bridge-crane','mortar');}
-        await move(0,-34);await move(0,27);await use();await record('proving-refuge-return');
-        await move(0,-34);await move(3,-34);await move(3,-154.5);await move(77,-154.5);await move(x,z);
+      if(id==='proving'&&x===218&&z===-170){
+        await move(198,-174);await move(200,-174);await move(200,-154);await shoot(195.1,-154,20.25,'proving-inspection');
+        await move(198,-154);await move(198,-152);await move(9,-152);await move(9,-34);await move(0,-34);await move(0,27);await use();await record('proving-refuge-return');
+        await move(0,-34);await move(3,-34);await move(3,-154.5);await move(198,-154.5);await move(198,-182);await move(218,-182);await move(x,z);
       }
     }
     if(route.ability&&!(await page.evaluate(()=>__game.snapshot())).player[route.ability])throw Error('Missing module '+id);
@@ -140,9 +139,14 @@ async page=>{
   await move(6,48);await page.keyboard.press('e');await move(24,48);await move(24,4);await move(36,4);await move(36,30);await move(22,30);await move(0,27);await page.keyboard.press('e');
 
   for(const [x,z]of [[-12,27],[-12,-8],[-12,-24],[-14,-36],[-12,-40],[-12,-72]])await move(x,z);
-  await move(6,-72,true);await settle(2);await move(34,-72,true);await use();
+  await move(6,-72,true);await settle(2);await move(34,-72,true);
+  for(const [x,z]of [[34,-98],[54,-98],[54,-118],[32,-118]])await move(x,z);
+  await shoot(24.6,-118,-4.75,'sorter-retry');await move(54,-118);await move(54,-132);
+  await choose('cannon');await fight('sorter',32,56,-146);await record('sorter');
+  await move(59,-146);await move(32,-146);await move(32,-178);await use();
+  for(const [x,z]of [[32,-146],[59,-146],[59,-124],[54,-124],[54,-98],[34,-98],[34,-72]])await move(x,z);
   if(!(await page.evaluate(()=>__game.snapshot())).player.mortar)throw Error('Cargo Mortar missed');await record('cargo-mortar');
-  await shoot(32,-58,-2,'loading-return','mortar');await move(28,-58);await move(28,-46);await move(18,-46);await arrive(0);await move(18,-34);await move(0,-34);await shoot(0,-24,6.8,'bridge-crane','mortar');await move(0,27);await use();
+  await shoot(32,-58,-2,'loading-return','mortar');await move(28,-58);await move(28,-46);await move(18,-46);await arrive(0);await move(18,-34);await move(0,-34);await move(0,27);await use();
   await page.screenshot({path:`v2/output/playwright/completion/${approach}-pickup.png`});
   }
   if(!['water','combined','proving'].includes(resume)){
@@ -154,7 +158,8 @@ async page=>{
   await move(-26,-8);await move(-26,27);await move(0,27);await use();await record('three-middle-loops');
   }
   if(resume!=='proving'){
-  await move(0,-34);await move(18,-34);await shoot(32,-34,4.2,'freight','mortar');
+  await move(0,-34);await move(18,-34);
+  if(!(await page.evaluate(()=>__game.snapshot())).state['bridge-crane'])throw Error('Cargo first use did not open freight');
   for(const [x,z]of [[59,-34],[59,-63],[67,-63],[67,-34],[74,-34],[74,-26]])await move(x,z);
   await page.evaluate(()=>{const g=__game,c=g.debug.world.controls.find(c=>c.id==='magnet');g.setInput([]);g.step(3,false);for(let i=0;i<90;i++){g.aimAt(c.x,c.z,c.y);g.setInput(['Mouse2']);g.step(1/60,false);}g.setInput([]);});
   if(!(await page.evaluate(()=>__game.snapshot())).state.magnet)throw Error('Inspection grille');
@@ -168,7 +173,7 @@ async page=>{
     async function getLaser(){
       await move(202,-28);await move(242,-24);await expedition('lens');
       if(!(await page.evaluate(()=>__game.snapshot())).player.laser)throw Error('Laser acquisition');
-      await move(242,-24);await move(202,-28);await move(150,-28);await use();await record('laser-reopens-optical-descent');
+      await move(242,-24);await move(202,-28);await move(150,-28);await use();await record('laser-reopens-C-return');
     }
     async function rigFromYard(){
       await move((await page.evaluate(()=>__game.snapshot())).player.x,48);await move(242,48);await move(210,48);await move(210,44);await use();await move(210,48);await move(242,48);await move(242,95);
@@ -178,7 +183,30 @@ async page=>{
     }
     if(resume!=='thermal'){
     await getLaser();
-    for(const [x,z]of [[162,-28],[162,30],[174,30],[174,-18],[190,-18],[190,48]])await move(x,z);
+    for(const [x,z]of [[202,-28],[225,-20]])await move(x,z);
+    await shoot(219.7,-5.6,26.25,'optical-screen','cannon');
+    await shoot(216,-4,26,'gallery','laser');
+    for(const [x,z]of [[242,-20],[242,6],[230,6],[230,38],[202,38],[202,48]])await move(x,z);
+    await choose('laser');
+    const guardianFight=await page.evaluate(()=>{
+      const g=__game,a=g.debug,e=a.world.enemies.find(e=>e.id==='guardian'),start=a.time;let cycle=-1,destination=194;
+      for(let n=0;n<60*120&&e.hp>0;n++){
+        if(a.p.hp<=0)throw Error('Guardian death');
+        if(e.attackCycle!==cycle){cycle=e.attackCycle;destination=a.p.x<202?210:194;}
+        const moving=e.phase==='warn'||e.attack==='seekers'&&e.phase==='vent'&&e.timer>.5;
+        const keys=moving&&Math.abs(a.p.x-destination)>.4?(destination>a.p.x?['KeyS','KeyD']:['KeyW','KeyA']):[];
+        const origin=a.weaponOrigin();let target=null;
+        for(const [x,z,nx,nz]of [[210,70,1.1417430631,1.5397934235],[190,68,-1.4631790535,1.1737206917]]){
+          const normal=new a.T.Vector3(nx,0,nz).normalize(),center=new a.T.Vector3(x,18,z),real=new a.T.Vector3(e.x,18,e.z);
+          const virtual=real.clone().addScaledVector(normal,-2*real.clone().sub(center).dot(normal)),ray=virtual.sub(origin);
+          const t=center.clone().sub(origin).dot(normal)/ray.dot(normal),point=origin.clone().addScaledVector(ray,t);
+          if(t>0&&t<1&&point.distanceTo(center)<4.4&&Math.cos(Math.atan2(point.x-e.x,point.z-e.z)-e.aim)<-.45){target=point;break;}
+        }
+        if(target)g.aimAt(target.x,target.z,target.y);if(target&&!a.p.overheated)keys.push('Mouse0');g.setInput(keys);g.step(1/60,false);
+      }
+      g.setInput([]);if(e.hp>0)throw Error('Guardian timeout');return {hp:a.p.hp,seconds:a.time-start};
+    });milestones.push({label:'guardian',...guardianFight});await settle();
+    for(const [x,z]of [[218,48],[218,70],[254,70],[254,12],[242,12],[242,48]])await move(x,z);
     await rigFromYard();
     }
     for(const [x,z]of [[162,-28],[162,30],[174,30],[174,-18],[190,-18],[190,46],[154,46]])await move(x,z);
@@ -202,6 +230,7 @@ async page=>{
   if(!await page.getByRole('heading',{name:'Mission Accomplished'}).isVisible())throw Error('Completion screen missing');
   if(!end.state.endingSeen||!end.state['lens-return']||!end.state['inner-thermal']||!end.state.load||!end.player.mortar)throw Error('Missing progression milestone');
   if(['overdrive','magnet','mortar','flotation','phoenix','laser','circulation'].some(id=>!end.player[id]))throw Error('Required ability missing');
+  if(['prototype','sorter','foundry','guardian','keeper'].some(id=>!end.state[id]))throw Error('Required Boss missing');
   await record('completed');await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('#ending')).opacity)>.99);await page.screenshot({path:`v2/output/playwright/completion/${approach}-${first}-ending.png`});
   await page.reload();await page.waitForFunction(()=>window.__game);await page.evaluate(()=>__game.manual(true));const saved=await page.evaluate(()=>__game.snapshot());
   if(!saved.state.endingSeen||!saved.state['lens-return']||!saved.state['inner-thermal']||!saved.player.mortar)throw Error('Reload lost progression');

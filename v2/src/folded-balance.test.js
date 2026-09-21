@@ -59,7 +59,10 @@ test('balance preserves the baseline apart from explicitly authored travel, hull
     // These old placements were retired for the Cargo acquisition and Overseer arena.
     Object.fromEntries(
       Object.entries({ ...baseline.health, keeper: 84 }).filter(
-        ([id]) => !['loading-gunner', 'loading-scout', 'upper-gunner', 'upper-scout'].includes(id),
+        ([id]) =>
+          !['loading-gunner', 'loading-scout', 'upper-gunner', 'upper-scout'].includes(id) &&
+          !id.startsWith('proving-endurance-') &&
+          !/^proving-return-(scout-6|guard-7)$/.test(id),
       ),
     ),
   );

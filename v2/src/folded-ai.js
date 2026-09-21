@@ -41,7 +41,9 @@ export function createFoldedEnemies({
     for (const e of world.enemies) {
       Object.assign(e, e.spawn);
       const completedCourt = foldedBattles.some(
-        (battle) => battle.battle === e.battle && state[battle.id],
+        (battle) =>
+          battle.battle === e.battle &&
+          (state[battle.id] || state.pendingSignals?.[battle.id]?.changes[battle.id]),
       );
       e.hp = (e.persistent && state[e.id]) || completedCourt ? 0 : e.max;
       e.phase = 'idle';
@@ -71,6 +73,7 @@ export function createFoldedEnemies({
       }
   }
   function moveEnemy(e, angle, speed, dt) {
+    if (e.emplacement) return;
     if (e.type === 'hunter' && !e.afloat && e.travelHeading != null)
       angle =
         e.travelHeading +
@@ -289,8 +292,8 @@ export function createFoldedEnemies({
           next = cover.x + dt * (e.sweepRight ? -5 : 5);
         if (
           now() > world.sidePuzzles.coverHeldUntil &&
-          next >= 116 &&
-          next <= 138 &&
+          next >= cover.railMin &&
+          next <= cover.railMax &&
           !(
             Math.abs(p.y - cover.y) < 3 &&
             p.x > next - 1 &&
@@ -334,10 +337,10 @@ export function createFoldedEnemies({
     encounterPacing.update(dt, p, resting, now());
     for (const battle of foldedBattles)
       if (
-        !state[battle.id] &&
+        !world.signals.active(battle.id) &&
         world.enemies.filter((e) => e.battle === battle.battle).every((e) => e.hp <= 0)
       ) {
-        state[battle.id] = true;
+        world.signals.trigger(battle.id, { [battle.id]: true });
         world.signalRelease(battle.id, now());
         audio.event('lever');
         save();
@@ -346,7 +349,7 @@ export function createFoldedEnemies({
       view.clearWarnings(e);
       e.deployed = swims(e);
       const beforeDrift = { x: e.x, y: e.y, z: e.z };
-      moveWithConveyor(e, 0, 0, dt, state, world.lifts, world.enemies);
+      if (!e.emplacement) moveWithConveyor(e, 0, 0, dt, state, world.lifts, world.enemies);
       if (
         refugeAt(e, world.hives, state, REFUGE_CLEARANCE + e.radius) ||
         (e.type === 'dredger' && !e.afloat)
@@ -382,9 +385,16 @@ export function createFoldedEnemies({
         continue;
       }
       e.readable = view.readable(e, origin);
-      const clearSight = !world.cast(origin, to.clone().normalize(), Math.max(0, distance - 1), {
-        targets: false,
-      });
+      const observation = e.spotterHeight ? new T.Vector3(e.x, e.y + e.spotterHeight, e.z) : origin;
+      const sight = new T.Vector3(p.x, p.y + 1.2, p.z).sub(observation);
+      const clearSight = !world.cast(
+        observation,
+        sight.clone().normalize(),
+        Math.max(0, sight.length() - 1),
+        {
+          targets: false,
+        },
+      );
       const supported =
         (e.type === 'artillery' && e.alertUntil > now()) ||
         (e.type === 'repairer' && woundedAlly(e, world.enemies));

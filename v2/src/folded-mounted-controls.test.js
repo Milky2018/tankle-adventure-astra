@@ -17,7 +17,7 @@ test('local releases sit on the actuator face and have no artificial local power
     assert.ok(c.y>b.y&&c.y<b.y+b.h,c.id);
     assert.ok(Math.abs(c.x-(b.x+b.w*(nz?(c.mountAlong??.5):.5)+nx*(b.w/2+.1)))<1e-6,c.id);
     assert.ok(Math.abs(c.z-(b.z+b.d*(nx?(c.mountAlong??.5):.5)+nz*(b.d/2+.1)))<1e-6,c.id);
-    assert.equal(links.filter(l=>l.id===c.id).length,['arsenal-return','pump'].includes(c.id)?1:0,c.id);
+    assert.equal(links.filter(l=>l.id===c.id).length,['arsenal-return','pump','roof-express','sorter-retry','proving-inspection'].includes(c.id)?1:0,c.id);
   }
 });
 test('a mounted lock releases its own door immediately while the remote gate waits for power',()=>{

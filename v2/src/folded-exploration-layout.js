@@ -3,9 +3,9 @@ export const explorationPickups = [
   {
     id: 'cannon-scope',
     upgrade: 'scope',
-    x: 390,
+    x: 400,
     y: 24,
-    z: 12,
+    z: 16,
     place: 'Detached rangefinding workshop off the optical service gallery',
     requires: 'scope-drawer',
     preview: true,
@@ -13,28 +13,28 @@ export const explorationPickups = [
   {
     id: 'armor-foundry',
     upgrade: 'armor',
-    x: -67,
+    x: -59,
     y: -16,
-    z: 114,
-    place: 'Behind the sorting drive',
+    z: 30,
+    place: 'Recessed scrap inspection bay off the press service lane',
   },
   {
     id: 'cannon-coil',
     upgrade: 'cannon',
-    x: -187,
+    x: 96,
     y: 8,
-    z: -92,
-    place: 'Rail-shop stores',
-    requires: 'stores-trial',
+    z: -132,
+    place: 'Freight battery stores at the end of the upper inspection spur',
+    requires: 'cargo-battery',
     preview: true,
   },
   {
     id: 'armor-reservoir',
     upgrade: 'armor',
-    x: -145,
+    x: 91,
     y: -8,
-    z: 92,
-    place: 'Visible reservoir inspection island',
+    z: 25,
+    place: 'Rear dock corner beyond the flooded bridge foundation',
   },
   {
     id: 'cooling-filter',
@@ -47,9 +47,9 @@ export const explorationPickups = [
   {
     id: 'armor-proving',
     upgrade: 'armor',
-    x: 252,
+    x: 260,
     y: 16,
-    z: -170,
+    z: -176,
     place: 'Discarded chassis beside the test runway',
     requires: 'impact-store',
     preview: true,
@@ -77,11 +77,11 @@ export const explorationPickups = [
   {
     id: 'laser-focus',
     upgrade: 'laser',
-    x: 348,
-    y: -24,
-    z: 193,
-    place: 'Separator maintenance side',
-    requires: 'laser-cache',
+    x: 210,
+    y: 40,
+    z: 148,
+    place: 'Signal tower instrument recess beyond the Guardian',
+    requires: 'signal',
     preview: true,
   },
   {
@@ -129,7 +129,7 @@ export const explorationSolids = [
   machine('service-compressor', 'filter', 114, 0, 2, 4, 2, 2),
   machine('service-stores', 'rack', 129, 0, 2, 5, 2, 2.4),
   machine('freight-side-cargo', 'rack', 84, 8, -112, 6, 3, 2.6),
-  machine('freight-stator', 'coil', 87, 8, -103, 4, 2, 2.4),
+  machine('freight-stator', 'coil', 72, 8, -103, 4, 2, 2.4),
   machine('yard-valves', 'filter', 163, -8, 37, 5, 4, 2.8),
   machine('yard-pump', 'filter', 180, -8, 48, 5, 3, 2.3),
 ];
@@ -179,12 +179,27 @@ export const explorationEnemies = [
 
 // Optional trials never close the approach or gate the main journey.
 export const explorationBattles = [
-  { id: 'stores-trial', battle: 'stores-trial', x: -184, y: 9.3, z: -80 },
+  {
+    id: 'cargo-battery',
+    battle: 'cargo-battery',
+    x: -12,
+    y: 1.3,
+    z: -38,
+    circuit: [
+      [-12, 0.12, -38],
+      [-12, 0.12, -34],
+      [59, 0.12, -34],
+      [59, 0.12, -40],
+      [59, 4.12, -60],
+      [59, 4.12, -64],
+      [59, 8.12, -86],
+      [62, 8.12, -106],
+      [91, 8.12, -106],
+      [96, 8.12, -106],
+      [96, 8.12, -132],
+    ],
+  },
 ];
-for (const e of explorationEnemies.filter((e) => e.encounter === 'stores-patrol')) {
-  e.battle = 'stores-trial';
-  e.wave = 0;
-}
 explorationEnemies.push(
   {
     id: 'rangefinder-turret',
@@ -206,42 +221,7 @@ explorationEnemies.push(
     encounter: 'rangefinder',
     activation: { x: 376, y: 24, z: -24, radius: 14 },
   },
-  {
-    id: 'stores-reserve-lobber',
-    type: 'artillery',
-    x: -187,
-    y: 8,
-    z: -52,
-    hp: 5,
-    battle: 'stores-trial',
-    wave: 1,
-    encounter: 'stores-reserve',
-  },
-  {
-    id: 'stores-reserve-scout',
-    type: 'scout',
-    x: -144,
-    y: 8,
-    z: -94,
-    hp: 2,
-    battle: 'stores-trial',
-    wave: 1,
-    encounter: 'stores-reserve',
-  },
 );
-explorationEnemies.push({
-  id: 'stores-reserve-miner',
-  type: 'miner',
-  x: -169,
-  y: 8,
-  z: -92,
-  hp: 3,
-  battle: 'stores-trial',
-  wave: 1,
-  encounter: 'stores-reserve',
-});
-for (const e of explorationEnemies.filter((e) => e.battle === 'stores-trial'))
-  e.activation = { x: -173, y: 8, z: -74, radius: 17 };
 
 export const explorationControls = [
   {
@@ -263,16 +243,6 @@ export const explorationControls = [
     z: -134.5,
   },
   {
-    id: 'laser-cache',
-    kind: 'laser',
-    frontOnly: true,
-    x: 354,
-    y: -22,
-    ground: -24,
-    z: 193,
-    normal: [1, 0, 0],
-  },
-  {
     id: 'collimator-drawer',
     kind: 'magnet',
     x: 366.9,
@@ -283,16 +253,7 @@ export const explorationControls = [
     facing: [-1, 0, 0],
   },
 ];
-export const explorationMirrors = [
-  {
-    id: 'separator-service-mirror',
-    x: 364,
-    y: -22,
-    z: 193,
-    n: [Math.SQRT1_2, 0, Math.SQRT1_2],
-    size: 4,
-  },
-];
+export const explorationMirrors = [];
 explorationSolids.push(
   machine('rangefinder-approach-pump', 'filter', 372, 24, -40, 2, 8, 2),
   machine('rangefinder-return-spares', 'rack', 401, 24, -34, 3, 6, 2),
@@ -570,17 +531,6 @@ const casing = (id, x, y, z, w, d, h, ground = y) => ({
   theme: 'circulation',
 });
 explorationSolids.push(
-  // An L-shaped optical housing: the Tank cannot enter its low light window.
-  // The inner partition blocks direct diagonals to the receiver, including its rim.
-  casing('optical-case-front', 352, -24, 190, 10.4, 0.6, 4),
-  casing('optical-case-sill', 362.4, -24, 190, 4.6, 0.6, 1.2),
-  casing('optical-case-lintel', 362.4, -21.2, 190, 4.6, 0.6, 1.2, -24),
-  casing('optical-case-west', 352, -24, 190, 0.6, 6, 4),
-  casing('optical-case-east', 367, -24, 190, 0.6, 6, 4),
-  casing('optical-case-back', 352, -24, 195.4, 15.6, 0.6, 4),
-  casing('optical-case-partition-front', 362, -24, 190, 0.4, 2.1, 4),
-  casing('optical-case-partition-back', 362, -24, 194, 0.4, 2, 4),
-  { ...casing('optical-case-roof', 352, -20, 190, 15.6, 6, 0.3, -24), mass: true },
   machine('stores-cross-cover', 'rack', -160, 8, -90, 4, 10, 2.6),
   {
     ...casing('stores-inspection-canopy', -158, 12.4, -92, 18, 14, 0.45, 8),
@@ -642,4 +592,67 @@ explorationSolids.push({
   d: 3,
   h: 3,
   permanent: true,
+});
+
+// Indirect fire changes this remembered corridor; no arena seal traps a first visit.
+for (const [side, x] of [
+  ['west', -46],
+  ['east', 12],
+]) {
+  explorationDecks.push({
+    id: `battery-${side}`,
+    x,
+    y: 0,
+    z: -82,
+    w: 10,
+    d: 34,
+    region: 'transit',
+  });
+  for (const [edge, bx, bz, w, d] of [
+    ['front', side === 'west' ? -37 : 12, -82, 1, 34],
+    ['back', side === 'west' ? -46 : 21, -82, 1, 34],
+    ['north', x, -82, 10, 1],
+    ['south', x, -49, 10, 1],
+  ])
+    explorationSolids.push(machine(`battery-${side}-${edge}`, 'rack', bx, 0, bz, w, d, 3.2));
+  for (const [i, z] of [-58, -75].entries())
+    explorationEnemies.push({
+      id: `battery-${side}-${i}`,
+      type: 'artillery',
+      x: side === 'west' ? -41 : 17,
+      y: 0,
+      z,
+      hp: 5,
+      emplacement: true,
+      spotterHeight: 9,
+      battle: 'cargo-battery',
+      encounter: 'cargo-battery',
+      wave: 0,
+      activation: { x: -12, y: -4, z: -52, radius: 14 },
+    });
+}
+explorationDecks.push(
+  { id: 'scrap-inspection-neck', x: -64, y: -16, z: 40, w: 16, d: 10, region: 'foundry' },
+  { id: 'scrap-inspection-bay', x: -64, y: -16, z: 26, w: 16, d: 18, region: 'foundry' },
+);
+explorationSolids.push(machine('scrap-inspection-partition', 'rack', -57, -16, 34, 6, 2, 2.5));
+
+explorationDecks.push({
+  id: 'battery-firing-bay',
+  x: -28,
+  y: -8,
+  z: -82,
+  w: 14,
+  d: 18,
+  region: 'transit',
+});
+
+explorationDecks.push({
+  id: 'freight-battery-stores',
+  x: 88,
+  y: 8,
+  z: -136,
+  w: 12,
+  d: 36,
+  region: 'transit',
 });

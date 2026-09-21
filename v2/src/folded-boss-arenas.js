@@ -3,7 +3,7 @@ export const BOSS_ARENAS=[
  {id:'prototype',x:-50,z:116,w:36,d:24,y:-16},
  {id:'foundry',x:202,z:-164,w:42,d:40,y:16},
  {id:'guardian',x:180,z:44,w:48,d:46,y:16},
- {id:'sorter',x:112,z:-126,w:36,d:22,y:24},
+ {id:'sorter',x:24,z:-164,w:40,d:36,y:-8},
  {id:'keeper',x:-28,z:12,w:56,d:48,y:-56}
 ];
 const gate=(arena,name,x,z,w,d,y)=>({id:`arena-${arena}-${name}`,arena,x,z,w,d,y,h:5});
@@ -11,8 +11,9 @@ export const arenaGates=[
  gate('prototype','entry',-50.5,120,1,12,-16),gate('prototype','return',-34,115.5,12,1,-16),
  gate('foundry','entry',202,-164.5,42,1,16),gate('foundry','exit',202,-124.5,42,1,16),gate('foundry','west',201.5,-164,1,40,16),gate('foundry','east',243.5,-164,1,40,16),
  gate('guardian','entry',196,43.5,12,1,16),
- gate('sorter','entry',112,-104.5,36,1,24),
- gate('sorter','west',111.5,-126,1,22,24),gate('sorter','east',147.5,-126,1,22,24),gate('sorter','north',112,-126.5,36,1,24),
+ gate('sorter','entry',24,-128.5,40,1,-8),
+ gate('sorter','west',23.5,-164,1,36,-8),gate('sorter','east',63.5,-164,1,36,-8),gate('sorter','north',24,-164.5,40,1,-8),
+ gate('guardian','exit',227.5,64,1,12,16),
  gate('keeper','entry',-28,59.5,56,1,-56),
  gate('keeper','west-exit',-16,11.5,8,1,-56),gate('keeper','east-exit',8,11.5,8,1,-56)
 ];

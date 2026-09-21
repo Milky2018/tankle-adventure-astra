@@ -99,17 +99,17 @@ test('moving machinery belongs to one session and never mutates authored geometr
     second = initialFoldedState();
   const cover = first.bodies.obstacles.find((body) => body.id === 'sorter-cover');
   const carrier = first.bodies.solids.find((body) => body.id === 'press-carrier');
-  cover.x = 136;
+  cover.x = 48;
   carrier.x = -42;
-  assert.equal(second.bodies.obstacles.find((body) => body.id === cover.id).x, 116);
-  assert.equal(sideObstacles.find((body) => body.id === cover.id).x, 116);
+  assert.equal(second.bodies.obstacles.find((body) => body.id === cover.id).x, 28);
+  assert.equal(sideObstacles.find((body) => body.id === cover.id).x, 28);
   assert.equal(foldedSolids.find((body) => body.id === carrier.id).x, -30);
-  assert.equal(foldedBlocked(137, 24, -107, first, 0)?.id, 'sorter-cover');
+  assert.equal(foldedBlocked(49, -8, -143, first, 0)?.id, 'sorter-cover');
   assert.equal(foldedBlocked(-40, -16, 49, first, 0)?.id, 'press-carrier');
   assert.equal(JSON.parse(JSON.stringify(first)).bodies, undefined);
   assert.equal(
     initialFoldedState(first).bodies.obstacles.find((body) => body.id === cover.id).x,
-    116,
+    28,
   );
 });
 

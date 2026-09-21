@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {BOSS_ARENAS,createBossArenas,insideArena,bossReserves,arenaGates} from './folded-boss-arenas.js';
 import {initialFoldedState,moveFolded,activeSolid,foldedArchitecture,foldedSupport,foldedBlocked} from './folded-layout.js';
 import {bossPattern,steerSeeker} from './folded-bosses.js';
-const fixtures=[['prototype',-47,-16,126,-8,0],['foundry',218,16,-162,0,-10],['guardian',202,16,46,0,-10],['keeper',0,-56,58,0,10],['sorter',126,24,-106,0,10]];
+const fixtures=[['prototype',-47,-16,126,-8,0],['foundry',218,16,-162,0,-10],['guardian',202,16,46,0,-10],['keeper',0,-56,58,0,10],['sorter',54,-8,-130,0,10]];
 test('every live boss encounter blocks actual movement through its entrance and reopens after release',()=>{
  for(const [id,x,y,z,dx,dz]of fixtures){
   const state={...initialFoldedState(),relays:true,combatArena:id},p={x,y,z,speed:1};moveFolded(p,dx,dz,state);
@@ -59,8 +59,8 @@ test('the raised carrier receiver retains its Mortar arc below the workshop roof
  }
 });
 
-test('the optical express bridge passes the optional Sorter without committing to its fight',()=>{
+test('the optical express bridge is independent of the freight Sorter',()=>{
  const state=initialFoldedState(),boss={id:'sorter',hp:12,max:12,timer:0},manager=createBossArenas([boss],state);
  for(let x=110;x<=150;x++)manager.update({x,y:24,z:-98,hp:50},x);
- assert.equal(state.combatArena,null);manager.update({x:126,y:24,z:-110,hp:50},151);assert.equal(state.combatArena,'sorter');
+ assert.equal(state.combatArena,null);manager.update({x:54,y:-8,z:-132,hp:50},151);assert.equal(state.combatArena,'sorter');
 });

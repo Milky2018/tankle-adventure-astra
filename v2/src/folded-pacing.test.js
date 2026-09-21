@@ -28,12 +28,13 @@ test('pressure mechanisms require the supporting hull and cycling sleeves have a
   assert.equal(mechanismReady(cycle,p,1),true);assert.equal(mechanismReady(cycle,p,3),false);
 
 });
-test('mandatory battles are finite and rest locations do not impose the old six-room recipe',()=>{
+test('the proving approach has a single ordinary pair and no compulsory endurance court',()=>{
   for(const b of expansionBattles){
     const enemies=expansionEnemies.filter(e=>e.battle===b.battle);
     assert.ok(enemies.some(e=>e.wave===0));assert.ok(enemies.some(e=>e.wave===1));
   }
-  assert.deepEqual(expansionBattles.map(b=>b.id),['proving-endurance']);
+  assert.deepEqual(expansionBattles,[]);
+  const pair=expansionEnemies.filter(e=>e.encounter==='proving-impact');assert.equal(pair.length,2);assert.ok(pair.every(e=>!e.battle&&!e.wave));
   assert.ok(new Set(expansionRoutes.map(r=>r.rooms.length)).size>1);
 });
 test('existing earned abilities and far-side saves preserve access across newly added trials',()=>{
@@ -45,12 +46,11 @@ test('existing earned abilities and far-side saves preserve access across newly 
   assert.equal(initialFoldedState()['reservoir-inlet'],false);
 });
 
-test('each reservoir sluice can be operated independently without a timed sleeve',()=>{
- const c=expansionControls.find(c=>c.id==='reservoir-transfer'),p={x:c.x-8,y:-8,z:c.z},s=initialFoldedState();
+test('one reservoir inlet changes the flow without a second duplicate rotor',()=>{
+ const c=expansionControls.find(c=>c.id==='reservoir-inlet'),p={x:c.x-8,y:-8,z:c.z},s=initialFoldedState();
  assert.equal(releaseFolded(c.id,'cannon',p,s,[]),true);
- s[c.id]=false;
- assert.equal(releaseFolded('reservoir-inlet','cannon',p,s,[]),true);
- assert.equal(releaseFolded(c.id,'cannon',p,s,[]),true);
+ assert.equal(releaseFolded(c.id,'cannon',p,s,[]),false);
+ assert.equal(expansionControls.some(c=>c.id==='reservoir-transfer'),false);
 });
 
 test('optional sentries stay dormant on the through route but wake on entry or provocation',()=>{

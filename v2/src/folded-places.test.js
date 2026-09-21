@@ -49,7 +49,7 @@ test('relocated acquisition and recovery points remain clear for an old saved an
 // Sweep every cross-section of the route gates; testing only their centre would
 // miss a new adjacent floor that lets the player skirt the jamb.
 test('full-width transfer and return shutters cover their supporting lane',()=>{
- for(const id of ['arsenal-return','proving-transfer','proving-endurance','lens-return','hearth-transfer']){
+ for(const id of ['arsenal-return','proving-transfer','lens-return','hearth-transfer']){
   const s=initialFoldedState(),gate=expansionSolids.find(g=>g.id===id),alongX=gate.w>gate.d;
   const fixed=alongX?gate.z:gate.x,start=(alongX?gate.x:gate.z)-3,end=start+(alongX?gate.w:gate.d)+6;
   for(let v=start;v<=end;v+=.5){

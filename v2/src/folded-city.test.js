@@ -98,26 +98,26 @@ test('Magnet training and the unassisted Mortar route preserve dry access',()=>{
 test('the cargo outlook previews the eastern city without a physical bypass of the original bulkhead',()=>{
  const s=initialFoldedState({freight:true,'bridge-crane':true}),p=player(0,0,-34,{overdrive:true,mortar:true});
  travel(p,s,[[59,-34],[59,-106],[88,-106]]);
- for(let i=0;i<300;i++)moveFolded(p,.15,0,s);assert.ok(p.x<94);
+ for(let i=0;i<300;i++)moveFolded(p,.15,0,s);assert.ok(p.x<100);
  p.phoenix=true;for(let i=0;i<300;i++){updateHeat(p,1/60,i/60,true,true);moveFolded(p,.3,0,s);}
- assert.ok(p.x<94);travel(p,s,[[59,-106],[59,-34],[53,-34],[53,-32],[43,-32],[43,-34],[0,-34]]);
+ assert.ok(p.x<100);travel(p,s,[[59,-106],[59,-34],[53,-34],[53,-32],[43,-32],[43,-34],[0,-34]]);
 });
 
 
-test('the eastern optical route and its returns precede the optional Guardian',()=>{
+test('the eastern optical return is available before the mandatory Guardian',()=>{
   const s=initialFoldedState(),p=player(136,24,-30,{overdrive:true,phoenix:true});
   travel(p,s,[[228,-30]],{boost:true});assert.equal(p.y,24);
   travel(p,s,[[242,-20],[242,-30],[254,-30],[254,-98],[64,-98],[64,-86]]);assert.equal(p.y,24);
   assert.ok(releaseFolded('emitter-cage','cannon',p,s,[]));assert.equal(s.guardian,false);
-  travel(p,s,[[64,-98],[254,-98],[254,-30],[242,-30],[242,-20],[228,-20]]);s.gallery=true;assert.ok(releaseFolded('garden-optical','laser',p,s,[]));assert.ok(releaseFolded('yard-optical','laser',p,s,[]));
+  travel(p,s,[[64,-98],[254,-98],[254,-30],[242,-30],[242,-20],[228,-20]]);s.gallery=true;assert.ok(releaseFolded('garden-optical','laser',p,s,[]));assert.equal(foldedControls.some(c=>c.id==='yard-optical'),false);
   travel(p,s,[[242,-20],[242,6],[230,6],[230,38],[202,38],[202,6],[110,6]]);assert.equal(p.y,16);
-  assert.ok(s['garden-optical']&&s['yard-optical']);assert.equal(s.guardian,false);
+  assert.ok(s['garden-optical']);assert.equal(s.guardian,false);
 });
 
-test('the optical return opens a supported internal descent to the dry circulation approach',()=>{
+test('Guardian victory opens the supported inspection descent to Circulation',()=>{
  const s=initialFoldedState(),p=player(162,24,-26,{overdrive:true,phoenix:true});
  for(let i=0;i<120;i++)moveFolded(p,0,.15,s);assert.ok(p.z<-16.5);
- p.laser=true;assert.ok(releaseFolded('lens-return','laser',p,s,[]));
+ p.laser=true;assert.ok(releaseFolded('lens-return','laser',p,s,[]));for(let i=0;i<120;i++)moveFolded(p,0,.15,s);assert.ok(p.z<-16.5);s.guardian=true;
  travel(p,s,[[162,30],[174,30],[174,-18],[190,-18],[190,48],[242,48],[242,120],[222,120]]);
  assert.equal(p.y,-24);assert.equal(p.circulation,false);
 });

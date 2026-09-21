@@ -286,7 +286,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     for(const x of [-.6,.6])cylinder(root,.35,2.5,x,1.25,0,C.metal,8);
     floorDetails.push({root,x:b.x,y:b.y-1.3,z:b.z,radius:3});
   }
-  for(const link of circuitLinks([...foldedControls,...foldedBattles,{id:'inner-thermal',x:154,y:-6.7,z:96},{id:'sorter',x:130,y:25.3,z:-100},{id:'rail-crossing',x:-162,y:9.3,z:-66}],foldedSolids,foldedLiftDefs)){
+  for(const link of circuitLinks([...foldedControls,...foldedBattles,{id:'inner-thermal',x:154,y:-6.7,z:96},{id:'sorter',x:44,y:-6.7,z:-154},{id:'guardian',x:202,y:17.3,z:64},{id:'rail-crossing',x:-162,y:9.3,z:-66}],foldedSolids,foldedLiftDefs)){
     const points=link.points.map(p=>new T.Vector3(...p)),root=new T.Group(),lamps=[];scene.add(root);root.name=`folded-circuit:${link.id}:${link.target}`;
     let length=0;for(let i=1;i<points.length;i++)length+=points[i].distanceTo(points[i-1]);
     if(length<.01){scene.remove(root);continue;}
@@ -403,6 +403,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     }
     if(magnetPullable(e)){for(const side of [-1,1])box(model.body,.2,.38,1,side*.75,1.1,0,mat(SIGNAL.magnet,true),0);}
     if(e.magneticShield&&model.frontArmor){model.frontArmor.material=mat(SIGNAL.magnet);for(const x of [-.7,.7])box(model.frontArmor,.3,.55,.12,x,0,.34,mat(0xa9dcff,true));}
+    if(e.spotterHeight){cylinder(model.body,.12,e.spotterHeight-1,0,(e.spotterHeight+1)/2,0,C.metal,6);box(model.body,.65,.35,.65,0,e.spotterHeight,0,mat(C.orange,true));}
     const materials=prepareEnemyMaterials(model,{batching});
     // Prototype's three rays each contain an origin, endpoint and return vertex.
     const warningGeometry=new T.BufferGeometry().setAttribute('position',new T.BufferAttribute(new Float32Array(e.id==='prototype'?27:['welder','dredger'].includes(e.type)?45:6),3).setUsage(T.DynamicDrawUsage));warningGeometry.setDrawRange(0,2);
@@ -418,7 +419,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     if(batteryWarning){scene.add(batteryWarning);batteryWarning.visible=false;batteryWarning.frustumCulled=false;}
     const deployment=e.wave||e.reserveFor?ring(scene,2,.1,e.x,e.y+.09,e.z,mat(SIGNAL.ready,true)):null;
     if(deployment)floorDetails.push({root:deployment,x:e.x,y:e.y,z:e.z,radius:2.2});
-    const enemy={deployment,batteryWarning,charge,zone,flame,supportBeam,spawn:{x:e.x,y:e.y,z:e.z},...e,hp:e.reserveFor||e.persistent&&state[e.id]||foldedBattles.some(b=>b.battle===e.battle&&state[b.id])?0:e.hp,max:e.hp,model,materials,warning,phase:'idle',timer:e.startup??1,aim:Math.PI/2,flash:0,armor:0,ramAt:-10,shieldPull:0,shieldRemoved:false,radius:e.type==='boss'?3.2:e.guardian?2.4:e.type==='dredger'?2:e.type==='guard'?1.75:1.35};
+    const enemy={deployment,batteryWarning,charge,zone,flame,supportBeam,spawn:{x:e.x,y:e.y,z:e.z},...e,hp:e.reserveFor||e.persistent&&state[e.id]||foldedBattles.some(b=>b.battle===e.battle&&(state[b.id]||state.pendingSignals?.[b.id]?.changes[b.id]))?0:e.hp,max:e.hp,model,materials,warning,phase:'idle',timer:e.startup??1,aim:Math.PI/2,flash:0,armor:0,ramAt:-10,shieldPull:0,shieldRemoved:false,radius:e.type==='boss'?3.2:e.guardian?2.4:e.type==='dredger'?2:e.type==='guard'?1.75:1.35};
     enemy.barrageWarnings=batteryWarning?Array.from({length:3},()=>{const marker=ring(scene,BARRAGE.radius,.1,e.x,e.y+.12,e.z,mat(C.orange,true));marker.visible=false;return marker;}):[];
     if(e.reserveFor){
       const hatch=new T.Group();hatch.position.set(e.x,e.y+.03,e.z);scene.add(hatch);
