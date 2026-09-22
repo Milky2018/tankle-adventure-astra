@@ -605,14 +605,14 @@ for (const [side, x] of [
     y: 0,
     z: -82,
     w: 10,
-    d: 34,
+    d: 28,
     region: 'transit',
   });
   for (const [edge, bx, bz, w, d] of [
-    ['front', side === 'west' ? -37 : 12, -82, 1, 34],
-    ['back', side === 'west' ? -46 : 21, -82, 1, 34],
+    ['front', side === 'west' ? -37 : 12, -82, 1, 28],
+    ['back', side === 'west' ? -46 : 21, -82, 1, 28],
     ['north', x, -82, 10, 1],
-    ['south', x, -49, 10, 1],
+    ['south', x, -55, 10, 1],
   ])
     explorationSolids.push(machine(`battery-${side}-${edge}`, 'rack', bx, 0, bz, w, d, 3.2));
   for (const [i, z] of [-58, -75].entries())

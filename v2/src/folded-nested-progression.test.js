@@ -76,7 +76,7 @@ test('the combined inspection route uses a grille, unsupported water and a real 
 test('Phoenix teaches impact, then returns to the starting side of the orange bulkhead',()=>{
  const f=fixtures({foundry:true,'proving-endurance':true,phoenix:true},{x:218,y:16,z:-114,phoenix:true}),{p,s,walk,wait}=f;
  walk([[238,-114],[238,-82]]);walk([[180,-82]],true);assert.ok(s['phoenix-departure']);wait(2);
- walk([[62,-82],[62,-74],[-22,-74],[-22,2],[38,2],[38,6]]);assert.equal(p.y,0);assert.equal(s.pressure,false);wait(2);
+ walk([[96,-82],[96,-74],[62,-74],[-22,-74],[-22,2],[38,2],[38,6]]);assert.equal(p.y,0);assert.equal(s.pressure,false);wait(2);
  walk([[140,6]],true);assert.ok(s.pressure);walk([[154,6],[154,-98],[126,-98],[126,-32],[150,-28]]);assert.equal(p.y,24);
 });
 

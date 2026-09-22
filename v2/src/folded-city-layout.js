@@ -128,7 +128,7 @@ export const cityControls=[
   control('garden-optical',232,26,-9.5,'laser',{ground:24,normal:[0,0,1]}),
   control('pump',58,-5.5,-4,'shot',{ground:-8,mount:'pump',facing:[0,0,1]}),
   control('pressure-return',218,-14.6,18),control('last-cage',40,-38.6,-12,'shot',{facing:[1,0,0]}),
-  control('signal',198,41.3,146,'use'),control('maintenance',110,-22.1,30,'shot'),
+  control('signal',198,41.3,146,'shot'),control('maintenance',110,-22.1,30,'shot'),
   control('dock',0,-54.6,0,'dock')
 ];
 export const cityPickups=[

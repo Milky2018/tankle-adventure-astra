@@ -22,9 +22,15 @@ export const sideObstacles=[
  {id:'care-screen',x:32,z:32,w:3,d:12,y:-8,h:3,permanent:true},
  {id:'care-planter',x:42,z:33,w:2,d:2,y:-8,h:1,permanent:true},
  {id:'maintenance-cart',x:109,z:29,w:2,d:2,y:-24,h:1.5,permanent:true},
- {id:'sorter-cover',x:28,z:-144,w:5,d:2,y:-8,h:2.8,permanent:true,railMin:28,railMax:50}
+ {id:'sorter-cover',x:28,z:-144,w:5,d:2,y:-8,h:2.8,permanent:true,railMin:28,railMax:50,rail:{axis:'x',min:28,max:50}}
 ];
 export const railOffset={x:-138,z:28,y:8};
 export const gutterControls=[{id:'gutter-a',x:37,z:35},{id:'gutter-b',x:49,z:39},{id:'gutter-plug',x:36,z:44}];
 
-export const sideEnemies=[{id:'sorter',type:'boss',x:44,y:-8,z:-154,hp:12,persistent:true}];
+export const sideEnemies=[
+ {id:'sorter',type:'boss',x:44,y:-8,z:-154,hp:12,persistent:true},
+ // The former roof arena is now a patrol crossing on the Phoenix return.
+ {id:'sorting-walk-sniper',type:'sniper',x:125,y:24,z:-85,hp:4,encounter:'sorting-patrol'},
+ {id:'sorting-walk-skirmisher',type:'skirmisher',x:126,y:24,z:-70,hp:4,encounter:'sorting-patrol'},
+ {id:'sorting-walk-guard',type:'guard',magneticShield:true,x:124,y:24,z:-53,hp:5,encounter:'sorting-patrol'}
+];

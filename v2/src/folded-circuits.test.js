@@ -6,7 +6,7 @@ import {SIGNAL} from './folded-visibility.js';
 
 test('circuits include linked shutters, remote returns, carrier and optical returns',()=>{
   const links=circuitLinks(foldedControls,foldedSolids,foldedLiftDefs);
-  assert.equal(links.filter(l=>l.id==='pump').length,1);
+  assert.equal(links.filter(l=>l.id==='pump'&&!l.local).length,1);
   assert.equal(links.filter(l=>l.id==='pressure-return').length,2);
   for(const [source,target]of [['load','inspection-load'],['load','carrier'],['lens-return','lens-return'],['relay-east','relays'],['garden-optical','garden-lift'],['loading-return','freight-platform']])assert.ok(links.some(l=>l.id===source&&l.target===target));
 });
@@ -17,6 +17,7 @@ test('activation changes the cable behind the traveling front, not the entire ca
   assert.equal(circuitColor(true,1,.8),SIGNAL.ready);
   assert.equal(circuitColor(true,4,.8),SIGNAL.open);
   assert.equal(circuitColor(true,Infinity,.8),SIGNAL.open);
+  assert.equal(circuitColor(true,1.4-Number.EPSILON,1,1.4),SIGNAL.open);
 });
 
 test('the switch latches immediately but its mechanism waits for every cable endpoint',async()=>{
@@ -38,7 +39,7 @@ test('remote magnetic connections retain visible cables outside their closed mac
   for(const c of controls){
     const links=circuitLinks([c],foldedSolids,foldedLiftDefs);
     if(!links.length){assert.ok(c.mount,c.id);continue;}
-    for(const link of links){
+    for(const link of links.filter(l=>!l.local)){
       let length=0;
       for(let i=1;i<link.points.length;i++){
         const a=link.points[i-1],b=link.points[i],span=Math.hypot(...b.map((v,j)=>v-a[j]));length+=span;

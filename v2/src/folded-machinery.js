@@ -32,7 +32,7 @@ export function stepLifts(lifts,state,player,dt,enemies=[]){
   for(const lift of lifts){
     const aboard=body=>Math.abs(body.y-lift.y)<.2&&inRect(body.x,body.z,lift,-.85);
     const riders=bodies.filter(aboard);
-    if(!state[lift.lock||lift.id]||lift.locks&&!lift.locks.every(id=>state[id]))continue;
+    if(!state[lift.lock||lift.id]||state.pendingSignals?.[lift.lock||lift.id]||lift.locks&&!lift.locks.every(id=>state[id]&&!state.pendingSignals?.[id]))continue;
     if(lift.settle){
       const next=Math.max(lift.stops[0],lift.y-dt*3);
       if(bodies.some(b=>!aboard(b)&&inRect(b.x,b.z,lift,.9)&&b.y+2.7>next&&b.y<lift.y))continue;

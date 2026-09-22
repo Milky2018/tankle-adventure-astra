@@ -4,7 +4,7 @@ import {makeCityBackdrop} from './folded-backdrop.js';
 import {cityMaterials} from './folded-materials.js';
 import {makeFinalMachinery} from './folded-final-machinery.js';
 import {makeDistrictMachinery,makeWorkingDistricts} from './folded-district-machinery.js';
-import {expansionCurrents,expansionDecks,expansionHeat} from './folded-expansion-layout.js';
+import {expansionCurrents,expansionDecks} from './folded-expansion-layout.js';
 import * as T from 'three';
 import {box,cylinder,ring,mat,batchStatic} from './world.js';
 import {REGION_STYLE,regionAt} from './folded-architecture.js';
@@ -51,10 +51,6 @@ export function makeCityPresentation(scene,aperture){
   // District machines occupy authored work positions, rather than the same
   // decorative strip behind every room. Their bounds are in the level layout.
   makeDistrictMachinery(scenery);
-  for(const q of expansionHeat)for(let x=q.x+4;x<q.x+q.w;x+=8){
-    box(scenery,5,.08,8,x,q.y+.07,q.z+q.d/2,iron,0);
-    for(const z of [-2,0,2])box(scenery,4,.04,.22,x,q.y+.13,q.z+q.d/2+z,mat(0xdb7941,true),0);
-  }
   // A real exhaust spine above the deep furnace, visible through the transit void.
   for(const x of [-23,-19]){cylinder(scenery,1.2,95,x,-13,-15,iron,12);for(let y=-54;y<35;y+=8)ring(scenery,1.35,.14,x,y,-15,copper);}
   // Supported transit bridge, visible from the water and the later roof route.
@@ -164,7 +160,7 @@ export function makeCityPresentation(scene,aperture){
     const cycle=p.endingTime?4+Math.max(0,p.endingTime-9)/3:time%18,travel=cycle<6?cycle/6:cycle<11?1:(18-cycle)/7;
     carrier.position.set(0,7,-22+travel*40);
     jaws.forEach((m,i)=>m.position.x=(i?1:-1)*(cycle>6&&cycle<11?2.1:1.6));
-    cargo.visible=!!state.endingSeen&&!!state['rail-repair'];
+    cargo.visible=!!state['rail-repair'];
     const repaired=state['rail-repair'];
     repairArm.rotation.z=-.45+Math.sin(time*(repaired?1.4:2.4))*(repaired?.35:.65);
     eye.material.color.setHex(repaired?0xc5c9ac:0x827f6c);brokenRail.rotation.x=repaired?0:.22;

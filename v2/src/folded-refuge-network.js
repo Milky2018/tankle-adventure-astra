@@ -45,6 +45,7 @@ export const refugeDecks = [
   deck('phoenix-departure', 232, -114, 12, 38, 16, { region: 'testworks' }),
   deck('phoenix-roof-rise', -28, -68, 12, 64, 16, { rise: -16, region: 'testworks' }),
   deck('phoenix-return-foot', -28, -4, 70, 8, 0, { region: 'transit' }),
+  deck('carrier-south-bypass',60,-78,44,8,16,{region:'testworks'}),
   deck('phoenix-roof-apron', 56, -88, 188, 12, 16, { region: 'testworks' }),
   deck('coolant-roof-walk', 272, -28, 12, 140, 24, { region: 'circulation' }),
   deck('coolant-roof-boarding', 272, 100, 24, 12, 24, { region: 'circulation' }),

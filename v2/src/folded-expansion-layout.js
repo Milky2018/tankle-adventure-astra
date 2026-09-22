@@ -27,9 +27,9 @@ const routes={
   branches:[[[-104,31],[-76,31],[-76,-2],[-104,-2],[-136,-2]],[[-136,-54],[-162,-54],[-162,-66],[-176,-66],[-176,-76]],[[-136,-54],[-82,-54],[-82,-30],[-82,-14],[-82,31]]],
   controls:[['arsenal-return',-102.1,-54,'magnet',{height:4.1,ground:8,mount:'arsenal-return',facing:[-1,0,0]}]],
   gates:[['arsenal-return',-101,-60,1,12,{magnetic:true}]],
-  cover:[[-123,-10,4,5],[-93,18,4,10],[-152,-48,3,6]],
+  cover:[[-123,-10,4,5],[-93,22,4,6],[-152,-48,3,6]],
   enemies:[['sniper',-134,-5,'dispatch'],['guard',-113,9,'dispatch'],['skirmisher',-80,1,'dispatch'],['artillery',-143,-42,'assembly'],['scout',-125,-45,'assembly'],['guard',-82,-20,'return']],
-  props:[['gantry',-124,-8],['assembly',-151,-58],['rack',-143,24],['rack',-97,-58]],
+  props:[['gantry',-124,-8],['assembly',-151,-58]],
  },
  reservoir:{
   path:[[-76,58,'repair'],[-76,82],[-76,102,'reservoir-inlet'],[-76,114],[-104,114],[-144,114],[-164,114],[-164,78,'repair'],[-164,64,'pickup']],
@@ -43,13 +43,13 @@ const routes={
  },
  proving:{
   path:[[77,-124,'repair'],[77,-150],[77,-158,'proving-transfer'],[94,-158],[94,-180],[112,-180],[130,-172],[152,-172],[182,-172],[182,-182],[218,-182],[218,-170,'repair'],[218,-132,'overseer'],[218,-114,'pickup']],
-  returns:[[218,-114],[238,-114],[238,-82],[180,-82,'boost'],[62,-82],[62,-74],[-22,-74],[-22,2],[38,2],[38,6],[140,6,'boost'],[154,6],[154,-98],[126,-98],[126,-32],[150,-28,'cage']],
+  returns:[[218,-114],[238,-114],[238,-82],[180,-82,'boost'],[96,-82],[96,-74],[62,-74],[-22,-74],[-22,2],[38,2],[38,6],[140,6,'boost'],[154,6],[154,-98],[126,-98],[126,-32],[150,-28,'cage']],
   branches:[[[112,-176],[106,-176],[106,-146],[192,-146],[192,-176],[188,-176]]],
   controls:[['proving-transfer',77,-170,'shot',{ground:16,height:1.3,counterweight:true}]],
   gates:[['proving-transfer',100,-196,1,46]],
-  cover:[[122,-187,4,8],[156,-168,9,3],[176,-190,3,8]],
+  cover:[[122,-187,4,8],[158,-168,5,3],[176,-190,3,8]],
   enemies:[['turret',82,-148,'receiving'],['artillery',169,-183,'impact'],['guard',143,-178,'impact'],['scout',180,-82,'return'],['guard',172,-82,'return']],
-  props:[['test-bed',86,-139],['test-bed',145,-190],['engine',225,-103],['wreck',207,-110]],
+  props:[['test-bed',145,-190],['engine',225,-103]],
  },
  lens:{
   path:[[276,-24,'repair'],[271,-62],[271,-88],[304,-88],[338,-88],[338,-58,'repair'],[324,-58],[324,-28,'pickup']],
@@ -59,14 +59,14 @@ const routes={
   gates:[['lens-return',302,-34,1,12]],
   cover:[[266,-58,5,3],[295,-99,3,9],[343,-76,4,3],[284,-82,.8,16]],
   enemies:[['reflector',272,-74,'collimator'],['sniper',332,-90,'gallery'],['skirmisher',303,-91,'gallery']],
-  props:[['lens',284,-91],['lens',320,-94],['emitter',337,-24]],
+  props:[['lens',284,-91],['emitter',337,-24]],
  },
  coolant:{
   path:[[286,117,'repair'],[292,143],[292,166],[292,186],[325,186],[325,164],[340,164],[340,186],[360,186],[360,160],[374,160,'repair'],[374,116,'pickup']],
   returns:[[374,116],[374,106],[284,106,'boost'],[284,117],[260,117]],
   branches:[[[292,143],[312,143],[312,164],[340,164],[340,186]]],
   controls:[['coolant-transfer',333,186,'magnet',{slide:'coolant-transfer',mount:'coolant-transfer',facing:[1,0,0]}]],
-  gates:[['coolant-transfer',334,180,3,12,{permanent:true,magnetic:true,rail:{axis:'z',min:166,max:180}}],['coolant-return',324,100,1,12,{red:true}]],
+  gates:[['coolant-transfer',334,180,3,12,{permanent:true,magnetic:true,rail:{axis:'z',min:166,max:180,goal:166}}],['coolant-return',324,100,1,12,{red:true}]],
   cover:[[283,150,5,3],[299,177,3,5],[342,188,3,7],[316,146,1,15]],
   enemies:[['welder',312,159,'separator'],['artillery',348,185,'separator'],['miner',325,188,'separator'],['guard',338,106,'return'],['welder',292,103,'return']],
   props:[['separator',326,153],['boiler',352,173],['jacket',379,114]],
@@ -110,9 +110,6 @@ for(const plan of districtPlans){
  expansionRoutes.push({...plan,returnY:id==='proving'?24:id==='arsenal'?0:y,path:r.path,returns:r.returns,rooms:rooms.map(r=>({...r,x:r.x+r.w/2,z:r.z+r.d/2})),trial:`${id}-transfer`});
 }
 floor('arsenal-return-link',-82,-60,34,12,8,{region:'transit'});
-floor('arsenal-slide-alcove',-115,-60,12,36,8,{region:'transit'});
-floor('arsenal-slide-pocket',-103,-60,8,36,8,{region:'transit'});
-expansionSolids.push({id:'arsenal-slide-jamb',x:-103,z:-48,w:2,d:28,y:8,h:1.2,permanent:true});
 floor('arsenal-cart-berth',-132,-38,18,8,8,{region:'transit'});
 floor('lens-screen-berth',307,-84,8,24,24,{region:'optics'});
 floor('coolant-screen-rail',332,158,8,36,-24,{region:'circulation'});

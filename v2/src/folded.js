@@ -400,6 +400,7 @@ const enemies = createFoldedEnemies({
 
 function save() {
   world.sidePuzzles.persist();
+  world.advanceSignals(0, time);
   state.discovered = [...discovered];
   saves.save(state);
 }
@@ -412,9 +413,14 @@ function rejectImpact(kind, position) {
 }
 function setState(id, kind) {
   if (id === 'maintenance') {
-    const changed = kind === 'cannon' && !state['maintenance-started'] && !state.maintenance;
+    const changed =
+      kind === 'cannon' &&
+      !state['maintenance-started'] &&
+      !state.maintenance &&
+      !world.signals.pending(id);
     if (changed) {
-      state['maintenance-started'] = true;
+      world.signals.trigger(id, { 'maintenance-started': true });
+      world.signalRelease(id, time);
       audio.event('lever');
       save();
     } else rejectImpact(kind);
@@ -707,14 +713,9 @@ function target() {
       Math.abs(h.y - p.y) < 0.5,
   );
   if (hive) return { ...hive, kind: 'hive' };
-  const signal = world.sidePuzzles.rail.state.moving
-    ? world.sidePuzzles.targets
-        .filter((t) => t.id === 'rail-signal')
-        .map((t) => ({ ...t, kind: 'use' }))
-    : [];
-  const use = [...world.controls, ...signal].find(
+  const use = world.controls.find(
     (c) =>
-      ['use', 'dock'].includes(c.kind) &&
+      c.kind === 'dock' &&
       !state[c.id] &&
       (c.kind !== 'dock' || state.keeper) &&
       Math.abs(c.y - 1.3 - p.y) < 0.6 &&
@@ -754,7 +755,6 @@ function interact() {
     audio.event('repair');
     save();
   }
-  if (t.kind === 'use') setState(t.id, 'use');
   return true;
 }
 function updateLifts(dt) {
@@ -1015,17 +1015,10 @@ function updateMagnet(dt) {
           ),
           ...state.bodies.obstacles,
           ...foldedArchitecture.solids,
-          ...world.enemies
-            .filter((e) => e.hp > 0)
-            .map((e) => ({
-              x: e.x - e.radius,
-              y: e.y,
-              z: e.z - e.radius,
-              w: e.radius * 2,
-              d: e.radius * 2,
-            })),
         ],
         (x, z, y) => !!foldedSupport(x, z, y, false, world.lifts),
+        world.enemies,
+        (enemy, dx, dz) => moveFolded(enemy, dx, dz, state, world.lifts),
       )
     ) {
       state.slidePositions[body.id] = body[body.rail.axis];
@@ -1209,7 +1202,6 @@ function advance(dt) {
     oldX = p.x,
     oldZ = p.z;
   const travelScale = p.deployed ? (p.afloat ? 1.15 : FLOTATION.speed) : 1;
-  const impactSpeed = p.speed;
   const knock = hitDisplacement(p, time, dt);
   moveWithConveyor(
     p,
@@ -1228,10 +1220,6 @@ function advance(dt) {
   if (moving) {
     p.heading += angleDelta(p.heading, Math.atan2(move.x, move.z)) * Math.min(1, dt * 12);
     moved = true;
-  }
-  if (moving && world.sidePuzzles.pushCarrier(p, impactSpeed)) {
-    audio.event('ram');
-    save();
   }
   if (world.sidePuzzles.update(dt, p, world.enemies)) {
     audio.event('lever');

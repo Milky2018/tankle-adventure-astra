@@ -1,4 +1,5 @@
 import {mountedControlPosition} from './folded-control-housing.js';
+import {openLiftShafts} from './folded-shafts.js';
 import {restoreSlidePositions} from './folded-mechanisms.js';
 import {refugeHives,refugeDecks,refugeSolids,refugeControls,refugeFlags,refugeLifts,migrateRefuge} from './folded-refuge-network.js';
 import {explorationDecks,explorationBattles,explorationControls,explorationFlags,explorationPickups,explorationSolids,explorationEnemies} from './folded-exploration-layout.js';
@@ -45,6 +46,8 @@ export const foldedLiftDefs=[
   {id:'cage',x:4,z:10,w:12,d:12,stops:[0,24],recess:.6},
   ...cityLifts,...refugeLifts
 ];
+foldedDecks.splice(0,foldedDecks.length,...openLiftShafts(foldedDecks,foldedLiftDefs));
+
 // Bounds describe solid material, including the moving shutters while closed.
 export const foldedSolids=[
   {id:'magnet',x:68,z:-23,w:12,d:1,y:0,h:4,magnetic:true},
@@ -101,7 +104,14 @@ for(const c of foldedControls.filter(c=>c.mount)){
 
 export const foldedArchitecture=buildArchitecture(foldedDecks,foldedLiftDefs);
 export const architectureGrid=architectureIndex(foldedArchitecture.solids);
-export const activeSolid=(s,state)=>s.arena?state.combatArena===s.arena:s.permanent||!!s.rail||(!state[s.id]&&!(s.localControl&&state.pendingSignals?.[s.localControl]));
+export function activeSolid(s,state){
+  if(s.arena)return state.combatArena===s.arena;
+  if(s.permanent||s.rail)return true;
+  const pending=state.pendingSignals?.[s.localControl||s.id];
+  if(pending&&!s.red&&!s.phoenix)return !s.localControl||pending.duration-pending.remaining<.18-1e-8;
+  return !state[s.id];
+}
+
 export function foldedAimHeight(p,target){
   const verticalReach=Math.hypot(target.x-p.x,target.z-p.z)*Math.tan(Math.PI*40/180);
   return clamp(target.y,p.y+2-verticalReach,p.y+2+verticalReach);
@@ -194,6 +204,7 @@ export function releaseFolded(id,kind,p,state,lifts,time=0){
   if(state[id])return false;
   const c=foldedControls.find(c=>c.id===id);if(!c)return false;
   if(!mechanismReady(c,p,time,state))return false;
+  if(c.kind==='shot'&&!['cannon','mortar','laser'].includes(kind))return false;
   if(c.kind==='laser'&&kind!=='laser'||['use','dock'].includes(c.kind)&&kind!=='use')return false;
   if(c.kind==='magnet'&&(kind!=='magnet'||!p.magnet))return false;
   state[id]=true;

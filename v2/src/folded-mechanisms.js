@@ -1,6 +1,6 @@
 // A magnetic slide is a solid body throughout its travel. The saved coordinate
 // describes its rail position, including an unfinished pull.
-export function pullSlide(body, player, dt, bodies, supported) {
+export function pullSlide(body, player, dt, bodies, supported, occupants = [], moveOccupant) {
   const rail = body.rail;
   if (!rail) return false;
   const axis = rail.axis, size = axis === 'x' ? 'w' : 'd';
@@ -13,8 +13,22 @@ export function pullSlide(body, player, dt, bodies, supported) {
     const candidate = { ...body, [axis]: before + (destination - before) * i / steps };
     const overlaps = (b, margin = 0) => candidate.x < b.x + b.w + margin && candidate.x + candidate.w > b.x - margin && candidate.z < b.z + b.d + margin && candidate.z + candidate.d > b.z - margin;
     if (overlaps({ x: player.x - .9, z: player.z - .9, w: 1.8, d: 1.8 })) break;
-    if (bodies.some(b => b !== body && Math.abs(b.y - body.y) < 2.5 && overlaps(b))) break;
+    const overlapArea=(a,b)=>Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.z+a.d,b.z+b.d)-Math.max(a.z,b.z));
+    if (bodies.some(b => b !== body && Math.abs(b.y - body.y) < 2.5 && overlaps(b) && overlapArea(candidate,b)>=overlapArea(body,b))) break;
     if (![[.1,.1],[body.w-.1,.1],[.1,body.d-.1],[body.w-.1,body.d-.1]].every(([x,z]) => supported(candidate.x+x,candidate.z+z,body.y))) break;
+    const pushed=[];
+    let blocked=false;
+    for(const enemy of occupants.filter(e=>e.hp>0&&Math.abs(e.y-body.y)<2.5)){
+      const radius=enemy.radius||.9,b={x:enemy.x-radius,z:enemy.z-radius,w:radius*2,d:radius*2};
+      if(!overlaps(b)||overlapArea(candidate,b)<overlapArea(body,b))continue;
+      const direction=Math.sign(destination-before),position=direction>0?candidate[axis]+candidate[size]+radius+.02:candidate[axis]-radius-.02;
+      const next={...enemy};
+      moveOccupant?.(next,axis==='x'?position-enemy.x:0,axis==='z'?position-enemy.z:0);
+      if(Math.abs(next[axis]-position)>.01||occupants.some(e=>e!==enemy&&e.hp>0&&Math.abs(e.y-next.y)<2.5&&Math.hypot(e.x-next.x,e.z-next.z)<(e.radius||.9)+radius)){blocked=true;break;}
+      pushed.push({enemy,next});
+    }
+    if(blocked)break;
+    for(const {enemy,next}of pushed){enemy.x=next.x;enemy.y=next.y;enemy.z=next.z;}
     body[axis] = candidate[axis];
   }
   return body[axis] !== before;

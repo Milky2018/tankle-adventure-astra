@@ -244,7 +244,9 @@ Blue grip fittings, removable plates, mines and interceptable artillery shells s
 
 Ordinary magnetic machinery uses removable blue locks, pins or plates. Holding traction for about 0.6 seconds visibly loosens the part, then tears it free and drops it beside its mounting. The empty socket and green fixed lamp remain; its passage or linked machinery stays released after leaving or reloading. Releasing traction early lets an unfinished pull settle back. Any clear reachable approach works, without an invisible rail-axis or standing-position condition. Heavy machinery responds through the exposed coupling rather than the whole machine flying toward the Tank.
 
-Solid walls and intervening cargo interrupt the tether. Only objects whose position needs repeated adjustment use visible rails: the Testworks cover cart and Sorter cover. These remain solid, move toward the pulling position, stop before bodies or unsupported edges, and preserve partial travel. The player can pull them back from the other end. Optional mirror carriages can use the same rule; ordinary access locks do not require rails.
+Solid walls and intervening cargo interrupt the tether. A magnetic rail destination has a blue outline equal to the box footprint; docking changes it to green. A visible cable connects the receiving terminal to the affected passage or machinery. Repositionable combat cover marks both useful parking positions without pretending to unlock a remote door. Boxes push movable enemies along supported floor, stop before trapping them against a wall, and remain retractable.
+
+Only objects whose position needs repeated adjustment use visible rails: the Testworks cover cart and Sorter cover. These remain solid, move toward the pulling position, stop before bodies or unsupported edges, and preserve partial travel. The player can pull them back from the other end. Optional mirror carriages can use the same rule; ordinary access locks do not require rails.
 
 A blue shield tears free, throws aside and briefly staggers its bearer; the missing plate remains absent until that encounter resets. Movable cover may remove the enemy's screen and the player's shelter together. Mines can be pulled and disarmed or shot from outside their blast; blue shells can be intercepted. These are advantages, not prerequisites for every combat encounter: flanking, cover and leaving a warned impact area remain alternatives.
 
@@ -596,6 +598,8 @@ Enclosure and release alternate: a compact interior frames the next shaft view o
 
 A normal gameplay view has one dominant local space, a readable route through it and at most one competing distant landmark. A doorway, freight opening, broken roof or shaft edge frames that landmark deliberately. Unrelated upper routes must not fill the centre of an encounter's view. Concentrate overlaps at recognizable bridges, underpasses, ramps and return junctions. Supporting piers stay out of usable paths. Rails, markings, pipes and fixtures belong visibly to their supporting structure; there are no detached floating remnants. Structural detail stays mainly at boundaries and overhead edges; usable floor, targets and warning areas remain visually quiet.
 
+Lift shafts remain physically open through every crossed floor, with headroom for the Tank at both landings. The Transit-to-Testworks carrier has an open upper berth; Phoenix's fixed return ledge passes south of the shaft without waiting for its platform. Decorative racks and abandoned slide pockets do not narrow ordinary travel or create alternate paths around earned-side doors. The former Sorter roof approach holds a small sniper, skirmisher and shield patrol, giving the return a ranged threat, movement pressure and a flankable defender rather than another Boss seal.
+
 Occluding portions of walls, ceilings, posts, floors and attached details become smoothly translucent along the view to the Tank and its nearby fighting space. The camera never shortens its configured following distance to avoid an obstruction. Whole floor tiles must not vanish, and the Tank's current support must remain legible. Transparency is a local aid, not a substitute for composing rooms that can be understood without several ghosted floors.
 
 Both views share readable world lighting. Interior paths, undersides and machine sides retain enough indirect light; ceilings cannot turn the third-person view black. Far structures fade beyond the local room network without removing nearby junctions, readable weapon targets or important landmarks.
@@ -632,11 +636,11 @@ Door frames and the map do not display the ability required to pass a barrier. T
 | Framed mirror and circular optical collector | Optical route; contact flare and outgoing beam show the reflection |
 | Mirror on a turntable with four quarter-turn marks | Each Cannon impact or Mortar blast rotates it 90 degrees; Laser only reflects |
 | Horizontal circular pressure tray with an open top and raised rim | A descending impact or exposed blast from above presses it; side and underside hits strike the protective casing |
-| Sprung striped pressure plate | Hull weight maintains an action; leaving releases it |
-| Hinged treadle linked to track blades | One crossing changes the visible detent once; remaining on it does not toggle repeatedly |
 | Reinforced braced shutter, dented wrecks and clear approach | Momentum can break the weakened structure; the supported run-up is visible |
 | Heated load-bearing fasteners | Red contact releases a thermal barrier with steam and visible separation |
 | Mint repair ring | Safe maintenance area and weapon boundary |
+
+Gameplay switches respond only to weapons: Cannon or Mortar impact, Laser where optically appropriate, or magnetic traction on blue fittings. Walking into a switch, pushing it with the hull, and pressing the interaction key never operate it. Repair, collection and voluntary final docking remain separate interactions.
 
 A direct-fire switch presents an upright impact face or an inclined panel inset into a door's upper edge; neither resembles an open collecting tray. Every mechanism intended for a lob uses a horizontal circular collecting tray, including the cargo return, freight platform, freight crossing, Testworks load, final supply load and optional Mortar reinforcement cabinet. Their differing consequences do not change this shared shape. The opening and rim are visible from the intended approach, and a successful impact visibly depresses the tray. A high tray's Mortar landing preview refers to its collecting surface rather than the ground behind it. No standing target quietly demands a particular weapon when an ordinary shot physically reaches its working face.
 
@@ -674,7 +678,7 @@ Conveyor motion is a physical world-direction force applied to the Tank, enemies
 
 Ordinary walking loses ground against an opposing lane; Overdrive makes progress without a prolonged crawl. The first Foundry belt carries the Tank into the expedition and prevents ordinary retreat. Its short post-Prototype return belt teaches reverse movement, rejoins the foot of the only entrance ramp, and lets the Tank reverse that original downhill belt to A. Short safe landings allow cooling; failure on the lesson belt merely returns the Tank to its starting apron. Neither belt is disabled or bypassed by a switch. Cargo crossings also interrupt enemy fire: the player can follow a moving load or use its passing cover to reach a firing position. Supported cooling and combat bays separate longer stretches.
 
-Belts have dark beds, side frames, end rollers and moving transverse treads with regular warm marks. Movement follows the real direction and slope. Destroying a drive stops its belt for every body and leaves its tread surface in place. Thermal-contact lanes use the Circulation rules rather than faster conveyor tuning to exclude the earlier engine. Visible heating rails add 28 Heat/s while occupied. Red contact arrives during useful traversal, without idling against a shutter. Completed thermal restoration leaves a persistent ordinary return or cool bypass rather than requiring repeated heating ceremonies.
+Belts have dark beds, side frames, end rollers and moving transverse treads with regular warm marks. Movement follows the real direction and slope. Destroying a drive stops its belt for every body and leaves its tread surface in place. Thermal-contact lanes use the Circulation rules rather than faster conveyor tuning to exclude the earlier engine. Active hot floors show dark red plates, pulsing orange heating grilles and sparse rising embers across the heated footprint. A restored bypass cools those same plates to dull green-grey and stops the embers. Visible heating rails add 28 Heat/s while occupied. Red contact arrives during useful traversal, without idling against a shutter. Completed thermal restoration leaves a persistent ordinary return or cool bypass rather than requiring repeated heating ceremonies.
 
 ### Automatic lifts and freight carriers
 
@@ -696,11 +700,11 @@ Movable combat cover changes both hostile and player lines. Sorter's rail cover 
 
 ### Magnetic workshop shunting yard — R2
 
-The two-branch rail puzzle occupies one readable workshop space within the already accessible freight layer. The start, track junctions, destination berth and neighboring reward lift can be inspected locally; no distant unexplained control is required. Shooting an impact paddle or crossing its hull treadle flips the visible track blades once. Remaining on the plate does not toggle repeatedly. A fixed yellow linkage ends at each junction pivot; paired metal rail tongues rotate to show the selected route. The linkage itself never acts as a direction arrow.
+The two-branch rail puzzle occupies one readable workshop space within the already accessible freight layer. The start, track junctions, destination berth and neighboring reward lift can be inspected locally; no distant unexplained control is required. Shooting an impact paddle flips the visible track blades once. A visible yellow-to-green connection ends at each junction pivot; paired metal rail tongues rotate to show the selected route. The linkage itself never acts as a direction arrow.
 
 A Cannon hit releases the parked maintenance carrier's brake. It travels along the chosen track at four units/s. Correct routing secures it at the visible freight berth, operating the catch that lowers the adjacent lift carrying Magnetic Traction from its visible raised berth to the workshop floor. The module descends with the platform and becomes reachable when it arrives; no extra confirmation or reset action is required. Wrong routing returns it to its accessible start.
 
-The signal recalls a moving carrier; nearby deliberate use remains an alternative. Recall does not launch a parked carrier, and shooting a moving carrier does not reverse or repeatedly restart it. Track changes lock during travel. The carrier pauses for a Tank or living enemy in its way.
+Shooting the signal recalls a moving carrier. Recall does not launch a parked carrier, and shooting a moving carrier does not reverse or repeatedly restart it. Track changes lock during travel. The carrier pauses for a Tank or living enemy in its way.
 
 An unfinished delivery can restart locally while track settings remain recognizable; a correctly docked carrier stays secured. The reward is Magnetic Traction, one of the three required middle-stage acquisitions. The installation is visible overhead before solving the puzzle; there is no duplicate module elsewhere in the workshop. The puzzle does not gate entry into R2 or the other two acquisition loops; its reward is physically needed for the later Testworks approach.
 
@@ -714,7 +718,7 @@ Following the current beneath B's familiar bridge reaches the far-bank latch of 
 
 ### Optional gutter garden — R3
 
-Two hinged gutters and low cranks lead from a leaking pipe toward an empty planter. Shooting the impact paddles or pushing the cranks with the hull advances a gutter to its next detent. A hull must withdraw before pushing again; there is no additional interaction-button step. Falling water follows the actual gutter orientation.
+Two hinged gutters and low cranks lead from a leaking pipe toward an empty planter. Shooting an impact paddle advances its gutter to the next detent; connected lines and falling water expose the result. Hull contact does not turn the cranks. Falling water follows the actual gutter orientation.
 
 A rust plug restricts the pipe to a trickle. One Cannon hit breaks it, before or after alignment. A wrong alignment spills harmlessly. Two seconds of settled, connected full flow fills the planter, raises its metal stem, unfolds five leaves and lights a blossom. Interrupted flow drains an unfinished planter; completed restoration remains.
 
@@ -998,7 +1002,7 @@ Holding contextual use for two seconds aligns the Tank with the socket. A circul
 | Time | Image and action | Meaning |
 | --- | --- | --- |
 | 0–9 s | Clamps couple; wheels settle; the engine joins the furnace rhythm. Circulation connects, red heat becomes a steadier light, and power travels outward. One small turret or antenna motion remains | The Tank participates in the machine; its precise consciousness or fate remains unstated |
-| 9–15 s | Transit returns to view. Useful cargo movement resumes if the player repaired the optional maintenance rail | A previous act of repair now has a larger consequence |
+| 9–15 s | Transit returns to view. The repaired maintenance rail continues the cargo service restored during exploration | A previous act of repair now has a larger consequence |
 | 15–20 s | The Gardens receive power. Restored pumping and water activity reflect the player's actual sluice restoration | Recovery belongs to the places the player affected |
 | 20–26 s | At the opening bay, the previously dormant cargo machine's eyes light; it rolls a short distance and stops | Something else can begin |
 

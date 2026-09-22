@@ -51,5 +51,6 @@ test('the combined load powers the carrier before Overseer, while victory seals 
   for(let i=0;i<240;i++)stepLifts([l],s,p,1/60);
   assert.equal(l.y>8,!!saved.load);
  }
- assert.ok(foldedSupport(def.x+6,def.z+6,16));
+ assert.equal(foldedSupport(def.x+6,def.z+6,16),null,'the upper floor must not cap the shaft');
+ assert.ok(foldedSupport(def.x+6,def.z+6,16,false,[{...def,y:16}]));
 });

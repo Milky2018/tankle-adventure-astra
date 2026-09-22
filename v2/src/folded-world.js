@@ -1,3 +1,5 @@
+import {makeSlideMarkers} from './folded-slide-view.js';
+import {makeThermalFloors} from './folded-thermal-view.js';
 import {controlHousingParts,controlCoverPart,mountedControlPosition} from './folded-control-housing.js';
 import {stepReleasedSlides} from './folded-mechanisms.js';
 import {explorationMirrors} from './folded-exploration-layout.js';
@@ -10,8 +12,9 @@ import {magnetPullable} from './folded-combat.js';
 import {REFUGE_RADIUS} from './folded-refuges.js';
 import {SORTER_REACH,BARRAGE} from './folded-attacks.js';
 import {mechanismReady} from './folded-pacing.js';
-import {expansionMirrors,expansionBelts} from './folded-expansion-layout.js';
-import {circuitLinks,circuitColor,createCircuitSignals} from './folded-circuits.js';
+import {expansionMirrors,expansionBelts,expansionHeat} from './folded-expansion-layout.js';
+import {circuitLinks,circuitColor,circuitEventSources,createCircuitSignals} from './folded-circuits.js';
+import {orthogonalCircuit} from './folded-circuit-routing.js';
 import {routeSigns} from './folded-guidance.js';
 import {makeCityPresentation} from './folded-presentation.js';
 import {SIGNAL,makeAperture,cameraApertureOpacity,apertureOpacity,APERTURE_AIM_THRESHOLD,STRUCTURE_APERTURE_RADIUS} from './folded-visibility.js';
@@ -276,9 +279,26 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
       floorDetails.push({root:base,x:q.x,y:q.y,z:q.z,radius:length+3});
     }
     const mountWall=c.mount?walls.find(w=>w.id===c.mount):null,mountOffset=mountWall?root.position.clone().sub(mountWall.mesh.position):null;
-    const control={...c,mountWall,mountOffset,restY:c.y,root,lamp,moving,cover,weight,plate,plateFeed,opticalNormal,housing,coverBase:lid,facing,detachAge:state[c.id]?1:0,detached:!!state[c.id],pullDirection:new T.Vector3(0,0,1),radius:opticalNormal?opticalRadius:.95,flash:0,engaged:state[c.id]?1:0};for(const mesh of housing)mesh.userData.controlHousing=c.id;controls.push(control);return control;
+    const localLamps=[];
+    if(c.mount&&!c.slide){
+      // The short feed is part of the door, so it follows the actuator down.
+      // Cancel the inclined control's rotation: wiring follows world axes.
+      const feed=new T.Group();feed.name=`local-circuit:${c.id}`;feed.quaternion.copy(root.quaternion).invert();root.add(feed);
+      const points=orthogonalCircuit([[-.8,-.6,1.4],[-1.6,-.6,1.4],[-1.6,-1.4,1.4]].map(p=>new T.Vector3(...p).applyQuaternion(root.quaternion).toArray())).map(p=>new T.Vector3(...p));
+      const lengths=points.slice(1).map((p,i)=>p.distanceTo(points[i])),total=lengths.reduce((a,b)=>a+b,0);
+      for(let i=1;i<points.length;i++){const delta=points[i].clone().sub(points[i-1]),mesh=box(feed,.12,.12,lengths[i-1],0,0,0,C.dark,0);mesh.name='circuit-segment';mesh.position.copy(points[i-1]).addScaledVector(delta,.5);mesh.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),delta.normalize());}
+      const end=points.at(-1);box(feed,.5,.5,.22,end.x,end.y,end.z,C.metal,0);
+      for(let n=1;n<=5;n++){let remaining=total*n/5,i=0;while(i<lengths.length-1&&remaining>lengths[i])remaining-=lengths[i++];const p=points[i].clone().lerp(points[i+1],remaining/lengths[i]);p.addScaledVector(new T.Vector3(...c.facing),.1);localLamps.push(box(feed,.14,.14,.14,p.x,p.y,p.z,mat(SIGNAL.ready,true),0));}
+    }
+    const control={...c,localLamps,mountWall,mountOffset,restY:c.y,root,lamp,moving,cover,weight,plate,plateFeed,opticalNormal,housing,coverBase:lid,facing,detachAge:state[c.id]?1:0,detached:!!state[c.id],pullDirection:new T.Vector3(0,0,1),radius:opticalNormal?opticalRadius:.95,flash:0,engaged:state[c.id]?1:0};for(const mesh of housing)mesh.userData.controlHousing=c.id;controls.push(control);return control;
   }
   for(const c of foldedControls)makeControl(c);
+  const eventTerminals=[];
+  for(const c of circuitEventSources){
+    const root=new T.Group();root.name=`circuit-source:${c.id}`;root.position.set(c.x,c.y-1.3,c.z);scene.add(root);
+    box(root,.9,.8,.7,0,.4,0,C.dark,0);cylinder(root,.28,.18,0,.85,0,C.metal,8);
+    const lamp=box(root,.5,.12,.07,0,.85,.4,mat(SIGNAL.ready,true),0);eventTerminals.push({id:c.id,lamp});
+  }
   const controlFeeds=[],circuitLampGeometry=new T.BoxGeometry(.25,.13,.25);
   for(const b of foldedBattles){
     const root=new T.Group();root.position.set(b.x,b.y-1.3,b.z);scene.add(root);
@@ -286,7 +306,9 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     for(const x of [-.6,.6])cylinder(root,.35,2.5,x,1.25,0,C.metal,8);
     floorDetails.push({root,x:b.x,y:b.y-1.3,z:b.z,radius:3});
   }
-  for(const link of circuitLinks([...foldedControls,...foldedBattles,{id:'inner-thermal',x:154,y:-6.7,z:96},{id:'sorter',x:44,y:-6.7,z:-154},{id:'guardian',x:202,y:17.3,z:64},{id:'rail-crossing',x:-162,y:9.3,z:-66}],foldedSolids,foldedLiftDefs)){
+  const circuitDefs=circuitLinks([...foldedControls,...foldedBattles,...circuitEventSources],foldedSolids,foldedLiftDefs,foldedDecks,foldedArchitecture.solids);
+  for(const link of circuitDefs){
+    if(link.local)continue;
     const points=link.points.map(p=>new T.Vector3(...p)),root=new T.Group(),lamps=[];scene.add(root);root.name=`folded-circuit:${link.id}:${link.target}`;
     let length=0;for(let i=1;i<points.length;i++)length+=points[i].distanceTo(points[i-1]);
     if(length<.01){scene.remove(root);continue;}
@@ -302,11 +324,11 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
           if(Math.abs(delta.y)>.95)position.x-=.11;else position.y+=.11;
           lamps.push({position,progress:(traveled+center)/length,color:new T.Color(SIGNAL.ready),direction:delta.clone(),length:size});
         }
-      }else for(let t=.35;t<span;t+=2.5)lamps.push({position:points[i-1].clone().addScaledVector(delta,t),progress:(traveled+t)/length,color:new T.Color(SIGNAL.ready)});
+      }else for(let t=.2;t<span;t+=1.25){const position=points[i-1].clone().addScaledVector(delta,t);if(Math.abs(delta.y)>.95)position.x-=.13;else position.y+=.13;lamps.push({position,progress:(traveled+t)/length,color:new T.Color(SIGNAL.ready)});}
       traveled+=span;
     }
-    lamps.push({position:points.at(-1).clone(),progress:1,color:new T.Color(SIGNAL.ready)});
-    if(link.magnetic){const end=points.at(-1);box(root,.55,.14,.55,end.x,end.y-.08,end.z,C.metal,0);}
+    lamps.push({position:points.at(-1).clone().add(new T.Vector3(0,.13,0)),progress:1,color:new T.Color(SIGNAL.ready)});
+    {const end=points.at(-1);box(root,.55,.14,.55,end.x,end.y-.08,end.z,C.metal,0);}
     batchStatic(root);
     const mesh=new T.InstancedMesh(circuitLampGeometry,mat(0xffffff,true),lamps.length),matrix=new T.Matrix4();
     lamps.forEach((lamp,i)=>{
@@ -316,11 +338,22 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     });
     mesh.instanceMatrix.needsUpdate=true;mesh.instanceColor.needsUpdate=true;mesh.computeBoundingBox();mesh.computeBoundingSphere();root.add(mesh);
     controlFeeds.push({...link,root,mesh,lamps,duration:Math.max(1.4,length/18)});
-    const start=points[0];floorDetails.push({root,x:start.x,y:start.y,z:start.z,radius:length,floorMark:true});
+    const start=points[0];floorDetails.push({root,x:start.x,y:start.y,z:start.z,radius:length,floorMark:true,circuit:true});
   }
-  const signals=createCircuitSignals(state,controlFeeds);
+  const tenderDrive=new T.Group();scene.add(tenderDrive);
+  box(tenderDrive,1,.8,1,108,-23.6,32,C.dark,0);
+  cylinder(tenderDrive,.32,.18,108,-23.1,32,C.metal,8);
+  box(tenderDrive,2,.12,.18,109,-23.85,32,C.metal,0);
+  const slideMarkers=makeSlideMarkers(scene,[...foldedSolids.filter(s=>s.rail&&s.magnetic),...state.bodies.obstacles.filter(s=>s.rail)]);
+  const thermalFloors=makeThermalFloors(scene,[...expansionHeat,...cityBelts.filter(b=>b.heat)]);
+  const signals=createCircuitSignals(state,circuitDefs);
   for(const feed of controlFeeds)feed.duration=signals.duration(feed.id);
   for(const d of foldedLiftDefs){
+    // Fixed shaft rims carry power even while the platform is at the other stop.
+    for(const y of d.stops){
+      for(const z of [d.z,d.z+d.d])box(fixed,d.w+.4,.12,.5,d.x+d.w/2,y+.05,z,C.metal,0);
+      for(const x of [d.x,d.x+d.w])box(fixed,.5,.12,d.d,x,y+.05,d.z+d.d/2,C.metal,0);
+    }
     const root=new T.Group();scene.add(root);
     const mesh=box(root,d.w,.55,d.d,d.x+d.w/2,-.275,d.z+d.d/2,mat(0x657770),0);
     const markings=new T.Group();root.add(markings);
@@ -543,22 +576,6 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
   // Continuous recessed tracks make the quiet final approach a clear Phoenix run.
   for(const side of [-1,1])box(fixed,218,.05,.14,145,-39.93,6+side*2.3,0x89978f,0);
   // Local relay feeds end at the adjacent workshop and Prototype doors.
-  const relayFeeds=[];
-  for(const [id,points]of [
-    ['relay-west',[[-35,44],[-35,51],[-47,51]]],
-    ['relay-east',[[-65,114],[-56,114],[-56,126],[-50,126]]]
-  ]){
-    const lamps=[];
-    for(let i=1;i<points.length;i++){
-      const [ax,az]=points[i-1],[bx,bz]=points[i],length=Math.hypot(bx-ax,bz-az);
-      for(let n=0;n<length;n+=8){
-        const span=Math.min(8,length-n),t=(n+span/2)/length,x=ax+(bx-ax)*t,z=az+(bz-az)*t;
-        box(fixed,bx===ax?.16:span,.13,bx===ax?span:.16,x,-15.88,z,C.dark,0);
-        if(n%16===0){const lamp=box(scene,.35,.12,.35,x,-15.75,z,mat(C.orange,true),0);lamps.push(lamp);}
-      }
-    }
-    relayFeeds.push({id,lamps});
-  }
   // Service rails lead out of the repair bay; quiet metal never competes with a live target.
   for(const d of foldedDecks.filter(d=>['foundry-west','foundry-west-ramp','foundry-reclaim-track'].includes(d.id))){
     const root=new T.Group();root.position.set(d.x+d.w/2,d.y+(d.rise||0)/2,d.z+d.d/2);root.rotation.x=-Math.atan2(d.rise||0,d.d);scene.add(root);
@@ -655,13 +672,13 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     if(owner?.arms)bounds.max.y+=.7;
     occluders.push({root,owner,meshes,local,bounds,dynamic,layered,cameraSoft,opacity:1});
   }
-  for(const root of sidePuzzles.roots)registerOccluder(root,sidePuzzles.owners.get(root),{dynamic:true});
+  for(const root of sidePuzzles.roots)registerOccluder(root,root.name.startsWith('side-circuit:')?{floorMark:true,circuit:true}:sidePuzzles.owners.get(root),{dynamic:true});
   for(const wall of walls)registerOccluder(wall.mesh,wall,{dynamic:true,clone:!wall.mass});
   for(const object of [...controls,...hives,...pickups,...lifts,...floorDetails,...mirrors])registerOccluder(object.root,object,{dynamic:object.stops!==undefined||!!object.lift||!!object.mount||mirrors.includes(object),cameraSoft:hives.includes(object)||controls.includes(object)||pickups.includes(object),layered:controls.includes(object)||hives.includes(object)||pickups.includes(object)});
   for(const object of pillars)registerOccluder(object.mesh,object);
   for(const root of cells.values())registerOccluder(root);
   for(const b of belts)for(const segment of b.segments)registerOccluder(segment.root,segment);
-  for(const mesh of [wheel,...clamps,...pipeLights.map(p=>p.lamp),...relayFeeds.flatMap(f=>f.lamps)])registerOccluder(mesh,null,{dynamic:true});
+  for(const mesh of [wheel,...clamps,...pipeLights.map(p=>p.lamp)])registerOccluder(mesh,null,{dynamic:true});
   for(const enemy of enemies){
     registerOccluder(enemy.model.root,enemy,{clone:false,dynamic:true,layered:true});
     for(const part of enemy.parts)registerOccluder(part.root,part,{dynamic:true,layered:true});
@@ -681,7 +698,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
       const obscures=!!hit&&distance>1.8&&distance<58;
       const ground=object.owner?.ground??(object.owner?.kind?object.owner.y-1.3:object.owner?.y);
       const otherFloor=object.layered&&Math.abs(ground-p.y)>3;
-      const targetOpacity=thirdPerson||object.owner?.mass?1:obscures?(object.owner?.h&&Math.abs(object.owner.y-p.y)<3?.36:.14):otherFloor?.28:1;
+      const targetOpacity=thirdPerson||object.owner?.mass||object.owner?.circuit?1:obscures?(object.owner?.h&&Math.abs(object.owner.y-p.y)<3?.36:.14):otherFloor?.28:1;
       object.opacity=T.MathUtils.damp(object.opacity,targetOpacity,10,dt);if(Math.abs(object.opacity-targetOpacity)<.001)object.opacity=targetOpacity;
       object.root.userData.cutaway=obscures&&object.opacity<.4;if(object.owner)object.owner.opacity=object.opacity;
       if(thirdPerson&&object.cameraSoft)continue;
@@ -755,10 +772,14 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
   function feedColor(feed,index,time){
     const pending=signals.pending(feed.id);
     const elapsed=pending?pending.duration-pending.remaining:time-(releaseTimes.get(feed.id)??-Infinity),progress=feed.lamps[index].progress??feed.lamps[index].userData?.progress??index/Math.max(1,feed.lamps.length-1);
-    return circuitColor(signals.active(feed.id),elapsed,progress,signals.duration(feed.id)||feed.duration||3);
+    return circuitColor(signals.active(feed.id)||feed.id==='maintenance'&&state['maintenance-started'],elapsed,progress,signals.duration(feed.id)||feed.duration||3);
   }
-  const previousSignals={...state};
+  const previousSignals={...state},automaticIds=[...foldedBattles,...circuitEventSources].map(c=>c.id),previousAutomatic={...state};
+  function queueAutomaticSignals(time){
+    for(const id of automaticIds){if(state[id]&&!previousAutomatic[id]){signals.trigger(id,{},true);signalRelease(id,time);}previousAutomatic[id]=!!state[id];}
+  }
   function advanceSignals(dt,time){
+    queueAutomaticSignals(time);
     const delivered=signals.advance(dt);
     for(const signal of delivered){
       releaseTimes.set(signal.id,time-signal.duration);
@@ -767,6 +788,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     return delivered.length>0;
   }
   function update(dt,time,p,camera=null){
+    queueAutomaticSignals(time);
     aperture.enable(!p.endingTime);supportPatches=groundPatches(p,lifts);aperture.support(supportPatches);
     for(const id of Object.keys(state))if(state[id]===true&&previousSignals[id]!==true){signalRelease(id,time);previousSignals[id]=true;}
     if(camera&&!thirdPerson)camera.getWorldDirection(sightDirection).negate();
@@ -777,7 +799,9 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     for(const c of controls){
       if(c.mountWall){c.root.position.copy(c.mountWall.mesh.position).add(c.mountOffset);c.x=c.root.position.x;c.y=c.root.position.y;c.z=c.root.position.z;c.root.updateMatrixWorld();}
       c.flash=Math.max(0,c.flash-dt);
-      const aligned=signals.active(c.id)||mechanismReady(c,p,time,state),engaged=signals.active(c.id);
+      const localPending=signals.pending(c.id),localElapsed=localPending?localPending.duration-localPending.remaining:Infinity;
+      c.localLamps.forEach((lamp,i)=>lamp.material.color.setHex(circuitColor(signals.active(c.id),localElapsed,(i+1)/c.localLamps.length,.18)));
+      const engaged=signals.active(c.id)||(c.id==='maintenance'&&!!state['maintenance-started']),aligned=engaged||mechanismReady(c,p,time,state);
       c.ready=aligned;
       c.engaged=T.MathUtils.damp(c.engaged,engaged?1:0,8,dt);
       c.lamp.scale.setScalar(!engaged&&Math.abs(c.y-p.y-1.3)<4&&Math.hypot(c.x-p.x,c.z-p.z)<22?1+Math.sin(time*3)*.06:1);
@@ -837,13 +861,15 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
       for(const lamp of h.lamps)lamp.material.color.setHex(h.pulse>0?C.lightYellow:active||nearby?C.mint:C.metal);
     }
     const matrix=new T.Matrix4(),rollerSpin=new T.Quaternion(),rollerAxis=new T.Vector3(0,1,0);
+    slideMarkers.update(time);
+    thermalFloors.update(time,state);
     for(const b of belts){
       if(Math.hypot(p.x-b.x-b.w/2,p.z-b.z-b.d/2)>80+b.length/2)continue;
       const part=b.id.includes('feed-')?(b.id.endsWith('left')?0:1):null,owner=enemies.find(e=>e.id===(b.id.startsWith('foundry')?'foundry':'keeper')),working=part===null||owner.hp>0&&owner.parts[part].hp>0;
       if(working)b.phase+=dt*(b.release&&state[b.release]?-4:Math.hypot(b.vx,b.vz)*Math.sign(b.vx||b.vz))*b.stretch;
       for(const segment of b.segments){
         const {mesh,count,travel}=segment;
-        for(const lamp of segment.heaters)lamp.material.color.setHex(state[b.release]?C.metal:0xffa05a);
+        for(const lamp of segment.heaters)lamp.material.color.setHex(state[b.release]||state[b.stop]?C.metal:0xffa05a);
         for(let i=0;i<count;i++){
           const along=((i*travel/count+b.phase)%travel+travel)%travel-travel/2;
           matrix.makeTranslation(b.horizontal?along:0,.15,b.horizontal?0:along);mesh.setMatrixAt(i,matrix);
@@ -853,10 +879,10 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
         for(const roller of segment.rollers)roller.quaternion.copy(roller.userData.mount).multiply(rollerSpin);
       }
     }
-    for(const feed of relayFeeds)feed.lamps.forEach((lamp,i)=>lamp.material.color.setHex(feedColor(feed,i,time)));
     for(const feed of gateSignals)feed.lamps.forEach((lamp,i)=>lamp.material.color.setHex(feed.arena?state.combatArena===feed.arena?C.red:SIGNAL.open:state[feed.id]?SIGNAL.open:SIGNAL.ready));
+    for(const terminal of eventTerminals)terminal.lamp.material.color.setHex(signals.active(terminal.id)?SIGNAL.open:SIGNAL.ready);
     for(const feed of controlFeeds){
-      const pending=signals.pending(feed.id),active=signals.active(feed.id),elapsed=pending?pending.duration-pending.remaining:time-(releaseTimes.get(feed.id)??-Infinity);
+      const pending=signals.pending(feed.id),active=signals.active(feed.id)||feed.id==='maintenance'&&state['maintenance-started'],elapsed=pending?pending.duration-pending.remaining:time-(releaseTimes.get(feed.id)??-Infinity);
       if(feed.resting===active&&(!active||elapsed>=feed.duration))continue;
       let changed=false;
       feed.lamps.forEach((lamp,i)=>{const color=feedColor(feed,i,time);if(lamp.color.getHex()!==color){lamp.color.setHex(color);feed.mesh.setColorAt(i,lamp.color);changed=true;}});

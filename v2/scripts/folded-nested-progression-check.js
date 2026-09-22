@@ -27,7 +27,7 @@ async page=>{
   if(!shoot('lens-return','laser',[324,-14,26]))throw Error('First reflection did not open the optical return');if(g.snapshot().state.guardian)throw Error('Laser bypassed Guardian');checks.push('Actual broad-mirror reflection restores the C return without opening R6');
   pose({x:218,y:16,z:-114,overdrive:true,phoenix:true},{foundry:true,phoenix:true,'proving-endurance':true,pressure:false,'phoenix-departure':false});
   move(238,-114);move(238,-82);move(180,-82,true);rest();
-  for(const [x,z]of [[62,-82],[62,-74],[-22,-74],[-22,2],[38,2],[38,6]])move(x,z);rest();
+  for(const [x,z]of [[96,-82],[96,-74],[62,-74],[-22,-74],[-22,2],[38,2],[38,6]])move(x,z);rest();
   if(g.snapshot().state.pressure)throw Error('The original wall opened before the remembered return');move(140,6,true);
   for(const [x,z]of [[154,6],[154,-98],[126,-98],[126,-32],[150,-28]])move(x,z);
   if(g.snapshot().player.y!==24||!g.snapshot().state.pressure)throw Error('Phoenix did not reconnect at C');checks.push('Phoenix lesson and roof return resolve the original orange bulkhead');
