@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
 import {moveWithConveyor} from './folded-machinery.js';
-import {initialFoldedState,foldedSupport,foldedControls,foldedDecks,moveFolded} from './folded-layout.js';
+import {initialFoldedState,foldedSupport,foldedControls,foldedDecks,foldedPickups,foldedSolids,moveFolded} from './folded-layout.js';
 
 const tank=(x,y,z,overdrive=false)=>({...newPlayer(),x,y,z,overdrive});
 function drive(p,s,x,z,seconds,boost=false){
@@ -68,5 +68,30 @@ test('victory teaches Boost on level ground, rejoins the foot, then reverses the
     walk(p,state,[[0,86]]);
     const unboosted=tank(-40,-16,52,true);drive(unboosted,state,0,1,3);
     assert.ok(unboosted.z<64.5,'Victory must not stop the original conveyor');
+  }
+});
+
+test('the remembered water channel replaces the press return door and rejects dry hulls',()=>{
+  const s=initialFoldedState({'relay-west':true});
+  assert.ok(!foldedSolids.some(w=>['press-return','scrap-inspection-north-wall'].includes(w.id)));
+  assert.ok(!foldedControls.some(c=>c.id==='press-return'));
+  for(const overdrive of [false,true])for(let x=-63;x<=-49;x+=.5){
+    const p=tank(x,-16,37,overdrive);drive(p,s,0,-1,5,overdrive);
+    assert.ok(p.z>34&&p.y===-16,`Dry tank crossed the channel at ${p.x},${p.z}`);
+  }
+  const reward=foldedPickups.find(p=>p.id==='armor-foundry');
+  const p=tank(-55,-16,50);
+  walk(p,s,[[-60,44],[-60,37],[reward.x,reward.z],[-60,44],[-55,50]]);
+  assert.equal(s.prototype,false);assert.equal(s.overdrive,false);
+});
+
+test('Flotation alone makes the remembered channel a bidirectional Foundry shortcut',()=>{
+  for(const saved of [{},{'press-return':true,pendingSignals:{'press-return':{duration:1,remaining:.5,changes:{}}}}]){
+    const s=initialFoldedState(saved),p={...tank(0,0,27),flotation:true,deployed:true};
+    walk(p,s,[[-26,28],[-26,-8],[-46,-8],[-46,20],[-46,30],[-60,30],[-60,37],[-60,44],[-55,50]]);
+    assert.equal(p.y,-16);
+    walk(p,s,[[-60,44],[-60,37],[-60,30],[-46,30],[-46,20],[-46,-8],[-26,-8],[-26,28],[0,27]]);
+    assert.equal(p.y,0);assert.equal(s.prototype,false);
+    assert.equal(s.pendingSignals['press-return'],undefined);
   }
 });

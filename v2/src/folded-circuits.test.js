@@ -53,3 +53,34 @@ test('remote magnetic connections retain visible cables outside their closed mac
     }
   }
 });
+
+test('the sequential Foundry doors have independent switches and no redundant cross-feed',async()=>{
+  const {releaseFolded}=await import('./folded-layout.js');
+  const links=circuitLinks(foldedControls,foldedSolids,foldedLiftDefs);
+  assert.equal(links.some(l=>l.id==='relay-west'&&l.target==='relays'),false);
+  const state=initialFoldedState(),next={...state};
+  assert.ok(releaseFolded('relay-east','cannon',{},next,[]));
+  assert.equal(next.relays,true);assert.equal(next['relay-west'],false);
+  const {createCircuitSignals}=await import('./folded-circuits.js');
+  const signals=createCircuitSignals(state,links);
+  signals.trigger('relay-east',{'relay-east':true,relays:next.relays});
+  signals.advance(signals.duration('relay-east')-.01);assert.equal(state.relays,false);
+  signals.advance(.01);assert.equal(state.relays,true);assert.equal(state['relay-west'],false);
+  assert.equal(initialFoldedState({'relay-east':true}).relays,true);
+  const old=initialFoldedState({pendingSignals:{'relay-east':{remaining:.2,duration:1.4,changes:{'relay-east':true}}}});
+  createCircuitSignals(old,links).advance(.2);assert.equal(old.relays,true);
+});
+
+test('the first Foundry switch opens only its door onto a permanently level passage',async()=>{
+  const {foldedSupport,moveFolded,releaseFolded}=await import('./folded-layout.js');
+  assert.equal(foldedLiftDefs.some(l=>l.id==='foundry-loading-frame'),false);
+  const links=circuitLinks(foldedControls,foldedSolids,foldedLiftDefs);
+  assert.deepEqual(links.filter(l=>l.id==='relay-west').map(l=>l.target),['relay-west']);
+  for(const x of [-60,-55,-50])for(const z of [45,50,55])assert.equal(foldedSupport(x,z,-16)?.height,-16);
+  const state=initialFoldedState(),p={x:-44,y:-16,z:50,speed:1};
+  for(let i=0;i<80;i++)moveFolded(p,-.15,0,state);
+  assert.ok(p.x>-47,'first door must still block the passage');
+  releaseFolded('relay-west','cannon',p,state,[]);
+  for(let i=0;i<80;i++)moveFolded(p,-.15,0,state);
+  assert.ok(p.x<-55);assert.equal(p.y,-16);
+});

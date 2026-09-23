@@ -1157,7 +1157,6 @@ function advance(dt) {
   time += dt;
   phoenixExhaust.update(p.hp > 0 && !p.endingTime && phoenixReady(p), time);
   if (world.advanceSignals(dt, time)) {
-    if (!state.relays && state['relay-west'] && state['relay-east']) state.relays = true;
     save();
   }
   if (deathAt >= 0) {

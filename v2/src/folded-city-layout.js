@@ -84,7 +84,7 @@ export const citySolids=[
   gate('relay-west',-47.5,44,1,12,-16,3),
   gate('relays',-50.5,120,1,12,-16),gate('overdrive-return',-34,114,12,1,-16,5),
   gate('prototype-jamb-north',-50.5,116,1,4,-16,6,{permanent:true}),gate('prototype-jamb-south',-50.5,132,1,8,-16,6,{permanent:true}),
-  gate('press-return',-64.5,44,1,12,-16),gate('foundry',204,-121,28,1,16,5),
+  gate('foundry',204,-121,28,1,16,5),
   gate('bridge-crane',-6,-20,12,1,0,3.2),
   gate('bridge-crane',-6,-28,1,8,0,3.2),gate('bridge-crane',5,-28,1,8,0,3.2),
   gate('freight-return',62.5,-40,1,12,0),
@@ -122,7 +122,7 @@ export const citySolids=[
 ];
 export const cityControls=[
   control('relay-west',-35,-14.5,44),control('relay-east',-65,-14.5,114),
-  control('press-return',-70,-14.6,50,'shot',{requires:'prototype',mount:'press-return',mountAlong:.88,facing:[-1,0,0]}),control('ballast',-29,1.3,27),
+  control('ballast',-29,1.3,27),
   control('loading-return',32,-2,-58,'shot',{ground:-8,surface:'top'}),control('freight-return',70,1.3,-34,'shot',{mount:'freight-return',facing:[1,0,0]}),
   control('emitter-cage',63,25.4,-86,'shot',{facing:[1,0,0]}),control('gallery',228,26,-4,'laser',{ground:24,normal:[-1,0,0]}),
   control('garden-optical',232,26,-9.5,'laser',{ground:24,normal:[0,0,1]}),
@@ -197,7 +197,7 @@ export const cityMirrors=[
   {id:'guardian-west-b',x:190,y:18,z:68,n:[-1.4631790535,0,1.1737206917],size:10},
   {id:'keeper-mirror',x:22,y:-54,z:18,n:[q,0,-q],size:6}
 ];
-export const cityFlags=['pressure-thermal','inner-thermal','bridge-crane','inner-optics','bench-cover','overdrive','magnetModule','mortarModule','laser','circulation','relay-west','relay-east','relays','prototype','overdrive-return','foundry','press-return','ballast','ratchet','loading-return','freight-return','optics-outer','emitter-cage','gallery','garden-optical','yard-optical','guardian','pump','pressure-return','last-cage','keeper','signal','maintenance','endingSeen','inner-transit'];
+export const cityFlags=['pressure-thermal','inner-thermal','bridge-crane','inner-optics','bench-cover','overdrive','magnetModule','mortarModule','laser','circulation','relay-west','relay-east','relays','prototype','overdrive-return','foundry','ballast','ratchet','loading-return','freight-return','optics-outer','emitter-cage','gallery','garden-optical','yard-optical','guardian','pump','pressure-return','last-cage','keeper','signal','maintenance','endingSeen','inner-transit'];
 
 cityEnemies.push({id:'canal-hunter',type:'hunter',hp:3,x:-72,y:-16,z:26,swimPatrol:[[-72,26],[-72,32]]});
 citySolids.push(gate('canal-hunter-pier',-12,-9,2,2,-16,3,{permanent:true}));

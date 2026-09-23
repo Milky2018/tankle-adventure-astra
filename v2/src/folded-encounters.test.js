@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {foldedEnemies,foldedHives,initialFoldedState,moveFolded,releaseFolded} from './folded-layout.js';
+import {foldedEnemies,foldedHives,initialFoldedState,moveFolded} from './folded-layout.js';
 import {ENEMY_KINDS} from './folded-enemies.js';
 
 function sail(p,state,points){
@@ -14,11 +14,9 @@ function sail(p,state,points){
   }
 }
 
-test('the unopened press spur returns through a local canal loop without granting foundry access',()=>{
+test('the press canal remains navigable and requires deployed Flotation',()=>{
   const state=initialFoldedState(),p={x:-72,y:-16,z:50,speed:1,deployed:true};
-  assert.equal(releaseFolded('press-return','cannon',p,state,[]),false);
   sail(p,state,[[-72,28],[-46,28],[-36,28],[-36,-4],[-72,-4],[-72,28]]);
-  assert.equal(state['press-return'],false);
   assert.equal(state.foundry,false);
   const dry={x:-72,y:-16,z:50,speed:1,deployed:false};
   moveFolded(dry,0,-22,state);

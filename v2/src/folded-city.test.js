@@ -36,7 +36,7 @@ test('awakening, local relay sequence, Overdrive return and foundry exit connect
   const p=player(0,-8,86),s=initialFoldedState();
   travel(p,s,[[-40,86],[-40,49],[-35,49]]);assert.equal(p.y,-16);
   releaseFolded('relay-west','cannon',p,s,[]);
-  travel(p,s,[[-57,52],[-57,118]]);releaseFolded('relay-east','cannon',p,s,[]);s.relays=true;
+  travel(p,s,[[-57,52],[-57,118]]);releaseFolded('relay-east','cannon',p,s,[]);assert.equal(s.relays,true);
   travel(p,s,[[-57,128],[-30,128]]);assert.equal(p.y,-16);
   s.prototype=s['overdrive-return']=true;p.overdrive=true;
   travel(p,s,[[-28,128],[-28,100]],{boost:true});travel(p,s,[[-28,52],[-40,52]]);travel(p,s,[[-40,86]],{boost:true});travel(p,s,[[0,86]]);assert.equal(p.y,-8);
@@ -196,10 +196,10 @@ test('every lift has an unobstructed shaft between its stops',()=>{
   }
 });
 
-test('the southern canal return opens into an already completed foundry',()=>{
+test('the southern canal returns to the Foundry without a door or remote prerequisite',()=>{
   const p=player(-72,-16,-4,{flotation:true,deployed:true}),s=initialFoldedState();
-  travel(p,s,[[-72,50]]);assert.equal(releaseFolded('press-return','cannon',p,s,[]),false);
-  s.prototype=true;assert.ok(releaseFolded('press-return','cannon',p,s,[]));travel(p,s,[[-55,50]]);assert.equal(p.y,-16);
+  travel(p,s,[[-72,50],[-55,50],[-72,50],[-72,-4]]);assert.equal(p.y,-16);
+  assert.equal(s.prototype,false);
 });
 
 test('overlapping ramp landings work in both directions and do not admit the hull underneath',()=>{

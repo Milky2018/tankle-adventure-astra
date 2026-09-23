@@ -14,7 +14,7 @@ export function circuitLinks(controls,solids,lifts,decks=null,architecture=[]){
   const links=[];
   for(const c of controls){
     if(c.slide)continue;
-    const ids=c.id.startsWith('relay-')?[c.id,'relays']:c.id==='loading-return'?['loading-return','bridge-crane']:[c.id];
+    const ids=c.id==='relay-east'?['relays']:c.id==='loading-return'?['loading-return','bridge-crane']:[c.id];
     const endpoints=[...solids.filter(s=>ids.includes(s.id)&&!s.permanent||ids.includes(s.rail?.release)||ids.includes(s.rail?.latch)),...lifts.filter(l=>ids.includes(l.lock||l.id)||l.locks?.some(id=>ids.includes(id))),...controls.filter(t=>t.requires===c.id).map(t=>({...t,y:t.ground??t.y-1.3}))];
     if(c.id==='signal')endpoints.push({id:'signal-dish',x:204,y:40,z:146});
     if(c.id==='rail-repair')endpoints.push({id:'cargo-rail',x:-18,y:0,z:25});

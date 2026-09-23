@@ -95,7 +95,6 @@ export const refugeFlags = ['roof-express','sorter-retry','workshop-water','tran
 export const refugeLifts = [
   { id: 'sorter-retry-lift', x: 12, z: -124, w: 12, d: 12, stops: [-8, 0], lock: 'sorter-retry' },
   { id: 'inspection-load', x: 104, z: -18, w: 12, d: 8, stops: [0, 5], lock: 'load', settle: true },
-  { id: 'foundry-loading-frame', x: -61, z: 44, w: 12, d: 12, stops: [-16, -10], lock: 'relay-west', settle: true },
   { id: 'furnace-service-lift', x: 88, z: 102, w: 12, d: 12, stops: [-40, -8], lock: 'inner-thermal' },
   { id: 'coolant-return-lift', x: 284, z: 100, w: 12, d: 12, stops: [-24, 24], lock: 'coolant-return' },
   { id: 'tower-descent', x: 180, z: 154, w: 12, d: 12, stops: [16, 40], lock: 'signal' },

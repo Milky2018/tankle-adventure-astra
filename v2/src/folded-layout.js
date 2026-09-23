@@ -157,6 +157,7 @@ export function initialFoldedState(saved={}){
   if(state.load)state.brake=true;
   if(state['loading-return'])state['bridge-crane']=true;
   if(state.ballast)state.ratchet=true;
+  if(state['relay-east'])state.relays=true;
   if(state['pressure-return'])state['pressure-thermal']=true;
   if(state['inner-transit'])state['inner-thermal']=true;
   if(state.keeper||state.endingSeen)state['core-feed']=true;
@@ -173,12 +174,14 @@ export function initialFoldedState(saved={}){
   }
   state.bossRouteRevision=1;
   state.pendingSignals=structuredClone(saved.pendingSignals||{});
+  if(state.pendingSignals['relay-east'])state.pendingSignals['relay-east'].changes.relays=true;
   if(state.pendingSignals['loading-return'])state.pendingSignals['loading-return'].changes['bridge-crane']=true;
   // Preserve the old indexed orientation, including an in-flight switch signal.
   state.mirrorTurns={'return-index':saved.mirrorTurns?.['return-index']??(saved['mirror-index']||saved.pendingSignals?.['mirror-index']?1:0)};
   delete state.pendingSignals['mirror-index'];
   delete state.pendingSignals['prototype-inspection'];
   delete state.pendingSignals['overdrive-bypass'];
+  delete state.pendingSignals['press-return'];
   state['rail-crossing']=!!(saved.sidePuzzles?.rail?.solved||saved.sidePuzzles?.rail?.secured);
   for(const p of explorationPickups)if(p.requires&&state[p.id])state[p.requires]=true;
   // Preserve earned access in legacy saves without granting missing modules.
@@ -201,6 +204,7 @@ export function releaseFolded(id,kind,p,state,lifts,time=0){
   if(c.kind==='laser'&&kind!=='laser'||['use','dock'].includes(c.kind)&&kind!=='use')return false;
   if(c.kind==='magnet'&&(kind!=='magnet'||!p.magnet))return false;
   state[id]=true;
+  if(id==='relay-east')state.relays=true;
   if(id==='load')state.brake=true;
   if(id==='loading-return')state['bridge-crane']=true;
   if(id==='ballast')state.ratchet=true;

@@ -15,7 +15,7 @@ export const explorationPickups = [
     upgrade: 'armor',
     x: -59,
     y: -16,
-    z: 30,
+    z: 37,
     place: 'Recessed scrap inspection bay off the press service lane',
   },
   {
@@ -633,9 +633,10 @@ for (const [side, x] of [
 }
 explorationDecks.push(
   { id: 'scrap-inspection-neck', x: -64, y: -16, z: 40, w: 16, d: 10, region: 'foundry' },
-  { id: 'scrap-inspection-bay', x: -64, y: -16, z: 26, w: 16, d: 18, region: 'foundry' },
+  { id: 'scrap-inspection-bay', x: -64, y: -16, z: 34, w: 16, d: 10, region: 'foundry' },
+  { id: 'press-return-channel', x: -64, y: -16, z: 26, w: 16, d: 8, water: true, region: 'garden' },
 );
-explorationSolids.push(machine('scrap-inspection-partition', 'rack', -57, -16, 34, 6, 2, 2.5));
+explorationSolids.push(machine('scrap-inspection-partition', 'rack', -57, -16, 40, 6, 2, 2.5));
 
 explorationDecks.push({
   id: 'battery-firing-bay',

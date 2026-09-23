@@ -39,7 +39,7 @@ test('all six rendered side-puzzle wires have square bends',()=>{
 
 test('every lift and every extra switch effect has an incoming circuit',()=>{
   for(const lift of foldedLiftDefs)assert.ok(links.some(l=>l.target===lift.id),lift.id);
-  for(const [id,target]of [['relay-west','foundry-loading-frame'],['coolant-return','coolant-maintenance-bridge'],['coolant-return','coolant-return-lift'],['maintenance','tender-drive']])assert.ok(links.some(l=>l.id===id&&l.target===target),`${id} -> ${target}`);
+  for(const [id,target]of [['coolant-return','coolant-maintenance-bridge'],['coolant-return','coolant-return-lift'],['maintenance','tender-drive']])assert.ok(links.some(l=>l.id===id&&l.target===target),`${id} -> ${target}`);
   for(const c of foldedControls.filter(c=>c.mount&&!c.slide))assert.ok(links.some(l=>l.id===c.id&&l.local),c.id);
   for(const c of foldedControls.filter(c=>c.slide))assert.ok(!links.some(l=>l.id===c.id),'a moved cover is not a remote electrical unlock');
 });
