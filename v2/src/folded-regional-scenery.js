@@ -288,7 +288,7 @@ export function makeRegionalLights(scene, sources) {
         .sort((a, b) => Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z))
         .slice(0, 3);
       for (const slot of slots) {
-        const target = candidates.includes(slot.source) ? 3.5 : 0;
+        const target = candidates.includes(slot.source) ? (slot.source.intensity ?? 32) : 0;
         slot.light.intensity = T.MathUtils.damp(slot.light.intensity, target, 8, dt);
         if (target === 0 && slot.light.intensity < 0.2) {
           slot.source = candidates.find((s) => !slots.some((other) => other.source === s)) || null;

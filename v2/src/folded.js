@@ -1,3 +1,4 @@
+import { makeFoldedLighting } from './folded-lighting.js';
 import { torpedoTargets } from './folded-aquatic.js';
 import { pullSlide } from './folded-mechanisms.js';
 import { applyUpgrades, weaponDamage, scopeRange } from './folded-upgrades.js';
@@ -96,6 +97,8 @@ renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = T.PCFSoftShadowMap;
+renderer.toneMapping = T.NeutralToneMapping;
+renderer.toneMappingExposure = 1.1;
 const overheadCamera = new T.OrthographicCamera(-30, 30, 17, -17, 0.1, 160),
   follow = new FollowCamera(innerWidth / innerHeight, p.heading),
   focus = new T.Vector3(p.x, p.y, p.z),
@@ -118,21 +121,8 @@ function updateOverheadAngle() {
 updateOverheadAngle();
 let thirdPerson = (params.get('view') || prefs.cameraView || 'third') !== 'overhead',
   camera = thirdPerson ? follow.camera : overheadCamera;
-scene.add(new T.HemisphereLight(0xe8edf1, 0x85877e, 1.8));
-// Indirect fill keeps undersides and shaded routes readable from either camera.
-scene.add(new T.AmbientLight(0xe2e7e8, 1.2));
-const sun = new T.DirectionalLight(0xf0e8d5, 2.6);
-sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-sun.shadow.camera.left = sun.shadow.camera.bottom = -45;
-sun.shadow.camera.right = sun.shadow.camera.top = 45;
-sun.shadow.camera.far = 90;
-sun.shadow.bias = -0.0001;
-sun.shadow.normalBias = 0.04;
-scene.add(sun, sun.target);
-const fill = new T.DirectionalLight(0x9ec5d5, 0.65);
-fill.position.set(20, 12, -30);
-scene.add(fill);
+const lighting = makeFoldedLighting(scene, foldedArchitecture.rooms),
+  sun = lighting.sun;
 const world = makeFoldedWorld(scene, state, {
     batching: !(import.meta.env.DEV && params.has('test') && params.has('unbatched')),
   }),
@@ -457,6 +447,7 @@ function project(x, y, z) {
   };
 }
 function updateCamera(dt) {
+  lighting.update(p, dt);
   scene.fog.near = thirdPerson ? 65 : 105;
   scene.fog.far = thirdPerson ? 105 : 150;
   if (thirdPerson) {

@@ -44,7 +44,7 @@ export function makeCityPresentation(scene,aperture){
   // The excavation walls sit beyond every playable floor, anchoring the city in earth.
   const rock=mat(0x53615a),iron=mat(0x384c49),pale=mat(0xa8ada0),copper=mat(0xa98b69);
   const lightSources=makeRegionalScenery(scenery,foldedArchitecture.rooms,foldedArchitecture.solids);
-  lightSources.push({x:-4,y:-3,z:38,ground:-8,color:0xffb780},{x:0,y:-49,z:-8,ground:-56,color:0xffb780});
+  lightSources.push({x:-4,y:-3,z:38,ground:-8,color:0xffa35c,intensity:110},{x:0,y:-49,z:-8,ground:-56,color:0xffa35c,intensity:150});
   const localLights=makeRegionalLights(scene,lightSources);
   const hot=mat(0xffaf62,true);box(scenery,8,3.4,.12,-4,-5,34.05,hot,0);
   for(const x of [-8,-6,-4,-2,0])box(scenery,.22,3.8,.25,x,-5,34.2,iron,0);
