@@ -133,7 +133,7 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
   $('new-game').onclick = () => {
     if (!resetArmed) {
       resetArmed = true;
-      $('reset-confirm').hidden = false;
+      $('new-game').textContent = 'Erase save & restart';
       return;
     }
     actions.restart();
@@ -177,11 +177,6 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
     '<option value="third">Third person</option><option value="overhead">Overhead</option>';
   viewLabel.append(viewSelect);
   $('quality').parentElement.after(viewLabel);
-  const cameraNote = document.createElement('p');
-  cameraNote.className = 'binding-note';
-  cameraNote.textContent =
-    'Click the game to capture the mouse. Move the mouse to look, WASD to move, and Esc to pause.';
-  viewLabel.after(cameraNote);
   const cameraTuning = document.createElement('section');
   cameraTuning.id = 'camera-tuning';
   cameraTuning.hidden = true;
@@ -189,7 +184,7 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
   $('settings').append(cameraTuning);
   const tuneButton = document.createElement('button');
   tuneButton.textContent = 'Adjust camera';
-  cameraNote.after(tuneButton);
+  viewLabel.after(tuneButton);
   function closeCameraTuning() {
     const wasOpen = !cameraTuning.hidden;
     cameraTuning.hidden = true;
@@ -209,12 +204,6 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
     const heading = document.createElement('h2');
     heading.textContent = thirdPerson ? 'Third-person camera' : 'Overhead camera';
     cameraTuning.append(heading);
-    const note = document.createElement('p');
-    note.className = 'binding-note';
-    note.textContent = thirdPerson
-      ? 'Adjust sliders to preview while paused. Obstructions fade without changing follow distance. Pitch sets the starting angle; mouse look remains free during play.'
-      : 'Adjust sliders to preview. A larger view scale shows more of the city.';
-    cameraTuning.append(note);
     for (const [key, title, min, max, step, , suffix] of cameraFields[view]) {
       const label = document.createElement('label'),
         name = document.createElement('span'),
@@ -288,16 +277,15 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
       rebind = null;
       resetArmed = false;
       $('reset-confirm').hidden = true;
+      $('new-game').textContent = 'Restart';
       renderBindings();
     },
     setView(value) {
       prefs.cameraView = value !== 'overhead' ? 'third' : 'overhead';
       viewSelect.value = prefs.cameraView;
-      cameraNote.hidden = prefs.cameraView !== 'third';
     },
     captureUnavailable() {
-      cameraNote.textContent =
-        'Hold the middle mouse button to look. WASD moves, left click fires, and right click uses Magnet.';
+      tuneButton.setAttribute('title', 'Middle mouse to look');
     },
   };
 }

@@ -60,7 +60,7 @@ export const foldedSolids=[
   {id:'guardian',x:156,z:-16.5,w:12,d:1,y:24,h:4},
   {id:'bank-cover',x:34,z:-5,w:3,d:3,y:-16,h:2,permanent:true},
   {id:'canal-cover',x:29,z:-13,w:2,d:2,y:-16,h:1.6,permanent:true},
-  {id:'bench-cover',x:124,z:-7,w:3,d:4,y:0,h:2,magnetic:true},
+  {id:'bench-cover',x:124,z:-7,w:3,d:4,y:0,h:2,permanent:true},
   {id:'gangway-casing',x:84.4,z:28,w:.5,d:6,y:-8,h:3,permanent:true},
   ...explorationSolids,...citySolids,...expansionSolids,...sideGates,...transportSolids,...arenaGates,...refugeSolids
 ];
@@ -70,7 +70,6 @@ export const foldedControls=[
   {id:'gangway',x:86,y:-6.6,z:31,kind:'shot',mount:'gangway',facing:[1,0,0]},
   {id:'load',x:123,y:6.8,z:-13,ground:0,kind:'shot',surface:'top'},
   {id:'cage',x:150,y:25.4,z:-23,kind:'shot',requires:'phoenix',facing:[0,0,-1],circuit:[[150,24.12,-23],[150,24.12,-35],[32,24.12,-35],[32,24.12,8],[16,24.12,8],[10,24.12,16]]},
-  {id:'bench-cover',x:117.5,y:2.4,z:-3,kind:'magnet',ground:0},
   ...cityControls,...expansionControls,...explorationControls,...refugeControls
 ];
 export const foldedHives=refugeHives;
@@ -87,12 +86,6 @@ export const foldedEnemies=[
   {id:'track-scout',x:142,y:16,z:-82,hp:2,type:'scout'},
   ...explorationEnemies,...cityEnemies,...expansionEnemies,...sideEnemies,...bossReserves
 ];
-
-// The test-bench cover remains repositionable; ordinary access locks tear free.
-for(const [id,axis,min,max]of [['bench-cover','x',116,124]]){
-  const body=foldedSolids.find(s=>s.id===id);body.rail={axis,min,max};
-  const c=foldedControls.find(c=>c.id===id);c.slide=id;c.mount=id;c.facing=[-1,0,0];
-}
 
 // Local controls live on their actuator's working face. Remote receivers and
 // overhead trays retain their authored sightlines and collecting surfaces.

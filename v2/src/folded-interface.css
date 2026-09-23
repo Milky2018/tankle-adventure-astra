@@ -105,9 +105,7 @@
 .folded-ui #ending{background:radial-gradient(ellipse at 50% 35%,#7855273d,#09191ded 75%);backdrop-filter:blur(7px)}
 .folded-ui #ending section{width:min(680px,100%)}
 .folded-ui #ending h1{font-family:Georgia,serif;font-size:clamp(32px,5vw,56px);letter-spacing:.045em;font-weight:400;margin-bottom:45px}
-.folded-ui .ending-flame{width:92px;height:92px}
 .folded-ui .ending-actions button{border-radius:2px;font-size:13px}
-.folded-ui .ending-note{color:#b1bcb0;font-size:11px}
 .folded-ui .ability-reveal{animation:instrument-reveal .4s ease-out}
 @keyframes instrument-reveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:760px){

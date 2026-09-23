@@ -71,11 +71,16 @@ export function makeSidePuzzles(scene,state){
  const plant=new T.Group();plant.position.set(43,-7,34);scene.add(plant);roots.push(plant);cylinder(plant,.13,1.6,0,.8,0,C.metal,8);
  const leaves=Array.from({length:5},(_,i)=>{const pivot=new T.Group();pivot.position.y=.3+i*.25;pivot.rotation.y=i*2.4;plant.add(pivot);box(pivot,.45,.12,1.1,0,0,.5,0x93b67a,.04);return pivot;});
  const bloom=cylinder(plant,.35,.25,0,1.75,0,mat(C.lightYellow,true),6);
- let coverHeldUntil=0;
+ let coverHeldUntil=0,coverFlash=0;
  const coverBounds=sideObstacles.find(s=>s.id==='sorter-cover'),cover=new T.Group();scene.add(cover);roots.push(cover);owners.set(cover,coverBounds);
  coverBounds.x=Math.max(coverBounds.railMin,Math.min(coverBounds.railMax,state.sidePuzzles?.coverX??coverBounds.railMin));
- const coverMesh=box(cover,5,2.8,2,2.5,1.4,1,C.metal);coverMesh.userData.sortingCover=true;solids.push(coverMesh);
- box(cover,1.4,.8,.2,2.5,1.6,2.2,mat(SIGNAL.magnet),0);
+ const coverMesh=box(cover,5,2.8,2,2.5,1.4,1,C.dark);coverMesh.userData.sortingCover=true;solids.push(coverMesh);
+ const shieldPlates=[];
+ for(const z of [-.06,2.06]){
+  shieldPlates.push(box(cover,4.5,2.2,.18,2.5,1.5,z,mat(C.metal),0));
+  for(const x of [.5,1.5,2.5,3.5,4.5])box(cover,.2,2.6,.3,x,1.4,z,C.teal,0);
+ }
+ for(const x of [-.12,5.12])box(cover,.2,.9,1.4,x,1.5,1,mat(SIGNAL.magnet),0);
  const coverTarget={id:'sorting-cover',kind:'magnet',sidePuzzle:true,root:cover,x:coverBounds.x+2.5,y:coverBounds.y+1.6,z:coverBounds.z+2.2,radius:.75};targets.push(coverTarget);
  for(const z of [0,2]){box(cover,5,.2,.12,2.5,2.4,z,C.yellow,0);segment(fixed,[coverBounds.railMin,coverBounds.y+.1,coverBounds.z+z],[coverBounds.railMax+5,coverBounds.y+.1,coverBounds.z+z],.14,C.metal);}
  for(const x of [.5,4.5])for(const z of [0,2])cylinder(cover,.3,.18,x,.3,z,C.dark,8).rotation.x=Math.PI/2;
@@ -96,11 +101,14 @@ export function makeSidePuzzles(scene,state){
  }
  function pullCover(dt,p,enemies,time){
   const body={...coverBounds,rail:{axis:'x',min:coverBounds.railMin,max:coverBounds.railMax}};
+  coverHeldUntil=time+.2;
   if(!pullSlide(body,p,dt,[...state.bodies.solids.filter(s=>activeSolid(s,state)),...foldedArchitecture.solids],(x,z,y)=>!!foldedSupport(x,z,y),enemies,(e,dx,dz)=>moveFolded(e,dx,dz,state)))return;
-  coverBounds.x=body.x;coverTarget.x=body.x+2.5;cover.position.x=body.x;cover.updateWorldMatrix(true,true);coverHeldUntil=time+.2;persist();
+  coverBounds.x=body.x;coverTarget.x=body.x+2.5;cover.position.x=body.x;cover.updateWorldMatrix(true,true);coverHeldUntil=time+.2;persist();return true;
  }
 
  function update(dt,p,enemies){
+  coverFlash=Math.max(0,coverFlash-dt);
+  for(const plate of shieldPlates){plate.material.emissive.setHex(0xffdf93);plate.material.emissiveIntensity=coverFlash*4;}
   const occupied=position=>[p,...enemies.filter(e=>e.hp>0)].some(b=>Math.abs(b.y-position[1])<2&&Math.hypot(b.x-position[0],b.z-position[2])<2.3);
   let changed=delivery.update(dt,state['maintenance-started'],occupied);
   if(changed)state.maintenance=true;
@@ -123,5 +131,5 @@ export function makeSidePuzzles(scene,state){
   return changed;
  }
  function cast(raycaster,targetsAllowed){let hit=raycaster.intersectObjects(solids,false)[0]||null;if(targetsAllowed)for(const t of targets){if(t.id==='gutter-plug'&&gutter.state.unplugged)continue;const q=raycaster.ray.intersectSphere(new T.Sphere(new T.Vector3(t.x,t.y,t.z),t.radius),new T.Vector3());if(q){const distance=q.distanceTo(raycaster.ray.origin);if(distance<=raycaster.far&&(!hit||distance<hit.distance))hit={point:q,distance,target:t};}}return hit;}
- update(0,{x:Infinity,y:0,z:0},[]);return {owners,roots,targets,act,update,cast,rail,gutter,delivery,persist,pullCover,get coverHeldUntil(){return coverHeldUntil;}};
+ update(0,{x:Infinity,y:0,z:0},[]);return {owners,roots,targets,act,update,cast,rail,gutter,delivery,persist,pullCover,flashCover(){coverFlash=.3;},get coverHeldUntil(){return coverHeldUntil;}};
 }

@@ -66,7 +66,7 @@ const routes={
   returns:[[374,116],[374,106],[284,106,'boost'],[284,117],[260,117]],
   branches:[[[292,143],[312,143],[312,164],[340,164],[340,186]]],
   controls:[['coolant-transfer',333,186,'magnet',{slide:'coolant-transfer',mount:'coolant-transfer',facing:[1,0,0]}]],
-  gates:[['coolant-transfer',334,180,3,12,{permanent:true,magnetic:true,rail:{axis:'z',min:166,max:180,goal:166}}],['coolant-return',324,100,1,12,{red:true}]],
+  gates:[['coolant-transfer',334,180,3,12,{permanent:true,magnetic:true,rail:{axis:'z',min:166,max:180}}],['coolant-return',324,100,1,12,{red:true}]],
   cover:[[283,150,5,3],[299,177,3,5],[342,188,3,7],[316,146,1,15]],
   enemies:[['welder',312,159,'separator'],['artillery',348,185,'separator'],['miner',325,188,'separator'],['guard',338,106,'return'],['welder',292,103,'return']],
   props:[['separator',326,153],['boiler',352,173],['jacket',379,114]],

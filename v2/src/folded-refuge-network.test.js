@@ -79,14 +79,14 @@ test('sluice diversion changes the actual force on an afloat tank but never crea
 });
 
 test('magnetic slides remain solid, stop for occupants, and restore an unfinished rail position',()=>{
-  const s=initialFoldedState(),body=s.bodies.solids.find(b=>b.id==='bench-cover'),p={x:111,y:0,z:-5};
+  const s=initialFoldedState(),body=s.bodies.solids.find(b=>b.id==='coolant-transfer'),p={x:340,y:-24,z:166};
   for(let i=0;i<30;i++)pullSlide(body,p,1/60,[],(x,z,y)=>!!foldedSupport(x,z,y));
-  assert.ok(body.x>116&&body.x<124);
-  s.slidePositions[body.id]=body.x;
+  assert.ok(body.z>166&&body.z<180);
+  s.slidePositions[body.id]=body.z;
   const restored=initialFoldedState(JSON.parse(JSON.stringify(s))).bodies.solids.find(b=>b.id===body.id);
-  assert.equal(restored.x,body.x);assert.ok(foldedBlocked(body.x+1,body.y,body.z+1,s));
-  const obstacle={x:body.x-4,y:body.y,z:body.z,w:3,d:4};
-  pullSlide(body,p,2,[obstacle],()=>true);assert.ok(body.x>=obstacle.x+obstacle.w);
+  assert.equal(restored.z,body.z);assert.ok(foldedBlocked(body.x+1,body.y,body.z+1,s));
+  const obstacle={x:body.x,y:body.y,z:body.z-4,w:3,d:3};
+  pullSlide(body,p,2,[obstacle],()=>true);assert.ok(body.z>=obstacle.z+obstacle.d);
 });
 
 test('the deep lift belongs to the inner thermal passage, not an optical AND vestibule',()=>{

@@ -157,6 +157,12 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
       box(mesh,d.w*.75,.09,d.d*.6,0,d.h/2+.045,0,finish,0);
     }
     if(d.rail){const r=d.rail,along=r.axis==='x';for(const side of [-1,1])box(scene,along?r.max-r.min+d.w:.14,.12,along?.14:r.max-r.min+d.d,along?(r.min+r.max+d.w)/2:d.x+d.w/2+side*(d.w/2+.25),d.y+.06,along?d.z+d.d/2+side*(d.d/2+.25):(r.min+r.max+d.d)/2,C.metal,0);}
+    if(d.id==='coolant-transfer'){
+      for(const z of [179.3,192.7])box(scene,3.8,5,.6,335.5,-21.5,z,C.metal,0);
+      box(scene,3.8,.6,14,335.5,-18.7,186,C.metal,0);
+      for(const side of [-1,1])box(mesh,d.w+.06,.7,.18,0,.1,side*(d.d/2+.12),SIGNAL.magnet,0);
+      for(const z of [182,186,190])box(scene,7,.04,.18,335.5,-23.77,z,C.lightYellow,0);
+    }
     if(d.motion){
       // Suspended scrap hulls ride real rails, with open wheel wells and lifting eyes.
       for(const side of [-1,1]){box(mesh,d.w,.3,.35,0,-d.h/2+.25,side*(d.d/2+.15),C.metal,0);ring(mesh,.4,.12,side*d.w*.3,d.h/2+.25,0,C.metal).rotation.x=Math.PI/2;}
@@ -217,13 +223,12 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
       box(moving,.28,1.7,.35,0,0,.4,C.metal,0);
       for(const y of [-1,1])box(root,.35,.6,.4,0,y*1.35,.3,c.id.startsWith('reservoir')?0x89c9bf:C.lightYellow,0);
     }else if(c.kind==='magnet'){
-      box(root,1.7,1.5,.18,0,0,-.26,C.metal);
-      box(root,1.1,.8,.2,0,0,-.13,C.dark);
+      if(!c.slide){box(root,1.7,1.5,.18,0,0,-.26,C.metal);box(root,1.1,.8,.2,0,0,-.13,C.dark);}
       for(const x of [-.68,.68]){box(moving,.36,1.4,.55,x,0,0,SIGNAL.magnet);box(moving,.38,.35,.58,x,.55,0,0xa9dcff);}
       box(moving,1.7,.32,.55,0,-.6,0,SIGNAL.magnet);
       lamp=box(root,.35,.16,.12,0,.92,-.12,mat(SIGNAL.magnet,true));
       if(!c.slide){box(moving,1.15,.85,.2,0,0,-.05,SIGNAL.magnet);for(const x of [-.65,.65])box(root,.16,.3,.28,x,-.55,-.06,C.metal);}
-      else box(moving,.22,.65,.2,0,.2,.08,C.dark);
+      else lamp.visible=false;
     }else if(c.kind==='laser'){
       const casing=cylinder(root,opticalRadius+.16,.3,0,0,-.18,C.dark,24);casing.rotation.x=Math.PI/2;
       for(const r of [opticalRadius,opticalRadius*.7])ring(root,r,.09,0,0,0,C.metal);
@@ -299,7 +304,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     box(root,.9,.8,.7,0,.4,0,C.dark,0);cylinder(root,.28,.18,0,.85,0,C.metal,8);
     const lamp=box(root,.5,.12,.07,0,.85,.4,mat(SIGNAL.ready,true),0);eventTerminals.push({id:c.id,lamp});
   }
-  const controlFeeds=[],circuitLampGeometry=new T.BoxGeometry(.25,.13,.25);
+  const controlFeeds=[],circuitLampGeometry=new T.BoxGeometry(.25,.13,.25),conduitSupports=new Set();
   for(const b of foldedBattles){
     const root=new T.Group();root.position.set(b.x,b.y-1.3,b.z);scene.add(root);
     cylinder(root,1.8,1,0,.5,0,C.dark,8);
@@ -316,6 +321,12 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     for(let i=1;i<points.length;i++){
       const delta=points[i].clone().sub(points[i-1]),span=delta.length();if(span<.01)continue;delta.normalize();
       const cable=box(root,.14,.14,span,0,0,0,C.dark,0);cable.castShadow=false;cable.position.copy(points[i-1]).addScaledVector(delta,span/2);cable.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),delta);
+      // Long level runs beside ramps sit on sparse brackets, outside driving space.
+      if(Math.abs(delta.z)>.99)for(const d of foldedDecks.filter(d=>d.rise)){
+        const x=points[i].x,y=points[i].y,near=Math.max(d.z,Math.min(points[i-1].z,points[i].z)),far=Math.min(d.z+d.d,Math.max(points[i-1].z,points[i].z));
+        if(Math.min(Math.abs(x-d.x),Math.abs(x-d.x-d.w))>.5||far-near<3)continue;
+        for(let z=far-.2;z>near;z-=8){const ground=deckHeight(d,z),height=y-ground,key=`${x.toFixed(2)}:${y.toFixed(2)}:${z.toFixed(2)}`;if(height<.6||conduitSupports.has(key))continue;conduitSupports.add(key);box(fixed,.12,height,.12,x,ground+height/2,z,C.metal,0);box(fixed,.4,.1,.4,x,ground+.05,z,C.metal,0);}
+      }
       if(link.magnetic){
         for(let t=0;t<span;t+=.7){
           const size=Math.min(.6,span-t),center=t+size/2;

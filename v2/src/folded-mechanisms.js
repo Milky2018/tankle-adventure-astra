@@ -6,8 +6,10 @@ export function pullSlide(body, player, dt, bodies, supported, occupants = [], m
   const axis = rail.axis, size = axis === 'x' ? 'w' : 'd';
   const toward = player[axis] - body[axis] - body[size] / 2;
   if (Math.abs(toward) < body[size] / 2 + 1.2) return false;
-  const destination = Math.max(rail.min, Math.min(rail.max, body[axis] + Math.sign(toward) * 3 * dt));
+  const travel = Math.min((rail.release ? 3 : 12) * dt, Math.abs(toward) - body[size] / 2 - 1.2);
+  const destination = Math.max(rail.min, Math.min(rail.max, body[axis] + Math.sign(toward) * travel));
   const before = body[axis];
+  if (Math.abs(destination - before) < 1e-5) return false;
   const steps = Math.max(1, Math.ceil(Math.abs(destination - before) / .15));
   for (let i = 1; i <= steps; i++) {
     const candidate = { ...body, [axis]: before + (destination - before) * i / steps };

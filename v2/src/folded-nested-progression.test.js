@@ -86,7 +86,7 @@ test('Guardian opens the internal descent; the later thermal boundary only opens
  p.laser=true;release('lens-return');for(let i=0;i<120;i++)moveFolded(p,0,.1,s);assert.ok(p.z< -16.5,'Laser alone cannot bypass Guardian');s.guardian=true;walk([[162,30],[174,30],[174,-18],[190,-18],[190,46],[154,46]]);
  assert.equal(p.y,-8);walk([[154,90]],true);assert.equal(s['inner-thermal'],false);
  p.circulation=true;wait(3);walk([[154,108]],true);assert.equal(s['inner-thermal'],true);
- release('inner-transit');walk([[170,108],[170,46]]);assert.equal(p.y,-8);
+ walk([[170,108],[170,46]]);assert.equal(p.y,-8);
  walk([[170,108],[154,108],[106,108],[94,108]]);for(let i=0;i<120&&p.y>-40;i++)wait(1);assert.equal(p.y,-40);
  walk([[82,108],[82,6],[44,6],[44,-10]]);assert.equal(p.y,-40);
 });

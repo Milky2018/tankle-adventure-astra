@@ -176,7 +176,7 @@ export const cityBelts=[
   {id:'inspection-foot-down',x:7,z:-86,w:4,d:46,y:0,vx:0,vz:9.95},
   {id:'inspection-east',x:12,z:-157,w:182,d:3,y:16,vx:9.95,vz:0},
   {id:'inspection-west',x:12,z:-153,w:182,d:3,y:16,vx:-9.95,vz:0},
-  {id:'vestibule-heat',x:148,z:52,w:12,d:50,y:-8,vx:0,vz:0,heat:28,stop:'inner-transit'},
+  {id:'vestibule-heat',x:148,z:52,w:28,d:50,y:-8,vx:0,vz:0,heat:28},
   {id:'press-crossing',x:-44,z:47,w:22,d:5,y:-16,vx:2.4,vz:0},
   {id:'rejection',x:-6,z:64,w:12,d:8,y:-8,vx:0,vz:9.95},
   {id:'foundry-entry',x:-46,z:64,w:12,d:8,y:-40/3,rise:8/3,vx:0,vz:-9.95},

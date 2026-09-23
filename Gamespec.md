@@ -235,18 +235,18 @@ Blue grip fittings, removable plates, mines and interceptable artillery shells s
 
 | Parameter | Value |
 | --- | ---: |
-| Tether reach | 13 units |
+| Tether reach | 13 units to acquire; 18 units to retain a dragged object |
 | Empty-scan Heat | 3/s |
 | Connected-pull Heat | 12/s |
-| Driving speed during connected traction | 55% of normal |
-| Repositionable cover travel | 3 units/s |
+| Driving speed during connected traction | Normal driving speed |
+| Repositionable cover travel | 12 units/s, limited by clearance |
 | Time to remove a blue shield | 0.7 s |
 
 Ordinary magnetic machinery uses removable blue locks, pins or plates. Holding traction for about 0.6 seconds visibly loosens the part, then tears it free and drops it beside its mounting. The empty socket and green fixed lamp remain; its passage or linked machinery stays released after leaving or reloading. Releasing traction early lets an unfinished pull settle back. Any clear reachable approach works, without an invisible rail-axis or standing-position condition. Heavy machinery responds through the exposed coupling rather than the whole machine flying toward the Tank.
 
-Solid walls and intervening cargo interrupt the tether. A magnetic rail destination has a blue outline equal to the box footprint; docking changes it to green. A visible cable connects the receiving terminal to the affected passage or machinery. Repositionable combat cover marks both useful parking positions without pretending to unlock a remote door. Boxes push movable enemies along supported floor, stop before trapping them against a wall, and remain retractable.
+Solid walls and intervening cargo interrupt the tether. Only electrically connected docking machinery uses a blue destination that turns green and a cable to the affected object. Purely physical slides have neither green destinations nor electrical terminals. The cooling passage has a visible doorway, jambs and floor markings behind its movable barrier, so the opening is apparent before pulling. Boxes push movable enemies along supported floor, stop before trapping them against a wall, and remain retractable.
 
-Only objects whose position needs repeated adjustment use visible rails: the Testworks cover cart and Sorter cover. These remain solid, move toward the pulling position, stop before bodies or unsupported edges, and preserve partial travel. The player can pull them back from the other end. Optional mirror carriages can use the same rule; ordinary access locks do not require rails.
+Only objects whose position needs repeated adjustment use visible rails: the cooling passage barrier and Sorter shield. The test-bench crate is ordinary fixed cover. These remain solid, move toward the pulling position, stop before bodies or unsupported edges, and preserve partial travel. Both ends offer visible blue grips. Once acquired, the tether remains attached while the player turns or moves within reach; walls still interrupt it. Manual pulling keeps pace with ordinary driving. At an obstruction, the end stop or the player clearance limit, a short local stop pulse and sound replace the moving tether and pulling sound, and Heat stops accumulating. Backing away resumes the pull without reacquiring the object. Optional mirror carriages can use the same rule; ordinary access locks do not require rails.
 
 A blue shield tears free, throws aside and briefly staggers its bearer; the missing plate remains absent until that encounter resets. Movable cover may remove the enemy's screen and the player's shelter together. Mines can be pulled and disarmed or shot from outside their blast; blue shells can be intercepted. These are advantages, not prerequisites for every combat encounter: flanking, cover and leaving a warned impact area remain alternatives.
 
@@ -694,7 +694,7 @@ Suspended loads obey visible supports and safe catch zones. The cargo loop's fir
 
 Most magnetic mechanisms release by tearing out a recognizable blue part. The first lock opens the maintenance return toward B; optical maintenance uses the same action to reveal its workspace. Loosening, separation, the dropped part and the exposed socket explain success without text.
 
-Rails are reserved for repeated positioning. The Testworks cover cart remains a physical obstacle and can change a firing window in either direction. Its stops leave supported access and recovery space.
+Rails are reserved for repeated positioning. The Sorter shield remains a physical obstacle and can change a firing window in either direction. Its thick reinforced plate visibly intercepts the sweep, producing a bright impact burst and heavy clang followed immediately by the Boss venting. Its stops leave supported access and recovery space.
 
 Movable combat cover changes both hostile and player lines. Sorter's rail cover remains a developed example: placement can interrupt its committed sweep and expose the drive, while its barrage discourages permanent shelter. The Tank can still win without using Magnet. Any optional mirror carriage is positioned and secured before firing; no mandatory task requires simultaneous traction and Laser use.
 
@@ -744,7 +744,7 @@ Guardian's arena uses two broad mirrors, recognizable firing areas and committed
 
 Water Circulation's first hot run leads to a jammed maintenance-bridge lock. Red contact releases the fasteners and the bridge settles on visible supports, connecting the lift return toward C. The far side opens an ordinary cool bypass. Later routes offer a choice between continued red contact through ordinary opposition and cooling in a sheltered side room before restoring ranged fire; these local choices meet at the same exit.
 
-The observatory's optical restoration opens the internal descent first. On entering the cooling works, the Tank sees the unsustainable hot passage leading toward the core; Circulation later resolves that boundary. These are successive parts of one building, not two independently collected prerequisites at C. The established route and its cool bypass remain usable in both directions; thermal restoration is not a repeated toll on late-game travel.
+The observatory's optical restoration opens the internal descent first. On entering the cooling works, the Tank sees the unsustainable hot passage leading toward the core; Circulation later resolves that boundary. These are successive parts of one building, not two independently collected prerequisites at C. The final thermal approach is one continuous heated corridor with a full-width red-contact barrier. It has no parallel cool lane or shootable bypass switch. Breaking the barrier enables the descent lift permanently; the D–A maintenance shaft subsequently provides the ordinary return.
 
 ## 8. Combat and enemies
 
@@ -935,7 +935,7 @@ Compression belongs to reception and observation, not the proving court: that fl
 
 **Preview and combined entrance.** The freight outlook shows the upper load, observation gallery and inaccessible trial floor; the garden channel approaches the same foundation below. The blue inspection grille, water passage and overhead collecting tray are visible parts of one installation. Using Magnet, Flotation and Mortar in that physical sequence forms the upper ascent. Each intermediate state allows retreat. The inside maintenance return opens toward B immediately after the ascent, before any finite court or Boss. Acquiring Mortar alone cannot advance through this reception to Phoenix.
 
-**Development before the climax.** Compact preparation rooms and observation windows show failed hulls, buffering equipment and the actual runway. A movable cover cart, shielded pressure and indirect firing positions develop the three acquired tools without prescribing one solution to every enemy. A short artillery-and-shield encounter around passing freight develops target choice without a mandatory wave sequence. A quiet observation passage looks back toward B. The near-arena service release opens the direct repair return before commitment; later Boss retries bypass the entire preparation route.
+**Development before the climax.** Compact preparation rooms and observation windows show failed hulls, buffering equipment and the actual runway. Fixed cover, shielded pressure and indirect firing positions develop the three acquired tools without prescribing one solution to every enemy. A short artillery-and-shield encounter around passing freight develops target choice without a mandatory wave sequence. A quiet observation passage looks back toward B. The near-arena service release opens the direct repair return before commitment; later Boss retries bypass the entire preparation route.
 
 **Overseer.** The carrier hall is the culmination of the middle expeditions. Low cover permits Mortar attacks on exposed batteries, direct fire exploits core openings, and changing approach prevents permanent safety behind one obstacle. Destroyed feed assemblies alter their associated belts. The entrance offers the direct return to B before commitment. Victory releases the Phoenix installation and its supported access; a brief quiet approach lets the combat settle before the new engine is introduced. There is no second ordinary wave sequence between the Boss and its reward.
 
@@ -1014,7 +1014,7 @@ This is the only ending. It restores operation without promising permanent salva
 
 The HUD withdraws after commitment. The coupled engine and returning network lead the sound before the final exploration theme returns. Camera direction is permitted during this committed sequence. Pause remains available; losing focus pauses the sequence. Skip becomes available after the brief coupling beat and reaches the same completed state as watching.
 
-The completion card reads exactly **Mission Accomplished**. Its main choices are Continue Exploration and Return to Journey Menu; the menu retains a completion mark. The final exploration theme can continue beneath this card.
+The completion card reads exactly **Mission Accomplished**. The card contains only that heading and two buttons, Continue and Main menu; no emblem, subtitle or explanatory paragraph. The final exploration theme can continue beneath this card.
 
 Continue Exploration returns to D, the Furnace Service Room, with the Keeper defeated, acquired abilities retained and opened routes intact. This is an exploration continuation from before final docking, not a literal reversal of the cinematic's events. Reloading a completed journey resumes exploration rather than automatically replaying the film. Returning to the socket allows the ending to be viewed again.
 
@@ -1026,7 +1026,7 @@ The title treatment places **Tankle Adventure** on one line, with **Astra** on a
 
 The interface should feel like part of a finished industrial adventure: a strong title composition, restrained architectural imagery, oxidized brass panels, clear focus, consistent spacing and deliberate animation. Avoid a development-dashboard appearance.
 
-The journey menu prioritizes Continue and Start. A new journey begins at the Foundry awakening with Cannon only; replacing existing progress requires confirmation. Independent location previews are clearly separated from the main journey, show their equipment scope and keep separate progress. They must not become the normal way to find the first region or travel between regions. Any archival previews belong in a secondary, collapsed area.
+The main menu contains the title and Continue, New game and (when applicable) Back buttons. Replacing existing progress requires a second action on an explicitly labelled Erase save & restart button. Preview routes and archived maps are not presented in the player menu. Menus omit promotional prose, campaign captions and instructional footnotes; retain only headings, setting labels and necessary controls.
 
 Pause provides a prominent Resume action and coherent display, camera, audio and input groups. Camera distance, angle and height can be previewed against the paused scene; sensitivity and full control rebinding are accessible here. Settings persist. Keyboard focus, reduced-motion treatment and compact layouts receive the same care as mouse interaction. Escape should reach pause directly rather than requiring a confusing second press after pointer release.
 

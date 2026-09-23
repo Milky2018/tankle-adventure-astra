@@ -19,7 +19,6 @@ export function circuitLinks(controls,solids,lifts,decks=null,architecture=[]){
     if(c.id==='signal')endpoints.push({id:'signal-dish',x:204,y:40,z:146});
     if(c.id==='rail-repair')endpoints.push({id:'cargo-rail',x:-18,y:0,z:25});
     if(c.id==='maintenance')endpoints.push({id:'tender-drive',x:108,y:-24,z:32});
-    if(c.id==='inner-transit')endpoints.push({id:'vestibule-heat',x:148.4,y:-8,z:99});
     if(c.id==='reservoir-inlet')endpoints.push({id:'reservoir-diverter',x:-100,y:-8,z:98});
     if(c.id==='coolant-bypass')endpoints.push({id:'coolant-runout',x:284,y:-24,z:106});
     for(const target of endpoints){

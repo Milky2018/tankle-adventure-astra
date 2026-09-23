@@ -27,7 +27,7 @@ test('a slide can retreat from an overlapping blocker instead of staying wedged'
 test('a magnetic crate pushes a living occupant but stops if the occupant cannot move',()=>{
   const box={x:0,y:0,z:0,w:3,d:3,rail:{axis:'x',min:0,max:8}},enemy={x:4,y:0,z:1.5,hp:2,radius:1};
   const move=(p,dx,dz)=>{p.x+=dx;p.z+=dz;};
-  assert.ok(pullSlide(box,{x:12,z:1.5},1,[],()=>true,[enemy],move));
+  assert.ok(pullSlide(box,{x:12,z:1.5},.25,[],()=>true,[enemy],move));
   assert.ok(enemy.x>=box.x+box.w+enemy.radius-.001);
   const before=box.x;
   pullSlide(box,{x:12,z:1.5},1,[],()=>true,[enemy],()=>{});

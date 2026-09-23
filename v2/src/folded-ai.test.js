@@ -459,3 +459,23 @@ test('an elevated artillery observer acquires below the breastwork without movin
   for (let i = 0; i < 40; i++) f.step(0.1);
   assert.equal(f.fired.length, shots, 'A covered observer must not acquire unseen new positions');
 });
+
+test('Sorter sweep impact flashes its shield and immediately enters recovery', () => {
+  const e = enemy('boss', { id: 'sorter', phase: 'sweep', attack: 'sweep', timer: 1, aim: 0 });
+  const f = fixture([e]);
+  let flashed = false;
+  f.world.sidePuzzles.flashCover = () => {
+    flashed = true;
+  };
+  f.world.cast = () => ({
+    distance: 5,
+    point: { x: 0, y: 1.8, z: 25 },
+    object: { userData: { sortingCover: true } },
+  });
+  f.ai.updateSorter(e, 1 / 60, true);
+  assert.equal(e.phase, 'vent');
+  assert.equal(e.timer, 1.5);
+  assert.ok(flashed);
+  assert.ok(f.events.some((event) => event.name === 'impact'));
+  assert.equal(f.hits.length, 0);
+});

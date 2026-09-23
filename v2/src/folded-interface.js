@@ -29,7 +29,7 @@ export function mountFoldedInterface(){
   journey.textContent='Journey menu';utility.append(journey,$('new-game'));panel.querySelector('.panel-footer').prepend(utility);
   const volume=$('volume'),output=document.createElement('output');output.id='volume-value';output.htmlFor='volume';volume.after(output);
   volume.addEventListener('input',()=>{output.value=`${Math.round(Number(volume.value)*100)}%`;});
-  const mapHeader=document.createElement('header');mapHeader.className='map-heading';mapHeader.innerHTML='<span class="eyebrow">TANKLE ADVENTURE ASTRA</span><h1>Mechanical City</h1>';$('region').prepend(mapHeader);
+  const mapHeader=document.createElement('header');mapHeader.className='map-heading';mapHeader.innerHTML='<h1>Map</h1>';$('region').prepend(mapHeader);
   const mapFooter=document.createElement('footer');mapFooter.className='map-footer';mapFooter.innerHTML='<span class="map-legend"><i class="map-player"></i>Your position</span><span class="map-legend"><i class="map-refuge"></i>Repair hive</span><span class="map-legend"><i class="map-gate"></i>Closed passage</span><span class="map-key"><kbd></kbd> Back</span>';$('region').append(mapFooter);
   const mapKey=document.createElement('kbd');mapKey.className='minimap-key';$('minimap-wrap').append(mapKey);
   $('settings').addEventListener('keydown',e=>{

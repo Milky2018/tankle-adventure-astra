@@ -14,7 +14,22 @@ function square(points,label){for(let i=1;i<points.length;i++)assert.equal(point
 test('all remote and legacy circuit segments use exactly one world axis',()=>{
   for(const l of [...links,...circuitLinks(sources,foldedSolids,foldedLiftDefs)])square(l.points,`${l.id} -> ${l.target}`);
   const input=[[0,0,0],[8,4,10],[8,4,10],[1,-2,-5]],result=orthogonalCircuit(input);
-  square(result,'stepped ramp');assert.deepEqual(result[0],input[0]);assert.deepEqual(result.at(-1),input.at(-1));
+  square(result,'rectangular route');assert.deepEqual(result[0],input[0]);assert.deepEqual(result.at(-1),input.at(-1));
+});
+test('a change in floor height uses one riser and one long run, never a staircase',()=>{
+  for(const input of [[[230,24.28,12],[230,16.28,36]],[[230,16.28,36],[230,24.28,12]]]){
+    const result=orthogonalCircuit(input);square(result,'ramp bypass');assert.equal(result.length,3);
+  }
+});
+test('the gallery ramp uses a long edge run with a single full-height riser',()=>{
+  const ramp=foldedDecks.find(d=>d.id==='gallery-descent');
+  for(const link of links.filter(l=>l.id==='garden-optical')){
+    const segments=link.points.slice(1).map((b,i)=>({a:link.points[i],b}));
+    const risers=segments.filter(({a,b})=>Math.abs(a[1]-b[1])>.1&&a[2]>ramp.z+2&&a[2]<=ramp.z+ramp.d&&a[0]>=ramp.x&&a[0]<=ramp.x+ramp.w);
+    assert.equal(risers.length,1);assert.ok(Math.abs(risers[0].a[1]-risers[0].b[1])>=Math.abs(ramp.rise)-.1);
+    assert.ok(segments.some(({a,b})=>Math.abs(a[2]-b[2])>ramp.d-2&&Math.min(Math.abs(a[0]-ramp.x),Math.abs(a[0]-ramp.x-ramp.w))<.5));
+  }
+  assert.deepEqual(orthogonalCircuit([[0,0,0],[10,0,0],[4,0,0],[4,0,5]]),[[0,0,0],[4,0,0],[4,0,5]]);
 });
 test('all six rendered side-puzzle wires have square bends',()=>{
   const scene=new Scene();makeSidePuzzles(scene,initialFoldedState());scene.updateMatrixWorld(true);
@@ -24,7 +39,7 @@ test('all six rendered side-puzzle wires have square bends',()=>{
 
 test('every lift and every extra switch effect has an incoming circuit',()=>{
   for(const lift of foldedLiftDefs)assert.ok(links.some(l=>l.target===lift.id),lift.id);
-  for(const [id,target]of [['inner-transit','vestibule-heat'],['relay-west','foundry-loading-frame'],['coolant-return','coolant-maintenance-bridge'],['coolant-return','coolant-return-lift'],['maintenance','tender-drive']])assert.ok(links.some(l=>l.id===id&&l.target===target),`${id} -> ${target}`);
+  for(const [id,target]of [['relay-west','foundry-loading-frame'],['coolant-return','coolant-maintenance-bridge'],['coolant-return','coolant-return-lift'],['maintenance','tender-drive']])assert.ok(links.some(l=>l.id===id&&l.target===target),`${id} -> ${target}`);
   for(const c of foldedControls.filter(c=>c.mount&&!c.slide))assert.ok(links.some(l=>l.id===c.id&&l.local),c.id);
   for(const c of foldedControls.filter(c=>c.slide))assert.ok(!links.some(l=>l.id===c.id),'a moved cover is not a remote electrical unlock');
 });

@@ -274,7 +274,9 @@ export function createFoldedEnemies({
       view.sorterArm(e, origin, dir, reach, angle);
       if (e.phase === 'sweep') {
         if (obstruction?.object?.userData.sortingCover) {
-          view.impact(obstruction.point, 'lightYellow', 10);
+          view.impact(obstruction.point, 'lightYellow', 28);
+          world.sidePuzzles.flashCover?.();
+          audio.event('vent', { position: e });
           audio.event('armor', { position: e });
           e.phase = 'vent';
           e.timer = 1.5;

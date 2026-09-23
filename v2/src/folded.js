@@ -61,8 +61,7 @@ const $ = (id) => document.getElementById(id),
   params = new URLSearchParams(location.search),
   route = params.get('route'),
   freight = route === 'freight',
-  garden = route === 'garden',
-  preview = freight || garden || route === 'foundry';
+  garden = route === 'garden';
 const interfaceView = mountFoldedInterface();
 const saves = createFoldedSave(route);
 const state = saves.load();
@@ -284,6 +283,7 @@ let time = 0,
 let manual = import.meta.env.DEV && params.has('test') && params.has('manual'),
   magnetic = null,
   magnetLock = null,
+  magnetStopped = null,
   recoil = 0,
   laserSoundAt = -1,
   repairAt = -10,
@@ -375,13 +375,11 @@ dockProgress.innerHTML =
   '<circle class="dock-track" cx="24" cy="24" r="21"/><circle class="dock-fill" cx="24" cy="24" r="21" pathLength="100"/>';
 $('interaction').append(dockProgress);
 $('journey-button').onclick = () => journeyMenu.show();
-document.querySelector('#settings .subtitle').textContent = preview
-  ? `Route previews · ${freight ? 'Freight entrance' : garden ? 'Garden entrance' : 'Chapter 1 · Foundry'}`
-  : 'Campaign · Mechanical City';
-$('new-game').textContent = preview ? 'Restart preview' : 'Restart campaign';
-$('reset-confirm').textContent = preview
-  ? 'Click again to reset this preview. Your campaign save is unaffected.'
-  : 'Click again to reset the campaign and begin at the Foundry.';
+document
+  .querySelectorAll('#settings .subtitle, #settings .eyebrow, #settings .binding-note')
+  .forEach((el) => el.remove());
+$('journey-button').textContent = 'Main menu';
+$('new-game').textContent = 'Restart';
 
 const enemies = createFoldedEnemies({
   player: p,
@@ -907,6 +905,7 @@ function updateMagnet(dt) {
   if (!p.magnet || !keys.has(bindings.magnet) || p.hp <= 0 || playerStunned(p, time)) {
     if (magnetLock?.id === 'sorting-cover' || magnetLock?.slide) save();
     magnetLock = null;
+    magnetStopped = null;
     return;
   }
   const origin = weaponOrigin(),
@@ -929,25 +928,43 @@ function updateMagnet(dt) {
   ];
   const selected = candidates
     .map((c) => {
-      const pos = new T.Vector3(c.x, c.y + (c.model ? 1.5 : 0), c.z),
+      const body = c.slide
+        ? state.bodies.solids.find((b) => b.id === c.slide)
+        : c.id === 'sorting-cover'
+          ? state.bodies.obstacles.find((b) => b.id === 'sorter-cover')
+          : null;
+      const pos = body
+          ? new T.Vector3(
+              clamp(p.x, body.x - 0.15, body.x + body.w + 0.15),
+              body.y + Math.min(1.6, body.h / 2),
+              clamp(p.z, body.z - 0.15, body.z + body.d + 0.15),
+            )
+          : new T.Vector3(c.x, c.y + (c.model ? 1.5 : 0), c.z),
         delta = pos.clone().sub(origin);
       return {
         c,
+        body,
         pos,
         delta,
         locked: c === magnetLock,
-        pointed:
-          (c.kind === 'magnet' || c.type === 'dredger') &&
-          picker.ray.distanceSqToPoint(pos) <= (c.radius || 0.75) ** 2,
+        pointed: body
+          ? picker.ray.intersectsBox(
+              new T.Box3(
+                new T.Vector3(body.x - 0.5, body.y, body.z - 0.5),
+                new T.Vector3(body.x + body.w + 0.5, body.y + body.h + 0.5, body.z + body.d + 0.5),
+              ),
+            )
+          : (c.kind === 'magnet' || c.type === 'dredger') &&
+            picker.ray.distanceSqToPoint(pos) <= (c.radius || 0.75) ** 2,
         distance: delta.length(),
         alignment: delta.clone().normalize().dot(aimDir),
       };
     })
     .filter(
       (q) =>
-        q.distance < 13 &&
-        (!q.c.mount || q.delta.x * q.c.facing.x + q.delta.z * q.c.facing.z < 0) &&
-        (q.pointed || q.alignment > (q.locked ? 0.75 : 0.95)),
+        q.distance < (q.locked && q.body ? 18 : 13) &&
+        (q.body || !q.c.mount || q.delta.x * q.c.facing.x + q.delta.z * q.c.facing.z < 0) &&
+        ((q.locked && q.body) || q.pointed || q.alignment > (q.locked ? 0.75 : 0.95)),
     )
     .sort(
       (a, b) =>
@@ -958,7 +975,15 @@ function updateMagnet(dt) {
     )
     .find((q) => {
       const h = world.cast(origin, q.delta.clone().normalize(), q.distance, { extras: mines });
-      return !h || h.target === q.c || h.distance > q.distance - 0.8;
+      return (
+        !h ||
+        h.target === q.c ||
+        h.blockedTarget === q.c ||
+        (q.body &&
+          (h.object?.userData.sortingCover ||
+            world.walls.some((w) => w.id === q.body.id && w.mesh === h.object))) ||
+        h.distance > q.distance - 0.8
+      );
     });
   const c = p.overheated ? null : selected?.c;
   magnetLock = c || null;
@@ -971,11 +996,45 @@ function updateMagnet(dt) {
       hit = world.cast(origin, delta.clone().normalize(), delta.length());
     if (hit) end = hit.point;
   }
+  let moved = true;
+  if (c?.slide) {
+    const body = state.bodies.solids.find((b) => b.id === c.slide);
+    moved = pullSlide(
+      body,
+      p,
+      dt,
+      [
+        ...state.bodies.solids.filter((b) => b !== body && (b.permanent || b.rail || !state[b.id])),
+        ...state.bodies.obstacles,
+        ...foldedArchitecture.solids,
+      ],
+      (x, z, y) => !!foldedSupport(x, z, y, false, world.lifts),
+      world.enemies,
+      (enemy, dx, dz) => moveFolded(enemy, dx, dz, state, world.lifts),
+    );
+    if (moved) {
+      state.slidePositions[body.id] = body[body.rail.axis];
+      if (body.rail.latch && body[body.rail.axis] === body.rail.max && !state[body.rail.latch]) {
+        state[body.rail.latch] = true;
+        world.signalRelease(body.rail.latch, time);
+        audio.event('lever');
+        save();
+      }
+    }
+  } else if (c?.id === 'sorting-cover')
+    moved = !!world.sidePuzzles.pullCover(dt, p, world.enemies, time);
+
+  const stopped = !!c && !moved;
+  if (stopped && magnetStopped !== c) {
+    audio.event('blocked');
+    ripple(end, 0.7, C.lightYellow, 0.25, 0.2);
+  }
+  magnetStopped = stopped ? c : null;
   const axis = end.clone().sub(origin),
     length = axis.length(),
     dir = axis.clone().normalize();
-  magnetic = c?.id || (p.overheated ? 'blocked' : 'search');
-  magneticBeam.visible = true;
+  magnetic = stopped ? 'blocked' : c?.id || (p.overheated ? 'blocked' : 'search');
+  magneticBeam.visible = !stopped;
   for (const shaft of [magneticCore, magneticGlow]) {
     shaft.position.copy(origin).addScaledVector(axis, 0.5);
     shaft.scale.y = length;
@@ -991,46 +1050,19 @@ function updateMagnet(dt) {
     r.scale.setScalar(c ? 1 : 1 + u * 1.5);
     r.material.color.setHex(p.overheated ? C.red : SIGNAL.magnet);
   }
-  if (time - magnetSoundAt > 0.7) {
+  if (!stopped && time - magnetSoundAt > 0.7) {
     audio.event(p.overheated ? 'blocked' : c ? 'magnet-pull' : 'magnet');
     magnetSoundAt = time;
   }
-  if (p.overheated) return;
+  if (p.overheated || stopped) return;
   p.heat = Math.min(100, p.heat + (c ? 12 : 3) * dt);
   p.lastHeat = time;
   p.boostCooling = false;
   p.actionHeatAt = time;
   if (p.heat >= 100) p.overheated = true;
   if (!c) return;
-  if (c.slide) {
-    const body = state.bodies.solids.find((b) => b.id === c.slide);
-    if (
-      pullSlide(
-        body,
-        p,
-        dt,
-        [
-          ...state.bodies.solids.filter(
-            (b) => b !== body && (b.permanent || b.rail || !state[b.id]),
-          ),
-          ...state.bodies.obstacles,
-          ...foldedArchitecture.solids,
-        ],
-        (x, z, y) => !!foldedSupport(x, z, y, false, world.lifts),
-        world.enemies,
-        (enemy, dx, dz) => moveFolded(enemy, dx, dz, state, world.lifts),
-      )
-    ) {
-      state.slidePositions[body.id] = body[body.rail.axis];
-      if (body.rail.latch && body[body.rail.axis] === body.rail.max && !state[body.rail.latch]) {
-        state[body.rail.latch] = true;
-        world.signalRelease(body.rail.latch, time);
-        audio.event('lever');
-        save();
-      }
-    }
-  } else if (c.id === 'sorting-cover') world.sidePuzzles.pullCover(dt, p, world.enemies, time);
-  else if (c.model && magnetPullable(c)) {
+  if (c.slide || c.id === 'sorting-cover') return;
+  if (c.model && magnetPullable(c)) {
     const body = { x: c.x, y: c.y, z: c.z, speed: 1 };
     if (length > c.radius + 1.4)
       moveFolded(body, -dir.x * 5 * dt, -dir.z * 5 * dt, state, world.lifts);
@@ -1274,19 +1306,6 @@ function advance(dt) {
     }
   if (support && !discovered.has(support.id)) {
     discovered.add(support.id);
-    learned = true;
-  }
-  if (
-    !state['inner-transit'] &&
-    p.circulation &&
-    p.y <= -39.9 &&
-    p.x > 259 &&
-    p.x < 273 &&
-    p.z < 16
-  ) {
-    state['inner-transit'] = true;
-    world.signalRelease('inner-transit', time);
-    audio.event('lever');
     learned = true;
   }
   if (learned) save();

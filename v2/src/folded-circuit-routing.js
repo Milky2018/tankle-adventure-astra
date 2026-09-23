@@ -5,24 +5,20 @@ const distance=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const point=(d,x,z)=>[x,(d.lift?d.y:deckHeight(d,z))+clearance,z];
 
-// Keep every bend square, including short stepped runs beside sloped floors.
+// Connect each waypoint with long axis-aligned runs and at most two bends.
 export function orthogonalCircuit(points,score=()=>0){
   const out=[points[0].slice()];
   for(let i=1;i<points.length;i++){
-    const a=out.at(-1),b=points[i],rise=Math.abs(b[1]-a[1]),run=Math.hypot(b[0]-a[0],b[2]-a[2]);
-    const steps=rise>.01&&run>.01?Math.max(1,Math.ceil(rise/.4)):1;
-    for(let n=1;n<=steps;n++){
-      const start=out.at(-1),end=a.map((v,j)=>n===steps?b[j]:v+(b[j]-v)*n/steps);
-      const orders=end[1]>=start[1]?[[1,0,2],[1,2,0],[0,1,2],[2,1,0],[0,2,1],[2,0,1]]:[[0,2,1],[2,0,1],[0,1,2],[2,1,0],[1,0,2],[1,2,0]];
-      const candidates=orders.map(order=>{const ps=[start];for(const axis of order){const p=ps.at(-1).slice();p[axis]=end[axis];if(distance(p,ps.at(-1))>1e-8)ps.push(p);}return ps;});
-      const ranked=candidates.map(ps=>({ps,cost:score(ps)})).sort((a,b)=>a.cost-b.cost);out.push(...ranked[0].ps.slice(1));
-    }
+    const start=out.at(-1),end=points[i];
+    const orders=end[1]>=start[1]?[[1,0,2],[1,2,0],[0,1,2],[2,1,0],[0,2,1],[2,0,1]]:[[0,2,1],[2,0,1],[0,1,2],[2,1,0],[1,0,2],[1,2,0]];
+    const candidates=orders.map(order=>{const ps=[start];for(const axis of order){const p=ps.at(-1).slice();p[axis]=end[axis];if(distance(p,ps.at(-1))>1e-8)ps.push(p);}return ps;});
+    const ranked=candidates.map(ps=>({ps,cost:score(ps)})).sort((a,b)=>a.cost-b.cost);out.push(...ranked[0].ps.slice(1));
   }
   const compact=[];
   for(const p of out){
     if(compact.length&&distance(p,compact.at(-1))<1e-7)continue;
-    if(compact.length>1){const a=compact.at(-2),b=compact.at(-1);if([0,1,2].some(axis=>(b[axis]-a[axis])*(p[axis]-b[axis])>0&&[0,1,2].every(j=>j===axis||Math.abs(a[j]-b[j])<1e-8&&Math.abs(b[j]-p[j])<1e-8)))compact.pop();}
-    compact.push(p);
+    while(compact.length>1){const a=compact.at(-2),b=compact.at(-1);if(![0,1,2].some(axis=>[0,1,2].every(j=>j===axis||Math.abs(a[j]-b[j])<1e-8&&Math.abs(b[j]-p[j])<1e-8)))break;compact.pop();}
+    if(!compact.length||distance(p,compact.at(-1))>=1e-7)compact.push(p);
   }
   return compact;
 }
@@ -93,7 +89,15 @@ export function createCircuitRouter(decks,lifts,solids){
     if(from.i!==to.i&&!previous.has(to.i))throw new Error(`Disconnected circuit surfaces: ${surfaces[from.i].id} -> ${surfaces[to.i].id}`);
     const steps=[];for(let id=to.i;id!==from.i;){const e=previous.get(id);steps.unshift(e);id=e.from;}
     const points=[from.q];for(const e of steps)points.push(e.a,e.b);points.push(to.q);
-    const square=orthogonalCircuit([start,...compact(points),end],bendCost);
+    const floorRoute=compact(points),edgeRoute=[floorRoute[0]];
+    for(let i=1;i<floorRoute.length;i++){
+      const a=floorRoute[i-1],b=floorRoute[i],ramp=decks.find(d=>d.rise&&Math.abs(a[1]-b[1])>.5&&[a,b].every(p=>p[0]>=d.x-.01&&p[0]<=d.x+d.w+.01&&p[2]>=d.z-.01&&p[2]<=d.z+d.d+.01&&Math.abs(p[1]-deckHeight(d,p[2])-clearance)<.1));
+      if(ramp){
+        const routes=[ramp.x+.35,ramp.x+ramp.w-.35].map(x=>orthogonalCircuit([a,[x,a[1],a[2]],[x,Math.max(a[1],b[1]),a[2]],[x,Math.max(a[1],b[1]),b[2]],[x,b[1],b[2]],b]));
+        routes.sort((a,b)=>bendCost(a)-bendCost(b));edgeRoute.push(...routes[0].slice(1));
+      }else edgeRoute.push(b);
+    }
+    const square=orthogonalCircuit([start,...edgeRoute,end],bendCost);
     return avoid(avoid(square,shafts),obstacles);
   };
 }

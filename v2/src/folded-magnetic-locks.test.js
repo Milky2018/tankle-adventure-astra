@@ -22,5 +22,5 @@ test('completed legacy magnetic locks survive obsolete rail coordinates',()=>{
     assert.equal(state[id],true);assert.equal(state.slidePositions[id],undefined);
     assert.equal(activeSolid(state.bodies.solids.find(b=>b.id===id),state),false);
   }
-  assert.equal(foldedControls.find(c=>c.id==='bench-cover').slide,'bench-cover');
+  assert.equal(foldedControls.some(c=>c.id==='bench-cover'),false);
 });

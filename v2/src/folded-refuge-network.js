@@ -54,8 +54,7 @@ export const refugeDecks = [
   deck('tower-garden-walk', 140, 154, 40, 12, 16, { region: 'garden' }),
   deck('tower-garden-return', 140, 6, 12, 148, 16, { region: 'garden' }),
   deck('vestibule-approach', 148, 44, 28, 8, -8, { region: 'circulation' }),
-  deck('vestibule-hot-lane', 148, 52, 12, 50, -8, { region: 'circulation' }),
-  deck('vestibule-cool-lane', 164, 52, 12, 62, -8, { region: 'circulation' }),
+  deck('vestibule-hot-lane', 148, 52, 28, 50, -8, { region: 'circulation' }),
   deck('vestibule-end', 148, 102, 28, 12, -8, { region: 'circulation' }),
   deck('vestibule-shaft-neck', 100, 102, 48, 12, -8, { region: 'furnace' }),
   deck('vestibule-shaft-boarding', 88, 90, 12, 12, -8, { region: 'furnace' }),
@@ -78,8 +77,7 @@ export const refugeSolids = [
   gate('transit-return', 30, 80, 1, 8, -8),
   gate('phoenix-departure', 196, -88, 1, 12, 16, { phoenix: true }),
   gate('phoenix-departure', -28, -66, 12, 1, 15.5, { phoenix: true }),
-  gate('inner-thermal', 148, 96, 12, 1, -8, { red: true }),
-  gate('inner-transit', 164, 54, 12, 1, -8),
+  gate('inner-thermal', 148, 96, 28, 1, -8, { red: true }),
   gate('last-cage', 14, 68, 8, 1, -8),
 ];
 export const refugeControls = [
@@ -89,7 +87,6 @@ export const refugeControls = [
   {id:'transit-return',x:33,y:-6.7,z:84,kind:'shot',mount:'transit-return',facing:[1,0,0]},
   { id: 'optical-screen', x: 214, y: 25.3, z: -10, kind: 'shot', mount: 'optical-screen', facing: [0,0,-1] },
   { id: 'coolant-bypass', x: 278, y: -22.7, z: 117, kind: 'shot', requires: 'coolant-return' },
-  { id: 'inner-transit', x: 170, y: -6.7, z: 56, kind: 'shot', mount: 'inner-transit', facing: [0,0,1] },
   { id: 'proving-inspection', x: 195.1, y: 20.25, z: -154, kind: 'shot', mount: 'proving-inspection', facing: [1,0,0] },
   { id: 'overseer-service', x: -10, y: -6.7, z: 61, kind: 'shot', mount: 'overseer-service', facing: [0,0,-1] },
 ];

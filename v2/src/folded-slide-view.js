@@ -4,7 +4,7 @@ import {SIGNAL} from './folded-visibility.js';
 
 export function makeSlideMarkers(scene,bodies){
   const markers=[];
-  for(const body of bodies){
+  for(const body of bodies.filter(b=>b.rail.latch)){
     const r=body.rail,along=r.axis==='x',goals=r.goal===undefined?[r.min,r.max]:[r.goal];
     for(const goal of goals){
       const x=along?goal:body.x,z=along?body.z:goal,root=new T.Group();root.name=`slide-destination:${body.id}:${goal}`;scene.add(root);
