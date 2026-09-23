@@ -2,6 +2,7 @@ import * as T from 'three';
 import {tankModel,box,cylinder,ring,mat,C} from './world.js';
 import {SIGNAL} from './folded-visibility.js';
 import {batchRigidParts} from './rigid-batching.js';
+import {ENEMY_VARIANTS} from './folded-enemy-rules.js';
 import {SORTER_REACH} from './folded-attacks.js';
 
 export function prepareEnemyMaterials(model,{batching=true}={}){
@@ -32,7 +33,22 @@ export function animateEnemy(enemy,time,dt,active){
 
 export { ENEMY_KINDS, woundedAlly } from './folded-enemy-rules.js';
 
-export function foldedEnemyModel(type){
+export function foldedEnemyModel(type,variant){
+  if(variant){
+    const model=foldedEnemyModel(type),v=ENEMY_VARIANTS[variant];
+    for(const side of [-1,1]){
+      box(model.body,.22,.5,1.8,side*1.05,1.1,-.15,v.color,0);
+      if(variant==='interceptor')box(model.body,.28,.4,1.1,side*.8,.9,1.5,v.color,0);
+      if(variant==='bastion')box(model.body,.4,1.1,2,side*1.4,1.1,0,v.color,0);
+      if(variant==='siege'){
+        const tube=cylinder(model.turret,.4,1.9,side*.95,1.8,.25,v.color,10);tube.rotation.x=.38;
+        ring(model.turret,.43,.1,side*.95,2.65,.55,C.yellow);
+      }
+      if(variant==='prism')box(model.turret,.25,2.6,.4,side*1.55,1.6,1,v.color,0);
+      if(variant==='flanker')box(model.turret,.18,.8,.18,side*.7,1.8,-.5,v.color,0);
+    }
+    return model;
+  }
   if(['scout','turret','guard','elite','boss'].includes(type))return tankModel(type);
   const root=new T.Group(),body=new T.Group(),turret=new T.Group(),barrel=new T.Group();root.add(body,turret);turret.add(barrel);
   const tracks=[],moving=[],lamp=mat(C.orange,true);

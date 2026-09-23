@@ -1,6 +1,6 @@
 export const MAX_HP = 25;
 export const playerMaxHp = p => MAX_HP + 5 * (p.armorPacks || 0);
-export const BASE_SPEED = 9.8;
+export const BASE_SPEED = 10;
 export const OVERDRIVE_MAX_SPEED = 1.6;
 export const PHOENIX_MAX_SPEED = 3.2;
 export const phoenixReady = p => p.phoenix && !p.deployed && p.speed >= PHOENIX_MAX_SPEED - .01;

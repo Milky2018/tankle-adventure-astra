@@ -77,8 +77,7 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
   const $ = (id) => document.getElementById(id),
     prefs = preferences.values;
   const { bindings, cameraSettings } = prefs;
-  let rebind = null,
-    resetArmed = false;
+  let rebind = null;
   function renderBindings() {
     $('bindings').replaceChildren();
     const labels = {
@@ -130,14 +129,7 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
     renderBindings();
     preferences.save();
   };
-  $('new-game').onclick = () => {
-    if (!resetArmed) {
-      resetArmed = true;
-      $('new-game').textContent = 'Erase save & restart';
-      return;
-    }
-    actions.restart();
-  };
+  $('new-game').onclick = () => actions.restart();
   $('fullscreen').onclick = () =>
     document.fullscreenElement
       ? document.exitFullscreen()
@@ -275,9 +267,6 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
       if (!value) closeCameraTuning();
       $('settings').hidden = !value;
       rebind = null;
-      resetArmed = false;
-      $('reset-confirm').hidden = true;
-      $('new-game').textContent = 'Restart';
       renderBindings();
     },
     setView(value) {

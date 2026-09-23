@@ -16,7 +16,7 @@ export function stepTransport(solids,dt,bodies){
   while(remaining>0){
    const delta=Math.min(remaining,.05);remaining-=delta;
    const direction=s.direction||1,next=Math.max(m.min,Math.min(m.max,s[axis]+direction*m.speed*delta));
-   if(bodies.some(b=>b.hp!==0&&Math.abs(b.y-s.y)<3&&b[axis]+1>Math.min(next,s[axis])&&b[axis]-1<Math.max(next,s[axis])+s[size]&&b[other]+1>s[other]&&b[other]-1<s[other]+s[otherSize]))break;
+   if(bodies.some(b=>b.hp!==0&&Math.abs(b.y-s.y)<3&&b[axis]+.9>Math.min(next,s[axis])&&b[axis]-.9<Math.max(next,s[axis])+s[size]&&b[other]+.9>s[other]&&b[other]-.9<s[other]+s[otherSize]))break;
    s[axis]=next;if(next===m.min||next===m.max)s.direction=-direction;
   }
  }

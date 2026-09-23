@@ -34,7 +34,7 @@ test('balance preserves the baseline apart from explicitly authored travel, hull
     {
       ...baseline.player,
       MAX_HP: 25,
-      BASE_SPEED: Number((baseline.player.BASE_SPEED * 1.4).toFixed(1)),
+      BASE_SPEED: 10,
     },
   );
   assert.deepEqual(MORTAR, { ...baseline.mortar, height: 10 });
@@ -58,7 +58,13 @@ test('balance preserves the baseline apart from explicitly authored travel, hull
     ),
     // These old placements were retired for the Cargo acquisition and Overseer arena.
     Object.fromEntries(
-      Object.entries({ ...baseline.health, keeper: 84 }).filter(
+      Object.entries({
+        ...baseline.health,
+        keeper: 84,
+        'lens-gallery-skirmisher-2': 15,
+        'coolant-separator-artillery-1': 20,
+        'hearth-intake-guard-1': 27,
+      }).filter(
         ([id]) =>
           !['loading-gunner', 'loading-scout', 'upper-gunner', 'upper-scout'].includes(id) &&
           !id.startsWith('proving-endurance-') &&

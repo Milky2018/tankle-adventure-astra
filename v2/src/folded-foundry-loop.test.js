@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
 import {moveWithConveyor} from './folded-machinery.js';
-import {initialFoldedState,foldedSupport,foldedControls,foldedDecks,foldedPickups,foldedSolids,moveFolded} from './folded-layout.js';
+import {initialFoldedState,foldedSupport,foldedControls,foldedDecks,foldedEnemies,foldedBlocked,foldedPickups,foldedSolids,moveFolded,releaseFolded} from './folded-layout.js';
 
 const tank=(x,y,z,overdrive=false)=>({...newPlayer(),x,y,z,overdrive});
 function drive(p,s,x,z,seconds,boost=false){
@@ -44,8 +44,10 @@ test('the opening has one shared ramp and a flat lower return without retired co
 test('the flat shortcut is sealed before victory and the shared ramp rails cannot be crossed',()=>{
   const s=initialFoldedState();
   for(let x=-32.5;x<=-23.5;x+=.5){
-    const p=tank(x,-16,60);drive(p,s,0,1,8);
-    assert.ok(p.z<116,'Return reached live Boss before the workshop route');
+    const p=tank(x,-16,52);drive(p,s,0,1,8);
+    assert.ok(p.z<58,'The shortcut entrance must block early access to the return belt');
+    drive(p,s,0,-1,2);
+    assert.ok(p.z<56,'An early visitor must be able to retreat without Boost');
   }
   const d=foldedDecks.find(d=>d.id==='foundry-west-ramp');
   for(let z=d.z+2;z<d.z+d.d-2;z+=1)for(const side of [-1,1]){
@@ -63,7 +65,11 @@ test('victory teaches Boost on level ground, rejoins the foot, then reverses the
   for(const state of [s,initialFoldedState(JSON.parse(JSON.stringify(s)))]){
     const p=tank(-28,-16,122,true);
     walk(p,state,[[-28,100]],true);assert.equal(p.y,-16);
-    walk(p,state,[[-28,52],[-40,52]]);assert.equal(p.y,-16);
+    walk(p,state,[[-28,64]]);
+    if(!state['prototype-shortcut'])assert.ok(releaseFolded('prototype-shortcut','cannon',p,state,[]));
+    const restored=initialFoldedState(JSON.parse(JSON.stringify(state)));
+    assert.equal(restored['prototype-shortcut'],true);
+    walk(p,restored,[[-28,52],[-40,52]]);assert.equal(p.y,-16);
     walk(p,state,[[-40,86]],true);assert.equal(p.y,-8);assert.ok(p.heat<100);
     walk(p,state,[[0,86]]);
     const unboosted=tank(-40,-16,52,true);drive(unboosted,state,0,1,3);
@@ -93,5 +99,32 @@ test('Flotation alone makes the remembered channel a bidirectional Foundry short
     walk(p,s,[[-60,44],[-60,37],[-60,30],[-46,30],[-46,20],[-46,-8],[-26,-8],[-26,28],[0,27]]);
     assert.equal(p.y,0);assert.equal(s.prototype,false);
     assert.equal(s.pendingSignals['press-return'],undefined);
+  }
+});
+
+test('the return adds an inward-facing entrance latch and preserves the Boss exit shutter',()=>{
+  const bossExit=foldedSolids.find(w=>w.id==='overdrive-return');
+  assert.equal(bossExit.z,114);assert.equal(bossExit.h,5);
+  const c=foldedControls.find(c=>c.id==='prototype-shortcut');
+  assert.equal(c.mount,'prototype-shortcut');assert.deepEqual(c.facing,[0,0,1]);
+  const state=initialFoldedState({prototype:true,overdrive:true});
+  assert.equal(state['overdrive-return'],true);assert.equal(state['prototype-shortcut'],false);
+});
+
+
+test('the post-Boost workroom contains an ordinary squad on the actual belt landing floor',()=>{
+  const room=foldedDecks.find(d=>d.id==='recycling-furnace');
+  const squad=foldedEnemies.filter(e=>e.y===room.y&&e.x>room.x&&e.x<room.x+room.w&&e.z>room.z&&e.z<room.z+room.d);
+  assert.equal(squad.length,3,'Moving Overseer must not leave the original workroom empty');
+  assert.deepEqual(new Set(squad.map(e=>e.type)),new Set(['turret','skirmisher','guard']));
+  const state=initialFoldedState({prototype:true,overdrive:true,foundry:true});
+  for(const e of squad){
+    assert.equal(e.encounter,'foundry-workroom');
+    assert.ok(!e.persistent&&!e.activation&&!e.battle&&!e.reserveFor);
+    assert.equal(foldedSupport(e.x,e.z,e.y)?.height,room.y);
+    assert.equal(foldedBlocked(e.x,e.y,e.z,state),undefined,e.id);
+    assert.ok(e.patrol.z+e.patrol.d<=56,'Pursuit must end before the belt');
+    for(const [dx,dz] of [[1.75,0],[-1.75,0],[0,1.75],[0,-1.75]])
+      assert.equal(foldedBlocked(e.x+dx,e.y,e.z+dz,state,.05),undefined,e.id);
   }
 });

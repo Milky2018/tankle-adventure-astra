@@ -427,3 +427,51 @@ test('mirror impacts repeat, count a direct Mortar hit once and reject blasts th
   blocked.impact({ point: new T.Vector3(0, 0, 0) }, { origin, mortar: true });
   assert.equal(blocked.state.mirrorTurns[mirror.id], undefined);
 });
+
+test('Mortar preserves full veteran damage while shortening only the flinch', () => {
+  const ordinary = enemy('ordinary', 0, 0, { type: 'artillery' }),
+    veteran = enemy('veteran', 4, 0, { type: 'artillery', variant: 'siege', hp: 20 });
+  const f = fixture([ordinary, veteran]);
+  f.hitEnemy(ordinary, 3, new T.Vector3(0, 1, 10), 'mortar');
+  f.hitEnemy(veteran, 3, new T.Vector3(0, 1, 10), 'mortar');
+  assert.equal(ordinary.hp, 7);
+  assert.equal(veteran.hp, 17);
+  assert.ok(Math.abs(ordinary.stunnedUntil - veteran.stunnedUntil - 0.4) < 1e-8);
+});
+
+test('veteran direct fire travels over twice as fast without raising hit damage', () => {
+  for (const [type, variant, speed] of [
+    ['guard', 'bastion', 36],
+    ['reflector', 'prism', 34],
+    ['skirmisher', 'flanker', 36],
+  ]) {
+    const distances = [];
+    for (const version of [undefined, variant]) {
+      const e = enemy('shooter', 0, 0, { type, variant: version });
+      const f = fixture([e]);
+      f.shootEnemy(e, 0, null, new T.Vector3(0, 1.5, 40));
+      const shot = f.shots[0];
+      assert.equal(shot.speed, version ? speed : 15);
+      assert.equal(shot.damage, 5);
+      f.step(0.1);
+      distances.push(shot.position.z);
+    }
+    assert.ok(distances[1] > distances[0] * 2, variant);
+  }
+});
+
+test('Siege shells shorten actual flight while preserving arc height and blast damage', () => {
+  const progress = [];
+  for (const variant of [undefined, 'siege']) {
+    const e = enemy('launcher', 0, 0, { type: 'artillery', variant });
+    const f = fixture([e]);
+    f.shootEnemy(e, 0, null, new T.Vector3(0, 0, 40));
+    const shot = f.shots[0];
+    assert.equal(shot.duration, variant ? 1.1 : 1.9);
+    assert.equal(shot.arc, 9);
+    assert.equal(shot.blastDamage, 10);
+    f.step(0.55);
+    progress.push(shot.position.z);
+  }
+  assert.ok(progress[1] > progress[0] * 1.7);
+});

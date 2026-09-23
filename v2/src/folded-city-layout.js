@@ -83,6 +83,7 @@ export const citySolids=[
   gate('training-pier-west',-58.8,23.2,1.2,1.2,-16,24,{permanent:true}),gate('training-pier-east',-45.6,37.2,1.2,1.2,-16,24,{permanent:true}),
   gate('relay-west',-47.5,44,1,12,-16,3),
   gate('relays',-50.5,120,1,12,-16),gate('overdrive-return',-34,114,12,1,-16,5),
+  gate('prototype-shortcut',-34,58,12,1,-16),
   gate('prototype-jamb-north',-50.5,116,1,4,-16,6,{permanent:true}),gate('prototype-jamb-south',-50.5,132,1,8,-16,6,{permanent:true}),
   gate('foundry',204,-121,28,1,16,5),
   gate('bridge-crane',-6,-20,12,1,0,3.2),
@@ -122,6 +123,7 @@ export const citySolids=[
 ];
 export const cityControls=[
   control('relay-west',-35,-14.5,44),control('relay-east',-65,-14.5,114),
+  control('prototype-shortcut',-28,-12.75,59.1,'shot',{mount:'prototype-shortcut',facing:[0,0,1]}),
   control('ballast',-29,1.3,27),
   control('loading-return',32,-2,-58,'shot',{ground:-8,surface:'top'}),control('freight-return',70,1.3,-34,'shot',{mount:'freight-return',facing:[1,0,0]}),
   control('emitter-cage',63,25.4,-86,'shot',{facing:[1,0,0]}),control('gallery',228,26,-4,'laser',{ground:24,normal:[-1,0,0]}),
@@ -144,6 +146,9 @@ export const cityEnemies=[
   {id:'reclaim-guard',x:-55,y:-16,z:110,hp:3,type:'guard',encounter:'prototype-approach',patrol:{x:-70,z:94,w:18,d:18}},
   {id:'prototype',x:-30,y:-16,z:126,hp:9,type:'elite',persistent:true},
   {id:'foundry',x:218,y:16,z:-144,hp:14,type:'boss',parts:[4,4],core:6,persistent:true},
+  {id:'workroom-gunner',x:12,y:-8,z:38,hp:2,type:'turret',encounter:'foundry-workroom',patrol:{x:-16,z:36,w:44,d:20}},
+  {id:'workroom-flanker',x:-10,y:-8,z:42,hp:2,type:'skirmisher',encounter:'foundry-workroom',patrol:{x:-16,z:36,w:44,d:20}},
+  {id:'workroom-guard',x:22,y:-8,z:47,hp:3,type:'guard',encounter:'foundry-workroom',patrol:{x:-16,z:36,w:44,d:20}},
   {id:'freight-lobber',x:55,y:0,z:-36,hp:3,type:'artillery',encounter:'freight-battery'},
   {id:'freight-flanker',x:53,y:0,z:-30,hp:2,type:'skirmisher',encounter:'freight-battery'},
   {id:'dispatch-turret',x:-15,y:0,z:-24,hp:2,type:'turret',encounter:'dispatch-crossing',patrol:{x:-18,z:-36,w:12,d:28}},
@@ -170,20 +175,20 @@ export const cityEnemies=[
 ];
 export const cityBelts=[
   // Paired freight lanes keep both directions usable without waiting for a lift.
-  {id:'inspection-up',x:1,z:-150,w:4,d:64,y:16,rise:-16,vx:0,vz:-9.95},
-  {id:'inspection-down',x:7,z:-150,w:4,d:64,y:16,rise:-16,vx:0,vz:9.95},
-  {id:'inspection-foot-up',x:1,z:-86,w:4,d:46,y:0,vx:0,vz:-9.95},
-  {id:'inspection-foot-down',x:7,z:-86,w:4,d:46,y:0,vx:0,vz:9.95},
-  {id:'inspection-east',x:12,z:-157,w:182,d:3,y:16,vx:9.95,vz:0},
-  {id:'inspection-west',x:12,z:-153,w:182,d:3,y:16,vx:-9.95,vz:0},
+  {id:'inspection-up',x:1,z:-150,w:4,d:64,y:16,rise:-16,vx:0,vz:-10.15},
+  {id:'inspection-down',x:7,z:-150,w:4,d:64,y:16,rise:-16,vx:0,vz:10.15},
+  {id:'inspection-foot-up',x:1,z:-86,w:4,d:46,y:0,vx:0,vz:-10.15},
+  {id:'inspection-foot-down',x:7,z:-86,w:4,d:46,y:0,vx:0,vz:10.15},
+  {id:'inspection-east',x:12,z:-157,w:182,d:3,y:16,vx:10.15,vz:0},
+  {id:'inspection-west',x:12,z:-153,w:182,d:3,y:16,vx:-10.15,vz:0},
   {id:'vestibule-heat',x:148,z:52,w:28,d:50,y:-8,vx:0,vz:0,heat:28},
   {id:'press-crossing',x:-44,z:47,w:22,d:5,y:-16,vx:2.4,vz:0},
-  {id:'rejection',x:-6,z:64,w:12,d:8,y:-8,vx:0,vz:9.95},
-  {id:'foundry-entry',x:-46,z:64,w:12,d:8,y:-40/3,rise:8/3,vx:0,vz:-9.95},
-  {id:'overdrive-return-belt',x:-34,z:104,w:12,d:6,y:-16,vx:0,vz:9.95},
-  {id:'loading',x:-4,z:-76,w:8,d:8,y:-8,vx:-9.95,vz:0},
-  {id:'loading-final',x:16,z:-76,w:8,d:8,y:-8,vx:-9.95,vz:0},
-  {id:'return',x:208,z:28,w:12,d:48,y:-16,rise:-16/3,vx:0,vz:9.95,release:'pressure-return',heat:28},
+  {id:'rejection',x:-6,z:64,w:12,d:8,y:-8,vx:0,vz:10.15},
+  {id:'foundry-entry',x:-46,z:64,w:12,d:8,y:-40/3,rise:8/3,vx:0,vz:-10.15},
+  {id:'overdrive-return-belt',x:-34,z:104,w:12,d:6,y:-16,vx:0,vz:10.15},
+  {id:'loading',x:-4,z:-76,w:8,d:8,y:-8,vx:-10.15,vz:0},
+  {id:'loading-final',x:16,z:-76,w:8,d:8,y:-8,vx:-10.15,vz:0},
+  {id:'return',x:208,z:28,w:12,d:48,y:-16,rise:-16/3,vx:0,vz:10.15,release:'pressure-return',heat:28},
   {id:'foundry-feed-left',x:203,z:-159,w:5,d:28,y:16,vx:-3.2,vz:0},
   {id:'foundry-feed-right',x:237,z:-159,w:5,d:28,y:16,vx:3.2,vz:0},
   {id:'keeper-feed-left',x:-23,z:24,w:8,d:26,y:-56,vx:0,vz:-3.2},
@@ -197,7 +202,7 @@ export const cityMirrors=[
   {id:'guardian-west-b',x:190,y:18,z:68,n:[-1.4631790535,0,1.1737206917],size:10},
   {id:'keeper-mirror',x:22,y:-54,z:18,n:[q,0,-q],size:6}
 ];
-export const cityFlags=['pressure-thermal','inner-thermal','bridge-crane','inner-optics','bench-cover','overdrive','magnetModule','mortarModule','laser','circulation','relay-west','relay-east','relays','prototype','overdrive-return','foundry','ballast','ratchet','loading-return','freight-return','optics-outer','emitter-cage','gallery','garden-optical','yard-optical','guardian','pump','pressure-return','last-cage','keeper','signal','maintenance','endingSeen','inner-transit'];
+export const cityFlags=['pressure-thermal','inner-thermal','bridge-crane','inner-optics','bench-cover','overdrive','magnetModule','mortarModule','laser','circulation','relay-west','relay-east','relays','prototype','overdrive-return','prototype-shortcut','foundry','ballast','ratchet','loading-return','freight-return','optics-outer','emitter-cage','gallery','garden-optical','yard-optical','guardian','pump','pressure-return','last-cage','keeper','signal','maintenance','endingSeen','inner-transit'];
 
 cityEnemies.push({id:'canal-hunter',type:'hunter',hp:3,x:-72,y:-16,z:26,swimPatrol:[[-72,26],[-72,32]]});
 citySolids.push(gate('canal-hunter-pier',-12,-9,2,2,-16,3,{permanent:true}));

@@ -21,7 +21,7 @@ test('optional equipment survives saving without compounding and leaves the orig
   updateHeat(p, .1, .75, false, false); assert.equal(p.heat, 93.75);
   const plain = newPlayer(); plain.heat = 100; plain.lastHeat = 0;
   updateHeat(plain, .1, .75, false, false); assert.equal(plain.heat, 95);
-  assert.equal(BASE_SPEED, 9.8); assert.equal(OVERDRIVE_MAX_SPEED, 1.6); assert.equal(PHOENIX_MAX_SPEED, 3.2);
+  assert.equal(BASE_SPEED, 10); assert.equal(OVERDRIVE_MAX_SPEED, 1.6); assert.equal(PHOENIX_MAX_SPEED, 3.2);
   assert.equal(playerMaxHp(plain), 25);
 });
 

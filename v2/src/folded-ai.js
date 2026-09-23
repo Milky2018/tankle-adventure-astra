@@ -1,7 +1,7 @@
 import { AQUATIC, swims, inSuction } from './folded-aquatic.js';
 import { HOSTILE_DAMAGE, BOSS_ATTACK_DAMAGE, hostileContactDamage } from './folded-weapons.js';
 import * as T from 'three';
-import { ENEMY_KINDS, woundedAlly } from './folded-enemy-rules.js';
+import { enemySpec, woundedAlly } from './folded-enemy-rules.js';
 import { BOSS_ARENAS } from './folded-boss-arenas.js';
 import { bossPattern, bossBarrage } from './folded-bosses.js';
 import { barrageTargets, RAIL, SORTER_REACH } from './folded-attacks.js';
@@ -10,7 +10,7 @@ import { canTelegraph } from './folded-pacing.js';
 import { cityContact, playerStunned } from './folded-combat.js';
 import { moveWithConveyor } from './folded-machinery.js';
 import { foldedBattles, moveFolded, foldedSupport } from './folded-layout.js';
-import { redContact, angleDelta } from './mechanics.js';
+import { redContact, angleDelta, BASE_SPEED, PHOENIX_MAX_SPEED } from './mechanics.js';
 
 // Decisions and collision queries do not depend on enemy meshes. The view
 // adapter receives updates at their original points in the simulation step.
@@ -28,7 +28,17 @@ export function createFoldedEnemies({
   save,
   view,
 }) {
+  let previous = { x: p.x, z: p.z };
+  const velocity = { x: 0, z: 0 };
+  function predict(seconds, limit = 24) {
+    const dx = velocity.x * seconds,
+      dz = velocity.z * seconds,
+      scale = Math.min(1, limit / (Math.hypot(dx, dz) || 1));
+    return { x: p.x + dx * scale, y: p.y, z: p.z + dz * scale };
+  }
   function resetEnemies() {
+    previous = { x: p.x, z: p.z };
+    velocity.x = velocity.z = 0;
     encounterPacing.reset();
     for (const e of world.enemies) {
       e.attackCycle = 0;
@@ -37,6 +47,9 @@ export function createFoldedEnemies({
       e.source = null;
       e.deploy = 0;
       e.chain = false;
+      e.warningAge = 0;
+      e.volleyCycle = 0;
+      e.secondLock = null;
     }
     for (const e of world.enemies) {
       Object.assign(e, e.spawn);
@@ -47,11 +60,13 @@ export function createFoldedEnemies({
       );
       e.hp = (e.persistent && state[e.id]) || completedCourt ? 0 : e.max;
       e.phase = 'idle';
-      e.timer = 1.5;
+      e.timer = e.variant ? (e.startup ?? 0.4) : 1.5;
       e.alertUntil = 0;
       e.lastSeen = null;
       e.deadAt = null;
       e.stunnedUntil = 0;
+      e.resumePhase = null;
+      e.resumeTimer = 0;
       e.shieldPull = 0;
       e.shieldRemoved = false;
       e.swimWaypoint = 0;
@@ -133,7 +148,7 @@ export function createFoldedEnemies({
     moveEnemy(
       e,
       Math.atan2(goal.x - e.x, goal.z - e.z),
-      ENEMY_KINDS[e.type].speed * (e.type === 'hunter' && !e.afloat ? 0.55 : 1),
+      enemySpec(e).speed * (e.type === 'hunter' && !e.afloat ? 0.55 : 1),
       dt,
     );
   }
@@ -326,6 +341,12 @@ export function createFoldedEnemies({
     }
   }
   function updateEnemies(dt) {
+    const dx = p.x - previous.x,
+      dz = p.z - previous.z;
+    const valid = dt > 0 && Math.hypot(dx, dz) <= BASE_SPEED * PHOENIX_MAX_SPEED * dt * 1.5;
+    velocity.x = valid ? dx / dt : 0;
+    velocity.z = valid ? dz / dt : 0;
+    previous = { x: p.x, z: p.z };
     const resting = !!refugeAt(p, world.hives, state);
     for (const event of bossArenas.update(p, now())) {
       audio.event(event.kind === 'reserve' ? 'warn' : 'lever');
@@ -362,7 +383,8 @@ export function createFoldedEnemies({
         view.collapse(e, now());
         continue;
       }
-      const spec = ENEMY_KINDS[e.type];
+      const spec = enemySpec(e);
+      e.warningAge = e.phase === 'warn' ? (e.warningAge || 0) + dt : 0;
       if (!e.awake || (BOSS_ARENAS.some((a) => a.id === e.id) && state.combatArena !== e.id)) {
         e.readable = false;
         view.idle(e, now(), dt);
@@ -382,7 +404,7 @@ export function createFoldedEnemies({
         engageRange = retaliating ? 94 : Math.max(30, spec.reach);
       if (distance > Math.max(45, engageRange + 8)) {
         e.phase = 'idle';
-        e.timer = 0.55;
+        e.timer = e.variant ? 0.2 : 0.55;
         e.readable = false;
         continue;
       }
@@ -419,8 +441,16 @@ export function createFoldedEnemies({
         (clearSight || ((supported || committed || retaliating) && Math.abs(e.y - p.y) < 4));
       if (active && clearSight) alertSquad(e);
       if (e.stunnedUntil > now()) {
+        if (e.variant && e.phase !== 'stunned') {
+          e.resumePhase = e.phase;
+          e.resumeTimer = e.timer;
+        }
         e.phase = 'stunned';
         e.timer = 0.5;
+      } else if (e.phase === 'stunned' && e.resumePhase) {
+        e.phase = e.resumePhase;
+        e.timer = e.resumeTimer;
+        e.resumePhase = null;
       } else if (!active) {
         if (resting) {
           e.alertUntil = 0;
@@ -445,7 +475,7 @@ export function createFoldedEnemies({
           else moveEnemy(e, Math.atan2(point[0] - e.x, point[1] - e.z), spec.speed * 0.45, dt);
         }
         e.phase = 'idle';
-        e.timer = 0.55;
+        e.timer = e.variant ? 0.2 : 0.55;
       } else {
         e.timer -= dt;
         if (e.id === 'keeper' || e.id === 'foundry' || e.guardian) updateBossBattery(e, clearSight);
@@ -475,8 +505,6 @@ export function createFoldedEnemies({
               spec.speed * (e.afloat ? 1 : 0.55),
               dt,
             );
-          else if (e.type === 'skirmisher' && distance < 20)
-            moveEnemy(e, e.aim + ((e.id.length % 2 ? 1 : -1) * Math.PI) / 2, spec.speed, dt);
           else if (spec.speed && !e.guardian && distance > (e.type === 'guard' ? 5 : spec.reach)) {
             approachEnemy(e, p, dt);
             if (distance > spec.reach) e.timer = Math.max(e.timer, 0.2);
@@ -490,12 +518,18 @@ export function createFoldedEnemies({
               e.attack = e.attackCycle % 2 ? 'cannon' : 'charge';
             }
             e.phase = 'warn';
+            e.warningAge = 0;
+            e.volleyCycle = (e.volleyCycle || 0) + 1;
             e.timer = e.id === 'prototype' ? (e.hp / e.max < 0.55 ? 0.85 : 1.05) : spec.warn;
             e.lock = new T.Vector3(
               sighting.x,
               ['artillery', 'miner'].includes(e.type) ? sighting.y + 0.05 : sighting.y + 1.2,
               sighting.z,
             );
+            if (e.variant === 'siege') {
+              const next = clearSight ? predict(spec.lobDuration + 0.45) : sighting;
+              e.secondLock = new T.Vector3(next.x, next.y + 0.05, next.z);
+            }
             if (e.type === 'miner') {
               const range = Math.hypot(e.lock.x - e.x, e.lock.z - e.z),
                 fraction = Math.min(1, 8 / range);
@@ -517,6 +551,19 @@ export function createFoldedEnemies({
           if (e.type === 'sniper' && e.timer > RAIL.lockTime && clearSight) {
             e.lock.set(p.x, p.y + 1.2, p.z);
             e.aim = Math.atan2(p.x - e.x, p.z - e.z);
+          }
+          if (clearSight && e.type === 'artillery' && e.timer > 0.45) {
+            const next = e.variant === 'siege' || e.volleyCycle % 2 ? p : predict(2.35);
+            e.lock.set(next.x, p.y + 0.05, next.z);
+            if (e.variant === 'siege') {
+              const ahead = predict(spec.lobDuration + 0.45);
+              e.secondLock.set(ahead.x, p.y + 0.05, ahead.z);
+            }
+          }
+          if (clearSight && e.variant === 'interceptor' && e.timer > 0.35) {
+            const next = predict(0.55, 10);
+            e.lock.set(next.x, p.y + 1.2, next.z);
+            e.aim = Math.atan2(next.x - e.x, next.z - e.z);
           }
           view.warn(e, origin, now());
           if (e.timer <= 0) {
@@ -566,15 +613,32 @@ export function createFoldedEnemies({
               for (const t of barrageTargets(origin, e.lock))
                 shootEnemy(e, 0, null, new T.Vector3(t.x, t.y, t.z), t.delay);
               e.phase = 'vent';
+              if (e.variant === 'siege')
+                for (const t of barrageTargets(origin, e.secondLock))
+                  shootEnemy(e, 0, null, new T.Vector3(t.x, t.y, t.z), 0.5 + t.delay);
               e.timer = spec.recovery;
             } else if (spec.attack === 'burst') {
-              shootEnemy(e, -0.08);
+              if (clearSight) {
+                const next = predict(0.3, 6);
+                e.lock.set(next.x, p.y + 1.2, next.z);
+              }
+              shootEnemy(
+                e,
+                -0.08,
+                null,
+                e.lock,
+                0,
+                false,
+                e.variant === 'flanker' ? { speed: spec.projectileSpeed } : {},
+              );
               e.phase = 'burst';
               e.timer = 0.18;
-              e.burstLeft = 2;
+              e.burstLeft = e.variant === 'flanker' ? 5 : 2;
             } else {
               shootEnemy(e, spec.attack === 'reflect' ? -0.1 : 0);
               if (spec.attack === 'reflect') shootEnemy(e, 0.1);
+              if (e.variant === 'prism') for (const angle of [-0.3, 0.3]) shootEnemy(e, angle);
+              if (e.variant === 'bastion') for (const angle of [-0.18, 0.18]) shootEnemy(e, angle);
               e.phase = 'vent';
               e.timer = e.guardian ? 2.2 : spec.recovery;
             }
@@ -582,7 +646,7 @@ export function createFoldedEnemies({
         } else if (e.phase === 'charge') {
           const oldX = e.x,
             oldZ = e.z,
-            speed = e.id === 'prototype' ? 21 : e.type === 'elite' ? 19 : 13;
+            speed = spec.chargeSpeed ?? (e.id === 'prototype' ? 21 : e.type === 'elite' ? 19 : 13);
           const body = { x: e.x, y: e.y, z: e.z, speed: 1 };
           moveFolded(
             body,
@@ -591,7 +655,13 @@ export function createFoldedEnemies({
             state,
             world.lifts,
           );
-          if (!refugeAt(body, world.hives, state, REFUGE_CLEARANCE + e.radius)) {
+          const outsidePatrol =
+            e.patrol &&
+            (body.x < e.patrol.x ||
+              body.x > e.patrol.x + e.patrol.w ||
+              body.z < e.patrol.z ||
+              body.z > e.patrol.z + e.patrol.d);
+          if (!outsidePatrol && !refugeAt(body, world.hives, state, REFUGE_CLEARANCE + e.radius)) {
             e.x = body.x;
             e.z = body.z;
             e.y = body.y;
@@ -617,7 +687,25 @@ export function createFoldedEnemies({
           }
         } else if (e.phase === 'burst') {
           if (e.timer <= 0) {
-            shootEnemy(e, e.burstLeft === 2 ? 0 : 0.08);
+            if (clearSight) {
+              const next = predict(0.3, 6);
+              e.lock.set(next.x, p.y + 1.2, next.z);
+            }
+            shootEnemy(
+              e,
+              e.variant === 'flanker'
+                ? e.burstLeft % 2
+                  ? 0.08
+                  : -0.08
+                : e.burstLeft === 2
+                  ? 0
+                  : 0.08,
+              null,
+              e.lock,
+              0,
+              false,
+              e.variant === 'flanker' ? { speed: spec.projectileSpeed } : {},
+            );
             e.burstLeft--;
             e.timer = 0.18;
             if (!e.burstLeft) {
@@ -732,21 +820,48 @@ export function createFoldedEnemies({
           }
         } else if (e.timer <= 0) {
           e.phase = 'idle';
-          e.timer = 0.25 + (e.id.length % 3) * 0.1;
+          e.timer = e.variant ? 0.12 : 0.25 + (e.id.length % 3) * 0.1;
         }
       }
       if (
         active &&
         e.type === 'skirmisher' &&
-        ['warn', 'burst', 'vent'].includes(e.phase) &&
+        e.phase !== 'stunned' &&
         Math.hypot(e.x - e.spawn.x, e.z - e.spawn.z) < 28
-      )
-        moveEnemy(
-          e,
-          Math.atan2(p.x - e.x, p.z - e.z) + ((e.id.length % 2 ? 1 : -1) * Math.PI) / 2,
-          spec.speed,
-          dt,
+      ) {
+        const incoming = shots.find(
+          (s) =>
+            s.mortar &&
+            !s.hostile &&
+            s.age > 0.2 &&
+            s.target &&
+            Math.abs(s.target.y - e.y) < 4 &&
+            Math.hypot(s.target.x - e.x, s.target.z - e.z) < 5 &&
+            !world.cast(
+              origin,
+              s.position.clone().sub(origin).normalize(),
+              Math.max(0, s.position.distanceTo(origin) - 0.3),
+              { targets: false },
+            ),
         );
+        if (incoming)
+          moveEnemy(
+            e,
+            Math.atan2(e.x - incoming.target.x, e.z - incoming.target.z),
+            spec.speed,
+            dt,
+          );
+        else if (
+          ['idle', 'warn', 'burst', 'vent'].includes(e.phase) &&
+          (e.phase !== 'idle' || distance < 20)
+        )
+          moveEnemy(
+            e,
+            Math.atan2(p.x - e.x, p.z - e.z) + ((e.id.length % 2 ? 1 : -1) * Math.PI) / 2,
+            spec.speed,
+            dt,
+          );
+      }
       if (
         active &&
         e.phase === 'vent' &&

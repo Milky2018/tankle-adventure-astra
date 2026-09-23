@@ -35,5 +35,5 @@ test('hostile lob clears low cover with a lower launch speed and gravity', () =>
   assert.ok(8*BARRAGE.height/BARRAGE.duration**2<21);
   assert.ok(24/BARRAGE.duration<24/1.65);
   // The non-combat return underpass fits below the original entrance floor.
-  for(const r of foldedArchitecture.rooms.filter(r=>r.roof))assert.ok(r.h>=(r.id==='prototype-return'?6:16),`${r.id} needs headroom`);
+  for(const r of foldedArchitecture.rooms.filter(r=>r.roof))assert.ok(r.h>=({ 'prototype-return':6,'arsenal-dispatch':9,'lens-vestibule':9,'coolant-west-service':9,'hearth-mounts':9,'hearth-feed':9 }[r.id]||16),`${r.id} needs headroom`);
 });

@@ -11,7 +11,9 @@ export function mechanismReady(control,player,time,state={}){
 export function canTelegraph(enemy,enemies){
   const heavy=['sniper','artillery','scout','elite','welder','hunter','dredger'];
   if(!heavy.includes(enemy.type))return true;
-  return !enemies.some(e=>e!==enemy&&e.hp>0&&(enemy.battle?e.battle===enemy.battle:e.encounter&&e.encounter===enemy.encounter)&&heavy.includes(e.type)&&['warn','charge','flame'].includes(e.phase));
+  const active=enemies.filter(e=>e!==enemy&&e.hp>0&&(enemy.battle?e.battle===enemy.battle:e.encounter&&e.encounter===enemy.encounter)&&heavy.includes(e.type)&&['warn','charge','flame'].includes(e.phase));
+  if(enemy.coordinated)return active.length<2&&active.every(e=>e.type!==enemy.type&&(e.phase!=='warn'||(e.warningAge||0)>=.5));
+  return active.length===0;
 }
 
 // Reserves are visible, damageable machines. Firing at them can wake them early;

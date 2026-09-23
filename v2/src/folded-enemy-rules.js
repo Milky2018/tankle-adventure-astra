@@ -30,6 +30,64 @@ export const ENEMY_KINDS = {
   boss: { role: 'ranged', speed: 0, reach: 27, warn: 1.4, recovery: 2.4, attack: 'shot' },
 };
 
+// Veteran health multiplies the local ordinary unit, not the opening-area baseline.
+export const ENEMY_VARIANTS = {
+  interceptor: {
+    name: 'Interceptor',
+    base: 'scout',
+    health: 3,
+    speed: 11.2,
+    chargeSpeed: 26,
+    warn: 0.75,
+    recovery: 0.75,
+    color: 0xb85443,
+  },
+  bastion: {
+    name: 'Bastion',
+    base: 'guard',
+    health: 3,
+    speed: 7.6,
+    reach: 24,
+    warn: 0.85,
+    recovery: 0.75,
+    projectileSpeed: 36,
+    color: 0xc4aa71,
+  },
+  siege: {
+    name: 'Siege Carrier',
+    base: 'artillery',
+    health: 2.5,
+    speed: 5,
+    warn: 0.95,
+    recovery: 1.4,
+    lobDuration: 1.1,
+    color: 0x986b4c,
+  },
+  prism: {
+    name: 'Prism Sentinel',
+    base: 'reflector',
+    health: 2.5,
+    speed: 6.4,
+    reach: 32,
+    warn: 0.9,
+    recovery: 0.85,
+    projectileSpeed: 34,
+    color: 0xc7b5d2,
+  },
+  flanker: {
+    name: 'Flanker',
+    base: 'skirmisher',
+    health: 3,
+    speed: 12.4,
+    reach: 36,
+    warn: 0.55,
+    recovery: 0.7,
+    projectileSpeed: 36,
+    color: 0x9f504c,
+  },
+};
+export const enemySpec = (e) => ({ ...ENEMY_KINDS[e.type], ...(ENEMY_VARIANTS[e.variant] || {}) });
+
 export function woundedAlly(enemy, enemies) {
   return enemies
     .filter(

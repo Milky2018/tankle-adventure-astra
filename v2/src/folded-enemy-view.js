@@ -10,6 +10,7 @@ export function createEnemyView({ world, project, getCamera, burst }) {
   function reset(e) {
     e.zone.visible = e.supportBeam.visible = false;
     if (e.batteryWarning) e.batteryWarning.visible = false;
+    if (e.siegeZone) e.siegeZone.visible = false;
     e.model.root.scale.copy(e.baseScale);
     e.model.root.rotation.z = 0;
     if (e.model.frontArmor) e.model.frontArmor.visible = true;
@@ -107,6 +108,7 @@ export function createEnemyView({ world, project, getCamera, burst }) {
   function clearWarnings(e) {
     e.warning.visible = e.zone.visible = e.supportBeam.visible = false;
     if (e.batteryWarning) e.batteryWarning.visible = false;
+    if (e.siegeZone) e.siegeZone.visible = false;
     if (e.charge) e.charge.root.visible = false;
     if (e.flame) e.flame.visible = false;
     if (e.model.flow) e.model.flow.visible = false;
@@ -177,6 +179,11 @@ export function createEnemyView({ world, project, getCamera, burst }) {
       e.zone.position.copy(e.lock);
       e.zone.position.y += 0.1;
       e.zone.scale.setScalar(1 + Math.sin(time * 14) * 0.06);
+      if (e.siegeZone && e.secondLock) {
+        e.siegeZone.visible = true;
+        e.siegeZone.position.copy(e.secondLock);
+        e.siegeZone.position.y += 0.1;
+      }
     } else if (e.type === 'repairer' && e.patient) {
       e.supportBeam.visible = true;
       e.supportBeam.geometry.setFromPoints([

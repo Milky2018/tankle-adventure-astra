@@ -156,8 +156,8 @@ function factoryEnemy(type) {
   };
 }
 
-export function chargeWarning(type) {
-  const { radius, speed, duration } = CHARGE[type], length = speed * duration;
+export function chargeWarning(type, speedScale = 1) {
+  const { radius, speed, duration } = CHARGE[type], length = speed * duration * speedScale;
   const path = new T.Shape();
   path.absarc(0, 0, radius, Math.PI, Math.PI * 2, false);
   path.lineTo(radius, length);

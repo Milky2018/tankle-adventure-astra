@@ -10,7 +10,7 @@ import {cityDamage} from './folded-combat.js';
 test('the same conveyor transports player, live enemy and wreck without crossing floors',()=>{
   const state=initialFoldedState(),bodies=[{hp:50},{hp:2},{hp:0}].map(extra=>({x:0,y:-8,z:67,speed:1,...extra}));
   for(let i=0;i<20;i++)for(const body of bodies)moveWithConveyor(body,0,0,1/60,state);
-  for(const body of bodies)assert.ok(Math.abs(body.z-(67+9.95/3))<.001);
+  for(const body of bodies)assert.ok(Math.abs(body.z-(67+10.15/3))<.001);
   assert.deepEqual(conveyorVelocity({x:0,z:67,y:0}),{x:0,z:0});
 });
 

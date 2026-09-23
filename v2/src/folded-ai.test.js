@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { Vector3 } from 'three';
 import { createFoldedEnemies } from './folded-ai.js';
 import { createEncounterPacing } from './folded-pacing.js';
 import { createBossArenas } from './folded-boss-arenas.js';
-import { initialFoldedState } from './folded-layout.js';
+import { initialFoldedState, foldedEnemies, foldedHives } from './folded-layout.js';
 import { createCircuitSignals } from './folded-circuits.js';
 import { expansionBattles } from './folded-expansion-layout.js';
 import { newPlayer } from './mechanics.js';
@@ -478,4 +479,164 @@ test('Sorter sweep impact flashes its shield and immediately enters recovery', (
   assert.ok(flashed);
   assert.ok(f.events.some((event) => event.name === 'impact'));
   assert.equal(f.hits.length, 0);
+});
+
+test('Interceptor predicts a moving hull, then commits before its faster charge', () => {
+  const e = enemy('scout', { variant: 'interceptor' }),
+    f = fixture([e]);
+  for (let i = 0; i < 30 && e.phase !== 'warn'; i++) f.step(0.05);
+  assert.equal(e.phase, 'warn');
+  while (e.timer > 0.45) {
+    f.p.x += 0.2;
+    f.step(0.1);
+  }
+  assert.ok(e.lock.x > f.p.x, 'The approach should intercept, not chase the old position');
+  while (e.timer > 0.3) f.step(0.05);
+  const lock = e.lock.clone();
+  f.p.x -= 2;
+  while (e.phase === 'warn') f.step(0.05);
+  assert.deepEqual(e.lock, lock, 'A last-moment reversal must beat the committed charge');
+  const before = { x: e.x, z: e.z };
+  f.step(0.05);
+  assert.ok(Math.hypot(e.x - before.x, e.z - before.z) > 1.2);
+});
+
+test('Siege Carrier marks and fires both remembered and predicted three-shell brackets', () => {
+  const e = enemy('artillery', { variant: 'siege' }),
+    f = fixture([e]);
+  f.step(0.1);
+  while (e.phase === 'warn') {
+    f.p.x += 0.1;
+    f.step(0.05);
+  }
+  assert.equal(f.fired.length, 6);
+  assert.ok(f.fired[4].target.x > f.fired[1].target.x + 2);
+  assert.deepEqual(
+    f.fired.map((s) => Number(s.delay.toFixed(2))),
+    [0, 0.32, 0.64, 0.5, 0.82, 1.14],
+  );
+  assert.equal(e.phase, 'vent');
+});
+
+test('Flanker keeps moving through a six-shot burst with faster projectiles', () => {
+  const e = enemy('skirmisher', { variant: 'flanker' }),
+    f = fixture([e]);
+  for (let i = 0; i < 60 && f.fired.length < 6; i++) f.step(0.05);
+  assert.equal(f.fired.length, 6);
+  assert.ok(f.fired.every((s) => s.speed === 36));
+  assert.ok(Math.hypot(e.x - e.spawn.x, e.z - e.spawn.z) > 2);
+});
+
+test('ordinary skirmisher follow-up shots respond to a changed firing lane', () => {
+  const e = enemy('skirmisher'),
+    f = fixture([e]);
+  while (!f.fired.length) f.step(0.1);
+  const first = f.fired[0].target.x;
+  f.p.x += 2;
+  while (f.fired.length < 2) f.step(0.1);
+  assert.ok(f.fired[1].target.x > first);
+});
+
+test('veteran flinches preserve completed attack preparation instead of restarting it', () => {
+  const e = enemy('artillery', { variant: 'siege' }),
+    f = fixture([e]);
+  f.step(0.1);
+  f.step(0.6);
+  const remaining = e.timer;
+  e.stunnedUntil = 1;
+  f.step(0.1);
+  assert.equal(e.phase, 'stunned');
+  f.step(0.3);
+  assert.equal(e.phase, 'warn');
+  assert.equal(e.timer, remaining);
+  for (let i = 0; i < 12 && !f.fired.length; i++) f.step(0.1);
+  assert.equal(f.fired.length, 6);
+});
+
+test('skirmishers evade visible airborne Mortars but cannot read hidden aiming', () => {
+  const e = enemy('skirmisher', { variant: 'flanker', x: 0, z: 20 }),
+    f = fixture([e]);
+  f.shots.push({
+    mortar: true,
+    hostile: false,
+    age: 0.3,
+    target: new Vector3(-2, 0, 20),
+    position: new Vector3(-2, 5, 20),
+  });
+  f.step(0.05);
+  assert.ok(e.x > 0, 'Dodge away from the visible landing, not toward it');
+  const hidden = enemy('skirmisher', { variant: 'flanker', x: 0, z: 20 }),
+    g = fixture([hidden]);
+  g.shots.push({ ...f.shots[0] });
+  g.block(true);
+  g.step(0.05);
+  assert.equal(hidden.x, 0);
+  assert.equal(hidden.z, 20);
+});
+
+test('veterans acquire sooner and repeat attacks more often than their ordinary counterparts', () => {
+  for (const [type, variant] of [
+    ['scout', 'interceptor'],
+    ['guard', 'bastion'],
+    ['artillery', 'siege'],
+    ['reflector', 'prism'],
+    ['skirmisher', 'flanker'],
+  ]) {
+    const cycles = [];
+    const firstWarnings = [];
+    for (const version of [undefined, variant]) {
+      const e = enemy(type, { variant: version });
+      const f = fixture([e], { z: 28 });
+      f.ai.resetEnemies();
+      let first = null;
+      for (let i = 0; i < 600; i++) {
+        f.step(1 / 60);
+        if (first == null && e.phase === 'warn') first = i / 60;
+      }
+      firstWarnings.push(first);
+      cycles.push(e.volleyCycle);
+    }
+    assert.ok(firstWarnings[1] < firstWarnings[0] * 0.6, `${variant}: initial acquisition`);
+    assert.ok(cycles[1] >= cycles[0] * 1.4, `${variant}: ${cycles.join(' -> ')} cycles`);
+  }
+});
+
+test('the former Overseer workroom squad wakes and fires after Boost, even with the old Boss flag', () => {
+  const squad = foldedEnemies
+    .filter((e) => e.encounter === 'foundry-workroom')
+    .map((e) => enemy(e.type, { ...e, max: e.hp }));
+  assert.equal(squad.length, 3);
+  const f = fixture(squad, { x: 0, y: -8, z: 53, overdrive: true });
+  f.state.foundry = true;
+  f.world.hives = foldedHives;
+  f.ai.resetEnemies();
+  assert.ok(squad.every((e) => e.hp > 0 && e.awake));
+  for (let i = 0; i < 600; i++) f.step(1 / 60);
+  for (const e of squad)
+    assert.ok(
+      f.fired.some((s) => s.id === e.id),
+      e.id,
+    );
+  const before = f.fired.length;
+  f.p.z = 86;
+  for (let i = 0; i < 600; i++) f.step(1 / 60);
+  assert.equal(f.fired.length, before, 'Retreat into the Hive ends attacks');
+  for (const e of squad) assert.ok(e.z <= 56, `${e.id} left the workroom`);
+});
+
+test('a committed Interceptor charge cannot merge its introduction with the next encounter', () => {
+  const e = enemy('scout', {
+    variant: 'interceptor',
+    x: 68,
+    y: -40,
+    z: 69,
+    patrol: { x: 54, z: 52, w: 24, d: 18 },
+    phase: 'charge',
+    timer: 1,
+    aim: 0,
+  });
+  const f = fixture([e], { x: 68, y: -40, z: 74 });
+  f.step(0.1);
+  assert.ok(e.z <= 70);
+  assert.equal(e.phase, 'vent');
 });

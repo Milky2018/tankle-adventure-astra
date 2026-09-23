@@ -6,6 +6,7 @@ export function cityDamage(e,amount,origin,kind='cannon',part=null){
   if(e.guardian&&!rear&&!red)return 0;
   if(e.id==='prototype'&&e.phase!=='vent'&&!rear&&!red)amount*=.4;
   if(['foundry','sorter'].includes(e.id)&&e.phase!=='vent'&&!red)return 0;
+  if(e.variant==='bastion'&&!e.shieldRemoved&&e.phase!=='vent'&&kind==='ram'&&Math.cos(angleDelta(Math.atan2(origin.x-e.x,origin.z-e.z),e.aim))>.55)amount*=.25;
   if(e.parts?.some(p=>p.hp>0)){
     if(red){let remaining=amount;for(const part of e.parts){const dealt=Math.min(part.hp,remaining);part.hp-=dealt;remaining-=dealt;}return Math.min(e.hp,amount);}
     const exposed=part?.hp>0?part:null;

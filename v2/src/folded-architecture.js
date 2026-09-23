@@ -16,8 +16,13 @@ export const REGION_STYLE={
   furnace:{wall:0x70655f,frame:0x3a3639,roof:0x524849,accent:0x9e8070,floor:0x716663,surface:'brick',paving:'ash'}
 };
 // Courtyards, exposed banks and long inspection walks retain the open skyline.
-export const OPEN_ROOMS=new Set(['turntable','garden-bank','pump-terrace','rear-dock','ferry-cradle','bridge-underside','canal-landing','guardian-court','predecessor-gallery','reservoir-east-bank','reservoir-filter-bank','reservoir-pump-island','proving-impact','proving-observation','lens-west-gallery','lens-north-gallery','lens-east-gallery']);
-// [support, region, wall height, roof]. Enclosed halls keep Mortar headroom.
+export const OPEN_ROOMS=new Set(['turntable','garden-bank','pump-terrace','rear-dock','ferry-cradle','bridge-underside','canal-landing','guardian-court','predecessor-gallery','reservoir-east-bank','reservoir-filter-bank','reservoir-pump-island','proving-impact','proving-observation','lens-west-gallery','lens-north-gallery','lens-east-gallery','coolant-separator']);
+// Low service ceilings favour direct fire; open galleries and the battery court admit lobs.
+const combatRoofs={
+ 'arsenal-dispatch':9,'lens-vestibule':9,'coolant-west-service':9,
+ 'hearth-mounts':9,'hearth-feed':9
+};
+// [support, region, wall height, roof].
 export const ROOM_PLAN=[
   ['garden-foundry-walk','garden',5,false],['garden-care','garden',16,true],['sorting-bay','transit',24,false],['mortar-installation','transit',16,true],
   ['foundry-awakening','foundry',16,true],['foundry-west','foundry',16,true],
@@ -91,12 +96,14 @@ export function buildArchitecture(decks,lifts){
     }
     const key=[x,y,z,w,h,d].map(n=>n.toFixed(2)).join('/');if(seen.has(key))return;seen.add(key);solids.push(s);return s;
   }
-  for(const [id,region,h,roof]of [...ROOM_PLAN,...[...expansionRooms,...explorationRooms].map(r=>[r.id,r.region,16,!OPEN_ROOMS.has(r.id)])]){
+  for(const [id,region,h,roof]of [...ROOM_PLAN,...[...expansionRooms,...explorationRooms].map(r=>[r.id,r.region,combatRoofs[r.id]||16,!OPEN_ROOMS.has(r.id)])]){
     const f=decks.find(d=>d.id===id),room={...f,region,h,roof};rooms.push(room);
     // Roof construction precedes the authored-wall branches: all hall types
     // receive ceilings, while floor and lift intersections carve real openings.
     if(roof)for(let x=f.x;x<f.x+f.w;x+=8)for(let z=f.z;z<f.z+f.d;z+=8){
       let w=Math.min(8,f.x+f.w-x),d=Math.min(8,f.z+f.d-z),lift=0;
+      // The eastern loading opening exposes the mandatory Mortar tray and charge lane.
+      if((id==='hearth-mounts'||id==='hearth-feed')&&x>=32)continue;
       if(region==='garden'){
         // Surviving greenhouse strips leave most of the roof open to daylight.
         if((Math.floor((x-f.x)/8)+Math.floor((z-f.z)/8))%3)continue;

@@ -11,6 +11,7 @@ import { damagePlayer } from './mechanics.js';
 import { foldedSupport } from './folded-layout.js';
 import { C, ring, mat } from './world.js';
 import { SIGNAL } from './folded-visibility.js';
+import { enemySpec } from './folded-enemy-rules.js';
 import { CANNON, HOSTILE_DAMAGE, hostileShotDamage, hostileBlastDamage } from './folded-weapons.js';
 
 // Combat uses the same world queries in the game and in renderer-free tests.
@@ -77,7 +78,8 @@ export function createFoldedCombat({
     } else if (kind !== 'laser') audio.event('hit', { position: e });
     e.hp = Math.max(0, e.hp - dealt);
     e.flash = 0.14;
-    if (dealt > 0 && kind === 'mortar' && !e.persistent) e.stunnedUntil = time + 0.6;
+    if (dealt > 0 && kind === 'mortar' && !e.persistent)
+      e.stunnedUntil = time + (e.variant ? 0.2 : 0.6);
     if (!e.hp) {
       e.deadAt = time;
       e.warning.visible = false;
@@ -256,6 +258,8 @@ export function createFoldedCombat({
     lob = false,
     options = {},
   ) {
+    const spec = enemySpec(e);
+    const speed = options.speed ?? spec.projectileSpeed ?? (e.type === 'sniper' ? RAIL.speed : 15);
     const origin = source
         ? new T.Vector3(source.x, source.y, source.z)
         : new T.Vector3(e.x, e.y + (e.type === 'boss' ? 4 : e.guardian ? 2.8 : 1.5), e.z),
@@ -277,7 +281,7 @@ export function createFoldedCombat({
       mesh.material.color.setHex(0xffb64a);
       mesh.scale.setScalar(1.8);
     }
-    if (options.speed >= 30 && mesh.children[0]) mesh.children[0].scale.set(0.7, 0.7, 0.45);
+    if (speed >= 30 && mesh.children[0]) mesh.children[0].scale.set(0.7, 0.7, 0.45);
     mesh.visible = delay <= 0;
     let marker = null;
     if (lob || e.type === 'artillery') {
@@ -295,18 +299,13 @@ export function createFoldedCombat({
       owner: e.id,
       marker,
       delay,
-      duration: BARRAGE.duration,
+      duration: spec.lobDuration ?? BARRAGE.duration,
       arc: e.type === 'boss' ? 10 : BARRAGE.height,
       range: e.id === 'keeper' ? 94 : e.type === 'sniper' ? RAIL.range : 55,
       mineOwner: e.type === 'miner' ? e.id : null,
       damage: hostileShotDamage(e, lob ? 'barrage' : options.homing ? 'seekers' : e.attack),
       blastDamage: mortar ? hostileBlastDamage(e) : null,
-      speed:
-        e.id === 'keeper'
-          ? Math.max(15, origin.distanceTo(target) / 2.5)
-          : e.type === 'sniper'
-            ? RAIL.speed
-            : 15,
+      speed: e.id === 'keeper' ? Math.max(15, origin.distanceTo(target) / 2.5) : speed,
       origin: origin.clone(),
       position: origin.clone(),
       dir,

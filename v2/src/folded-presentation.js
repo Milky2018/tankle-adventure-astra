@@ -51,8 +51,6 @@ export function makeCityPresentation(scene,aperture){
   // District machines occupy authored work positions, rather than the same
   // decorative strip behind every room. Their bounds are in the level layout.
   makeDistrictMachinery(scenery);
-  // A real exhaust spine above the deep furnace, visible through the transit void.
-  for(const x of [-23,-19]){cylinder(scenery,1.2,95,x,-13,-15,iron,12);for(let y=-54;y<35;y+=8)ring(scenery,1.35,.14,x,y,-15,copper);}
   // Supported transit bridge, visible from the water and the later roof route.
   for(const x of [-8,8]){
     box(scenery,.65,2.5,60,x,-2,-2,iron,0);

@@ -1,3 +1,4 @@
+import {ENEMY_VARIANTS} from './folded-enemy-rules.js';
 // Authored service districts. Coordinates describe usable rooms and machinery,
 // not slots in a repeated acquisition template.
 export const districtPlans=[
@@ -28,7 +29,13 @@ const routes={
   controls:[['arsenal-return',-102.1,-54,'magnet',{height:4.1,ground:8,mount:'arsenal-return',facing:[-1,0,0]}]],
   gates:[['arsenal-return',-101,-60,1,12,{magnetic:true}]],
   cover:[[-123,-10,4,5],[-93,22,4,6],[-152,-48,3,6]],
-  enemies:[['sniper',-134,-5,'dispatch'],['guard',-113,9,'dispatch'],['skirmisher',-80,1,'dispatch'],['artillery',-143,-42,'assembly'],['scout',-125,-45,'assembly'],['guard',-82,-20,'return']],
+  enemies:[
+   ['sniper',-134,-5,'dispatch',0,{battle:'arsenal-dispatch',activation:{x:-126,y:8,z:2,radius:18},patrol:{x:-144,z:-10,w:32,d:24}}],
+   ['guard',-118,7,'dispatch',0,{battle:'arsenal-dispatch',activation:{x:-126,y:8,z:2,radius:18},patrol:{x:-144,z:-10,w:32,d:24}}],
+   ['skirmisher',-84,24,'entry',0,{id:'arsenal-dispatch-skirmisher-2',patrol:{x:-110,z:14,w:40,d:25}}],
+   ['artillery',-143,-42,'assembly'],['scout',-125,-45,'assembly'],['guard',-82,-20,'return'],
+   ['turret',-108,22,'entry']
+  ],
   props:[['gantry',-124,-8],['assembly',-151,-58]],
  },
  reservoir:{
@@ -37,8 +44,8 @@ const routes={
   branches:[[[-104,114],[-104,98],[-122,98],[-122,90]]],
   controls:[['reservoir-inlet',-72,100,'shot',{rotor:true}]],
   gates:[],
-  cover:[[-84,72,3,3],[-97,117,3,5],[-149,117,3,5]],
-  enemies:[['sniper',-159,107,'banks'],['guard',-77,95,'banks'],['sniper',-142,113,'filter'],['skirmisher',-115,111,'filter']],
+  cover:[[-84,72,3,3],[-97,117,3,5],[-149,117,3,5],[-82,99,4,2]],
+  enemies:[['sniper',-82,110,'banks',0,{patrol:{x:-82,z:106,w:12,d:12}}],['guard',-77,95,'banks',0,{patrol:{x:-82,z:88,w:12,d:28}}],['sniper',-142,113,'filter',0,{patrol:{x:-154,z:108,w:20,d:10}}],['skirmisher',-115,111,'filter',0,{patrol:{x:-130,z:108,w:28,d:10}}]],
   props:[['pump',-123,78],['sluice',-107,118],['wreck',-167,60],['planter',-169,74],['planter',-72,114]],
  },
  proving:{
@@ -57,8 +64,14 @@ const routes={
   branches:[[[271,-62],[290,-62],[290,-88]]],
   controls:[['lens-return',308,-14,'laser',{height:2,via:[324,26,-14]}]],
   gates:[['lens-return',302,-34,1,12]],
-  cover:[[266,-58,5,3],[295,-99,3,9],[343,-76,4,3],[284,-82,.8,16]],
-  enemies:[['reflector',272,-74,'collimator'],['sniper',332,-90,'gallery'],['skirmisher',303,-91,'gallery']],
+  cover:[[266,-58,5,3],[295,-99,3,9],[343,-76,4,3],[284,-82,.8,16],[278,-27,3,6]],
+  enemies:[
+   ['reflector',272,-74,'collimator',0,{patrol:{x:266,z:-80,w:10,d:16}}],
+   ['sniper',332,-90,'gallery',0,{coordinated:true,battle:'lens-gallery',activation:{x:310,y:24,z:-89,radius:22},patrol:{x:304,z:-98,w:40,d:14}}],
+   ['skirmisher',284,-30,'entry',0,{id:'lens-gallery-skirmisher-2',variant:'flanker',battle:'lens-entry',activation:{x:276,y:24,z:-24,radius:14},patrol:{x:267,z:-36,w:20,d:23}}],
+   ['reflector',318,-89,'gallery',0,{variant:'prism',coordinated:true,battle:'lens-gallery',activation:{x:310,y:24,z:-89,radius:22},patrol:{x:304,z:-98,w:40,d:14}}],
+   ['turret',286,-16,'entry',0,{battle:'lens-entry',activation:{x:276,y:24,z:-24,radius:14}}]
+  ],
   props:[['lens',284,-91],['emitter',337,-24]],
  },
  coolant:{
@@ -68,7 +81,13 @@ const routes={
   controls:[['coolant-transfer',333,186,'magnet',{slide:'coolant-transfer',mount:'coolant-transfer',facing:[1,0,0]}]],
   gates:[['coolant-transfer',334,180,3,12,{permanent:true,magnetic:true,rail:{axis:'z',min:166,max:180}}],['coolant-return',324,100,1,12,{red:true}]],
   cover:[[283,150,5,3],[299,177,3,5],[342,188,3,7],[316,146,1,15]],
-  enemies:[['welder',312,159,'separator'],['artillery',348,185,'separator'],['miner',325,188,'separator'],['guard',338,106,'return'],['welder',292,103,'return']],
+  enemies:[
+   ['welder',345,177,'separator',0,{coordinated:true,battle:'coolant-separator',activation:{x:340,y:-24,z:177,radius:18},patrol:{x:338,z:172,w:28,d:22}}],
+   ['artillery',348,185,'separator',0,{variant:'siege',coordinated:true,battle:'coolant-separator',activation:{x:340,y:-24,z:177,radius:18},patrol:{x:338,z:178,w:28,d:16}}],
+   ['miner',294,142,'service',0,{id:'coolant-separator-miner-2',patrol:{x:284,z:138,w:16,d:32}}],
+   ['guard',338,106,'return'],['welder',292,103,'return'],
+   ['guard',292,158,'service',0,{id:'coolant-separator-guard-5',variant:'bastion',patrol:{x:284,z:138,w:16,d:32}}]
+  ],
   props:[['separator',326,153],['boiler',352,173],['jacket',379,114]],
  },
  hearth:{
@@ -78,7 +97,14 @@ const routes={
   controls:[['hearth-transfer',42,96,'shot',{surface:'top',ground:-40,height:2.6}],['core-feed',12,110,'laser',{height:2,normal:[1,0,0],via:[24,-38,110]}],['hearth-return',20,103,'shot',{mount:'hearth-return',facing:[0,0,1]}]],
   gates:[['hearth-transfer',32,76,1,46],['hearth-return',18,58,12,1]],
   cover:[[19,80,3,7]],
-  enemies:[['sniper',15,87,'intake'],['guard',10,92,'intake']],
+  enemies:[
+   ['sniper',75,55,'receiving',0,{id:'hearth-intake-sniper-0',patrol:{x:54,z:52,w:24,d:18}}],
+   ['guard',10,92,'feed',0,{id:'hearth-intake-guard-1',variant:'bastion',battle:'hearth-feed',activation:{x:20,y:-40,z:91,radius:12},patrol:{x:6,z:80,w:23,d:24}}],
+   ['scout',68,61,'receiving',0,{id:'hearth-intake-scout-2',variant:'interceptor',patrol:{x:54,z:52,w:24,d:18}}],
+   ['repairer',12,100,'feed',0,{id:'hearth-intake-repairer-3',battle:'hearth-feed',activation:{x:20,y:-40,z:91,radius:12},patrol:{x:6,z:80,w:23,d:24}}],
+   ['skirmisher',54,96,'intake',0,{variant:'flanker',battle:'hearth-intake',activation:{x:48,y:-40,z:91,radius:12},patrol:{x:35,z:84,w:25,d:18}}],
+   ['scout',46,89,'intake',0,{variant:'interceptor',battle:'hearth-intake',activation:{x:48,y:-40,z:91,radius:12},patrol:{x:35,z:84,w:25,d:18}}]
+  ],
   props:[['wreck',44,80],['wreck',37,80],['battery',12,106],['core',55,116]],
  }
 };
@@ -99,7 +125,7 @@ for(const plan of districtPlans){
  for(const [cid,x,z,kind,extra={}]of r.controls)expansionControls.push({id:cid,x,y:y+(extra.height||1.3),z,kind,...extra});
  for(const [gid,x,z,w,d,extra={}]of r.gates)expansionSolids.push({id:gid,x,y,z,w,d,h:3.5,...extra});
  for(const [i,[x,z,w,d]]of r.cover.entries())expansionSolids.push({id:`${id}-cover-${i}`,x,y,z,w,d,h:2.6,permanent:true,theme:region});
- for(const [i,[type,x,z,encounter,wave=0,extra={}]]of r.enemies.entries())expansionEnemies.push({id:`${id}-${encounter}-${type}-${i}`,type,hp:Math.ceil(hp[type]*({proving:1.25,lens:1.5,coolant:1.5,hearth:1.75}[id]||1)),x,y,z,...extra,encounter:`${id}-${encounter}${wave?'-reserve':''}`,startup:1.2+(i%3)*.4,...(encounter==='endurance'?{battle:`${id}-endurance`,wave}:{}),...(type==='guard'?{magneticShield:true}:{})});
+ for(const [i,[type,x,z,encounter,wave=0,extra={}]]of r.enemies.entries())expansionEnemies.push({id:`${id}-${encounter}-${type}-${i}`,type,hp:Math.ceil(Math.ceil(hp[type]*({proving:1.25,lens:1.5,coolant:1.5,hearth:1.75}[id]||1))*(ENEMY_VARIANTS[extra.variant]?.health||1)),x,y,z,...extra,encounter:`${id}-${encounter}${wave?'-reserve':''}`,startup:extra.variant ? .4+(i%3)*.15:1.2+(i%3)*.4,...(encounter==='endurance'?{battle:`${id}-endurance`,wave}:{}),...(type==='guard'?{magneticShield:true}:{})});
  for(const [kind,x,z]of r.props){
   expansionProps.push({kind,x,y,z,region,district:id});
   if(kind==='gantry')for(const side of [-7,7])expansionSolids.push({id:`${id}-gantry-${side}`,x:x+side-.3,y,z:z-.4,w:.6,d:.8,h:9,permanent:true,invisible:true});

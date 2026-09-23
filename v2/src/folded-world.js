@@ -440,7 +440,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     pickups.push({...p,root,item,halo,cage});
   }
   for(const e of foldedEnemies){
-    const model=foldedEnemyModel(e.id==='sorter'?'sorter':e.type);scene.add(model.root);model.root.position.set(e.x,e.y,e.z);
+    const model=foldedEnemyModel(e.id==='sorter'?'sorter':e.type,e.variant);scene.add(model.root);model.root.position.set(e.x,e.y,e.z);
     if(e.id==='prototype'){
       model.frontArmor=box(model.body,2.4,1.3,.35,0,1.2,1.35,C.metal);
       box(model.body,1.1,.65,.15,0,1.2,1.2,mat(C.orange,true));
@@ -453,7 +453,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     const warningGeometry=new T.BufferGeometry().setAttribute('position',new T.BufferAttribute(new Float32Array(e.id==='prototype'?27:['welder','dredger'].includes(e.type)?45:6),3).setUsage(T.DynamicDrawUsage));warningGeometry.setDrawRange(0,2);
     const warning=new T.Line(warningGeometry,new T.LineBasicMaterial({color:e.type==='sniper'?0xff263c:C.orange,transparent:true,opacity:.95}));scene.add(warning);warning.visible=false;warning.frustumCulled=false;
     if(e.type==='boss')model.root.scale.setScalar(1.8);
-    const charge=['scout','elite'].includes(e.type)?chargeWarning(e.type):null;if(charge)scene.add(charge.root);
+    const charge=['scout','elite'].includes(e.type)?chargeWarning(e.type,e.variant==='interceptor'?2:1):null;if(charge)scene.add(charge.root);
     const zone=e.id==='sorter'?new T.LineLoop(new T.BufferGeometry().setFromPoints([new T.Vector3(),...Array.from({length:25},(_,i)=>{const a=-.9+i*1.8/24;return new T.Vector3(Math.sin(a)*SORTER_REACH,0,Math.cos(a)*SORTER_REACH);})]),new T.LineBasicMaterial({color:C.lightYellow,transparent:true,opacity:.8})):ring(scene,e.type==='artillery'||e.id==='keeper'?4:3,.1,e.x,e.y+.1,e.z,mat(C.orange,true));
     if(e.id==='sorter')scene.add(zone);zone.visible=false;
     const flame=e.type==='welder'||e.id==='keeper'?new T.Mesh(new T.ConeGeometry(1,1,10,1,true),new T.MeshBasicMaterial({color:C.orange,transparent:true,opacity:.32,depthWrite:false,side:T.DoubleSide})):null;
@@ -463,7 +463,8 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     if(batteryWarning){scene.add(batteryWarning);batteryWarning.visible=false;batteryWarning.frustumCulled=false;}
     const deployment=e.wave||e.reserveFor?ring(scene,2,.1,e.x,e.y+.09,e.z,mat(SIGNAL.ready,true)):null;
     if(deployment)floorDetails.push({root:deployment,x:e.x,y:e.y,z:e.z,radius:2.2});
-    const enemy={deployment,batteryWarning,charge,zone,flame,supportBeam,spawn:{x:e.x,y:e.y,z:e.z},...e,hp:e.reserveFor||e.persistent&&state[e.id]||foldedBattles.some(b=>b.battle===e.battle&&(state[b.id]||state.pendingSignals?.[b.id]?.changes[b.id]))?0:e.hp,max:e.hp,model,materials,warning,phase:'idle',timer:e.startup??1,aim:Math.PI/2,flash:0,armor:0,ramAt:-10,shieldPull:0,shieldRemoved:false,radius:e.type==='boss'?3.2:e.guardian?2.4:e.type==='dredger'?2:e.type==='guard'?1.75:1.35};
+    const siegeZone=e.variant==='siege'?ring(scene,4,.1,e.x,e.y+.1,e.z,mat(C.orange,true)):null;if(siegeZone)siegeZone.visible=false;
+    const enemy={siegeZone,deployment,batteryWarning,charge,zone,flame,supportBeam,spawn:{x:e.x,y:e.y,z:e.z},...e,hp:e.reserveFor||e.persistent&&state[e.id]||foldedBattles.some(b=>b.battle===e.battle&&(state[b.id]||state.pendingSignals?.[b.id]?.changes[b.id]))?0:e.hp,max:e.hp,model,materials,warning,phase:'idle',timer:e.startup??1,aim:Math.PI/2,flash:0,armor:0,ramAt:-10,shieldPull:0,shieldRemoved:false,radius:e.type==='boss'?3.2:e.guardian?2.4:e.type==='dredger'?2:e.type==='guard'?1.75:1.35};
     enemy.barrageWarnings=batteryWarning?Array.from({length:3},()=>{const marker=ring(scene,BARRAGE.radius,.1,e.x,e.y+.12,e.z,mat(C.orange,true));marker.visible=false;return marker;}):[];
     if(e.reserveFor){
       const hatch=new T.Group();hatch.position.set(e.x,e.y+.03,e.z);scene.add(hatch);
