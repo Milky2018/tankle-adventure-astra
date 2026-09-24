@@ -17,6 +17,7 @@ import {
   explorationPickups,
   explorationSolids,
   explorationEnemies,
+  explorationMirrors,
 } from './folded-exploration-layout.js';
 import { UPGRADE_IDS } from './folded-upgrades.js';
 import { arenaGates, bossReserves } from './folded-boss-arenas.js';
@@ -30,6 +31,7 @@ import {
   expansionEnemies,
   expansionPickups,
   expansionFlags,
+  expansionMirrors,
 } from './folded-expansion-layout.js';
 import {
   cityDecks,
@@ -39,6 +41,7 @@ import {
   cityPickups,
   cityEnemies,
   cityFlags,
+  cityMirrors,
 } from './folded-city-layout.js';
 import { buildArchitecture, architectureIndex } from './folded-architecture.js';
 
@@ -235,6 +238,11 @@ for (const control of mounted) {
 for (const target of [...foldedSolids, ...foldedControls, ...foldedLiftDefs]) {
   target.circuitKey = circuitTargetKey(target);
 }
+export const foldedMirrors = structuredClone([
+  ...cityMirrors,
+  ...expansionMirrors,
+  ...explorationMirrors,
+]);
 export const foldedBattles = structuredClone([...expansionBattles, ...explorationBattles]);
 export const foldedArchitecture = buildArchitecture(foldedDecks, foldedLiftDefs);
 export const architectureGrid = architectureIndex(foldedArchitecture.solids);
@@ -265,6 +273,10 @@ export const foldedFlags = [
   ]),
 ];
 
+for (const pickup of foldedPickups)
+  if (pickup.lift && !foldedLiftDefs.some((lift) => lift.id === pickup.lift))
+    throw new Error(`${pickup.id} references unknown lift ${pickup.lift}`);
+
 for (const definition of [...foldedControls, ...foldedPickups, ...foldedLiftDefs]) {
   for (const flag of [
     ...(definition.effects || []),
@@ -293,6 +305,7 @@ for (const definitions of [
   foldedPickups,
   foldedEnemies,
   foldedBattles,
+  foldedMirrors,
   foldedFlags,
   foldedArchitecture,
 ])

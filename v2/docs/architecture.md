@@ -29,6 +29,7 @@ The current game boots through `src/entry.js` and `src/folded.js`. The latter cr
 | `folded-save.js` | Campaign/preview storage selection, settings storage, denied/corrupt-storage fallback |
 | `folded-content.js` | Compiled, immutable region definitions; mounted positions, recipient identity and reference validation |
 | `folded-layout.js` | Terrain support, collision and movement; compatibility exports for content/state readers |
+| `folded-machinery-state.js` | Session-owned lift, pickup and mirror records; mirror motion, carried pickup positions and lift reconstruction |
 | `folded-state.js`, `folded-save-migrations.js` | Session construction, durable serialization, completion notifications and explicit legacy-save recovery |
 | `folded-progression.js` | Receiver commands, completion events, the signal clock and read-only timing queries |
 | `folded-circuits.js`, `folded-signal-state.js` | Cable routes from declared effects; recipient delivery state independent of meshes |
@@ -56,6 +57,7 @@ Input receives live status getters so rebinding, camera changes and pause transi
 - Compiled content is deeply frozen. Every compiled collection owns a deep copy, including nested geometry and enemy data. Mounting, shaft cutting and freezing never mutate or freeze region exports. Pickup prerequisites and previews cannot generate collision bodies.
 - `initialFoldedState` creates session-local `state.bodies` for moving side machinery and solids. It is non-enumerable, so it is excluded from JSON saves and snapshots. Collision, world construction and machinery must use these same bodies.
 - `serializeFoldedState` whitelists durable flags, anchor, discoveries, signals, mirror/slide coordinates and side-puzzle records. Arena state, collision bodies, completion notifications and visual handles are excluded even if present on a live object. The released flat save format remains compatible.
+- `state.machinery` owns lifts, pickups and mirrors independently of the scene. These transient records contain mechanical coordinates, reflection normals and feedback timers, with no meshes or materials. Lift and pickup positions reconstruct from durable progress; saved mirror turns restore the indexed orientation.
 - Meshes, materials, input state and camera state belong to the running session. They are not serialized as campaign progress.
 - The campaign key remains `furnace-born-v2-city`; previews use `furnace-born-v2-folded-<route>`; settings use `furnace-born-v2-settings`.
 
@@ -83,6 +85,10 @@ A source can be latched while its destinations are still waiting. Each destinati
 
 Floors and large structures have matching depth passes. Fading changes camera color/depth only and never toggles physical shadow casting. View switches change uniforms and batch representations, then restore occluder opacity through the same policy. Aim tests use the policy's matching visibility math. Fog and the render boundary share one player-centered rendering context; neither is a camera-opacity fade.
 
+Lift, pickup and mirror models read `state.machinery`. Their collections exposed by `world.lifts`, `world.pickups` and `world.mirrors` are the same simulation-owned records, not model wrappers. Visual diagnostics use `world.views` explicitly. Scene-owned view records may cache coordinates for occlusion but are never used to advance the mechanical state. Mesh hit metadata points back to the runtime mirror, so combat and laser tracing share its simulation-owned normal.
+
+The simulation calls `advanceMachineryState` before the world synchronization at the existing frame stage. It advances indexed mirror turns at the established angular speed and follows lift-mounted rewards. Death and ending updates use the same step; camera changes and drawing do not. Lift reconstruction resets riders' machinery through `resetMachineryLifts`, including attached reward positions. The development-only scenario helper explicitly settles machinery when applying a fixture; it does not rely on a render side effect.
+
 The procedural mesh builders and side-puzzle visual adapters remain substantial modules. Enemy records still carry model handles. These boundaries are explicit; this architecture does not claim that every actor has become renderer-independent, nor require an entity framework merely to shorten files.
 
 ## Historical code
@@ -108,6 +114,6 @@ Run migrated diagnostics with `npm run test:browser -- render-contract occlusion
 
 Formatting currently covers the session coordinator and extracted modules. Expand that set as modules are edited, keeping mechanical formatting separate from gameplay changes. The existing shared-bundle size warning is not evidence of a runtime frame-time regression.
 
-Route traversal tests may use `test-fixtures/settled-control.js` to start from a fully operated mechanism. That fixture is not a game API and does not test signal timing. `folded-progression.test.js` covers actual commands, branch arrival, save restoration, completion ownership and immutable content without a renderer. Browser circuit checks exercise rendered lamps, collision release and lift timing together. Obsolete camera-push-in, treadle/E-switch and old mixed presentation/feedback probes have been removed; current rendering contracts replace their private-cache assertions.
+Route traversal tests may use `test-fixtures/settled-control.js` to start from a fully operated mechanism. That fixture is not a game API and does not test signal timing. `folded-progression.test.js` covers actual commands, branch arrival, save restoration, completion ownership and immutable content without a renderer. Browser circuit checks exercise rendered lamps, collision release and lift timing together. `folded-machinery-state.test.js` verifies mechanical lifetimes, reflection during a turn, restoration and lift-mounted rewards without constructing a scene. The render contract also snapshots those records while a mirror has an unfinished turn. Obsolete camera-push-in, treadle/E-switch and old mixed presentation/feedback probes have been removed; current rendering contracts replace their private-cache assertions.
 
 The former mixed feedback probe referenced deleted receivers (`freight` and `bridge-crane`) and assumed all doors wait for the longest branch. Its signal and save checks are superseded by `circuit-arrival`/`circuit-visibility`; combat feedback has `hit-response`, while exhaust geometry is covered by `folded-effects.test.js`. Diagnostic scripts use the same current progression queries as the game.

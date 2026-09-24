@@ -1,3 +1,4 @@
+import { advanceMachineryState, resetMachineryLifts } from './folded-machinery-state.js';
 import { createSceneRendering } from './folded-render-policy.js';
 import { createProgression } from './folded-progression.js';
 import { circuitLinks, circuitEventSources } from './folded-circuits.js';
@@ -817,11 +818,7 @@ function respawn() {
   ending.hide();
   skipEnding.hidden = true;
   $('hud').classList.remove('ending-active');
-  for (const l of world.lifts) {
-    l.y = l.settle && !state[l.lock] ? l.stops.at(-1) : l.stops[0];
-    l.destination = l.stops[0];
-    l.wait = 0;
-  }
+  resetMachineryLifts(state.machinery, state);
   deathAt = -1;
   keys.clear();
   updatePlayerPose(1, true);
@@ -1131,6 +1128,7 @@ function updateEnding(dt) {
   rendering.distance(camera);
   const view = { ...p, x: shot.at[0], y: shot.at[1], z: shot.at[2] };
   lighting.trackShadows(view);
+  advanceMachineryState(state.machinery, state, dt);
   world.update(dt, time, view, camera);
   for (const { m, color } of hullMaterials)
     m.color.copy(color).lerp(new T.Color(0xe99955), Math.min(0.55, p.endingTime * 0.08));
@@ -1165,6 +1163,7 @@ function advance(dt) {
   if (deathAt >= 0) {
     laserBeam.visible = laserGuide.visible = laserEndpoint.visible = false;
     mortarGuide.visible = mortarLanding.visible = magneticBeam.visible = false;
+    advanceMachineryState(state.machinery, state, dt);
     world.update(dt, time, p, camera);
     updateSparks(dt);
     updateWaves(dt);
@@ -1260,6 +1259,7 @@ function advance(dt) {
   }
   updatePlayerPose(dt);
   updateCamera(dt);
+  advanceMachineryState(state.machinery, state, dt);
   world.update(dt, time, p, camera);
   updateAim();
   if (keys.has(bindings.fire)) fire();
@@ -1818,6 +1818,7 @@ if (import.meta.env.DEV && params.has('test')) {
         }
       updatePlayerPose(1, true);
       focus.set(p.x, p.y, p.z);
+      advanceMachineryState(state.machinery, state, 1);
       world.update(1, time, p, camera);
       updateCamera(1);
       updateAim();

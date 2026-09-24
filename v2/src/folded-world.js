@@ -6,7 +6,6 @@ import {
   controlCoverPart,
   mountedControlPosition,
 } from './folded-control-housing.js';
-import { explorationMirrors } from './folded-exploration-layout.js';
 import { cityMaterials } from './folded-materials.js';
 import { groundPatches } from './folded-ground.js';
 import { makeSidePuzzles } from './folded-side-puzzles.js';
@@ -15,14 +14,14 @@ import { magnetPullable } from './folded-combat.js';
 import { REFUGE_RADIUS } from './folded-refuges.js';
 import { SORTER_REACH, BARRAGE } from './folded-attacks.js';
 import { mechanismReady } from './folded-pacing.js';
-import { expansionMirrors, expansionBelts, expansionHeat } from './folded-expansion-layout.js';
+import { expansionBelts, expansionHeat } from './folded-expansion-layout.js';
 import { circuitColor, circuitEventSources, circuitReady } from './folded-circuits.js';
 import { orthogonalCircuit } from './folded-circuit-routing.js';
 import { routeSigns } from './folded-guidance.js';
 import { makeCityPresentation } from './folded-presentation.js';
 import { SIGNAL } from './folded-visibility.js';
 import { foldedEnemyModel, prepareEnemyMaterials } from './folded-enemies.js';
-import { cityBelts, cityMirrors } from './folded-city-layout.js';
+import { cityBelts } from './folded-city-layout.js';
 import * as T from 'three';
 import {
   box,
@@ -42,7 +41,6 @@ import {
   foldedLiftDefs,
   foldedControls,
   foldedHives,
-  foldedPickups,
   foldedEnemies,
   activeSolid,
   inRect,
@@ -67,12 +65,12 @@ export function makeFoldedWorld(
     walls = [],
     controls = [],
     hives = [],
-    pickups = [],
-    lifts = [],
+    pickupViews = [],
+    liftViews = [],
     enemies = [],
     pillars = [],
     floorDetails = [],
-    mirrors = [],
+    mirrorViews = [],
     belts = [];
   const raycaster = new T.Raycaster();
   const deckRegions = new Map(
@@ -992,7 +990,7 @@ export function makeFoldedWorld(
     ...cityBelts.filter((b) => b.heat),
   ]);
   for (const feed of controlFeeds) feed.duration = signals.duration(feed.id, feed.targetKey);
-  for (const d of foldedLiftDefs) {
+  for (const d of state.machinery.lifts) {
     // Fixed shaft rims carry power even while the platform is at the other stop.
     for (const y of d.stops) {
       for (const z of [d.z, d.z + d.d])
@@ -1034,15 +1032,8 @@ export function makeFoldedWorld(
       pillars.push({ mesh, x: x - 0.225, z: d.z - 0.225, w: 0.45, d: 0.45, y: d.stops[0], h });
       box(root, 0.18, 1, 0.18, x, 0.5, d.z, C.dark, 0);
     }
-    const l = {
-      ...d,
-      root,
-      mesh,
-      y: d.settle && !state[d.lock] ? d.stops.at(-1) : d.stops[0],
-      destination: d.stops[0],
-      wait: 0,
-    };
-    lifts.push(l);
+    root.position.y = d.y;
+    liftViews.push({ ...d, body: d, root, mesh });
   }
   for (const h of foldedHives) {
     const root = new T.Group();
@@ -1079,7 +1070,7 @@ export function makeFoldedWorld(
       pulseKind: 'repair',
     });
   }
-  for (const p of foldedPickups) {
+  for (const p of state.machinery.pickups) {
     const root = new T.Group();
     root.position.set(p.x, p.y, p.z);
     scene.add(root);
@@ -1160,7 +1151,7 @@ export function makeFoldedWorld(
         for (const z of [-1.8, 1.8]) box(cage, 0.12, 3, 0.12, x, 1.5, z, C.metal, 0);
       ring(cage, 2.2, 0.12, 0, 3, 0, C.metal);
     }
-    pickups.push({ ...p, root, item, halo, cage });
+    pickupViews.push({ ...p, body: p, root, item, halo, cage });
   }
   for (const e of foldedEnemies) {
     const model = foldedEnemyModel(e.id === 'sorter' ? 'sorter' : e.type, e.variant);
@@ -1621,9 +1612,8 @@ export function makeFoldedWorld(
   mirrorPaint.fillRect(0, 0, 128, 128);
   const mirrorTexture = new T.CanvasTexture(mirrorCanvas);
   mirrorTexture.colorSpace = T.SRGBColorSpace;
-  for (const d of [...cityMirrors, ...expansionMirrors, ...explorationMirrors]) {
-    const angle = d.turnable ? (-(state.mirrorTurns[d.id] || 0) * Math.PI) / 2 : 0,
-      normal = new T.Vector3(...d.n).normalize().applyAxisAngle(new T.Vector3(0, 1, 0), angle),
+  for (const d of state.machinery.mirrors) {
+    const normal = d.normal,
       root = new T.Group();
     root.position.set(d.x, d.y, d.z);
     root.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), normal);
@@ -1648,9 +1638,9 @@ export function makeFoldedWorld(
       }
       floorDetails.push({ root: base, x: d.x, y: d.y - 1.9, z: d.z, radius: 1.5 });
     }
-    const mirror = { ...d, angle, normal, root, mesh, ground: d.y - 2 };
-    mesh.userData.mirror = mirror;
-    mirrors.push(mirror);
+    const mirror = { ...d, body: d, root, mesh };
+    mesh.userData.mirror = d;
+    mirrorViews.push(mirror);
   }
   // Continuous recessed tracks make the quiet final approach a clear Phoenix run.
   for (const side of [-1, 1]) box(fixed, 218, 0.05, 0.14, 145, -39.93, 6 + side * 2.3, 0x89978f, 0);
@@ -1826,12 +1816,23 @@ export function makeFoldedWorld(
       { dynamic: true },
     );
   for (const wall of walls) registerOccluder(wall.mesh, wall, { dynamic: true, clone: !wall.mass });
-  for (const object of [...controls, ...hives, ...pickups, ...lifts, ...floorDetails, ...mirrors])
+  for (const object of [
+    ...controls,
+    ...hives,
+    ...pickupViews,
+    ...liftViews,
+    ...floorDetails,
+    ...mirrorViews,
+  ])
     registerOccluder(object.root, object, {
       dynamic:
-        object.stops !== undefined || !!object.lift || !!object.mount || mirrors.includes(object),
-      cameraSoft: hives.includes(object) || controls.includes(object) || pickups.includes(object),
-      layered: controls.includes(object) || hives.includes(object) || pickups.includes(object),
+        object.stops !== undefined ||
+        !!object.lift ||
+        !!object.mount ||
+        mirrorViews.includes(object),
+      cameraSoft:
+        hives.includes(object) || controls.includes(object) || pickupViews.includes(object),
+      layered: controls.includes(object) || hives.includes(object) || pickupViews.includes(object),
     });
   for (const object of pillars) registerOccluder(object.mesh, object);
   for (const root of cells.values()) registerOccluder(root);
@@ -1899,7 +1900,7 @@ export function makeFoldedWorld(
           .intersectObjects(
             [
               ...[...surfaceGrid.ray(origin, direction, distance)].map((s) => s.mesh),
-              ...lifts.map((l) => l.mesh),
+              ...liftViews.map((l) => l.mesh),
             ],
             false,
           )
@@ -1934,8 +1935,8 @@ export function makeFoldedWorld(
       ...[...wallGrid.ray(origin, direction, distance), ...movingWalls]
         .filter((w) => activeSolid(w, state) && (!aiming || w.opacity > 0.4))
         .map((w) => w.mesh),
-      ...lifts.filter((l) => !aiming || !l.root.userData.cutaway).map((l) => l.mesh),
-      ...mirrors.filter((m) => !aiming || !m.root.userData.cutaway).map((m) => m.mesh),
+      ...liftViews.filter((l) => !aiming || !l.root.userData.cutaway).map((l) => l.mesh),
+      ...mirrorViews.filter((m) => !aiming || !m.root.userData.cutaway).map((m) => m.mesh),
     ];
     let hit =
       raycaster.intersectObjects(meshes, false).find(
@@ -2034,7 +2035,7 @@ export function makeFoldedWorld(
   }
   function update(dt, time, p, camera = null) {
     rendering.enable(!p.endingTime);
-    supportPatches = groundPatches(p, lifts);
+    supportPatches = groundPatches(p, state.machinery.lifts);
     rendering.support(supportPatches);
     if (camera && !thirdPerson) camera.getWorldDirection(sightDirection).negate();
     Object.assign(viewPlayer, { x: p.x, y: p.y, z: p.z });
@@ -2174,26 +2175,17 @@ export function makeFoldedWorld(
       else c.moving.position.z = -c.engaged * 0.3 - (c.flash ? Math.sin(c.flash * 24) * 0.08 : 0);
       c.root.updateMatrixWorld();
     }
-    for (const m of mirrors) {
-      m.flash = Math.max(0, (m.flash || 0) - dt);
-      m.mesh.material.color.setHex(m.flash ? C.lightYellow : 0xd3eee4);
+    for (const m of mirrorViews) {
+      m.mesh.material.color.setHex(m.body.flash ? C.lightYellow : 0xd3eee4);
+      m.root.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), m.body.normal);
+      m.root.updateMatrixWorld();
     }
-    for (const m of mirrors)
-      if (m.turnable) {
-        const desired = (-(state.mirrorTurns[m.id] || 0) * Math.PI) / 2;
-        m.angle += T.MathUtils.clamp(desired - m.angle, -Math.PI * 2 * dt, Math.PI * 2 * dt);
-        m.normal
-          .set(...m.n)
-          .normalize()
-          .applyAxisAngle(new T.Vector3(0, 1, 0), m.angle);
-        m.root.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), m.normal);
-        m.root.updateMatrixWorld();
-      }
-    for (const l of lifts) {
+    for (const l of liftViews) {
+      l.y = l.body.y;
       l.root.position.y = l.y;
       l.root.updateMatrixWorld();
     }
-    const carrierLift = lifts.find((l) => l.id === 'carrier'),
+    const carrierLift = state.machinery.lifts.find((l) => l.id === 'carrier'),
       aligned = Math.abs(carrierLift.y - 16) < 0.15;
     for (const shoe of carrierShoes) {
       shoe.position.y = carrierLift.y + 0.25;
@@ -2203,12 +2195,10 @@ export function makeFoldedWorld(
     for (const display of battleDisplays)
       for (const icon of display.icons)
         icon.root.visible = enemies.find((e) => e.id === icon.id).hp > 0;
-    for (const p of pickups) {
-      if (p.lift) {
-        p.y = lifts.find((l) => l.id === p.lift).y;
-        p.root.position.y = p.y;
-        p.root.updateMatrixWorld();
-      }
+    for (const p of pickupViews) {
+      p.y = p.body.y;
+      p.root.position.y = p.y;
+      p.root.updateMatrixWorld();
       p.root.visible = p.preview || !p.requires || !!state[p.requires];
       p.item.visible = !state[p.id];
       if (p.cage) p.cage.visible = !state[p.requires];
@@ -2409,11 +2399,12 @@ export function makeFoldedWorld(
     walls,
     controls,
     hives,
-    pickups,
-    lifts,
+    pickups: state.machinery.pickups,
+    lifts: state.machinery.lifts,
     enemies,
     wheel,
-    mirrors,
+    mirrors: state.machinery.mirrors,
+    views: { lifts: liftViews, pickups: pickupViews, mirrors: mirrorViews },
     belts,
     occluders,
     presentation,

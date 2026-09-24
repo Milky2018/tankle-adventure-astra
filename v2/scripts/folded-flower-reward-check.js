@@ -7,7 +7,7 @@ async page=>{
   const g=__game,q=g.debug,w=q.world,puzzle=w.sidePuzzles;
   g.manual(true);q.setCameraView('overhead');
   g.scenario({enemies:Object.fromEntries(w.enemies.map(e=>[e.id,0])),player:{x:46,y:-8,z:34,hp:25,invincible:1e9}});g.step(.1);
-  const reward=w.pickups.find(p=>p.id==='armor-foundry');
+  const reward=w.views.pickups.find(p=>p.id==='armor-foundry');
   if(reward.root.visible||q.state[reward.id])throw Error('Armour appeared or was collected before bloom');
   g.scenario({player:{x:46,y:-8,z:24}});g.setInput(['KeyS','KeyA']);g.step(1.4,false);g.setInput([]);
   if(q.p.z<36)throw Error('Unbloomed reward blocks the garden passage');
@@ -29,7 +29,7 @@ async page=>{
   const g=__game,q=g.debug,w=q.world;g.manual(true);q.setCameraView('overhead');
   if(!q.state['garden-bloom']||!w.sidePuzzles.gutter.state.grown)throw Error('Uncollected reward lost after reload');
   g.scenario({enemies:Object.fromEntries(w.enemies.map(e=>[e.id,0])),player:{x:46,y:-8,z:30,hp:25,invincible:1e9}});
-  const reward=w.pickups.find(p=>p.id==='armor-foundry');if(!reward.root.visible)throw Error('Restored reward invisible');
+  const reward=w.views.pickups.find(p=>p.id==='armor-foundry');if(!reward.root.visible)throw Error('Restored reward invisible');
   g.setInput(['KeyS','KeyA']);g.step(.6);g.setInput([]);
   if(!q.state['armor-foundry']||q.p.armorPacks!==1||q.p.hp!==30)throw Error('Cannot collect the armour from the shore');
   g.step(.1);if(reward.item.visible)throw Error('Collected armour still visible');
@@ -38,7 +38,7 @@ async page=>{
  await page.reload();await page.waitForFunction(()=>window.__game?.debug);
  const restored=await page.evaluate(()=>{
   const g=__game,q=g.debug;g.manual(true);g.scenario({player:{x:46,y:-8,z:34,invincible:1e9}});g.step(.1);
-  const reward=q.world.pickups.find(p=>p.id==='armor-foundry');
+  const reward=q.world.views.pickups.find(p=>p.id==='armor-foundry');
   if(q.p.armorPacks!==1||!q.state['armor-foundry']||reward.item.visible)throw Error('Reload duplicated or lost collected armour');
   return {armorPacks:q.p.armorPacks,itemVisible:reward.item.visible};
  });

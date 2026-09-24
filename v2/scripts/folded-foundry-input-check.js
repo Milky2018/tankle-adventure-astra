@@ -16,11 +16,11 @@ async page=>{
  await page.screenshot({path:'output/playwright/rooms/input-entered.png'});
  await page.evaluate(()=>{__game.scenario({player:{x:-28,y:-16,z:124,overdrive:false},state:{prototype:false,overdrive:false}});__game.step(.1);});
  await page.keyboard.press('e');
- const locked=await page.evaluate(()=>{const p=__game.debug.world.pickups.find(p=>p.id==='overdrive');return {visible:p.root.visible,cage:p.cage.visible,acquired:__game.snapshot().player.overdrive};});
+ const locked=await page.evaluate(()=>{const p=__game.debug.world.views.pickups.find(p=>p.id==='overdrive');return {visible:p.root.visible,cage:p.cage.visible,acquired:__game.snapshot().player.overdrive};});
  if(!locked.visible||!locked.cage||locked.acquired)throw Error('Engine preview is hidden or collectible before release');
  await page.screenshot({path:'output/playwright/rooms/input-engine-locked.png'});
  await page.evaluate(()=>{__game.scenario({state:{prototype:true}});__game.step(.1);});await page.keyboard.press('e');
- const acquired=await page.evaluate(()=>{const p=__game.debug.world.pickups.find(p=>p.id==='overdrive');return {cage:p.cage.visible,acquired:__game.snapshot().player.overdrive};});
+ const acquired=await page.evaluate(()=>{const p=__game.debug.world.views.pickups.find(p=>p.id==='overdrive');return {cage:p.cage.visible,acquired:__game.snapshot().player.overdrive};});
  if(acquired.cage||!acquired.acquired)throw Error('Released engine cannot be collected');
  await page.screenshot({path:'output/playwright/rooms/input-engine-acquired.png'});
  if(errors.length)throw Error(JSON.stringify(errors));return {opened,entered:{x:entered.x,y:entered.y,z:entered.z},locked,acquired,errors};

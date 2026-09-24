@@ -5,7 +5,7 @@ async page=>{
  await page.evaluate(()=>localStorage.removeItem('furnace-born-v2-city'));await page.reload();await page.waitForFunction(()=>window.__game?.debug);
  const before=await page.evaluate(()=>{
   const g=__game,w=g.debug.world;g.manual(true);g.scenario({enemies:Object.fromEntries(w.enemies.map(e=>[e.id,0])),player:{x:-156,y:8,z:-60,hp:25}});g.step(.5);
-  const p=w.pickups.find(p=>p.id==='magnetModule');if(p.y!==14||!p.root.visible)throw Error('Raised reward must be visible');
+  const p=w.pickups.find(p=>p.id==='magnetModule');if(p.y!==14||!w.views.pickups.find(v=>v.id===p.id).root.visible)throw Error('Raised reward must be visible');
   g.interact();if(g.snapshot().state.magnetModule)throw Error('Reward acquired before lowering');
   return {y:p.y,name:document.querySelector('#minimap-wrap .map-area-name').textContent};
  });
@@ -19,7 +19,7 @@ async page=>{
   if(Math.abs(angles[0]+Math.PI/2)>.01||Math.abs(angles[1]-Math.PI)>.01)throw Error('Selected rails disagree with cart route');
   shoot('rail-carrier',-176,-84);g.scenario({player:{x:-166,y:8,z:-86}});g.step(12);
   const p=w.pickups.find(p=>p.id==='magnetModule'),lift=w.lifts.find(l=>l.id===p.lift);
-  if(!g.snapshot().state['rail-crossing']||Math.abs(p.y-8)>.01||p.root.position.y!==lift.y)throw Error('Docking failed to deliver reward '+JSON.stringify({p:p.y,lift:lift.y}));
+  if(!g.snapshot().state['rail-crossing']||Math.abs(p.y-8)>.01||w.views.pickups.find(v=>v.id===p.id).root.position.y!==lift.y)throw Error('Docking failed to deliver reward '+JSON.stringify({p:p.y,lift:lift.y}));
   g.scenario({player:{x:-156,y:8,z:-60}});g.step(.1);g.save();return {angles,y:p.y};
  });
  await page.screenshot({path:'output/playwright/regression/rail-reward-lowered.png'});

@@ -1,3 +1,4 @@
+import { createMachineryState } from './folded-machinery-state.js';
 import { foldedFlags, foldedSolids } from './folded-content.js';
 import { sideObstacles } from './folded-side-layout.js';
 import { restoreSlidePositions } from './folded-mechanisms.js';
@@ -6,6 +7,7 @@ import { migrateFoldedSave } from './folded-save-migrations.js';
 export function initialFoldedState(saved = {}) {
   const state = migrateFoldedSave(saved);
   Object.defineProperty(state, 'progressEvents', { value: [] });
+  Object.defineProperty(state, 'machinery', { value: createMachineryState(state) });
   // Session-owned collision bodies share positions with animated machinery,
   // but are neither authored definitions nor saved progression.
   Object.defineProperty(state, 'bodies', {

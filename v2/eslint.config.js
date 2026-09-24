@@ -10,6 +10,7 @@ export default [
       'src/folded-save-migrations.js',
       'src/folded-palette.js',
       'src/folded-state.js',
+      'src/folded-machinery-state.js',
       'src/folded-progression.js',
       'src/folded-signal-state.js',
       'src/folded-render-policy.js',

@@ -10,13 +10,23 @@ async page => {
     const {RENDER_ROLES} = await import('/src/folded-render-policy.js');
     g.manual(true);
     const results=[];
-    const capture = () => JSON.stringify({save:serializeFoldedState(q.state),bodies:q.state.bodies});
+    // Keep a mirror deliberately between indexed orientations. Repeated draws
+    // must not advance its collision normal, even when the game is paused.
+    const mirror=q.world.mirrors.find(m=>m.turnable);
+    q.state.mirrorTurns[mirror.id]=(q.state.mirrorTurns[mirror.id]||0)+1;
+    for(const collection of ['lifts','pickups','mirrors']) {
+      if(q.world[collection]!==q.state.machinery[collection])throw Error('Scene replaced runtime '+collection);
+      for(const body of q.world[collection])
+        if(body.root||body.mesh||body.material)throw Error('Runtime body contains scene handles');
+    }
+    const capture = () => JSON.stringify({save:serializeFoldedState(q.state),bodies:q.state.bodies,machinery:q.state.machinery});
     for (const [region,x,y,z] of [
       ['foundry',0,-8,86],['transit',0,0,27],['garden',48,-8,20],
       ['testworks',218,16,-170],['optics',218,24,-20],
       ['circulation',231,-24,125],['furnace',0,-56,53],
     ]) {
       g.scenario({player:{x,y,z,hp:25},enemies:Object.fromEntries(q.world.enemies.map(e=>[e.id,0]))});
+      q.state.mirrorTurns[mirror.id]++;
       for (const view of ['third','overhead','third']) {
         q.setCameraView(view);
         const before=capture();
