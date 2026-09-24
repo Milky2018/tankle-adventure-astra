@@ -1,6 +1,6 @@
-// Player weapon values remain at the 0.1.0 baseline.
+// Player weapon balance.
 export const CANNON = { damage: 1, heat: 20, cooldown: 0.5, speed: 38, range: 24 };
-export const LASER = { damage: 4.5, heat: 24, range: 90, bounces: 5 };
+export const LASER = { damage: 3, heat: 24, range: 90, bounces: 5 };
 
 export const HOSTILE_DAMAGE = {
   keeper: 5,

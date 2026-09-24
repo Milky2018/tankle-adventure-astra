@@ -89,3 +89,62 @@ test('absolute sensitivity defaults to 3 and preserves saved values within 1–1
     assert.equal(preferences.values.cameraSettings.third.sensitivity, 3);
   }
 });
+
+test('shared fog distances persist, enforce ordering and reset separately from cameras', () => {
+  let saved;
+  const prefs = createFoldedPreferences({}, (values) => {
+    saved = structuredClone(values);
+  });
+  assert.deepEqual(prefs.values.viewDistance, { fogNear: 40, fogFar: 100, renderDistance: 130 });
+  assert.equal(prefs.setViewDistance('fogNear', 290), 90);
+  assert.equal(prefs.setViewDistance('fogFar', 300), 120);
+  assert.equal(prefs.setViewDistance('renderDistance', 40), 130);
+  prefs.setViewDistance('renderDistance', 260);
+  prefs.setViewDistance('fogFar', 220);
+  prefs.setViewDistance('fogNear', 100);
+  prefs.save();
+  const restored = createFoldedPreferences(saved, () => {});
+  assert.deepEqual(restored.values.viewDistance, {
+    fogNear: 100,
+    fogFar: 220,
+    renderDistance: 260,
+  });
+  restored.resetCamera('third');
+  restored.resetCamera('overhead');
+  assert.deepEqual(restored.values.viewDistance, prefs.values.viewDistance);
+  restored.setCamera('third', 'distance', 20);
+  restored.resetViewDistance();
+  assert.equal(restored.values.cameraSettings.third.distance, 20);
+  assert.deepEqual(restored.values.viewDistance, { fogNear: 40, fogFar: 100, renderDistance: 130 });
+});
+
+test('legacy fog values migrate from the selected view and invalid distances are normalized', () => {
+  const prefs = createFoldedPreferences(
+    {
+      cameraView: 'overhead',
+      cameraSettings: {
+        third: { fogNear: 40, fogFar: 100 },
+        overhead: { fogNear: 75, fogFar: 160 },
+      },
+    },
+    () => {},
+  );
+  assert.deepEqual(prefs.values.viewDistance, { fogNear: 75, fogFar: 160, renderDistance: 200 });
+  assert.equal(prefs.values.cameraSettings.third.fogNear, undefined);
+  const invalid = createFoldedPreferences(
+    {
+      viewDistance: {
+        fogNear: 900,
+        fogFar: 900,
+        renderDistance: -100,
+      },
+    },
+    () => {},
+  );
+  assert.deepEqual(invalid.values.viewDistance, { fogNear: 20, fogFar: 30, renderDistance: 40 });
+  const bad = createFoldedPreferences(
+    { viewDistance: { fogNear: null, fogFar: 'invalid' } },
+    () => {},
+  );
+  assert.deepEqual(bad.values.viewDistance, { fogNear: 40, fogFar: 100, renderDistance: 130 });
+});

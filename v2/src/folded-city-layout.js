@@ -159,7 +159,7 @@ export const cityEnemies=[
   {id:'calibration-scout',x:233,y:24,z:-29,hp:4,type:'skirmisher',encounter:'emitter'},
   {id:'gallery-sentry',x:220,y:16,z:34,hp:4,type:'reflector',encounter:'optical-releases'},
   {id:'gallery-scout',magneticShield:true,x:211,y:16,z:28,hp:5,type:'guard',encounter:'optical-releases'},
-  {id:'guardian',x:202,y:16,z:64,hp:48,type:'guard',guardian:true,persistent:true},
+  {id:'guardian',x:202,y:16,z:64,hp:36,type:'guard',guardian:true,persistent:true},
   {id:'yard-inlet-gunner',x:160,y:-8,z:40,hp:4,type:'turret',encounter:'pressure-inlet'},
   {id:'yard-inlet-flanker',x:158,y:-8,z:47,hp:4,type:'skirmisher',encounter:'pressure-inlet'},
   {id:'yard-guard',x:230,y:-8,z:46,hp:5,type:'welder',encounter:'rig-approach'},
@@ -171,7 +171,7 @@ export const cityEnemies=[
   {id:'gallery-repairer',x:223,y:16,z:28,hp:4,type:'repairer',encounter:'optical-releases'},
   {id:'yard-repairer',x:220,y:-8,z:40,hp:4,type:'repairer',encounter:'rig-approach'},
   {id:'rig-shield',x:230,y:-24,z:128,hp:5,type:'guard',magneticShield:true,encounter:'circulation-cradle'},
-  {id:'keeper',x:0,y:-56,z:32,hp:84,type:'boss',parts:[9,9],core:66,persistent:true}
+  {id:'keeper',x:0,y:-56,z:32,hp:63,type:'boss',parts:[6.75,6.75],core:49.5,persistent:true}
 ];
 export const cityBelts=[
   // Paired freight lanes keep both directions usable without waiting for a lift.

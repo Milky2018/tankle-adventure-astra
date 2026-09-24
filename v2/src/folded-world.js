@@ -305,10 +305,22 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     const lamp=box(root,.5,.12,.07,0,.85,.4,mat(SIGNAL.ready,true),0);eventTerminals.push({id:c.id,lamp});
   }
   const controlFeeds=[],circuitLampGeometry=new T.BoxGeometry(.25,.13,.25),conduitSupports=new Set();
+  const battleDisplays=[];
   for(const b of foldedBattles){
-    const root=new T.Group();root.position.set(b.x,b.y-1.3,b.z);scene.add(root);
-    cylinder(root,1.8,1,0,.5,0,C.dark,8);
-    for(const x of [-.6,.6])cylinder(root,.35,2.5,x,1.25,0,C.metal,8);
+    const root=new T.Group();root.name=`battle-display:${b.id}`;root.position.set(b.x,b.y-1.3,b.z);scene.add(root);
+    cylinder(root,1.8,.55,0,.275,0,C.dark,8);
+    const icons=foldedEnemies.filter(e=>e.battle===b.battle).map((enemy,i)=>{
+      const icon=new T.Group();icon.name=`battery-icon:${enemy.id}`;
+      icon.position.set(i<2?-.85:.85,.6,i%2? .8:-.8);root.add(icon);
+      box(icon,.65,.18,.8,0,.15,0,C.metal,.04);
+      for(const side of [-1,1]){const wheel=cylinder(icon,.22,.16,side*.38,.22,.15,C.dark,8);wheel.rotation.z=Math.PI/2;}
+      const tube=new T.Group();tube.position.set(0,.35,0);tube.rotation.x=-.65;icon.add(tube);
+      cylinder(tube,.22,.8,0,.4,0,SIGNAL.ready,10);
+      cylinder(tube,.15,.025,0,.815,0,C.dark,10);
+      ring(tube,.23,.05,0,.8,0,C.lightYellow);
+      return {id:enemy.id,root:icon};
+    });
+    battleDisplays.push({id:b.id,root,icons});
     floorDetails.push({root,x:b.x,y:b.y-1.3,z:b.z,radius:3});
   }
   const circuitDefs=circuitLinks([...foldedControls,...foldedBattles,...circuitEventSources],foldedSolids,foldedLiftDefs,foldedDecks,foldedArchitecture.solids);
@@ -673,7 +685,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
         const result=cache.get(material);result.transparent=true;if(owner?.floorMark)aperture.apply(result);return result;
       });
       mesh.material=Array.isArray(mesh.material)?materials:materials[0];
-      meshes.push({mesh,cameraOpacity:1,cameraBounds:cameraSoft?new T.Box3():null,shadow:mesh.castShadow,materials:materials.map(material=>({material,opacity:material.opacity,depthWrite:material.depthWrite}))});
+      meshes.push({mesh,cameraOpacity:1,cameraBounds:cameraSoft?new T.Box3():null,materials:materials.map(material=>({material,opacity:material.opacity,depthWrite:material.depthWrite}))});
     });
     const bounds=new T.Box3().setFromObject(root),local=bounds.clone().applyMatrix4(new T.Matrix4().copy(root.matrixWorld).invert());
     if(owner?.model){
@@ -715,8 +727,8 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
       object.root.userData.cutaway=obscures&&object.opacity<.4;if(object.owner)object.owner.opacity=object.opacity;
       if(thirdPerson&&object.cameraSoft)continue;
       if(object.lastOpacity===object.opacity)continue;
-      for(const {mesh,shadow,materials}of object.meshes){
-        mesh.castShadow=shadow&&object.opacity===1;
+      for(const {materials}of object.meshes){
+        // Camera cutaways affect the color pass, never the physical shadow caster.
         for(const {material,opacity,depthWrite}of materials){material.opacity=opacity*object.opacity;material.depthWrite=object.owner?.mass?thirdPerson:depthWrite&&object.opacity===1;}
       }
       object.lastOpacity=object.opacity;
@@ -859,6 +871,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     const carrierLift=lifts.find(l=>l.id==='carrier'),aligned=Math.abs(carrierLift.y-16)<.15;
     for(const shoe of carrierShoes){shoe.position.y=carrierLift.y+.25;shoe.material.color.setHex(aligned?SIGNAL.open:SIGNAL.ready);}
     for(const lamp of brakeFeed)lamp.material.color.setHex(aligned?SIGNAL.open:C.dark);
+    for(const display of battleDisplays)for(const icon of display.icons)icon.root.visible=enemies.find(e=>e.id===icon.id).hp>0;
     for(const p of pickups){if(p.lift){p.y=lifts.find(l=>l.id===p.lift).y;p.root.position.y=p.y;p.root.updateMatrixWorld();}p.root.visible=p.preview||!p.requires||!!state[p.requires];p.item.visible=!state[p.id];if(p.cage)p.cage.visible=!state[p.requires];p.halo.material.color.setHex(state[p.id]?C.dark:p.requires&&!state[p.requires]?C.metal:C.yellow);p.item.position.y=Math.sin(time*2)*.15;p.item.rotation.y=time*.35;}
     for(const h of hives){
       h.root.visible=!h.requires||!!state[h.requires];h.pulse=Math.max(0,h.pulse-dt);
@@ -928,5 +941,5 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     scene.updateMatrixWorld();
     if(camera)updateCameraOcclusion(camera,p,dt);
   }
-  return {transport,sidePuzzles,signals,advanceSignals,signalRelease,controlFeeds,signs,surfaces,walls,controls,hives,pickups,lifts,enemies,wheel,mirrors,belts,occluders,presentation,pulseHive,cast,update,setThirdPerson,updateCameraOcclusion};
+  return {transport,sidePuzzles,battleDisplays,signals,advanceSignals,signalRelease,controlFeeds,signs,surfaces,walls,controls,hives,pickups,lifts,enemies,wheel,mirrors,belts,occluders,presentation,pulseHive,cast,update,setThirdPerson,updateCameraOcclusion};
 }

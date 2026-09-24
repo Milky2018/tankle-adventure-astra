@@ -45,3 +45,44 @@ test('a bright furnace source fades before its pooled light moves to a different
   assert.equal(pool.slots.find((s) => s.light.intensity > 1).source.ground, 24);
   assert.equal(scene.children.filter((o) => o.isLight).length, 3);
 });
+
+test('tracking shadows preserves texel alignment across movement and height changes', () => {
+  const scene = new Scene(),
+    lighting = makeFoldedLighting(scene, rooms),
+    sun = lighting.sun;
+  const lightOffset = new Vector3(-18, 55, 16);
+  for (const [width, height] of [
+    [2048, 2048],
+    [1024, 2048],
+  ]) {
+    sun.shadow.mapSize.set(width, height);
+    let origin;
+    for (const focus of [
+      new Vector3(),
+      new Vector3(0.01, 0, 0),
+      new Vector3(0.1, 0.04, -0.08),
+      new Vector3(-17, -8, 86),
+      new Vector3(142, 24, -42),
+    ]) {
+      lighting.trackShadows(focus);
+      scene.updateMatrixWorld(true);
+      sun.shadow.updateMatrices(sun);
+      const pixel = new Vector3(5, 0, 5).applyMatrix4(sun.shadow.matrix);
+      pixel.x *= width;
+      pixel.y *= height;
+      origin ??= pixel.clone();
+      for (const key of ['x', 'y']) {
+        const delta = pixel[key] - origin[key];
+        assert.ok(
+          Math.abs(delta - Math.round(delta)) < 1e-7,
+          `${key}: fractional texel drift ${delta}`,
+        );
+      }
+      assert.ok(sun.position.clone().sub(sun.target.position).distanceTo(lightOffset) < 1e-9);
+      const camera = sun.shadow.camera;
+      const maxError =
+        Math.hypot((camera.right - camera.left) / width, (camera.top - camera.bottom) / height) / 2;
+      assert.ok(sun.target.position.distanceTo(focus) <= maxError + 1e-9);
+    }
+  }
+});

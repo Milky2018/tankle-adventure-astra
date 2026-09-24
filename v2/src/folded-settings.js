@@ -1,3 +1,4 @@
+import { DEFAULT_VIEW_DISTANCE } from './folded-haze.js';
 import { DEFAULT_BINDINGS, clamp } from './mechanics.js';
 
 const DEFAULT_CITY_BINDINGS = { ...DEFAULT_BINDINGS, camera: 'KeyC' };
@@ -23,8 +24,24 @@ const cameraFields = {
   ],
 };
 
+const distanceFields = [
+  ['fogNear', 'Fog start', 10, 290, 1, DEFAULT_VIEW_DISTANCE.fogNear, ''],
+  ['fogFar', 'Fog end', 30, 300, 1, DEFAULT_VIEW_DISTANCE.fogFar, ''],
+  ['renderDistance', 'Render distance', 40, 400, 1, DEFAULT_VIEW_DISTANCE.renderDistance, ''],
+];
+
 // Keep the same objects for input, HUD and camera consumers when resetting values.
 export function createFoldedPreferences(saved, persist) {
+  const legacy = saved.cameraSettings?.[saved.cameraView === 'overhead' ? 'overhead' : 'third'];
+  const distance =
+    saved.viewDistance ??
+    (legacy && {
+      fogNear: legacy.fogNear,
+      fogFar: legacy.fogFar,
+      renderDistance: Number.isFinite(legacy.fogFar)
+        ? legacy.fogFar + (saved.cameraView === 'overhead' ? 40 : 30)
+        : undefined,
+    });
   const values = {
     ...saved,
     bindings: { ...DEFAULT_CITY_BINDINGS, ...saved.bindings },
@@ -33,6 +50,12 @@ export function createFoldedPreferences(saved, persist) {
     sfx: saved.sfx ?? true,
     quality: saved.quality || 'high',
     cameraView: saved.cameraView || 'third',
+    viewDistance: Object.fromEntries(
+      distanceFields.map(([key, , min, max, , fallback]) => {
+        const value = distance?.[key];
+        return [key, Number.isFinite(value) ? clamp(value, min, max) : fallback];
+      }),
+    ),
     cameraSettings: Object.fromEntries(
       Object.entries(cameraFields).map(([view, fields]) => [
         view,
@@ -45,6 +68,14 @@ export function createFoldedPreferences(saved, persist) {
       ]),
     ),
   };
+  values.viewDistance.fogFar = Math.min(
+    values.viewDistance.fogFar,
+    values.viewDistance.renderDistance - 10,
+  );
+  values.viewDistance.fogNear = Math.min(
+    values.viewDistance.fogNear,
+    values.viewDistance.fogFar - 10,
+  );
   return {
     values,
     save: () => persist(values),
@@ -57,6 +88,27 @@ export function createFoldedPreferences(saved, persist) {
     resetBindings() {
       for (const action of Object.keys(values.bindings)) delete values.bindings[action];
       Object.assign(values.bindings, DEFAULT_CITY_BINDINGS);
+    },
+    setCamera(view, key, value) {
+      const settings = values.cameraSettings[view];
+      const [, , min, max] = cameraFields[view].find(([field]) => field === key);
+      value = clamp(value, min, max);
+      settings[key] = value;
+      return value;
+    },
+    setViewDistance(key, value) {
+      const settings = values.viewDistance;
+      const [, , min, max] = distanceFields.find(([field]) => field === key);
+      value = clamp(value, min, max);
+      if (key === 'fogNear') value = Math.min(value, settings.fogFar - 10);
+      if (key === 'fogFar')
+        value = clamp(value, settings.fogNear + 10, settings.renderDistance - 10);
+      if (key === 'renderDistance') value = Math.max(value, settings.fogFar + 10);
+      settings[key] = value;
+      return value;
+    },
+    resetViewDistance() {
+      Object.assign(values.viewDistance, DEFAULT_VIEW_DISTANCE);
     },
     resetCamera(view) {
       for (const [key, , , , , value] of cameraFields[view])
@@ -196,7 +248,11 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
     const heading = document.createElement('h2');
     heading.textContent = thirdPerson ? 'Third-person camera' : 'Overhead camera';
     cameraTuning.append(heading);
-    for (const [key, title, min, max, step, , suffix] of cameraFields[view]) {
+    for (const [key, title, min, max, step, , suffix] of [
+      ...cameraFields[view],
+      ...distanceFields,
+    ]) {
+      const shared = Object.hasOwn(prefs.viewDistance, key);
       const label = document.createElement('label'),
         name = document.createElement('span'),
         output = document.createElement('output'),
@@ -208,16 +264,21 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
       slider.max = max;
       slider.step = step;
       slider.setAttribute('aria-label', title);
-      const value =
-        thirdPerson && key === 'pitch' ? (camera.pitch * 180) / Math.PI : cameraSettings[view][key];
+      const value = shared
+        ? prefs.viewDistance[key]
+        : thirdPerson && key === 'pitch'
+          ? (camera.pitch * 180) / Math.PI
+          : cameraSettings[view][key];
       slider.value = clamp(value, min, max);
       output.textContent = `${Number(value.toFixed(1))}${suffix}`;
       output.htmlFor = slider.id;
       label.append(name, output, slider);
       cameraTuning.append(label);
       slider.oninput = () => {
-        const value = Number(slider.value);
-        cameraSettings[view][key] = value;
+        const value = shared
+          ? preferences.setViewDistance(key, Number(slider.value))
+          : preferences.setCamera(view, key, Number(slider.value));
+        slider.value = value;
         output.textContent = `${value}${suffix}`;
         if (view === 'third' && key === 'pitch') camera.pitch = (value * Math.PI) / 180;
         previewCamera();
@@ -231,6 +292,13 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
       previewCamera();
       openCameraTuning();
     };
+    const resetDistance = document.createElement('button');
+    resetDistance.textContent = 'Reset fog & distance';
+    resetDistance.onclick = () => {
+      preferences.resetViewDistance();
+      previewCamera();
+      openCameraTuning();
+    };
     const back = document.createElement('button');
     back.textContent = 'Back to settings';
     back.onclick = closeCameraTuning;
@@ -239,7 +307,7 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
     resume.onclick = () => {
       actions.resume();
     };
-    cameraTuning.append(reset, back, resume);
+    cameraTuning.append(reset, resetDistance, back, resume);
     cameraTuning.querySelector('input').focus();
   }
   tuneButton.onclick = openCameraTuning;

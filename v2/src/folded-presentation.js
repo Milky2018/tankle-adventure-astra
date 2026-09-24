@@ -185,7 +185,7 @@ export function makeCityPresentation(scene,aperture){
   }
   const viewCamera=new T.Vector3(),viewPlayer=new T.Vector3(),viewDirection=new T.Vector3();
   return {update,cast,bounds,carrier,pumpFans,finale,backdrop,localLights,get region(){return frameRegion;},
-    setCamera(c){viewCamera.copy(c);},setView(value){third=value;backdrop.setView(value);depth.visible=true;for(const m of visualMaterials){m.transparent=true;m.depthWrite=sceneryMaterials.has(m);m.needsUpdate=true;}},
+    setCamera(c){viewCamera.copy(c);},setView(value){third=value;depth.visible=true;for(const m of visualMaterials){m.transparent=true;m.depthWrite=sceneryMaterials.has(m);m.needsUpdate=true;}},
     sight(p,d){viewPlayer.set(p.x,p.y,p.z);viewDirection.copy(d);}
   };
 }

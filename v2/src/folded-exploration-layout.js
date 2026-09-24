@@ -625,6 +625,7 @@ for (const [side, x] of [
       hp: 5,
       emplacement: true,
       spotterHeight: 9,
+      detectionRange: 55,
       battle: 'cargo-battery',
       encounter: 'cargo-battery',
       wave: 0,

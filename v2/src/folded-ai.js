@@ -385,7 +385,7 @@ export function createFoldedEnemies({
       }
       const spec = enemySpec(e);
       e.warningAge = e.phase === 'warn' ? (e.warningAge || 0) + dt : 0;
-      if (!e.awake || (BOSS_ARENAS.some((a) => a.id === e.id) && state.combatArena !== e.id)) {
+      if (BOSS_ARENAS.some((a) => a.id === e.id) && state.combatArena !== e.id) {
         e.readable = false;
         view.idle(e, now(), dt);
         continue;
@@ -419,6 +419,23 @@ export function createFoldedEnemies({
           targets: false,
         },
       );
+      // Local encounter markers may wake a patrol early, but cannot hide a
+      // visible target already within its weapon's acquisition range.
+      if (
+        !e.awake &&
+        !e.wave &&
+        !e.reserveFor &&
+        p.hp > 0 &&
+        !resting &&
+        clearSight &&
+        distance <= (e.detectionRange ?? spec.reach * 0.8)
+      )
+        encounterPacing.wake(e);
+      if (!e.awake) {
+        e.readable = false;
+        view.idle(e, now(), dt);
+        continue;
+      }
       const supported =
         (e.type === 'artillery' && e.alertUntil > now()) ||
         (e.type === 'repairer' && woundedAlly(e, world.enemies));

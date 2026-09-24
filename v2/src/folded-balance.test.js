@@ -21,7 +21,7 @@ const baseline = JSON.parse(
   readFileSync(new URL('../test-fixtures/balance-0.1.0.json', import.meta.url), 'utf8'),
 );
 
-test('balance preserves the baseline apart from explicitly authored travel, hull and Keeper changes', () => {
+test('balance preserves the baseline apart from explicitly authored gameplay changes', () => {
   assert.deepEqual(
     {
       MAX_HP,
@@ -37,7 +37,7 @@ test('balance preserves the baseline apart from explicitly authored travel, hull
       BASE_SPEED: 10,
     },
   );
-  assert.deepEqual(MORTAR, { ...baseline.mortar, height: 10 });
+  assert.deepEqual(MORTAR, { ...baseline.mortar, height: 10, damage: 2 });
   assert.deepEqual(FLOTATION, baseline.flotation);
   assert.deepEqual(ENEMY_KINDS, {
     ...baseline.enemies,
@@ -60,7 +60,8 @@ test('balance preserves the baseline apart from explicitly authored travel, hull
     Object.fromEntries(
       Object.entries({
         ...baseline.health,
-        keeper: 84,
+        keeper: 63,
+        guardian: 36,
         'lens-gallery-skirmisher-2': 15,
         'coolant-separator-artillery-1': 20,
         'hearth-intake-guard-1': 27,
@@ -81,9 +82,9 @@ test('balance preserves the baseline apart from explicitly authored travel, hull
   );
 });
 
-test('extracted weapon values retain the 0.1.0 direct-fire and laser contracts', () => {
+test('weapon values match the current damage balance and retain heat and range contracts', () => {
   assert.deepEqual(CANNON, { damage: 1, heat: 20, cooldown: 0.5, speed: 38, range: 24 });
-  assert.deepEqual(LASER, { damage: 4.5, heat: 24, range: 90, bounces: 5 });
+  assert.deepEqual(LASER, { damage: 3, heat: 24, range: 90, bounces: 5 });
   for (const [enemy, damage] of [
     [{ id: 'keeper', type: 'boss' }, 5],
     [{ type: 'boss' }, 5],
@@ -98,8 +99,8 @@ test('extracted weapon values retain the 0.1.0 direct-fire and laser contracts',
 
 test('Keeper endurance retains destructible feeds and an uncapped core', () => {
   const keeper = foldedEnemies.find((e) => e.id === 'keeper');
-  assert.deepEqual(keeper.parts, [9, 9]);
-  assert.equal(keeper.core, 66);
+  assert.deepEqual(keeper.parts, [6.75, 6.75]);
+  assert.equal(keeper.core, 49.5);
   assert.equal(keeper.hp, keeper.core + keeper.parts.reduce((a, b) => a + b, 0));
 });
 

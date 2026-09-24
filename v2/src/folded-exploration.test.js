@@ -1,4 +1,6 @@
 import {swims} from './folded-aquatic.js';
+import { MORTAR } from './abilities.js';
+import { LASER } from './folded-weapons.js';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -14,8 +16,8 @@ test('optional equipment survives saving without compounding and leaves the orig
   applyUpgrades(p, state);
   assert.equal(playerMaxHp(p), 50);
   assert.equal(weaponDamage(p, 'cannon', 1), 1.5);
-  assert.equal(weaponDamage(p, 'mortar', 3), 4.5);
-  assert.equal(weaponDamage(p, 'laser', 4.5), 6.75);
+  assert.equal(weaponDamage(p, 'mortar', MORTAR.damage), 3);
+  assert.equal(weaponDamage(p, 'laser', LASER.damage), 4.5);
   p.heat = 100; p.lastHeat = 0;
   updateHeat(p, .1, .74, false, false); assert.equal(p.heat, 100);
   updateHeat(p, .1, .75, false, false); assert.equal(p.heat, 93.75);

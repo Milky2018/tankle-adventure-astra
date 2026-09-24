@@ -1,3 +1,4 @@
+import { setViewDistance, DEFAULT_VIEW_DISTANCE } from './folded-haze.js';
 import { makeFoldedLighting } from './folded-lighting.js';
 import { torpedoTargets } from './folded-aquatic.js';
 import { pullSlide } from './folded-mechanisms.js';
@@ -99,7 +100,14 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = T.PCFSoftShadowMap;
 renderer.toneMapping = T.NeutralToneMapping;
 renderer.toneMappingExposure = 1.1;
-const overheadCamera = new T.OrthographicCamera(-30, 30, 17, -17, 0.1, 160),
+const overheadCamera = new T.OrthographicCamera(
+    -30,
+    30,
+    17,
+    -17,
+    0.1,
+    DEFAULT_VIEW_DISTANCE.renderDistance,
+  ),
   follow = new FollowCamera(innerWidth / innerHeight, p.heading),
   focus = new T.Vector3(p.x, p.y, p.z),
   offset = new T.Vector3(28, 39.6, 28);
@@ -121,8 +129,7 @@ function updateOverheadAngle() {
 updateOverheadAngle();
 let thirdPerson = (params.get('view') || prefs.cameraView || 'third') !== 'overhead',
   camera = thirdPerson ? follow.camera : overheadCamera;
-const lighting = makeFoldedLighting(scene, foldedArchitecture.rooms),
-  sun = lighting.sun;
+const lighting = makeFoldedLighting(scene, foldedArchitecture.rooms);
 const world = makeFoldedWorld(scene, state, {
     batching: !(import.meta.env.DEV && params.has('test') && params.has('unbatched')),
   }),
@@ -132,7 +139,12 @@ world.setThirdPerson(thirdPerson);
 const encounterPacing = createEncounterPacing(world.enemies),
   bossArenas = createBossArenas(world.enemies, state),
   groundPose = createGroundPose();
-const endingCamera = new T.PerspectiveCamera(55, innerWidth / innerHeight, 0.15, 160);
+const endingCamera = new T.PerspectiveCamera(
+  55,
+  innerWidth / innerHeight,
+  0.15,
+  DEFAULT_VIEW_DISTANCE.renderDistance,
+);
 // Rotate the actual trunnion, so pitch does not swing the whole barrel below the hull.
 for (const child of model.barrel.children) child.position.y -= 2;
 model.barrel.position.y = 2;
@@ -448,8 +460,7 @@ function project(x, y, z) {
 }
 function updateCamera(dt) {
   lighting.update(p, dt);
-  scene.fog.near = thirdPerson ? 65 : 105;
-  scene.fog.far = thirdPerson ? 105 : 150;
+  setViewDistance(scene, camera, prefs.viewDistance);
   if (thirdPerson) {
     follow.update(p, dt);
     focus.set(p.x, p.y, p.z);
@@ -459,9 +470,7 @@ function updateCamera(dt) {
     camera.lookAt(focus);
     camera.updateMatrixWorld();
   }
-  sun.position.copy(focus).add(new T.Vector3(-18, 55, 16));
-  sun.target.position.copy(focus);
-  sun.target.updateMatrixWorld();
+  lighting.trackShadows(focus);
   world.updateCameraOcclusion(camera, p, 0);
 }
 function updatePlayerPose(dt, snap = false) {
@@ -1107,8 +1116,7 @@ function updateEnding(dt) {
   if (camera !== endingCamera) {
     camera = endingCamera;
     world.setThirdPerson(true);
-    scene.fog.near = 105;
-    scene.fog.far = 150;
+    setViewDistance(scene, camera, prefs.viewDistance);
   }
   endingCamera.aspect = innerWidth / innerHeight;
   endingCamera.updateProjectionMatrix();
@@ -1116,9 +1124,7 @@ function updateEnding(dt) {
   camera.lookAt(new T.Vector3(...shot.at));
   camera.updateMatrixWorld();
   const view = { ...p, x: shot.at[0], y: shot.at[1], z: shot.at[2] };
-  sun.position.set(view.x - 18, view.y + 55, view.z + 16);
-  sun.target.position.set(view.x, view.y, view.z);
-  sun.target.updateMatrixWorld();
+  lighting.trackShadows(view);
   world.update(dt, time, view, camera);
   for (const { m, color } of hullMaterials)
     m.color.copy(color).lerp(new T.Color(0xe99955), Math.min(0.55, p.endingTime * 0.08));
@@ -1636,6 +1642,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
 if (import.meta.env.DEV && params.has('test')) {
   const { createFrameProfiler } = await import('./folded-profiler.js');
   const profile = createFrameProfiler(renderer);

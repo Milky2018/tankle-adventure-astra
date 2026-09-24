@@ -640,3 +640,50 @@ test('a committed Interceptor charge cannot merge its introduction with the next
   assert.ok(e.z <= 70);
   assert.equal(e.phase, 'vent');
 });
+
+test('authored cargo emplacements acquire visible targets across their full range without entering the old trigger', () => {
+  for (const definition of foldedEnemies.filter((e) => e.battle === 'cargo-battery')) {
+    const e = enemy(definition.type, definition);
+    const f = fixture([e], { x: e.x, y: -8, z: e.z + 52 });
+    for (let i = 0; i < 50; i++) f.step(0.1);
+    assert.ok(
+      f.fired.some((shot) => shot.id === e.id),
+      `${e.id} stayed dormant in range`,
+    );
+    assert.deepEqual([e.x, e.y, e.z], [definition.x, definition.y, definition.z]);
+  }
+});
+
+test('local activation markers cannot suppress visible enemies inside eighty percent of weapon reach', async () => {
+  const { enemySpec } = await import('./folded-enemy-rules.js');
+  for (const type of ['turret', 'sniper', 'artillery', 'skirmisher', 'welder', 'guard']) {
+    const e = enemy(type, {
+      battle: 'test-patrol',
+      activation: { x: -100, y: 0, z: -100, radius: 5 },
+    });
+    const f = fixture([e], { x: enemySpec(e).reach * 0.79, y: 0, z: 20 });
+    f.step();
+    assert.equal(e.awake, true, type);
+    assert.equal(e.phase, 'warn', type);
+  }
+});
+
+test('range acquisition respects cover, refuge safety and undeployed reserves', () => {
+  const definition = {
+    battle: 'test-patrol',
+    activation: { x: -100, y: 0, z: -100, radius: 5 },
+  };
+  const e = enemy('sniper', definition),
+    f = fixture([e]);
+  f.block(true);
+  f.step();
+  assert.equal(e.awake, false);
+  f.block(false);
+  f.world.hives = [{ id: 'safe', x: f.p.x, y: f.p.y, z: f.p.z }];
+  f.step();
+  assert.equal(e.awake, false);
+  const reserve = enemy('sniper', { ...definition, wave: 1 });
+  const r = fixture([enemy('turret', { ...definition, wave: 0 }), reserve]);
+  r.step();
+  assert.equal(reserve.awake, false);
+});

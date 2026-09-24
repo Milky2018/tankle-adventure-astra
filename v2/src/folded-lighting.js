@@ -21,11 +21,29 @@ export function makeFoldedLighting(scene, rooms) {
   sun.shadow.camera.left = sun.shadow.camera.bottom = -45;
   sun.shadow.camera.right = sun.shadow.camera.top = 45;
   sun.shadow.camera.far = 90;
+  sun.shadow.camera.updateProjectionMatrix();
   sun.shadow.bias = -0.0001;
   sun.shadow.normalBias = 0.04;
   const fill = new T.DirectionalLight(0x9cbed8, 0.8);
   fill.position.set(20, 12, -30);
   scene.add(hemisphere, ambient, sun, sun.target, fill);
+  const lightOffset = new T.Vector3(-18, 55, 16);
+  const backward = lightOffset.clone().normalize();
+  const right = new T.Vector3().crossVectors(sun.up, backward).normalize();
+  const up = new T.Vector3().crossVectors(backward, right);
+  function trackShadows(focus) {
+    const camera = sun.shadow.camera;
+    const texelX = (camera.right - camera.left) / sun.shadow.mapSize.x;
+    const texelY = (camera.top - camera.bottom) / sun.shadow.mapSize.y;
+    const center = sun.target.position.copy(focus);
+    const x = center.dot(right),
+      y = center.dot(up);
+    // Anchor the sampling grid in light space, including on ramps and other floors.
+    center.addScaledVector(right, Math.round(x / texelX) * texelX - x);
+    center.addScaledVector(up, Math.round(y / texelY) * texelY - y);
+    sun.position.copy(center).add(lightOffset);
+    sun.target.updateMatrixWorld();
+  }
   const color = new T.Color();
   let initialized = false;
   function update(p, dt) {
@@ -38,5 +56,5 @@ export function makeFoldedLighting(scene, rooms) {
     fill.color.lerp(color.setHex(palette.fill), blend);
     sun.intensity = T.MathUtils.lerp(sun.intensity, palette.strength, blend);
   }
-  return { sun, update };
+  return { sun, update, trackShadows };
 }
