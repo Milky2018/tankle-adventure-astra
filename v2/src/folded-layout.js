@@ -1,3 +1,4 @@
+import {circuitReady} from './folded-circuits.js';
 import {mountedControlPosition} from './folded-control-housing.js';
 import {openLiftShafts} from './folded-shafts.js';
 import {restoreSlidePositions} from './folded-mechanisms.js';
@@ -100,9 +101,8 @@ export const architectureGrid=architectureIndex(foldedArchitecture.solids);
 export function activeSolid(s,state){
   if(s.arena)return state.combatArena===s.arena;
   if(s.permanent||s.rail)return true;
-  const pending=state.pendingSignals?.[s.localControl||s.id];
-  if(pending&&!s.red&&!s.phoenix)return !s.localControl||pending.duration-pending.remaining<.18-1e-8;
-  return !state[s.id];
+  if(s.red||s.phoenix)return !state[s.id];
+  return !circuitReady(state,s.localControl||s.id,s);
 }
 
 export function foldedAimHeight(p,target){

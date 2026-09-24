@@ -15,7 +15,7 @@ export function circuitLinks(controls,solids,lifts,decks=null,architecture=[]){
   for(const c of controls){
     if(c.slide)continue;
     const ids=c.id==='relay-east'?['relays']:c.id==='loading-return'?['loading-return','bridge-crane']:[c.id];
-    const endpoints=[...solids.filter(s=>ids.includes(s.id)&&!s.permanent||ids.includes(s.rail?.release)||ids.includes(s.rail?.latch)),...lifts.filter(l=>ids.includes(l.lock||l.id)||l.locks?.some(id=>ids.includes(id))),...controls.filter(t=>t.requires===c.id).map(t=>({...t,y:t.ground??t.y-1.3}))];
+    const endpoints=[...solids.filter(s=>ids.includes(s.id)&&!s.permanent||ids.includes(s.rail?.release)||ids.includes(s.rail?.latch)),...lifts.filter(l=>ids.includes(l.lock||l.id)||l.locks?.some(id=>ids.includes(id))),...controls.filter(t=>t.requires===c.id).map(t=>({...t,circuitKey:circuitTargetKey(t),y:t.ground??t.y-1.3}))];
     if(c.id==='signal')endpoints.push({id:'signal-dish',x:204,y:40,z:146});
     if(c.id==='rail-repair')endpoints.push({id:'cargo-rail',x:-18,y:0,z:25});
     if(c.id==='maintenance')endpoints.push({id:'tender-drive',x:108,y:-24,z:32});
@@ -23,7 +23,7 @@ export function circuitLinks(controls,solids,lifts,decks=null,architecture=[]){
     if(c.id==='coolant-bypass')endpoints.push({id:'coolant-runout',x:284,y:-24,z:106});
     for(const target of endpoints){
       if(target.red&&target.id===c.id)continue;
-      if(target.localControl===c.id){links.push({id:c.id,target:target.id,local:true,points:[[c.x,c.y,c.z],[c.x,c.y-.8,c.z]]});continue;}
+      if(target.localControl===c.id){links.push({id:c.id,target:target.id,targetKey:circuitTargetKey(target),local:true,points:[[c.x,c.y,c.z],[c.x,c.y-.8,c.z]]});continue;}
       const ground=c.ground??c.y-1.3,end=[target.x+(target.w||0)/2,(target.y??target.stops[0])+.12,target.z+(target.d||0)/2];
       if(target.stops){
         end[0]=Math.max(target.x+.3,Math.min(target.x+target.w-.3,c.x));
@@ -84,7 +84,7 @@ export function circuitLinks(controls,solids,lifts,decks=null,architecture=[]){
         if(c.id==='rail-repair')points=[...lead,...route(foot,[-11.35,.28,8]),[-11.35,9.65,8],[-2,9.65,8],[-2,9.65,18]];
         else {try{points=c.id==='mortar-cache'?[...lead,...route(foot,[160.5,20.28,-134.1]),...route([160.5,20.28,-134.1],finish)]:[...lead,...route(foot,finish)];}catch(e){throw new Error(`${c.id} -> ${target.id}: ${e.message}`);}}
       }else points=c.circuit||points;
-      links.push({id:c.id,target:target.id,points:orthogonalCircuit(points),magnetic:c.kind==='magnet'&&!c.slide});
+      links.push({id:c.id,target:target.id,targetKey:circuitTargetKey(target),points:orthogonalCircuit(points),magnetic:c.kind==='magnet'&&!c.slide});
     }
   }
   return links;
@@ -100,25 +100,50 @@ export function circuitColor(open,elapsed,progress,duration=3){
   return SIGNAL.open;
 }
 
-// Branches from one switch arrive together, so a shared mechanism flag cannot
-// open one destination while another branch is still carrying the signal.
+// Authored coordinates identify individual destinations even when gates share a flag.
+// Platforms and sliding bodies keep the same identity throughout their travel.
+export function circuitTargetKey(target){
+  if(target.targetKey||target.circuitKey)return target.targetKey||target.circuitKey;
+  const x=target.rail?.axis==='x'?target.rail.min:target.x;
+  const z=target.rail?.axis==='z'?target.rail.min:target.z;
+  const y=target.stops?.[0]??target.ground??(target.kind?(target.restY??target.y)-1.3:target.y);
+  return [target.id,...[x,y,z].map(v=>v.toFixed(4))].join(':');
+}
+
+export function circuitReady(state,id,target){
+  for(const [source,signal]of Object.entries(state.pendingSignals||{})){
+    if(source!==id&&!Object.hasOwn(signal.changes,id))continue;
+    const key=typeof target==='string'?null:circuitTargetKey(target);
+    const branch=signal.targets?.find(t=>key?t.key===key:t.target===target);
+    const duration=branch?.duration??(target.localControl===id?.18:signal.duration);
+    return signal.duration-signal.remaining>=duration-1e-8;
+  }
+  return !!state[id];
+}
+
 export function createCircuitSignals(state,links){
-  const durations=new Map();
+  const durations=new Map(),targets=new Map();
   for(const link of links){
     let length=0;
     for(let i=1;i<link.points.length;i++)length+=Math.hypot(...link.points[i].map((v,j)=>v-link.points[i-1][j]));
-    if(length>.01)durations.set(link.id,Math.max(durations.get(link.id)||0,link.local?.18:Math.max(1.4,length/18)));
+    const duration=length>.01?(link.local?.18:Math.max(1.4,length/18)):0;
+    durations.set(link.id,Math.max(durations.get(link.id)||0,duration));
+    if(link.targetKey){
+      if(!targets.has(link.id))targets.set(link.id,[]);
+      targets.get(link.id).push({key:link.targetKey,target:link.target,duration});
+    }
   }
   state.pendingSignals??={};
+  for(const [id,signal]of Object.entries(state.pendingSignals))signal.targets??=structuredClone(targets.get(id)||[]);
   return {
-    duration:id=>durations.get(id)||0,
+    duration:(id,key)=>key?targets.get(id)?.find(t=>t.key===key)?.duration??0:durations.get(id)||0,
     active:id=>!!state[id]||!!state.pendingSignals[id],
     pending:id=>state.pendingSignals[id],
     trigger(id,changes,external=false){
       if(!external&&state[id]||state.pendingSignals[id])return false;
       const duration=durations.get(id)||0;
       if(!duration)Object.assign(state,changes);
-      else state.pendingSignals[id]={duration,remaining:duration,changes};
+      else state.pendingSignals[id]={duration,remaining:duration,changes,targets:structuredClone(targets.get(id)||[])};
       return true;
     },
     advance(dt){

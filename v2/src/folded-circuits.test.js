@@ -20,7 +20,7 @@ test('activation changes the cable behind the traveling front, not the entire ca
   assert.equal(circuitColor(true,1.4-Number.EPSILON,1,1.4),SIGNAL.open);
 });
 
-test('the switch latches immediately but its mechanism waits for every cable endpoint',async()=>{
+test('shared progression commits after all branches while the switch latches immediately',async()=>{
   const {createCircuitSignals}=await import('./folded-circuits.js');
   const state={gate:false},links=[{id:'gate',points:[[0,0,0],[36,0,0]]},{id:'gate',points:[[0,0,0],[0,0,9]]}];
   const signals=createCircuitSignals(state,links);
@@ -83,4 +83,60 @@ test('the first Foundry switch opens only its door onto a permanently level pass
   releaseFolded('relay-west','cannon',p,state,[]);
   for(let i=0;i<80;i++)moveFolded(p,-.15,0,state);
   assert.ok(p.x<-55);assert.equal(p.y,-16);
+});
+
+test('each destination opens on its own cable arrival, including after save and reload',async()=>{
+  const {createCircuitSignals}=await import('./folded-circuits.js');
+  const {activeSolid}=await import('./folded-layout.js');
+  const {stepLifts}=await import('./folded-machinery.js');
+  const near={id:'relays',x:8,y:0,z:0,w:1,d:4,h:4};
+  const far={...near,x:100};
+  const lift={id:'relay-lift',lock:'relays',x:45,z:0,w:6,d:6,stops:[0,8],y:0,destination:0,wait:0};
+  const links=circuitLinks([{id:'relay-east',x:0,y:1.3,z:0}],[near,far],[lift]);
+  const length=l=>l.points.slice(1).reduce((n,p,i)=>n+Math.hypot(...p.map((v,j)=>v-l.points[i][j])),0);
+  const travel=l=>Math.max(1.4,length(l)/18);
+  const nearTime=travel(links[0]),liftTime=travel(links.find(l=>l.target===lift.id));
+  const state=initialFoldedState(),signals=createCircuitSignals(state,links);
+  signals.trigger('relay-east',{'relay-east':true,relays:true});
+  signals.advance(nearTime-.01);
+  assert.equal(activeSolid(near,state),true);
+  signals.advance(.01);
+  assert.equal(activeSolid(near,state),false,'short branch must open without waiting for the long branch');
+  assert.equal(activeSolid(far,state),true);
+  const restored=initialFoldedState(JSON.parse(JSON.stringify(state))),resume=createCircuitSignals(restored,links);
+  assert.equal(activeSolid(near,restored),false,'an arrived branch must not close on reload');
+  assert.equal(activeSolid(far,restored),true);
+  const player={x:-20,y:0,z:-20};
+  stepLifts([lift],restored,player,.1);assert.equal(lift.wait,0);
+  resume.advance(liftTime-nearTime-.01);
+  stepLifts([lift],restored,player,.1);assert.equal(lift.wait,0);
+  resume.advance(.01);
+  stepLifts([lift],restored,player,.1);assert.ok(lift.wait>0,'lift starts its cycle as its own signal arrives');
+  assert.equal(activeSolid(far,restored),true);
+  resume.advance(signals.duration('relay-east')-liftTime);
+  assert.equal(activeSolid(far,restored),false);
+  assert.equal(restored.relays,true);
+});
+
+test('automatic unlocks independently power a nearby control, moving screen and distant lift',async()=>{
+  const {createCircuitSignals,circuitReady}=await import('./folded-circuits.js');
+  const {mechanismReady}=await import('./folded-pacing.js');
+  const {stepReleasedSlides}=await import('./folded-mechanisms.js');
+  const control={id:'coolant-bypass',x:9,y:1.3,z:0,kind:'shot',requires:'coolant-return'};
+  const screen={id:'screen',x:20,y:0,z:0,w:1,d:2,h:2,rail:{axis:'z',min:0,max:8,release:'coolant-return'}};
+  const lift={id:'lift',x:100,z:0,w:6,d:6,stops:[0,8],lock:'coolant-return'};
+  const links=circuitLinks([{id:'coolant-return',x:0,y:1.3,z:0},control],[screen],[lift]);
+  const state=initialFoldedState({'coolant-return':true}),signals=createCircuitSignals(state,links);
+  signals.trigger('coolant-return',{},true);
+  assert.equal(mechanismReady(control,{},0,state),false,'external flag must not enable a receiver before arrival');
+  signals.advance(1.4);
+  assert.equal(mechanismReady(control,{},0,state),true);
+  assert.equal(circuitReady(state,'coolant-return',lift),false);
+  stepReleasedSlides([screen],state,.2,[],()=>true);
+  assert.ok(screen.z>0,'the nearby slide moves while the lift still waits');
+  assert.equal(circuitReady(state,'coolant-return',screen),true,'moving an actuator must not change its circuit identity');
+  const legacy=JSON.parse(JSON.stringify(state));delete legacy.pendingSignals['coolant-return'].targets;
+  const restored=initialFoldedState(legacy);createCircuitSignals(restored,links);
+  assert.equal(mechanismReady(control,{},0,restored),true);
+  assert.equal(circuitReady(restored,'coolant-return',lift),false);
 });

@@ -1,3 +1,4 @@
+import {circuitReady} from './folded-circuits.js';
 import {currentVelocity} from './folded-mechanisms.js';
 import {expansionCurrents,expansionBelts,expansionHeat} from './folded-expansion-layout.js';
 import {cityBelts} from './folded-city-layout.js';
@@ -32,7 +33,7 @@ export function stepLifts(lifts,state,player,dt,enemies=[]){
   for(const lift of lifts){
     const aboard=body=>Math.abs(body.y-lift.y)<.2&&inRect(body.x,body.z,lift,-.85);
     const riders=bodies.filter(aboard);
-    if(!state[lift.lock||lift.id]||state.pendingSignals?.[lift.lock||lift.id]||lift.locks&&!lift.locks.every(id=>state[id]&&!state.pendingSignals?.[id]))continue;
+    if(!circuitReady(state,lift.lock||lift.id,lift)||lift.locks&&!lift.locks.every(id=>circuitReady(state,id,lift)))continue;
     if(lift.settle){
       const next=Math.max(lift.stops[0],lift.y-dt*3);
       if(bodies.some(b=>!aboard(b)&&inRect(b.x,b.z,lift,.9)&&b.y+2.7>next&&b.y<lift.y))continue;

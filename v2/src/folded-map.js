@@ -1,5 +1,12 @@
+import { circuitReady } from './folded-circuits.js';
 import { REGION_NAMES, regionAt } from './folded-architecture.js';
-import { foldedDecks, foldedArchitecture, inRect, deckHeight } from './folded-layout.js';
+import {
+  foldedDecks,
+  foldedArchitecture,
+  inRect,
+  deckHeight,
+  activeSolid,
+} from './folded-layout.js';
 import { abilityIcon } from './folded-hud.js';
 import { clamp } from './mechanics.js';
 
@@ -128,7 +135,7 @@ export function createFoldedMap({ player: p, world, state, discovered, heading }
     }
     // Reveal only the visited portion of a circuit, never unexplored destinations.
     for (const feed of world.controlFeeds) {
-      ctx.strokeStyle = state[feed.id] ? '#85db58' : '#f3d250';
+      ctx.strokeStyle = circuitReady(state, feed.id, feed) ? '#85db58' : '#f3d250';
       ctx.lineWidth = large ? 1.5 : 1;
       ctx.globalAlpha = 0.7;
       for (let i = 1; i < feed.points.length; i++) {
@@ -151,8 +158,8 @@ export function createFoldedMap({ player: p, world, state, discovered, heading }
         seen(wall.x + wall.w / 2, wall.y, wall.z + wall.d / 2) &&
         Math.abs(wall.y - layer) < 5
       ) {
-        ctx.strokeStyle = state[wall.id] ? '#85db58' : '#f3d250';
-        ctx.lineWidth = state[wall.id] ? 1 : 3;
+        ctx.strokeStyle = !activeSolid(wall, state) ? '#85db58' : '#f3d250';
+        ctx.lineWidth = !activeSolid(wall, state) ? 1 : 3;
         ctx.beginPath();
         if (wall.w > wall.d) {
           ctx.moveTo(ox + wall.x * scale, oz + (wall.z + wall.d / 2) * scale);
@@ -166,7 +173,8 @@ export function createFoldedMap({ player: p, world, state, discovered, heading }
     for (const l of world.lifts)
       if (l.stops.includes(layer) && l.stops.some((y) => seen(l.x + l.w / 2, y, l.z + l.d / 2))) {
         ctx.strokeStyle =
-          state[l.lock || l.id] && (!l.locks || l.locks.every((id) => state[id]))
+          circuitReady(state, l.lock || l.id, l) &&
+          (!l.locks || l.locks.every((id) => circuitReady(state, id, l)))
             ? '#a6e3cd'
             : '#e8bd62';
         ctx.lineWidth = 2;

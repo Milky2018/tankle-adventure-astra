@@ -13,7 +13,7 @@ import {REFUGE_RADIUS} from './folded-refuges.js';
 import {SORTER_REACH,BARRAGE} from './folded-attacks.js';
 import {mechanismReady} from './folded-pacing.js';
 import {expansionMirrors,expansionBelts,expansionHeat} from './folded-expansion-layout.js';
-import {circuitLinks,circuitColor,circuitEventSources,createCircuitSignals} from './folded-circuits.js';
+import {circuitLinks,circuitColor,circuitEventSources,createCircuitSignals,circuitReady} from './folded-circuits.js';
 import {orthogonalCircuit} from './folded-circuit-routing.js';
 import {routeSigns} from './folded-guidance.js';
 import {makeCityPresentation} from './folded-presentation.js';
@@ -192,7 +192,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
       box(root,.55,1.1,.55,x,.55,z,C.dark,0);
       lamps.push(box(root,.38,.18,.38,x,1.15,z,mat(SIGNAL.ready,true),0));
     }
-    gateSignals.push({id:d.id,arena:d.arena,root,lamps});floorDetails.push({root,x:root.position.x,y:d.y,z:root.position.z,radius:Math.max(d.w,d.d)/2});
+    gateSignals.push({body:d,id:d.id,arena:d.arena,root,lamps});floorDetails.push({root,x:root.position.x,y:d.y,z:root.position.z,radius:Math.max(d.w,d.d)/2});
   }
   function makeControl(c){
     if(c.mount)c={...c,...mountedControlPosition(c,foldedSolids.find(b=>b.id===c.mount))};
@@ -358,7 +358,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
   const slideMarkers=makeSlideMarkers(scene,[...foldedSolids.filter(s=>s.rail&&s.magnetic),...state.bodies.obstacles.filter(s=>s.rail)]);
   const thermalFloors=makeThermalFloors(scene,[...expansionHeat,...cityBelts.filter(b=>b.heat)]);
   const signals=createCircuitSignals(state,circuitDefs);
-  for(const feed of controlFeeds)feed.duration=signals.duration(feed.id);
+  for(const feed of controlFeeds)feed.duration=signals.duration(feed.id,feed.targetKey);
   for(const d of foldedLiftDefs){
     // Fixed shaft rims carry power even while the platform is at the other stop.
     for(const y of d.stops){
@@ -784,7 +784,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
   function feedColor(feed,index,time){
     const pending=signals.pending(feed.id);
     const elapsed=pending?pending.duration-pending.remaining:time-(releaseTimes.get(feed.id)??-Infinity),progress=feed.lamps[index].progress??feed.lamps[index].userData?.progress??index/Math.max(1,feed.lamps.length-1);
-    return circuitColor(signals.active(feed.id)||feed.id==='maintenance'&&state['maintenance-started'],elapsed,progress,signals.duration(feed.id)||feed.duration||3);
+    return circuitColor(signals.active(feed.id)||feed.id==='maintenance'&&state['maintenance-started'],elapsed,progress,feed.duration||3);
   }
   const previousSignals={...state},automaticIds=[...foldedBattles,...circuitEventSources].map(c=>c.id),previousAutomatic={...state};
   function queueAutomaticSignals(time){
@@ -891,7 +891,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
         for(const roller of segment.rollers)roller.quaternion.copy(roller.userData.mount).multiply(rollerSpin);
       }
     }
-    for(const feed of gateSignals)feed.lamps.forEach((lamp,i)=>lamp.material.color.setHex(feed.arena?state.combatArena===feed.arena?C.red:SIGNAL.open:state[feed.id]?SIGNAL.open:SIGNAL.ready));
+    for(const feed of gateSignals)feed.lamps.forEach((lamp,i)=>lamp.material.color.setHex(feed.arena?state.combatArena===feed.arena?C.red:SIGNAL.open:!activeSolid(feed.body,state)?SIGNAL.open:SIGNAL.ready));
     for(const terminal of eventTerminals)terminal.lamp.material.color.setHex(signals.active(terminal.id)?SIGNAL.open:SIGNAL.ready);
     for(const feed of controlFeeds){
       const pending=signals.pending(feed.id),active=signals.active(feed.id)||feed.id==='maintenance'&&state['maintenance-started'],elapsed=pending?pending.duration-pending.remaining:time-(releaseTimes.get(feed.id)??-Infinity);
@@ -919,8 +919,9 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     ram.position.y=state.foundry?T.MathUtils.damp(ram.position.y,10.5,3,dt):8+Math.sin(time*.75)*2.5;
     tenderLamp.material.color.setHex(state.maintenance?C.mint:C.dark);tender.position.set(...sidePuzzles.delivery.position);tender.rotation.y=sidePuzzles.delivery.heading;Object.assign(tenderDetail,{x:tender.position.x,y:tender.position.y,z:tender.position.z});
     for(const {lamp,y}of pipeLights)lamp.material.color.setHex(p.endingTime||state.pump&&y===-8||state['pressure-return']&&y===-24?C.mint:C.orange);
-    const signalPhase=time-(releaseTimes.get('signal')??-Infinity);
-    bowl.rotation.y=state.signal?signalPhase<.65?0:signalPhase<1.5?(signalPhase-.65)/.85*.35:.35:0;
+    const dishFeed=controlFeeds.find(f=>f.id==='signal'&&f.target==='signal-dish');
+    const signalPhase=time-(releaseTimes.get('signal')??-Infinity)-(dishFeed?.duration||0);
+    bowl.rotation.y=circuitReady(state,'signal','signal-dish')?signalPhase<.65?0:signalPhase<1.5?(signalPhase-.65)/.85*.35:.35:0;
     wheel.rotation.z=Math.sin(time*.08)*.06;
     waterTexture.offset.x=time*.012;waterMaterial.normalMap.offset.copy(waterTexture.offset);
     updateOcclusion(dt,p);

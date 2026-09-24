@@ -223,34 +223,6 @@ export function makeRegionalScenery(parent, rooms, solids) {
         });
       }
     }
-    const roofs = solids.filter((s) => s.room === r.id && s.kind === 'roof');
-    for (const [i, s] of roofs.entries()) {
-      if (r.region === 'transit') {
-        // Local trusses cannot bridge a carved opening for an upper route or lift.
-        const x = s.x + 0.3,
-          z = s.z + s.d / 2,
-          y = s.y - 0.25;
-        beam([x, y, z], [s.x + s.w - 0.3, y, z], 0.2, frame);
-        if (s.w > 4) {
-          beam([x, y, z], [x + s.w / 2, y + 1.5, z], 0.16, trim);
-          beam([x + s.w / 2, y + 1.5, z], [s.x + s.w - 0.3, y, z], 0.16, trim);
-        }
-      }
-      if (i % 3 === 0 && r.region !== 'garden') {
-        const along = r.w > r.d;
-        box(
-          parent,
-          along ? Math.min(5, s.w) : 0.35,
-          0.1,
-          along ? 0.35 : Math.min(5, s.d),
-          s.x + s.w / 2,
-          s.y - 0.08,
-          s.z + s.d / 2,
-          lamp,
-          0,
-        );
-      }
-    }
     // Construction at the edge carries each area's silhouette into ordinary rooms.
     if (r.region === 'garden') {
       for (let z = r.z + 4; z < r.z + r.d; z += 16) {

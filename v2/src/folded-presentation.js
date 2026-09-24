@@ -1,3 +1,4 @@
+import {circuitReady} from './folded-circuits.js';
 import {makeRegionalScenery,makeRegionalLights} from './folded-regional-scenery.js';
 import {currentVelocity} from './folded-mechanisms.js';
 import {makeCityBackdrop} from './folded-backdrop.js';
@@ -37,7 +38,6 @@ export function makeCityPresentation(scene,aperture){
     colliders.set(s,new T.Box3(new T.Vector3(s.x,s.y,s.z),new T.Vector3(s.x+s.w,s.y+s.h,s.z+s.d)));
     // Frames, drip caps and foundations give even a cut-away wall its construction.
     if(s.kind==='wall'||s.kind==='lintel')box(architecture,s.w+.12,.12,s.d+.12,s.x+s.w/2,s.y+s.h+.04,s.z+s.d/2,material(s.region,'frame'),0);
-    if(s.kind==='roof'){const beam=box(architecture,.22,.45,s.d,s.x+.2,s.y-.2,s.z+s.d/2,material(s.region,'frame'),0);beam.castShadow=beam.receiveShadow=false;}
   }
   batchStatic(architecture,{preserveGeometry:true});batchStatic(depth,{preserveGeometry:true});
   for(const root of [architecture,depth]){root.updateWorldMatrix(true,true);root.traverse(o=>{o.matrixAutoUpdate=false;o.matrixWorldAutoUpdate=false;});}
@@ -59,7 +59,7 @@ export function makeCityPresentation(scene,aperture){
   // Greenhouse remnants and waterlines on the basin's retaining face.
   for(let x=33;x<62;x+=7){
     for(const z of [11,29])box(scenery,.18,8,.18,x,-4,z,iron,0);
-    const beam=box(scenery,.18,.18,18,x,.1,20,pale,0);beam.rotation.x=x%2?.06:-.03;
+    box(scenery,.18,.18,18.18,x,.09,20,pale,0);
   }
   for(const y of [-15.8,-13.2,-10.4])box(scenery,27,.11,.12,46.5,y,29.05,pale,0);
   for(let x=34;x<62;x+=6){
@@ -165,10 +165,11 @@ export function makeCityPresentation(scene,aperture){
     pumpFans.forEach((m,i)=>m.rotation.z=time*(state[i<2?'pump':'circulation']?2: .22+.08*Math.sin(time*.7+i)));
     hot.color.setHex(state.foundry?0xc77b44:0xffaf62);
     waterFlow.visible=!!state.pump;waterFlow.scale.x=.85+Math.sin(time*2)*.05;waterRipples.forEach((m,i)=>{m.visible=!!state.pump;m.position.x=71+(i*2.4+time*2)%12;});
-    if(initialized&&state.signal&&!signalWasOn)signalTime=time;
-    signalWasOn=!!state.signal;initialized=true;
+    const dishReady=circuitReady(state,'signal','signal-dish');
+    if(initialized&&dishReady&&!signalWasOn)signalTime=time;
+    signalWasOn=dishReady;initialized=true;
     const signalPhase=time-signalTime;
-    opticalPulse.visible=!!state.signal&&signalPhase<.65;opticalPulse.scale.z=.8+signalPhase*.4;
+    opticalPulse.visible=dishReady&&signalPhase<.65;opticalPulse.scale.z=.8+signalPhase*.4;
     for(let i=0;i<pipeFlow.length;i++){const m=pipeFlow[i],active=state.circulation||state.endingSeen||state.pump&&m.position.y===-8;m.visible=!!active;m.material.color.setHex((time*2+i)%4<1?0xb7c4a3:0x748d80);}
     oldEye.material.color.setHex(state.endingSeen?0xcac5a1:0x575749);endingSprout.visible=!!state.pump;
     carrier.visible=true;

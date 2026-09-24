@@ -1,3 +1,4 @@
+import {circuitReady} from './folded-circuits.js';
 // A magnetic slide is a solid body throughout its travel. The saved coordinate
 // describes its rail position, including an unfinished pull.
 export function pullSlide(body, player, dt, bodies, supported, occupants = [], moveOccupant) {
@@ -54,9 +55,9 @@ export function currentVelocity(current, state) {
 }
 
 export function stepReleasedSlides(solids, state, dt, occupants, supported) {
-  const released = solids.filter(s => s.rail?.release && state[s.rail.release] && s[s.rail.axis] < s.rail.max);
+  const released = solids.filter(s => s.rail?.release && circuitReady(state,s.rail.release,s) && s[s.rail.axis] < s.rail.max);
   if (!released.length) return;
-  const blockers = [...solids.filter(s => s.permanent || s.rail || !state[s.id]), ...occupants.filter(p => p.hp !== 0).map(p => ({ x: p.x - .9, y: p.y, z: p.z - .9, w: 1.8, d: 1.8 }))];
+  const blockers = [...solids.filter(s => s.permanent || s.rail || !circuitReady(state,s.localControl||s.id,s)), ...occupants.filter(p => p.hp !== 0).map(p => ({ x: p.x - .9, y: p.y, z: p.z - .9, w: 1.8, d: 1.8 }))];
   for (const body of released) {
     const rail = body.rail;
     const driver = { x: body.x, y: body.y, z: body.z, [rail.axis]: rail.max + 100 };

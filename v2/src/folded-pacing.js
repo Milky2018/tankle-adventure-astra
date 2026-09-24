@@ -1,5 +1,6 @@
+import {circuitReady} from './folded-circuits.js';
 export function mechanismReady(control,player,time,state={}){
-  if(control.requires&&!state[control.requires])return false;
+  if(control.requires&&!circuitReady(state,control.requires,control))return false;
   if(control.pressure){
     const q=control.pressure;
     return Math.abs(player.y-q.y)<.5&&Math.hypot(player.x-q.x,player.z-q.z)<2.2;

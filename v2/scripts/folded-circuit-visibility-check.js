@@ -30,7 +30,7 @@ async page => {
     check(a.world.signals.trigger(id,changes),`${id} refused signal`);const started=a.time;a.world.signalRelease(id,started);
     const duration=a.world.signals.duration(id);a.world.advanceSignals(duration*.5,started+duration*.5);a.world.update(.01,started+duration*.5,a.p,a.camera);
     check(id==='maintenance'?!a.state['maintenance-started']:!a.state[id],`${id} activated before arrival`);
-    const f=connections.find(f=>f.id===id);check(f.lamps.some(l=>l.color.getHexString()==='85db58')&&f.lamps.some(l=>l.color.getHexString()==='f3d250'),`${id} did not show a traveling front`);
+    const f=connections.filter(f=>f.id===id).sort((a,b)=>b.duration-a.duration)[0];check(f.lamps.some(l=>l.color.getHexString()==='85db58')&&f.lamps.some(l=>l.color.getHexString()==='f3d250'),`${id} did not show a traveling front`);
     a.world.advanceSignals(duration*.5+.05,started+duration+.05);a.world.update(.01,started+duration+.05,a.p,a.camera);
     check(Object.entries(changes).every(([k,v])=>a.state[k]===v),`${id} failed to activate`);
     if(id==='maintenance')check(a.world.controls.find(c=>c.id===id).lamp.material.color.getHexString()==='85db58','Maintenance control reverted to yellow after its drive started');
