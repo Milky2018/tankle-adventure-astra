@@ -36,14 +36,25 @@ export function createCircuitSignals(state, links) {
       targets.get(link.id).push({ key: link.targetKey, target: link.target, duration });
     }
   }
+  function ownPayload(changes, branches) {
+    return {
+      changes: Object.freeze({ ...changes }),
+      targets: Object.freeze(branches.map((branch) => Object.freeze({ ...branch }))),
+    };
+  }
   state.pendingSignals ??= {};
   for (const [id, signal] of Object.entries(state.pendingSignals))
-    signal.targets ??= structuredClone(targets.get(id) || []);
+    Object.assign(signal, ownPayload(signal.changes, signal.targets ?? targets.get(id) ?? []));
   return {
     duration: (id, key) =>
       key ? (targets.get(id)?.find((t) => t.key === key)?.duration ?? 0) : durations.get(id) || 0,
     active: (id) => !!state[id] || !!state.pendingSignals[id],
-    pending: (id) => state.pendingSignals[id],
+    // Only the clock's owner can change remaining time. Consumers receive a
+    // snapshot with immutable payload, so observing a signal cannot deliver it.
+    pending(id) {
+      const signal = state.pendingSignals[id];
+      return signal && Object.freeze({ ...signal });
+    },
     trigger(id, changes, external = false) {
       if ((!external && state[id]) || state.pendingSignals[id]) return false;
       const duration = durations.get(id) || 0;
@@ -52,8 +63,7 @@ export function createCircuitSignals(state, links) {
         state.pendingSignals[id] = {
           duration,
           remaining: duration,
-          changes,
-          targets: structuredClone(targets.get(id) || []),
+          ...ownPayload(changes, targets.get(id) || []),
         };
       return true;
     },

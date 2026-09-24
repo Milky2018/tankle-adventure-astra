@@ -25,15 +25,23 @@ export const RENDER_ROLES = Object.freeze(
   ),
 );
 
+// A material carries mutable uniforms and belongs to exactly one scene. Keep
+// ownership outside userData: Three clones userData but must not clone ownership.
+const materialOwners = new WeakMap();
+
 export function createRenderPolicy() {
   const aperture = makeAperture();
   const registrations = new WeakMap();
   function material(material, role, { clone = false, depth = false } = {}) {
     const rule = RENDER_ROLES[role];
     if (!rule) throw new Error(`Unknown render role: ${role}`);
+    const source = materialOwners.get(material);
     if (clone) {
       material = material.clone();
       delete material.userData.aperture;
+      if (source) material.opacity = source.opacity;
+    } else if (source && source.owner !== registrations) {
+      throw new Error('Material belongs to another scene; clone it before registration');
     }
     if (material.isSharedPrimitive)
       throw new Error('Clone shared primitive materials before registering a render role');
@@ -48,12 +56,15 @@ export function createRenderPolicy() {
     material.depthWrite = depth || rule.depthWrite;
     material.colorWrite = !depth;
     material.userData.renderRole = role;
-    registrations.set(material, {
+    const record = {
+      owner: registrations,
       role,
       depth,
       opacity: material.opacity,
       depthWrite: material.depthWrite,
-    });
+    };
+    registrations.set(material, record);
+    materialOwners.set(material, record);
     return material;
   }
   function fade(material, amount) {

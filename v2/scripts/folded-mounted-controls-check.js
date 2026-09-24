@@ -43,12 +43,12 @@ async page=>{
   await page.screenshot({path:`output/playwright/regression/mounted-${fixture.id}-${view}.png`});
   const result=await page.evaluate(({view,id})=>{
    const g=__game,q=g.debug,w=q.world,c=w.controls.find(c=>c.id===id),before=c.root.position.clone();
-   for(let i=0;i<150&&!w.signals.active(id);i++){
+   for(let i=0;i<150&&!g.debug.progression.signals.active(id);i++){
     if(view==='overhead')g.aimAt(c.x+c.facing.x*.5,c.z+c.facing.z*.5,c.y+c.facing.y*.5);
     g.setInput([c.kind==='magnet'?'Mouse2':'Mouse0']);g.step(1/60,false);
    }
    g.setInput([]);
-   if(!w.signals.active(id))throw Error('Actual input cannot operate mounted control '+view+'/'+id+' '+JSON.stringify({p:{x:q.p.x,y:q.p.y,z:q.p.z},aim:q.aim.toArray(),magnetic:g.snapshot().magnetic,heat:q.p.heat,cutaway:c.root.userData.cutaway,ray:(()=>{const target=new q.T.Vector3(c.x+c.facing.x*.5,c.y+c.facing.y*.5,c.z+c.facing.z*.5),ray=new q.T.Raycaster();ray.setFromCamera(target.clone().project(q.camera),q.camera);const h=w.cast(ray.ray.origin,ray.ray.direction,1000,{aiming:true});return {target:h?.target?.id,point:h?.point.toArray(),object:h?.object?.userData,objectAt:h?.object?.position.toArray()};})()}));
+   if(!g.debug.progression.signals.active(id))throw Error('Actual input cannot operate mounted control '+view+'/'+id+' '+JSON.stringify({p:{x:q.p.x,y:q.p.y,z:q.p.z},aim:q.aim.toArray(),magnetic:g.snapshot().magnetic,heat:q.p.heat,cutaway:c.root.userData.cutaway,ray:(()=>{const target=new q.T.Vector3(c.x+c.facing.x*.5,c.y+c.facing.y*.5,c.z+c.facing.z*.5),ray=new q.T.Raycaster();ray.setFromCamera(target.clone().project(q.camera),q.camera);const h=w.cast(ray.ray.origin,ray.ray.direction,1000,{aiming:true});return {target:h?.target?.id,point:h?.point.toArray(),object:h?.object?.userData,objectAt:h?.object?.position.toArray()};})()}));
    g.step(2,false);
    const attached=c.root.position.clone().sub(c.mountWall.mesh.position).distanceTo(c.mountOffset)<.001;
    if(!attached||c.root.position.distanceTo(before)<.5)throw Error('Control did not travel with its actuator '+id);

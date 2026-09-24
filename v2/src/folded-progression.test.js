@@ -155,3 +155,65 @@ test('machine completion does not replay an already delivered start command', ()
   assert.equal(p.signals.pending('delivery'), undefined);
   assert.equal(p.signals.elapsed('delivery', 10), 10);
 });
+
+test('compiled content owns every object instead of freezing authored region exports', async () => {
+  const content = await import('./folded-content.js');
+  const sources = await Promise.all([
+    import('./folded-city-layout.js'),
+    import('./folded-expansion-layout.js'),
+    import('./folded-exploration-layout.js'),
+    import('./folded-refuge-network.js'),
+    import('./folded-side-layout.js'),
+  ]);
+  const originals = new Set();
+  function collect(value) {
+    if (!value || typeof value !== 'object' || originals.has(value)) return;
+    originals.add(value);
+    for (const child of Object.values(value)) collect(child);
+  }
+  for (const source of sources)
+    for (const value of Object.values(source)) if (Array.isArray(value)) collect(value);
+  function check(value) {
+    if (!value || typeof value !== 'object') return;
+    assert.equal(originals.has(value), false, 'compiled data aliases an authored object');
+    assert.ok(Object.isFrozen(value));
+    for (const child of Object.values(value)) check(child);
+  }
+  for (const name of [
+    'foldedDecks',
+    'foldedSolids',
+    'foldedControls',
+    'foldedHives',
+    'foldedPickups',
+    'foldedEnemies',
+    'foldedBattles',
+    'foldedLiftDefs',
+  ])
+    check(content[name]);
+});
+
+test('signal observations are immutable snapshots, not writable simulation handles', () => {
+  const state = initialFoldedState();
+  const p = createProgression(state, links, [control]);
+  p.activate(control.id, 'cannon', {}, 0);
+  const pending = p.signals.pending(control.id);
+  assert.throws(() => {
+    pending.remaining = 0;
+  }, TypeError);
+  assert.throws(() => {
+    pending.changes['test-door'] = false;
+  }, TypeError);
+  assert.throws(() => {
+    pending.targets[0].duration = 0;
+  }, TypeError);
+  p.advance(1.4, 1.4);
+  assert.equal(pending.remaining, 5, 'a captured observation must not advance with the clock');
+  assert.equal(activeSolid(near, state), false);
+  assert.equal(activeSolid(far, state), true);
+  const restored = createProgression(initialFoldedState(JSON.parse(JSON.stringify(state))), links, [
+    control,
+  ]);
+  assert.throws(() => {
+    restored.signals.pending(control.id).changes['test-door'] = false;
+  }, TypeError);
+});

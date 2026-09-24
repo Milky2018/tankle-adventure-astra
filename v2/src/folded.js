@@ -5,7 +5,8 @@ import { foldedControls, foldedBattles, foldedLiftDefs } from './folded-content.
 import { DEFAULT_VIEW_DISTANCE } from './folded-haze.js';
 import { makeFoldedLighting } from './folded-lighting.js';
 import { torpedoTargets } from './folded-aquatic.js';
-import { pullSlide } from './folded-mechanisms.js';
+import { pullSlide, stepReleasedSlides } from './folded-mechanisms.js';
+import { stepTransport } from './folded-transport.js';
 import { applyUpgrades, weaponDamage, scopeRange } from './folded-upgrades.js';
 import { predictMortar, mortarGroundTarget, MORTAR_PREVIEW_SEGMENTS } from './folded-ballistics.js';
 import { createFoldedPreferences, mountFoldedSettings, keyGlyph } from './folded-settings.js';
@@ -752,7 +753,17 @@ function interact() {
   }
   return true;
 }
-function updateLifts(dt) {
+function updateMachinery(dt) {
+  const occupants = [p, ...world.enemies];
+  stepTransport(state.bodies.solids, dt, occupants);
+  stepReleasedSlides(
+    state.bodies.solids,
+    state,
+    dt,
+    occupants,
+    (x, z, y) => !!foldedSupport(x, z, y, false, world.lifts),
+  );
+  world.syncMovingSolids();
   stepLifts(world.lifts, state, p, dt, world.enemies);
 }
 function resetEnemies(...args) {
@@ -1106,8 +1117,7 @@ function updateMagnet(dt) {
   }
 }
 function updateEnding(dt) {
-  world.transport(dt, p);
-  updateLifts(dt);
+  updateMachinery(dt);
   const shot = endingShot(p.endingTime);
   if (camera !== endingCamera) {
     camera = endingCamera;
@@ -1207,8 +1217,7 @@ function advance(dt) {
     Math.abs(p.y + 8) < 0.5 && Math.hypot(p.x - 58, p.z - 4) < 1.5
       ? Math.min(1, (p.pumpPressure || 0) + dt)
       : 0;
-  world.transport(dt, p);
-  updateLifts(dt);
+  updateMachinery(dt);
   const horizontal = Number(keys.has(bindings.right)) - Number(keys.has(bindings.left)),
     vertical = Number(keys.has(bindings.down)) - Number(keys.has(bindings.up));
   const move = thirdPerson

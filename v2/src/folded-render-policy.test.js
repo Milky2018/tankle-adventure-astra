@@ -80,3 +80,17 @@ test('scene shaders cannot mutate a shared primitive or inherit another session 
   assert.deepEqual(sa.uniforms.aperturePlayer.value.toArray(), [1, 2, 3]);
   assert.deepEqual(sb.uniforms.aperturePlayer.value.toArray(), [10, 20, 30]);
 });
+
+test('a material belongs to one scene and cloning a faded material restores its base appearance', () => {
+  const first = createRenderPolicy(),
+    second = createRenderPolicy();
+  const a = first.material(new MeshBasicMaterial({ opacity: 0.8 }), 'fixture');
+  first.fade(a, 0.2);
+  assert.throws(() => second.material(a, 'fixture'), /another scene/);
+  const b = second.material(a, 'fixture', { clone: true });
+  assert.equal(b.opacity, 0.8);
+  second.fade(b, 1);
+  assert.equal(b.depthWrite, true);
+  first.fade(a, 0.5);
+  assert.equal(b.opacity, 0.8);
+});

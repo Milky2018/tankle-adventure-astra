@@ -20,7 +20,7 @@ async page => {
       for (const view of ['third','overhead','third']) {
         q.setCameraView(view);
         const before=capture();
-        for(let i=0;i<4;i++){q.world.update(.1,q.time,q.p,q.camera);q.draw();}
+        for(let i=0;i<4;i++){q.world.syncMovingSolids();q.world.update(.1,q.time,q.p,q.camera);q.draw();}
         if(capture()!==before)throw Error(`Rendering advanced gameplay in ${region}/${view}`);
         let registered=0;
         q.scene.traverse(object=>{

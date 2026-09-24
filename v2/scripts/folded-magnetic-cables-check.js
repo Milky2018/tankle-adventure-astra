@@ -28,13 +28,13 @@ async page=>{
    if(view==='overhead')g.aimAt(c.x,c.z,c.y);
    else{let yaw=Math.atan2(c.x-q.p.x,c.z-q.p.z),pitch=0;for(let i=0;i<24;i++){g.look(yaw,pitch);const p=g.project(c.x,c.z,c.y);yaw-=(p.x/innerWidth*2-1)*Math.tan(Math.PI/6)*(innerWidth/innerHeight)*.8;pitch+=(p.y/innerHeight*2-1)*Math.tan(Math.PI/6)*.8;}g.look(yaw,pitch);}
    g.setInput(['Mouse2']);g.step(.65,false);g.setInput([]);
-   const pending=w.signals.pending(id);if(!pending||q.state[id])throw Error('Missing transmission after pull '+view+'/'+id);
+   const pending=g.debug.progression.signals.pending(id);if(!pending||q.state[id])throw Error('Missing transmission after pull '+view+'/'+id);
    g.step(Math.max(0,pending.remaining-pending.duration/2));
    const feeds=w.controlFeeds.filter(f=>f.id===id);
    for(const f of feeds)if(f.lamps[0].color.equals(f.lamps.at(-1).color))throw Error('Cable did not show moving front '+id);
    if(q.state[id])throw Error('Actuator opened before power arrived '+id);
    const fixed=feeds.map(f=>f.points.map(p=>[...p]));
-   g.step(w.signals.pending(id).remaining+.2);
+   g.step(g.debug.progression.signals.pending(id).remaining+.2);
    if(!q.state[id])throw Error('No action at arrival '+id);
    for(const f of feeds)if(f.lamps.some(l=>l.color.getHex()!==0x85db58))throw Error("Cable did not remain green after arrival "+id);
    if(JSON.stringify(fixed)!==JSON.stringify(feeds.map(f=>f.points)))throw Error('Cable followed the discarded grip');

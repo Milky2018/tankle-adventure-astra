@@ -11,7 +11,7 @@ async page=>{
  const freight=await page.evaluate(async()=>{
   const w=__game.debug.world.walls.find(w=>w.id==='dispatch-carrier-a'),s=w;
   __game.scenario({player:{x:-104,y:8,z:31,hp:50}});const x=s.x;__game.step(1);if(Math.abs(x-s.x)<1)throw Error('Carrier does not move');
-  const rays=[];for(let i=0;i<15;i++){__game.debug.world.transport(.2,{x:Infinity,y:8,z:0});const origin=new (__game.debug.scene.position.constructor)(s.x+s.w/2,9.5,20),dir=new (__game.debug.scene.position.constructor)(0,0,-1);rays.push(__game.debug.world.cast(origin,dir,30,{targets:false})?.object===w.mesh);}
+  const rays=[];for(let i=0;i<15;i++){__game.step(.2);const origin=new (__game.debug.scene.position.constructor)(s.x+s.w/2,9.5,20),dir=new (__game.debug.scene.position.constructor)(0,0,-1);rays.push(__game.debug.world.cast(origin,dir,30,{targets:false})?.object===w.mesh);}
   if(!rays.every(Boolean))throw Error('Moving cover left the ray index');return {from:x,to:s.x,raySamples:rays.length};
  });
  const guardian=await page.evaluate(()=>{

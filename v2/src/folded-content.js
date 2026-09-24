@@ -98,7 +98,7 @@ export const foldedLiftDefs = structuredClone([
   ...cityLifts,
   ...refugeLifts,
 ]);
-export const foldedDecks = openLiftShafts(authoredDecks, foldedLiftDefs);
+export const foldedDecks = openLiftShafts(structuredClone(authoredDecks), foldedLiftDefs);
 
 // Bounds describe solid material, including the moving shutters while closed.
 export const foldedSolids = structuredClone([
@@ -184,13 +184,13 @@ export const foldedControls = structuredClone([
   ...explorationControls,
   ...refugeControls,
 ]);
-export const foldedHives = refugeHives;
-export const foldedPickups = [
+export const foldedHives = structuredClone(refugeHives);
+export const foldedPickups = structuredClone([
   ...explorationPickups,
   ...cityPickups.filter((p) => !expansionPickups.some((q) => q.id === p.id)),
   ...expansionPickups,
-];
-export const foldedEnemies = [
+]);
+export const foldedEnemies = structuredClone([
   { id: 'bank-gunner', x: 35, y: -16, z: -20, hp: 2, type: 'turret', encounter: 'garden-bank' },
   {
     id: 'bank-scout',
@@ -221,7 +221,7 @@ export const foldedEnemies = [
   ...expansionEnemies,
   ...sideEnemies,
   ...bossReserves,
-];
+]);
 
 // Compilation owns its copies; authored region definitions are never mutated.
 const mounted = foldedControls.filter((control) => control.mount);
@@ -235,7 +235,7 @@ for (const control of mounted) {
 for (const target of [...foldedSolids, ...foldedControls, ...foldedLiftDefs]) {
   target.circuitKey = circuitTargetKey(target);
 }
-export const foldedBattles = [...expansionBattles, ...explorationBattles];
+export const foldedBattles = structuredClone([...expansionBattles, ...explorationBattles]);
 export const foldedArchitecture = buildArchitecture(foldedDecks, foldedLiftDefs);
 export const architectureGrid = architectureIndex(foldedArchitecture.solids);
 export const foldedFlags = [

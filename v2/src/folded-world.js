@@ -6,10 +6,8 @@ import {
   controlCoverPart,
   mountedControlPosition,
 } from './folded-control-housing.js';
-import { stepReleasedSlides } from './folded-mechanisms.js';
 import { explorationMirrors } from './folded-exploration-layout.js';
 import { cityMaterials } from './folded-materials.js';
-import { stepTransport } from './folded-transport.js';
 import { groundPatches } from './folded-ground.js';
 import { makeSidePuzzles } from './folded-side-puzzles.js';
 import { architectureIndex, REGION_STYLE, regionAt } from './folded-architecture.js';
@@ -46,7 +44,6 @@ import {
   foldedHives,
   foldedPickups,
   foldedEnemies,
-  foldedSupport,
   activeSolid,
   inRect,
   deckHeight,
@@ -58,8 +55,7 @@ export function makeFoldedWorld(
   { batching = true, circuitDefs, signals, rendering },
 ) {
   const batchStatic = batching ? batchGeometry : () => {};
-  const foldedSolids = state.bodies.solids,
-    transportSolids = foldedSolids.filter((s) => s.motion);
+  const foldedSolids = state.bodies.solids;
   const sidePuzzles = makeSidePuzzles(scene, state);
   const viewPlayer = { x: 0, y: 0, z: 0 };
   const presentation = makeCityPresentation(scene, rendering);
@@ -1877,15 +1873,9 @@ export function makeFoldedWorld(
   const surfaceGrid = architectureIndex(surfaces),
     wallGrid = architectureIndex(walls.filter((w) => !w.motion && !w.rail));
   const movingWalls = walls.filter((w) => w.motion || w.rail);
-  function transport(dt, p) {
-    stepTransport(transportSolids, dt, [p, ...enemies]);
-    stepReleasedSlides(
-      foldedSolids,
-      state,
-      dt,
-      [p, ...enemies],
-      (x, z, y) => !!foldedSupport(x, z, y, false, lifts),
-    );
+  // Synchronize scene query bounds and meshes from simulation-owned bodies.
+  // Calling this repeatedly must not advance machinery or modify a save.
+  function syncMovingSolids() {
     for (const w of movingWalls) {
       const s = foldedSolids.find((s) => s.id === w.id);
       w.x = s.x;
@@ -2410,7 +2400,7 @@ export function makeFoldedWorld(
     if (camera) updateCameraOcclusion(camera, p, dt);
   }
   return {
-    transport,
+    syncMovingSolids,
     sidePuzzles,
     battleDisplays,
     controlFeeds,

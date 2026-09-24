@@ -27,9 +27,9 @@ async page=>{
       // Solve the actual return after turning by projectile, then wait for its cable.
       g.scenario({player:{x:225.2376,y:24,z:-20,weapon:'laser',heat:0,overheated:false}});
       aim(216,26,-4);g.setInput(['Mouse0']);g.step(1/60);g.setInput([]);
-      check(w.signals.active('garden-optical'),'Turned mirror did not route the laser to the receiver');
+      check(g.debug.progression.signals.active('garden-optical'),'Turned mirror did not route the laser to the receiver');
       check(q.state.mirrorTurns[m.id]===5,'Solving the reflection rotated the mirror');
-      g.step(w.signals.duration('garden-optical')+.1,false);check(q.state['garden-optical'],'Return did not unlock after cable arrival');
+      g.step(g.debug.progression.signals.duration('garden-optical')+.1,false);check(q.state['garden-optical'],'Return did not unlock after cable arrival');
       g.scenario({player:{x:242,y:24,z:-4},state:{'garden-optical':false,pendingSignals:{}}});
       // Aiming at the mirror resolves a ground landing; its unobstructed blast turns the plate.
       for(let n=6;n<=9;n++){
