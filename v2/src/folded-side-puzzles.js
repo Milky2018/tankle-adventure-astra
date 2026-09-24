@@ -88,7 +88,7 @@ export function makeSidePuzzles(scene,state){
  batchStatic(fixed);roots.splice(roots.indexOf(fixed),1,...fixed.children);
  for(const root of [cart,...targets.filter(t=>t!==brake&&t.handle).map(t=>t.root)])batchRigidParts(root,[...wheels,...targets.flatMap(t=>[t.handle,t.lamp].filter(Boolean))]);
 
- function persist(){state.sidePuzzles={rail:rail.serialize(),gutter:gutter.serialize(),coverX:coverBounds.x,pending};state['rail-crossing']=rail.state.solved;}
+ function persist(){state.sidePuzzles={rail:rail.serialize(),gutter:gutter.serialize(),coverX:coverBounds.x,pending};state['rail-crossing']=rail.state.solved;state['garden-bloom']=gutter.state.grown;}
  function operate(id){const changed=id.startsWith('rail-')?rail.act(id):id==='gutter-plug'?gutter.unplug():gutter.act(id);const t=targets.find(t=>t.id===id);if(t?.handle)t.flash=.22;if(changed)persist();return changed;}
  function act(id){
   const feed=feeds.find(f=>f.id===id);

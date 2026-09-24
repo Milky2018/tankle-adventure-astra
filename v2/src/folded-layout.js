@@ -185,6 +185,7 @@ export function initialFoldedState(saved={}){
   delete state.pendingSignals['overdrive-bypass'];
   delete state.pendingSignals['press-return'];
   state['rail-crossing']=!!(saved.sidePuzzles?.rail?.solved||saved.sidePuzzles?.rail?.secured);
+  state['garden-bloom']=!!saved.sidePuzzles?.gutter?.grown;
   for(const p of explorationPickups)if(p.requires&&state[p.id])state[p.requires]=true;
   // Preserve earned access in legacy saves without granting missing modules.
   if(saved.progressionRevision!==2&&saved.anchor&&(state.phoenix||state.laser||state.circulation)){

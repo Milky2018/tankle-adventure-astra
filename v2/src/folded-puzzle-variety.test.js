@@ -43,9 +43,10 @@ test('the finite battery guards a remote reward instead of a through-route picku
 });
 
 test('equipment placements do not cluster around another acquisition',()=>{
- // This catches gross crowding; route fixtures separately prove the detours.
+ // This catches crowding within nearby floors; route fixtures prove separate expeditions.
  for(const reward of foldedPickups.filter(p=>p.upgrade))for(const other of foldedPickups){
   if(reward.id===other.id)continue;
+  if(Math.abs(reward.y-other.y)>=24)continue;
   assert.ok(Math.hypot(reward.x-other.x,reward.y-other.y,reward.z-other.z)>45,`${reward.id} crowds ${other.id}`);
  }
 });

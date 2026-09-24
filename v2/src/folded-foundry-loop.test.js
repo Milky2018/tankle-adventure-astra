@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
 import {moveWithConveyor} from './folded-machinery.js';
-import {initialFoldedState,foldedSupport,foldedControls,foldedDecks,foldedEnemies,foldedBlocked,foldedPickups,foldedSolids,moveFolded,releaseFolded} from './folded-layout.js';
+import {initialFoldedState,foldedSupport,foldedControls,foldedDecks,foldedEnemies,foldedBlocked,foldedSolids,moveFolded,releaseFolded} from './folded-layout.js';
 
 const tank=(x,y,z,overdrive=false)=>({...newPlayer(),x,y,z,overdrive});
 function drive(p,s,x,z,seconds,boost=false){
@@ -85,9 +85,8 @@ test('the remembered water channel replaces the press return door and rejects dr
     const p=tank(x,-16,37,overdrive);drive(p,s,0,-1,5,overdrive);
     assert.ok(p.z>34&&p.y===-16,`Dry tank crossed the channel at ${p.x},${p.z}`);
   }
-  const reward=foldedPickups.find(p=>p.id==='armor-foundry');
   const p=tank(-55,-16,50);
-  walk(p,s,[[-60,44],[-60,37],[reward.x,reward.z],[-60,44],[-55,50]]);
+  walk(p,s,[[-60,44],[-60,37],[-60,44],[-55,50]]);
   assert.equal(s.prototype,false);assert.equal(s.overdrive,false);
 });
 

@@ -553,7 +553,7 @@ A visible shot switch powers only the first door, which opens onto a permanently
 
 **Onward and later return:** from A, Boost now crosses the separate northward opposing belt into the former Overseer workroom: a Turret covers open floor, a Skirmisher pressures the other flank, and a Guard protects the ascent to B. They remain in the workroom, away from the belt, ascent and Hives; the exit stays open without waves or a kill gate. Only the original workroom ascent reaches Transit; inside service releases make return ordinary. This ordinary encounter, B and the middle expeditions separate Prototype from the next Boss.
 
-An early scrap-inspection armour bay off the first-door service lane overlooks water separating it from the Transit shore ramp. That water prevents an opening bypass; Flotation later makes it a bidirectional return without a door or Boss-state check. The separate garden-side east door also reconnects to A later. Preservation and reclamation remain an observed contradiction, not exposition.
+An early scrap-inspection alcove off the first-door service lane overlooks water separating it from the Transit shore ramp. That water prevents an opening bypass; Flotation later makes it a bidirectional return without a door or Boss-state check. The separate garden-side east door also reconnects to A later. Preservation and reclamation remain an observed contradiction, not exposition.
 
 ### R2 — Freight Exchange
 
@@ -587,7 +587,7 @@ The cargo-battery readout shows four miniature Mortar emblems, one for each empl
 
 The canal follows the actual press foundation to R1's service passage. From the far-bank care court, a south maintenance walk turns west to A's east door. Its full-width door exposes an embedded latch only toward the Gardens, preserves the initial commitment and permanently opens both ways without requiring the plant. Later tower descent reaches the upper inspection walk; the cooling outlet meets a lower height of the same retaining wall. The region has no Boss or extra Hive.
 
-**Optional care:** two hinged gutters and low cranks connect a leaking pipe to a planter. Cannon paddles advance gutters through detents; actual falling water shows alignment, and wrong settings spill harmlessly. One shot breaks the rust plug before or after alignment. **Two seconds** of settled full flow fills the planter, raises a metal stem, unfolds **five leaves** and lights a blossom. Interrupted flow drains an unfinished planter; completion persists. A low partition shelters the scene from far-bank fire. It gives no item, HP or route key.
+**Optional care:** two hinged gutters and low cranks connect a leaking pipe to a planter. Cannon paddles advance gutters through detents; actual falling water shows alignment, and wrong settings spill harmlessly. One shot breaks the rust plug before or after alignment. **Two seconds** of settled full flow fills the planter, raises a metal stem, unfolds **five leaves** and lights a blossom. Interrupted flow drains an unfinished planter; completion persists. A low partition shelters the scene from far-bank fire. Blooming reveals an [armour pack](#8-optional-equipment) beside the planter; the puzzle remains optional and unlocks no route.
 
 Flotation also reaches a stranded foundation tender and supported ramp. A shot releases its brake; it crosses a short floating lane, climbs to the inspection berth and lights the bay, waiting for occupied track. Unfinished delivery restarts at the accessible lower dock; completed delivery stays. This is restored work, not the separate opening-bay machine used in the ending.
 
@@ -641,7 +641,7 @@ Ten one-time discoveries span different stages and detour types: easy local find
 
 | Discovery | Placement / action | Effect |
 | --- | --- | --- |
-| Armour 1 | Recessed scrap-inspection bay behind the early press-service partition, overlooking the later water return | +1 segment / 5 HP |
+| Armour 1 | Beside the Gardens mechanical flower; appears only after restoring full water flow and blooming | +1 segment / 5 HP |
 | Armour 2 | Rear dock corner beneath the freight station, reached by a deeper water-and-bank expedition rather than beside Flotation | +1 segment / 5 HP |
 | Armour 3 | Discarded-chassis recovery pocket beside Phoenix runway, full-speed breakthrough and short return to Testworks | +1 segment / 5 HP |
 | Armour 4 | Optical maintenance mezzanine recognized from another floor; remove blue retaining plate to enter workspace | +1 segment / 5 HP |

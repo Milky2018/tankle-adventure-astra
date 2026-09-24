@@ -40,3 +40,15 @@ test('Magnet is a single raised shunting reward with a reachable lowered berth',
  const p={x:-156,y:8,z:-60,speed:1};moveFolded(p,0,-8,{},[{...lift,y:14}]);assert.ok(p.z> -64);
  p.z=-60;moveFolded(p,0,-8,{'rail-crossing':true},[{...lift,y:8}]);assert.ok(Math.abs(p.z-reward.z)<2);
 });
+
+test('the flower reveals the relocated armour only after blooming and preserves legacy collections',()=>{
+ const reward=foldedPickups.find(p=>p.id==='armor-foundry');
+ assert.equal(foldedPickups.filter(p=>p.upgrade==='armor').length,5);
+ assert.equal(reward.requires,'garden-bloom');assert.equal(reward.preview,undefined);
+ assert.equal(initialFoldedState()[reward.requires],false);
+ assert.equal(initialFoldedState({sidePuzzles:{gutter:{fill:.9}}})[reward.requires],false);
+ assert.equal(initialFoldedState({sidePuzzles:{gutter:{grown:true}}})[reward.requires],true);
+ const collected=initialFoldedState({'armor-foundry':true});assert.equal(collected[reward.id],true);
+ const p={x:46,y:-8,z:24,speed:1};moveFolded(p,0,10,initialFoldedState());
+ assert.equal(p.x,reward.x);assert.equal(p.z,reward.z);assert.equal(p.y,reward.y);
+});

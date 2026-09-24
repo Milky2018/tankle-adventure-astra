@@ -13,10 +13,11 @@ export const explorationPickups = [
   {
     id: 'armor-foundry',
     upgrade: 'armor',
-    x: -59,
-    y: -16,
-    z: 37,
-    place: 'Recessed scrap inspection bay off the press service lane',
+    x: 46,
+    y: -8,
+    z: 34,
+    place: 'Beside the mechanical flower after restoring its water supply',
+    requires: 'garden-bloom',
   },
   {
     id: 'cannon-coil',
@@ -299,6 +300,7 @@ explorationSolids.push(
   ...explorationPickups
     .filter(
       (p) =>
+        p.preview &&
         p.requires &&
         !['impact-store', 'mortar-cache', 'collimator-drawer', 'scope-drawer'].includes(p.requires),
     )
