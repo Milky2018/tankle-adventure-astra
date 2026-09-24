@@ -6,7 +6,17 @@ async page=>{
   results.push(await page.evaluate(view=>{
    const g=__game,q=g.debug,check=(ok,msg)=>{if(!ok)throw Error(`${view}: ${msg}`);};
    g.manual(true);q.setCameraView(view);g.setInput([]);
-   g.scenario({enemies:Object.fromEntries(g.snapshot().enemies.map(e=>[e.id,0])),state:{prototype:false,'overdrive-return':false},player:{x:-40,y:-34/3,z:70,overdrive:false,heat:0,speed:1}});
+   g.scenario({enemies:Object.fromEntries(g.snapshot().enemies.map(e=>[e.id,0])),state:{prototype:false,'overdrive-return':false,'prototype-shortcut':false,pendingSignals:{}},player:{x:-40,y:-34/3,z:70,overdrive:false,heat:0,speed:1}});
+   const latch=q.world.controls.find(c=>c.id==='prototype-shortcut');
+   for(const [x,z]of [[-36,70],[-38,74],[-40,78]]){
+    g.scenario({player:{x,y:-16+(z-56)/3,z,weapon:'cannon',heat:0,lastShot:-100,lastHeat:-100,overheated:false}});
+    q.aim.set(latch.x,latch.y,latch.z+.5);
+    const origin=q.weaponOrigin(),delta=q.aim.clone().sub(origin);
+    check(q.world.cast(origin,delta.clone().normalize(),delta.length()+.1)?.target?.id!==latch.id,'Ramp exposes the return latch');
+    check(g.fire(),'Cannon fixture failed to fire');g.step(.7,false);
+    check(!q.progression.signals.active(latch.id),'A real cannon shell opened the return from the ramp');
+   }
+   g.scenario({player:{x:-40,y:-34/3,z:70,heat:0,speed:1}});
    if(view==='third')g.look(0,0);
    const keys=(x,z)=>view==='overhead'?(x?x>0?['KeyS','KeyD']:['KeyW','KeyA']:z>0?['KeyS','KeyA']:['KeyW','KeyD']):(x?x>0?['KeyA']:['KeyD']:z>0?['KeyW']:['KeyS']);
    function drive(x,z,seconds,boost=false){g.setInput(x||z?[...keys(x,z),...boost?['ShiftLeft']:[]]:[]);g.step(seconds,false);g.setInput([]);}
@@ -19,7 +29,11 @@ async page=>{
    function reach(x,z,boost=true){for(let i=0;i<900&&Math.hypot(q.p.x-x,q.p.z-z)>.35;i++){
     const dx=x-q.p.x,dz=z-q.p.z;drive(Math.abs(dx)>Math.abs(dz)?Math.sign(dx):0,Math.abs(dx)>Math.abs(dz)?0:Math.sign(dz),1/60,boost);
    }check(Math.hypot(q.p.x-x,q.p.z-z)<.5,`Return blocked at ${q.p.x},${q.p.y},${q.p.z}`);}
-   reach(-28,100);check(q.p.y===-16,'First lesson is not level');reach(-28,52,false);reach(-40,52,false);reach(-40,86);reach(0,86,false);check(q.p.y===-8,'Return reached another floor');
+   reach(-28,100);check(q.p.y===-16,'First lesson is not level');reach(-28,66,false);
+   q.p.heat=0;q.p.lastShot=-100;q.p.overheated=false;q.aim.set(latch.x,latch.y,latch.z+.5);
+   check(g.fire(),'Return-side cannon did not fire');g.step(1,false);
+   check(q.progression.signals.active(latch.id),'The tunnel blocks the intended return-side shot');
+   reach(-28,52,false);reach(-40,52,false);reach(-40,86);reach(0,86,false);check(q.p.y===-8,'Return reached another floor');
    for(const e of q.world.enemies.filter(e=>e.encounter==='prototype-approach')){
     Object.assign(e,e.spawn);
     for(let i=0;i<600;i++)q.moveEnemy(e,Math.atan2(-28-e.x,124-e.z),6,1/60);

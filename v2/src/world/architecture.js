@@ -22,11 +22,11 @@ const combatRoofs={
  'arsenal-dispatch':9,'lens-vestibule':9,'coolant-west-service':9,
  'hearth-mounts':9,'hearth-feed':9
 };
-// [support, region, wall height, roof].
+// [support, region, wall height, roof, optional enclosure].
 export const ROOM_PLAN=[
   ['garden-foundry-walk','garden',5,false],['garden-care','garden',16,true],['sorting-bay','transit',24,false],['mortar-installation','transit',16,true],
   ['foundry-awakening','foundry',16,true],['foundry-west','foundry',16,true],
-  ['press-working-floor','foundry',16,true],['reclaim-sorting-bay','foundry',16,true],['prototype-return','foundry',6,true],['prototype-court','foundry',24,true],['recycling-furnace','foundry',24,true],
+  ['press-working-floor','foundry',16,true],['reclaim-sorting-bay','foundry',16,true],['prototype-return','foundry',6,true,'tunnel'],['prototype-court','foundry',24,true],['recycling-furnace','foundry',24,true],
   ['turntable','transit',16,true],['roof-junction','transit',16,true],['hub-entry','transit',16,true],['loading-descent-top','transit',16,true],['loading','transit',16,true],['mortar-apron','transit',16,true],['training-gallery','transit',16,true],['freight','transit',16,true],
   ['ferry-cradle','garden',5,false],['bridge-underside','garden',3.5,false],['canal-landing','garden',4,false],
   ['garden-bank','garden',5,false],['pump-terrace','garden',5,false],['rear-dock','garden',5,false],
@@ -67,7 +67,7 @@ const roomWalls={
   'foundry-west':[[-46.85,80,.8,12],[-33.9,79.15,19.8,.8],[-46,92.05,32,.8]],
   'press-working-floor':[[-46,37.15,24,.8],[-21.95,38,.8,18],[-46.85,38,.8,5.9]],
   'reclaim-sorting-bay':[[-70.85,94,.8,22],[-70,93.15,7.9,.8],[-70,116.05,7.9,.8]],
-  'prototype-return':[[-34.85,56,.8,60],[-21.95,56,.8,60]],
+  'prototype-return':[[-33.9,56.1,.8,59.8],[-22.95,56.1,.8,59.8]],
   'prototype-court':[[-50,115.15,15.9,.8],[-21.9,115.15,7.9,.8],[-50,140.05,36,.8],[-13.95,116,.8,24]]
 };
 const overlaps=(a,b,pad=0)=>a.x<b.x+b.w+pad&&a.x+a.w>b.x-pad&&a.z<b.z+b.d+pad&&a.z+a.d>b.z-pad;
@@ -96,11 +96,14 @@ export function buildArchitecture(decks,lifts){
     }
     const key=[x,y,z,w,h,d].map(n=>n.toFixed(2)).join('/');if(seen.has(key))return;seen.add(key);solids.push(s);return s;
   }
-  for(const [id,region,h,roof]of [...ROOM_PLAN,...[...expansionRooms,...explorationRooms].map(r=>[r.id,r.region,combatRoofs[r.id]||16,!OPEN_ROOMS.has(r.id)])]){
-    const f=decks.find(d=>d.id===id),room={...f,region,h,roof};rooms.push(room);
+  for(const [id,region,h,roof,enclosure='hall']of [...ROOM_PLAN,...[...expansionRooms,...explorationRooms].map(r=>[r.id,r.region,combatRoofs[r.id]||16,!OPEN_ROOMS.has(r.id)])]){
+    const f=decks.find(d=>d.id===id),room={...f,region,h,roof,enclosure};rooms.push(room);
     // Roof construction precedes the authored-wall branches: all hall types
     // receive ceilings, while floor and lift intersections carve real openings.
-    if(roof)for(let x=f.x;x<f.x+f.w;x+=8)for(let z=f.z;z<f.z+f.d;z+=8){
+    // A low tunnel has a joined ceiling, not the hall's alternating roof lights.
+    // Its side walls and roof stay clear of the adjacent ramp and upper floor.
+    if(roof&&enclosure==='tunnel')add(room,'roof',f.x-.9,f.y+h,f.z,f.w+1.75,.55,f.d);
+    else if(roof)for(let x=f.x;x<f.x+f.w;x+=8)for(let z=f.z;z<f.z+f.d;z+=8){
       let w=Math.min(8,f.x+f.w-x),d=Math.min(8,f.z+f.d-z),lift=0;
       // The eastern loading opening exposes the mandatory Mortar tray and charge lane.
       if((id==='hearth-mounts'||id==='hearth-feed')&&x>=32)continue;
@@ -125,7 +128,7 @@ export function buildArchitecture(decks,lifts){
       // Openings are real projectile sightlines above a solid Tank-height sill.
       // Posts and headers stay within the old wall footprint and route clearance.
       const section=(kind,bottom,top,width=span)=>add(room,kind,x,f.y+bottom,z,along?width:w,top-bottom,along?d:width);
-      if(height<4)return section('wall',0,height);
+      if(height<4||enclosure==='tunnel')return section('wall',0,height);
       const profile={foundry:[4.2,10,1.1],transit:[3,8,.65],garden:[1.2,height-.4,.22],testworks:[3.2,7,.45],optics:[2.6,height-3,1.1],circulation:[3,8,.7],furnace:[height,height,1.3]}[region];
       const [sill,lintel,pier]=profile;
       // Furnace buttresses and Foundry service bays retain substantial closed mass.
