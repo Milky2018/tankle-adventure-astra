@@ -1822,11 +1822,8 @@ export function makeFoldedWorld(
     floorTrimBatches.visible = value;
     occlusion.reset();
   }
-  const viewCamera = new T.Vector3();
   function updateCameraOcclusion(camera, p, dt) {
-    viewCamera.copy(camera.position);
-    rendering.setCamera(p, camera.position);
-    presentation.setCamera(camera.position);
+    rendering.setCamera(p, camera);
   }
   function pulseHive(id, kind = 'repair') {
     const hive = hives.find((h) => h.id === id);
@@ -1875,7 +1872,6 @@ export function makeFoldedWorld(
                 (!thirdPerson && !h.object.userData.aperture) ||
                 rendering.aimVisible(h.point, viewPlayer, {
                   third: thirdPerson,
-                  camera: viewCamera,
                   direction: sightDirection,
                   terrain: h.object.userData.supportSurface,
                   support: supportPatches,
@@ -1909,7 +1905,6 @@ export function makeFoldedWorld(
           (!thirdPerson && !(h.object.userData.aperture || h.object.userData.massAperture)) ||
           rendering.aimVisible(h.point, viewPlayer, {
             third: thirdPerson,
-            camera: viewCamera,
             direction: sightDirection,
             structure: h.object.userData.massAperture,
             terrain: h.object.userData.supportSurface,
@@ -1927,7 +1922,6 @@ export function makeFoldedWorld(
         (!puzzleHit.target?.root?.userData.cutaway &&
           rendering.aimVisible(puzzleHit.point, viewPlayer, {
             third: thirdPerson,
-            camera: viewCamera,
             direction: sightDirection,
           })))
     )

@@ -409,7 +409,6 @@ export function makeCityPresentation(scene, aperture) {
         aiming &&
         !aperture.aimVisible(point, viewPlayer, {
           third,
-          camera: viewCamera,
           direction: viewDirection,
           structure: true,
         })
@@ -419,8 +418,7 @@ export function makeCityPresentation(scene, aperture) {
     }
     return hit;
   }
-  const viewCamera = new T.Vector3(),
-    viewPlayer = new T.Vector3(),
+  const viewPlayer = new T.Vector3(),
     viewDirection = new T.Vector3();
   return {
     update,
@@ -433,9 +431,6 @@ export function makeCityPresentation(scene, aperture) {
     localLights,
     get region() {
       return frameRegion;
-    },
-    setCamera(c) {
-      viewCamera.copy(c);
     },
     setView(value) {
       third = value;

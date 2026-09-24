@@ -4,7 +4,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {expansionRoutes,expansionPickups,expansionControls} from './expansion-layout.js';
 import {foldedDecks,foldedSolids,foldedControls,deckHeight,foldedSupport,foldedLiftDefs,foldedBlocked,moveFolded,initialFoldedState} from '../world/terrain.js';
-import {cameraApertureOpacity} from '../rendering/visibility.js';
 import {barrageTargets,RAIL} from '../combat/attacks.js';
 import {moveWithConveyor} from '../machinery/motion.js';
 
@@ -69,13 +68,6 @@ test('a visible current gives Flotation a quicker downstream return without movi
   assert.equal(foldedSupport(refuge.x,refuge.z,refuge.y,true).water,undefined);
   for(let i=0;i<60;i++)moveWithConveyor(refuge,0,0,1/60,s);
   assert.equal(refuge.z,52);
-});
-test('camera obstruction opacity is local and continuous across arbitrary mesh boundaries',()=>{
-  const p={x:0,y:0,z:0},camera={x:0,y:5,z:-12};
-  assert.ok(cameraApertureOpacity({x:0,y:3,z:-6},p,camera)<.3);
-  assert.equal(cameraApertureOpacity({x:0,y:0,z:-6},p,camera),1);
-  assert.equal(cameraApertureOpacity({x:0,y:3,z:5},p,camera),1);
-  assert.ok(Math.abs(cameraApertureOpacity({x:3,y:3,z:-6},p,camera)-cameraApertureOpacity({x:3.001,y:3,z:-6},p,camera))<.002);
 });
 test('artillery brackets a frozen sighting with staggered impacts and rail shots have travel time',()=>{
   const shots=barrageTargets({x:0,z:0},{x:0,y:0,z:40});

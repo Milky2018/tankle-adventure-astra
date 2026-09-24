@@ -1636,6 +1636,7 @@ function resize() {
   follow.camera.aspect = innerWidth / innerHeight;
   follow.camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
+  world.updateCameraOcclusion(camera, p, 0);
   if (paused) renderer.render(scene, camera);
   if (mapOpen) drawMap(true);
   else minimapBounds = $('minimap-wrap').getBoundingClientRect();

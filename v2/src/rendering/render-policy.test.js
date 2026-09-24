@@ -2,7 +2,7 @@ import { box } from './factory-models.js';
 import { Group } from 'three';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MeshBasicMaterial, Mesh, BoxGeometry, Vector3 } from 'three';
+import { MeshBasicMaterial, Mesh, BoxGeometry, Vector3, PerspectiveCamera } from 'three';
 import { createRenderPolicy, RENDER_ROLES } from './render-policy.js';
 
 test('every role owns its depth contract across fading and view changes, preserving shadow casters', () => {
@@ -39,12 +39,17 @@ test('conflicting material roles fail instead of silently changing another mesh'
   assert.equal(clone.depthWrite, true);
 });
 
-test('aim queries and color use the same obstruction cone, protecting support surfaces', () => {
+test('aim queries and color use the same viewport pyramid, protecting support surfaces', () => {
   const p = createRenderPolicy(),
     player = new Vector3(),
-    context = { third: true, camera: new Vector3(0, 5, 15) };
+    context = { third: true };
+  const camera = new PerspectiveCamera(60, 2, 0.15, 100);
+  camera.position.set(0, 5, 15);
+  camera.lookAt(0, 1.6, 0);
+  camera.updateMatrixWorld();
+  p.setCamera(player, camera);
   assert.equal(p.aimVisible(new Vector3(0, 3.3, 7.5), player, context), false);
-  assert.equal(p.aimVisible(new Vector3(8, 3.3, 7.5), player, context), true);
+  assert.equal(p.aimVisible(new Vector3(20, 3.3, 7.5), player, context), true);
   const point = new Vector3(0, 3.3, 7.5);
   assert.equal(
     p.opacity(point, player, {

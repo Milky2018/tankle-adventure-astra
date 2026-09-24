@@ -3,7 +3,6 @@ import { MeshBasicMaterial } from 'three';
 import {
   makeAperture,
   apertureOpacity,
-  cameraApertureOpacity,
   APERTURE_AIM_THRESHOLD,
   STRUCTURE_APERTURE_RADIUS,
 } from './visibility.js';
@@ -76,10 +75,10 @@ export function createRenderPolicy() {
   function opacity(
     point,
     player,
-    { third, camera, direction, terrain = false, structure = false, support = [] },
+    { third, direction, terrain = false, structure = false, support = [] },
   ) {
     return third
-      ? cameraApertureOpacity(point, player, camera, terrain ? support : [])
+      ? aperture.cameraOpacity(point, terrain ? support : [])
       : apertureOpacity(
           point,
           player,

@@ -13,7 +13,7 @@ const smoke = [
   'flower-reward',
   'circuit-visibility',
   'circuit-arrival',
-  'occlusion-cone',
+  'occlusion-pyramid',
   'render-contract',
   'fog-boundary',
   'shadow',

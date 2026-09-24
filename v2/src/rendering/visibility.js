@@ -3,7 +3,7 @@ import * as T from 'three';
 export { SIGNAL } from './palette.js';
 export const APERTURE_AIM_THRESHOLD = 0.45;
 export const STRUCTURE_APERTURE_RADIUS = 36;
-const CAMERA_APERTURE = { inner: 1.5, outer: 2, eyeInner: 0.12, eyeOuter: 0.2 };
+const PYRAMID_EDGE = 0.9;
 const direction = new T.Vector3(28, 39.6, 28).normalize();
 const smooth = (a, b, x) => {
   const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
@@ -49,35 +49,45 @@ export function apertureOpacity(
   return 1 - 0.84 * aperture * (1 - supportProtection(point, patches));
 }
 
-// Perspective sightlines converge at the eye; a fixed-width tunnel fades unrelated surfaces.
-export function cameraApertureOpacity(point, p, camera, patches = []) {
-  const dx = camera.x - p.x,
-    dy = camera.y - p.y - 1.6,
-    dz = camera.z - p.z,
-    l2 = dx * dx + dy * dy + dz * dz;
-  const x = point.x - p.x,
-    y = point.y - p.y - 1.6,
-    z = point.z - p.z,
-    t = (x * dx + y * dy + z * dz) / Math.max(0.001, l2);
-  const r = Math.hypot(x - dx * t, y - dy * t, z - dz * t);
-  const scale = Math.max(0, Math.min(1, 1 - t)),
-    a = CAMERA_APERTURE;
-  return (
-    1 -
-    0.84 *
-      (1 - smooth(a.eyeInner + a.inner * scale, a.eyeOuter + a.outer * scale, r)) *
-      smooth(0, 0.02, t) *
-      (1 - smooth(0.99, 1, t)) *
-      smooth(0.2, 1.4, point.y - p.y) *
-      (1 - supportProtection(point, patches))
-  );
+// Coordinates (u, v, t) describe a pyramid with its apex at the hull and
+// its rectangular base at the camera: |u| <= t, |v| <= t. The base uses
+// viewport dimensions at hull depth, not the tiny physical near-plane size.
+const nearCorner = new T.Vector3(),
+  viewportRight = new T.Vector3(),
+  viewportUp = new T.Vector3(),
+  viewportCenter = new T.Vector3(),
+  apex = new T.Vector3(),
+  viewApex = new T.Vector3();
+export function viewportPyramidMatrix(p, camera, target = new T.Matrix4()) {
+  apex.set(p.x, p.y + 1.6, p.z);
+  nearCorner.set(-1, -1, -1).unproject(camera);
+  viewportRight.set(1, -1, -1).unproject(camera).sub(nearCorner).multiplyScalar(0.5);
+  viewportUp.set(-1, 1, -1).unproject(camera).sub(nearCorner).multiplyScalar(0.5);
+  viewportCenter.copy(nearCorner).add(viewportRight).add(viewportUp).sub(apex);
+  if (camera.isPerspectiveCamera) {
+    const scale = -viewApex.copy(apex).applyMatrix4(camera.matrixWorldInverse).z / camera.near;
+    viewportRight.multiplyScalar(scale);
+    viewportUp.multiplyScalar(scale);
+  }
+  return target.makeBasis(viewportRight, viewportUp, viewportCenter).setPosition(apex).invert();
+}
+
+export function cameraApertureOpacity(point, pyramid, patches = []) {
+  const e = pyramid.elements,
+    { x, y, z } = point;
+  const u = e[0] * x + e[4] * y + e[8] * z + e[12];
+  const v = e[1] * x + e[5] * y + e[9] * z + e[13];
+  const t = e[2] * x + e[6] * y + e[10] * z + e[14];
+  if (t <= 0 || t > 1) return 1;
+  const cut = 1 - smooth(PYRAMID_EDGE, 1, Math.max(Math.abs(u), Math.abs(v)) / t);
+  return 1 - 0.84 * cut * (1 - supportProtection(point, patches));
 }
 
 export function makeAperture() {
   const player = { value: new T.Vector3() },
     enabled = { value: 1 },
     viewDirection = { value: direction.clone() },
-    camera = { value: new T.Vector3() },
+    pyramid = { value: new T.Matrix4() },
     mode = { value: 0 },
     combatFocus = { value: 0 };
   const supportBounds = { value: Array.from({ length: 4 }, () => new T.Vector4()) },
@@ -95,7 +105,7 @@ export function makeAperture() {
       shader.uniforms.supportBounds = supportBounds;
       shader.uniforms.supportPlanes = supportPlanes;
       shader.uniforms.apertureCombatFocus = combatFocus;
-      shader.uniforms.apertureCamera = camera;
+      shader.uniforms.apertureViewportPyramid = pyramid;
       shader.uniforms.apertureMode = mode;
       shader.uniforms.aperturePlayer = player;
       shader.uniforms.apertureEnabled = enabled;
@@ -117,7 +127,7 @@ export function makeAperture() {
         );
       shader.fragmentShader = shader.fragmentShader.replace(
         '#include <common>',
-        '#include <common>\nuniform vec4 supportBounds[4];\nuniform vec4 supportPlanes[4];\nuniform float apertureCombatFocus;\nuniform vec3 apertureCamera;\nuniform float apertureMode;\nuniform vec3 aperturePlayer;\nuniform float apertureEnabled;\nuniform vec3 apertureDirection;\nvarying vec3 apertureWorld;',
+        '#include <common>\nuniform vec4 supportBounds[4];\nuniform vec4 supportPlanes[4];\nuniform float apertureCombatFocus;\nuniform mat4 apertureViewportPyramid;\nuniform float apertureMode;\nuniform vec3 aperturePlayer;\nuniform float apertureEnabled;\nuniform vec3 apertureDirection;\nvarying vec3 apertureWorld;',
       );
       shader.fragmentShader = shader.fragmentShader.replace(
         '#include <opaque_fragment>',
@@ -126,12 +136,10 @@ export function makeAperture() {
         float apertureAlong = dot(apertureDelta, apertureDirection);
         float apertureRadius = length(apertureDelta - apertureDirection * apertureAlong);
         float apertureCut = (1.0 - smoothstep(${((radius * 5) / 13).toFixed(4)}, ${radius.toFixed(4)}, apertureRadius)) * smoothstep(1.5, 3.5, apertureDelta.y) * (1.0 - smoothstep(55.0, 62.0, apertureAlong));
-        vec3 eyeDelta = apertureCamera - aperturePlayer - vec3(0.0, 1.6, 0.0);
-        vec3 pointDelta = apertureWorld - aperturePlayer - vec3(0.0, 1.6, 0.0);
-        float eyeT = dot(pointDelta,eyeDelta) / max(0.001,dot(eyeDelta,eyeDelta));
-        float eyeRadius = length(pointDelta-eyeDelta*eyeT);
-        float eyeScale = clamp(1.0-eyeT,0.0,1.0);
-        float eyeCut = (1.0-smoothstep(${CAMERA_APERTURE.eyeInner.toFixed(2)}+${CAMERA_APERTURE.inner.toFixed(2)}*eyeScale,${CAMERA_APERTURE.eyeOuter.toFixed(2)}+${CAMERA_APERTURE.outer.toFixed(2)}*eyeScale,eyeRadius))*smoothstep(0.0,0.02,eyeT)*(1.0-smoothstep(0.99,1.0,eyeT))*smoothstep(0.2,1.4,apertureWorld.y-aperturePlayer.y);
+        vec3 viewportPoint = (apertureViewportPyramid * vec4(apertureWorld, 1.0)).xyz;
+        float viewportRadius = max(abs(viewportPoint.x), abs(viewportPoint.y)) / max(0.000001, viewportPoint.z);
+        float eyeCut = viewportPoint.z > 0.0 && viewportPoint.z <= 1.0
+          ? 1.0 - smoothstep(${PYRAMID_EDGE.toFixed(4)}, 1.0, viewportRadius) : 0.0;
         float cut = mix(${cameraOnly ? '0.0' : 'apertureCut'},eyeCut,apertureMode);
         ${
           terrain
@@ -154,7 +162,7 @@ export function makeAperture() {
       );
     };
     material.customProgramCacheKey = () =>
-      `${cacheKey}/folded-continuous-aperture-v12-${terrain}-${cameraOnly}-${radius}-${depthOnly ? 'depth' : 'color'}`;
+      `${cacheKey}/folded-viewport-pyramid-v13-${terrain}-${cameraOnly}-${radius}-${depthOnly ? 'depth' : 'color'}`;
   }
   return {
     apply,
@@ -169,8 +177,9 @@ export function makeAperture() {
     },
     setCamera: (p, c) => {
       player.value.set(p.x, p.y, p.z);
-      camera.value.copy(c);
+      viewportPyramidMatrix(p, c, pyramid.value);
     },
+    cameraOpacity: (point, patches) => cameraApertureOpacity(point, pyramid.value, patches),
     setView: (third) => {
       mode.value = third ? 1 : 0;
     },
