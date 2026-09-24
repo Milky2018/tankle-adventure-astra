@@ -445,14 +445,6 @@ export function makeFoldedWorld(
           0,
         );
     }
-    if (d.id === 'coolant-transfer') {
-      for (const z of [179.3, 192.7]) box(scene, 3.8, 5, 0.6, 335.5, -21.5, z, C.metal, 0);
-      box(scene, 3.8, 0.6, 14, 335.5, -18.7, 186, C.metal, 0);
-      for (const side of [-1, 1])
-        box(mesh, d.w + 0.06, 0.7, 0.18, 0, 0.1, side * (d.d / 2 + 0.12), SIGNAL.magnet, 0);
-      for (const z of [182, 186, 190])
-        box(scene, 7, 0.04, 0.18, 335.5, -23.77, z, C.lightYellow, 0);
-    }
     if (d.motion) {
       // Suspended scrap hulls ride real rails, with open wheel wells and lifting eyes.
       for (const side of [-1, 1]) {

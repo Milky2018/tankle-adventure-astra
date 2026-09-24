@@ -619,7 +619,7 @@ Laser's first broad reflection restores the remembered optical machinery and the
 
 **Route:** descend from Guardian along the same pipes seen above. Preview the unsustainable hot maintenance passage toward the core, then follow a cold service route around vessels to the cooling-jacket installation. A return landing to C releases from inside; it cannot provide an earlier Laser bypass.
 
-The separator's outer lane exposes the Tank to the distant lobber. Its screened inner path breaks direct observation but meets a Welder's approach; already-aimed Mortars still require movement. Both lanes allow retreat. The blue rail screen repeatedly trades shelter between crossings; in the cooling passage, moving the barrier exposes the already visible doorway rather than completing an electrical goal. Neither demands a kill count or compulsory shot switch.
+The separator's outer lane exposes the Tank to the distant lobber. Its screened inner path breaks direct observation but meets a Welder's approach; already-aimed Mortars still require movement. Both lanes allow retreat and meet in an open service crossing, without a movable barrier, kill-count gate or compulsory shot switch.
 
 **Circulation loop:** the cold installation apron leads into the first hot bridge operation defined under [thermal routes](#thermal-routes). Its bridge, lift return and permanent cool bypass establish a useful local loop. A following lane offers sustained red contact versus sheltered cooling, and a familiar overlook separates acquisition from the final descent. The industrial outlet opens from inside to the known garden retaining wall; its opposite housing prevents early access. The condensate-island revisit develops Flotation as a combat approach.
 

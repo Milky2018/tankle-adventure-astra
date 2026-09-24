@@ -12,47 +12,6 @@ async (page) => {
       __game.debug.world.views.enemy(e).model.root.visible = false;
     }
     const results = [];
-    for (const view of ['overhead', 'third']) {
-      a.setCameraView(view);
-      const b = a.state.bodies.solids.find((b) => b.id === 'coolant-transfer');
-      b.z = 180;
-      g.scenario({
-        player: { x: 340, y: -24, z: 170, magnet: true, heat: 0, overheated: false, hp: 50 },
-      });
-      if (view === 'third') g.look(Math.atan2(-4.5, 10), 0.1);
-      else g.aimAt(335.5, 181, -22.5);
-      g.setInput(['Mouse2']);
-      g.step(0.1);
-      const start = b.z;
-      if (start >= 180) throw Error(view + ' failed to grab near end');
-      if (view === 'third') g.look(1, 0.2);
-      else g.aimAt(350, 170, -22.5);
-      g.step(0.3);
-      if (b.z >= start) throw Error(view + ' dropped tether on aim change');
-      g.step(2);
-      const stopped = b.z,
-        heat = a.p.heat;
-      g.step(1);
-      if (b.z !== stopped || a.p.heat > heat || a.magneticActive())
-        throw Error(view + ' heats or pulls while stopped');
-      g.scenario({ player: { x: 340, y: -24, z: 164 } });
-      g.step(1);
-      if (Math.abs(b.z - 166) > 1e-4)
-        throw Error(view + ' failed to follow retreat to rail endpoint ' + b.z);
-      g.setInput([]);
-      g.step(0.1);
-      g.scenario({ player: { x: 340, y: -24, z: 188, heat: 0, overheated: false } });
-      if (view === 'third') g.look(Math.atan2(-4.5, -10), 0.1);
-      else g.aimAt(335.5, 177, -22.5);
-      g.setInput(['Mouse2']);
-      g.step(0.2);
-      g.scenario({ player: { z: 194 } });
-      g.step(1.5);
-      if (Math.abs(b.z - 180) > 1e-4) throw Error(view + ' failed reverse grab ' + b.z);
-      results.push({ view, min: 166, max: b.z, stoppedHeat: a.p.heat });
-      g.setInput([]);
-      g.step(0.1);
-    }
     a.setCameraView('overhead');
     const b = a.state.bodies.obstacles.find((b) => b.id === 'sorter-cover');
     b.x = 28;

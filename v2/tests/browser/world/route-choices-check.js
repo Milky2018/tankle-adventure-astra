@@ -8,14 +8,14 @@ async page=>{
     const g=__game,q=g.debug,w=q.world,T=q.T,check=(ok,msg)=>{if(!ok)throw Error(`${view}/${area}: ${msg}`);};
     q.setCameraView(view);g.setInput([]);q.clearShots();
     const start={freight:[59,0,-34],optics:[271,24,-62],coolant:[292,-24,143]}[area];
-    g.scenario({player:{x:start[0],y:start[1],z:start[2],hp:25,invincible:0,hurtUntil:0,heat:0,knockX:0,knockZ:0},state:{freight:true,'freight-return':false,'coolant-transfer':true}});
+    g.scenario({player:{x:start[0],y:start[1],z:start[2],hp:25,invincible:0,hurtUntil:0,heat:0,knockX:0,knockZ:0},state:{freight:true,'freight-return':false}});
     if(view==='third')g.look(0,0);
     function walk(points){for(const [x,z]of points){for(let i=0;i<800&&Math.hypot(q.p.x-x,q.p.z-z)>.35;i++){
      const dx=x-q.p.x,dz=z-q.p.z;
      const keys=view==='overhead'?(Math.abs(dx)>Math.abs(dz)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD']):(Math.abs(dx)>Math.abs(dz)?dx>0?['KeyA']:['KeyD']:dz>0?['KeyW']:['KeyS']);
      g.setInput(keys);g.step(1/60,false);
     }check(Math.hypot(q.p.x-x,q.p.z-z)<.5,`movement blocked at ${q.p.x},${q.p.y},${q.p.z} toward ${x},${z}`);}g.setInput([]);}
-    const paths={freight:[[59,-63],[67,-63],[67,-34],[67,-63],[59,-63],[59,-92]],optics:[[290,-62],[290,-88],[271,-88],[271,-62]],coolant:[[312,143],[312,164],[340,164],[340,186],[340,164],[325,164],[325,186],[292,186],[292,143]]};
+    const paths={freight:[[59,-63],[67,-63],[67,-34],[67,-63],[59,-63],[59,-92]],optics:[[290,-62],[290,-88],[271,-88],[271,-62]],coolant:[[312,143],[312,164],[340,164],[340,186],[325,186],[292,186],[292,143]]};
     walk(paths[area]);
     function blocked(a,b){const from=new T.Vector3(...a),to=new T.Vector3(...b).sub(from);return !!w.cast(from,to.clone().normalize(),to.length()-.1,{targets:false});}
     if(area==='optics'){
@@ -28,7 +28,8 @@ async page=>{
      check(blocked([348,-22.5,185],[312,-22.8,155]),'Maintenance lane has no shelter');
      check(!blocked([312,-22.5,159],[312,-22.8,150]),'Welder cannot contest maintenance lane');
     }
-    g.scenario({player:{x:start[0],y:start[1],z:start[2]}});
+    const preview=area==='coolant'?[340,-24,186]:start;
+    g.scenario({player:{x:preview[0],y:preview[1],z:preview[2]}});
     for(const e of w.enemies){const show=area==='optics'?e.id==='lens-collimator-reflector-0':area==='coolant'?e.encounter==='coolant-separator':false;e.hp=show?e.max:0;__game.debug.world.views.enemy(e).model.root.visible=show;e.stunnedUntil=q.time+1000;}
     if(view==='third')g.look(area==='coolant'?.4:area==='optics'?2.7:Math.PI,.1);
     g.step(.1);q.draw();

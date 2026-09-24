@@ -1,9 +1,8 @@
 import {settleControl} from '../../tests/fixtures/settled-control.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { foldedBattles, foldedControls, foldedPickups, foldedSolids, foldedLiftDefs, initialFoldedState, foldedSupport } from '../world/terrain.js';
+import { foldedBattles, foldedControls, foldedPickups, foldedSolids, foldedLiftDefs, initialFoldedState } from '../world/terrain.js';
 import { circuitLinks, createCircuitSignals } from '../machinery/circuits.js';
-import { pullSlide } from '../machinery/mechanisms.js';
 import { explorationEnemies } from './exploration-layout.js';
 
 test('one Mortar lesson powers both freight returns only after the cable arrives, including reload',()=>{
@@ -19,18 +18,6 @@ test('one Mortar lesson powers both freight returns only after the cable arrives
   const legacy=initialFoldedState({pendingSignals:{'loading-return':{remaining:1,duration:3,changes:{'loading-return':true}}}});
   createCircuitSignals(legacy,links).advance(1);assert.equal(legacy['bridge-crane'],true);
   for(const id of ['bridge-crane','freight','reservoir-transfer','arsenal-transfer','lens-transfer'])assert.equal(foldedControls.some(c=>c.id===id),false,id);
-});
-
-test('the separator magnetic screen moves in both directions and persists its physical position',()=>{
- const state=initialFoldedState(),body=state.bodies.solids.find(b=>b.id==='coolant-transfer');
- const obstacles=state.bodies.solids.filter(b=>b!==body&&(b.permanent||b.rail||!state[b.id]));
- const support=(x,z,y)=>!!foldedSupport(x,z,y);
- for(const [direction,expected]of [[-1,166],[1,180]]){
-  for(let i=0;i<600;i++){const player={x:340,y:-24,z:body.z+6+direction*9};assert.ok(foldedSupport(player.x,player.z,player.y));pullSlide(body,player,1/60,obstacles,support);}
-  assert.ok(Math.abs(body.z-expected)<.01,`${body.z} should reach ${expected}`);
- }
- state.slidePositions[body.id]=170;
- assert.equal(initialFoldedState(JSON.parse(JSON.stringify(state))).bodies.solids.find(b=>b.id===body.id).z,170);
 });
 
 test('the finite battery guards a remote reward instead of a through-route pickup',()=>{

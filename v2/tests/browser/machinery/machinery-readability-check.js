@@ -27,7 +27,5 @@ async page => {
   const paddle=a.world.sidePuzzles.targets.find(t=>t.id==='rail-a'),setting=rail.state.switches[0];g.aimAt(paddle.x,paddle.z,paddle.y);g.setInput(['Mouse0']);g.step(.3,false);g.setInput([]);g.step(1,false);check(rail.state.switches[0]!==setting,'Cannon did not turn rail after its cable');
   return {railCannon:true,liftExit:true,phoenixBypass:true,satelliteCannon:true,noHullSwitches:true,thermalStates:true,remoteCables:true,fixture:'Granted incoming equipment and disabled enemies; real movement and Cannon input'};
  });
- await page.evaluate(()=>{const g=__game;g.scenario({player:{x:340,y:-24,z:160,magnet:true},state:{slidePositions:{'coolant-transfer':166}}});g.step(.1,false);g.debug.draw();});
- await page.screenshot({path:'output/playwright/machinery-slide.png'});
  return report;
 }

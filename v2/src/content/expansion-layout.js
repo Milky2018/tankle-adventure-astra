@@ -78,8 +78,8 @@ const routes={
   path:[[286,117,'repair'],[292,143],[292,166],[292,186],[325,186],[325,164],[340,164],[340,186],[360,186],[360,160],[374,160,'repair'],[374,116,'pickup']],
   returns:[[374,116],[374,106],[284,106,'boost'],[284,117],[260,117]],
   branches:[[[292,143],[312,143],[312,164],[340,164],[340,186]]],
-  controls:[['coolant-transfer',333,186,'magnet',{slide:'coolant-transfer',mount:'coolant-transfer',facing:[1,0,0]}]],
-  gates:[['coolant-transfer',334,180,3,12,{permanent:true,magnetic:true,rail:{axis:'z',min:166,max:180}}],['coolant-return',324,100,1,12,{red:true}]],
+  controls:[],
+  gates:[['coolant-return',324,100,1,12,{red:true}]],
   cover:[[283,150,5,3],[299,177,3,5],[342,188,3,7],[316,146,1,15]],
   enemies:[
    ['welder',345,177,'separator',0,{coordinated:true,battle:'coolant-separator',activation:{x:340,y:-24,z:177,radius:18},patrol:{x:338,z:172,w:28,d:22}}],
@@ -138,7 +138,7 @@ for(const plan of districtPlans){
 floor('arsenal-return-link',-82,-60,34,12,8,{region:'transit'});
 floor('arsenal-cart-berth',-132,-38,18,8,8,{region:'transit'});
 floor('lens-screen-berth',307,-84,8,24,24,{region:'optics'});
-floor('coolant-screen-rail',332,158,8,36,-24,{region:'circulation'});
+floor('coolant-service-walk',332,158,8,36,-24,{region:'circulation'});
 floor('proving-recovery-approach',178,-128,50,12,16,{region:'testworks'});
 floor('proving-gallery-west',102,-176,8,26,16,{rise:4,region:'testworks'});
 floor('proving-gallery-east',188,-176,8,26,16,{rise:4,region:'testworks'});

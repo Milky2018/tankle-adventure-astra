@@ -35,8 +35,8 @@ test('optical frontal and screened routes both reconnect into the open gallery w
 });
 
 test('separator offers an exposed outer route and a sheltered close route without trapping either approach',()=>{
-  for(const points of [[[292,186],[325,186],[325,164],[340,164],[340,186]],[[312,143],[312,164],[340,164],[340,186]]]){
-    const s=initialFoldedState({'coolant-transfer':true}),p={x:292,y:-24,z:143,speed:1};
+  for(const points of [[[292,186],[325,186],[340,186]],[[312,143],[312,164],[340,164],[340,186]]]){
+    const s=initialFoldedState(),p={x:292,y:-24,z:143,speed:1};
     walk(p,s,points);assert.equal(p.y,-24);assert.equal(s['coolant-return'],false);
     walk(p,s,[...points.slice(0,-1)].reverse());walk(p,s,[[292,143]]);
   }

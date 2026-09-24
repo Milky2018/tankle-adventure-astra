@@ -2,7 +2,7 @@ import {settleControl} from '../../tests/fixtures/settled-control.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {foldedHives,foldedLiftDefs,foldedSupport,foldedBlocked,initialFoldedState,moveFolded,foldedEnemies,foldedControls} from '../world/terrain.js';
-import {pullSlide,currentVelocity,stepReleasedSlides} from '../machinery/mechanisms.js';
+import {currentVelocity,stepReleasedSlides} from '../machinery/mechanisms.js';
 import {moveWithConveyor,stepLifts} from '../machinery/motion.js';
 import {newPlayer,updateHeat,BASE_SPEED} from '../player/mechanics.js';
 import {expansionCurrents} from './expansion-layout.js';
@@ -77,17 +77,6 @@ test('sluice diversion changes the actual force on an afloat tank but never crea
   for(let i=0;i<60;i++){moveWithConveyor(a,0,0,1/60,fast);moveWithConveyor(b,0,0,1/60,calm);}
   assert.ok(b.z-a.z>3);assert.deepEqual(currentVelocity(q,calm),q.diverted);
   assert.equal(foldedSupport(-94,85,-8,false),null);
-});
-
-test('magnetic slides remain solid, stop for occupants, and restore an unfinished rail position',()=>{
-  const s=initialFoldedState(),body=s.bodies.solids.find(b=>b.id==='coolant-transfer'),p={x:340,y:-24,z:166};
-  for(let i=0;i<30;i++)pullSlide(body,p,1/60,[],(x,z,y)=>!!foldedSupport(x,z,y));
-  assert.ok(body.z>166&&body.z<180);
-  s.slidePositions[body.id]=body.z;
-  const restored=initialFoldedState(JSON.parse(JSON.stringify(s))).bodies.solids.find(b=>b.id===body.id);
-  assert.equal(restored.z,body.z);assert.ok(foldedBlocked(body.x+1,body.y,body.z+1,s));
-  const obstacle={x:body.x,y:body.y,z:body.z-4,w:3,d:3};
-  pullSlide(body,p,2,[obstacle],()=>true);assert.ok(body.z>=obstacle.z+obstacle.d);
 });
 
 test('the deep lift belongs to the inner thermal passage, not an optical AND vestibule',()=>{
