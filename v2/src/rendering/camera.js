@@ -7,6 +7,14 @@ export function cameraMovement(horizontal,vertical,yaw){
   return {x:(-Math.cos(yaw)*horizontal-Math.sin(yaw)*vertical)/length,z:(Math.sin(yaw)*horizontal-Math.cos(yaw)*vertical)/length};
 }
 
+// Third-person picking starts beyond the turret's horizontal front plane.
+// Keep the original screen ray so target height still follows the reticle.
+export function clipAimRay(ray,turret){
+  const {origin,direction}=ray,horizontal=Math.hypot(direction.x,direction.z);
+  const ahead=((origin.x-turret.x)*direction.x+(origin.z-turret.z)*direction.z)/horizontal;
+  ray.recast(Math.max(0,(1-ahead)/horizontal));
+}
+
 export class FollowCamera{
   constructor(aspect,yaw=Math.PI){
     this.camera=new T.PerspectiveCamera(60,aspect,.15,DEFAULT_VIEW_DISTANCE.renderDistance);

@@ -29,7 +29,7 @@ import { traceFoldedLaser } from '../combat/laser.js';
 import { createGroundPose, groundPatches, groundAim } from '../world/ground.js';
 import { refugeAt, REFUGE_CLEARANCE } from '../world/refuges.js';
 import { createEncounterPacing } from '../combat/encounter-pacing.js';
-import { FollowCamera, cameraMovement } from '../rendering/camera.js';
+import { FollowCamera, cameraMovement, clipAimRay } from '../rendering/camera.js';
 import { magnetPullable, playerStunned, hitDisplacement, hitOpacity } from '../combat/damage.js';
 import { moveWithConveyor, stepLifts, applyFloorHeat } from '../machinery/motion.js';
 import { SIGNAL } from '../rendering/visibility.js';
@@ -497,6 +497,7 @@ function weaponOrigin() {
 function updateAim() {
   if (thirdPerson) pointer.set(0, 0);
   picker.setFromCamera(pointer, camera);
+  if (thirdPerson) clipAimRay(picker.ray, weaponOrigin());
   const direct = world.cast(picker.ray.origin, picker.ray.direction, 300, {
     aiming: true,
     extras: [...mines, ...torpedoTargets(shots)],
@@ -515,9 +516,6 @@ function updateAim() {
   if (thirdPerson) {
     if (hit) aim.copy(hit.point);
     else aim.copy(picker.ray.origin).addScaledVector(picker.ray.direction, 150);
-    const muzzle = weaponOrigin();
-    if (aim.clone().sub(muzzle).dot(follow.forward) < 1)
-      aim.copy(muzzle).addScaledVector(follow.forward, 2);
   } else if (hit?.target || hit?.mirror) aim.copy(hit.point);
   else if (hit) {
     if (p.weapon === 'mortar') aim.copy(hit.point);
