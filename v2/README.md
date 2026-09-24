@@ -22,7 +22,7 @@ Open `http://127.0.0.1:5174/` for the journey menu. A web server is required; op
 | `/?chapter=folded&route=freight` | Independent Mortar/Phoenix preview |
 | `/?chapter=legacy` | Historical journey, with a separate save |
 
-Previews use separate saves. Restarting a preview does not replace campaign progress. The menu groups earlier prototypes under historical versions.
+Previews use separate saves. Restarting a preview does not replace campaign progress. Historical chapter URLs are retained, but their old settings UI currently references the removed `reset-confirm` element and prevents startup. This predates the directory reorganization.
 
 ```sh
 npm run build
@@ -57,7 +57,7 @@ npm run check
 
 This runs JavaScript syntax checks, undefined/unused-reference checks, formatting checks for the extracted modules, Node tests and the production build. `npm run format` formats that same maintained set; it does not rewrite all historical source files.
 
-The `0.1.0` Git tag is the baseline before structural cleanup. `test-fixtures/balance-0.1.0.json` was generated from that tag and protects player values, ability values, enemy health and Boss patterns. Intentional gameplay changes must update the corresponding expectations explicitly.
+The `0.1.0` Git tag is the baseline before structural cleanup. `tests/fixtures/balance-0.1.0.json` was generated from that tag and protects player values, ability values, enemy health and Boss patterns. Intentional gameplay changes must update the corresponding expectations explicitly.
 
 For browser regression checks, keep the development server running on port 5174 and provide Playwright CLI:
 
@@ -79,15 +79,29 @@ The development-only `?test&manual` interface suspends automatic simulation befo
 
 Node and scripted browser checks establish rules, routes and controlled interactions. They do not establish first-time discovery quality, subjective balance, or a human playthrough duration.
 
+## Source layout
+
+The current entry is `src/entry.js`; `src/app/session.js` composes the game. Source directories are organized by responsibility: `player`, `combat`, `world`, `content`, `machinery`, `progression`, `rendering`, `ui` and `audio`. `src/legacy/` contains historical simulations. Shared tank models and rules remain outside it.
+
+Unit tests are colocated with their modules. Browser checks live under `tests/browser/`, fixtures under `tests/fixtures/`, and profiling tools under `scripts/performance/`. Dated reports live in `docs/history/`.
+
+```sh
+npm run test:browser -- --list
+npm run test:browser -- ui/journey-menu combat/friendly-fire
+npm run test:browser -- performance/render-perf
+```
+
+A unique short check name still works. Use the listed subject/name when names overlap. Syntax checks and unit-test discovery recurse through the organized directories.
+
 ## Code and investigation notes
 
-See [architecture](docs/architecture.md) for module ownership, state lifetimes and historical code boundaries. [IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md) records dated investigations and validation limits. Implementation and test details do not belong in `Gamespec.md`.
+See [architecture](docs/architecture.md) for module ownership, state lifetimes and historical code boundaries. [docs/history/implementation-notes.md](docs/history/implementation-notes.md) records dated investigations and validation limits. Implementation and test details do not belong in `Gamespec.md`.
 
 Enemy decisions run through `createFoldedEnemies` with an explicit visual adapter. Its attack, healing and arena-reset tests do not construct Three.js models.
 
 ## Sound-effect comparison
 
-See [sound-effect auditions](scripts/SOUND_EFFECTS.md) to regenerate the old/new previews from the actual Web Audio implementations. The local audition page is served at `/output/audio/sfx-comparison/index.html`; its audio files remain in ignored output and are not shipped with the game.
+See [sound-effect auditions](scripts/audio/README.md) to regenerate the old/new previews from the actual Web Audio implementations. The local audition page is served at `/output/audio/sfx-comparison/index.html`; its audio files remain in ignored output and are not shipped with the game.
 
 Optional discovery, equipment persistence, real upgraded weapon hits and both-view Mortar landing checks:
 

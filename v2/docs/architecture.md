@@ -1,49 +1,75 @@
 # Code ownership
 
-The current game boots through `src/entry.js` and `src/folded.js`. The latter creates the session, wires game actions and advances systems in their existing order. It owns session orchestration and player ability coordination. Settings UI and transient effects have dedicated owners; camera preview callbacks stay here because they must refresh world visibility and aim without advancing simulation.
+The current game boots through `src/entry.js` and `src/app/session.js`. The latter creates the session, wires game actions and advances systems in their existing order. It owns session orchestration and player ability coordination. Settings UI and transient effects have dedicated owners; camera preview callbacks stay here because they must refresh world visibility and aim without advancing simulation.
+
+## Directory layout
+
+All module paths below are relative to `src/`. `entry.js` selects an entry; `app/session.js` composes the current game.
+
+| Directory | Responsibility |
+| --- | --- |
+| `app/` | Session construction, frame orchestration, input and development profiling |
+| `player/` | Hull, heat, movement, abilities and equipment bonuses |
+| `combat/` | Enemy state/AI, damage, weapons, projectiles and encounter scheduling |
+| `world/` | Supporting geometry, collision, structural envelopes and safe zones |
+| `content/` | Authored map collections and their immutable compilation |
+| `machinery/` | Mechanical state, motion, puzzle rules and circuit delivery/routing |
+| `progression/` | Completion commands, campaign storage/migrations and finale state |
+| `rendering/` | Scene/model construction, animation, camera, lighting and visibility |
+| `ui/` | Menus, settings, HUD, map and their styles/assets |
+| `audio/` | Playback coordination, synthesis and soundtrack selection |
+| `legacy/` | Historical journey and chapter simulations; shared code stays with its current owner |
+
+Unit tests live beside the modules they exercise. Cross-system layout and progression-route tests live in `content/`; historical simulation tests stay in `legacy/`. Browser checks live in `tests/browser/<subject>/`, shared test data in `tests/fixtures/`, timing probes in `scripts/performance/`, and asset tools in `scripts/audio/` and `scripts/music/`. `docs/history/` preserves dated investigations; this document describes the current structure.
+
+Import the owning module directly. Do not create directory-wide re-export indexes or restore `folded-*` forwarding files. Folder names identify responsibility, not development chronology. The existing exported names, `chapter=folded` URLs, CSS hooks and storage keys remain compatible; they are not file-placement rules.
+
+The current session does not import `legacy/`. Historical entries may import shared player, rendering, audio and machinery modules. `content/prototypes/` records earlier authored layouts, some of which still supply shared ability and puzzle definitions; their location does not mark them as unused.
+
+This organization does not make every dependency one-way: `machinery/side-puzzles.js` still mixes simulation and presentation, and `world/terrain.js` retains existing compatibility exports. Future decoupling should address those seams without disguising them with folders.
 
 ## Current modules
 
 | Module | Owns |
 | --- | --- |
-| `folded-ai.js` | Enemy decisions, movement, attack phases, squad alerts and combat reset |
-| `folded-enemy-state.js` | Session-owned enemy identity, spawn state, health and boss-part records |
-| `folded-enemy-rules.js` | Enemy archetype values and squad healing selection |
-| `folded-death.js` | Player wreck animation, smoke and the death/reconstruction iris |
-| `folded-enemy-view.js` | Enemy warning geometry, deployment, collapse, animation and camera readability |
-| `folded-profiler.js` | Development-only CPU/GPU sampling and query cleanup |
-| `folded-projectiles.js` | Damage application, armour, sanctuary interception, shell flight, hostile launch and direct/blast friendly fire |
-| `folded-combat.js` | Armour and contact-damage rules |
-| `folded-weapons.js` | Current city Cannon/Laser values and hostile projectile damage |
-| `folded-ballistics.js` | Shared mortar flight position and read-only obstruction prediction |
-| `folded-upgrades.js` | Saved discovery IDs, derived equipment bonuses and weapon damage scaling |
-| `folded-exploration-layout.js` | Optional finds, collision-backed workshop infill and local patrols |
-| `folded-materials.js` | Cached seamless surface colour and normal maps |
-| `folded-architecture.js` | Region-specific wall openings, roof profiles, shared-ceiling clipping and collision-backed structural envelopes |
-| `folded-regional-scenery.js` | Envelope-attached regional detail and a bounded pool of local task lights |
-| `folded-laser.js` | Read-only trajectory shared by preview and live Laser |
-| `folded-settings.js` | Preference defaults and persistence, control rebinding, quality/audio settings and camera-tuning UI |
-| `folded-effects.js` | Spark/shield-fragment motion, blast rings and projectile visuals with scene-local material cleanup |
-| `folded-input.js` | Keyboard/mouse listeners, pointer capture, raw-input fallback, held mouse chords |
-| `folded-camera.js`, `folded-ground.js` | Camera pose, terrain pose and height-aware aim |
-| `folded-map.js` | Discovered-layer drawing, floor selection and lift-link picking |
-| `folded-save.js` | Campaign/preview storage selection, settings storage, denied/corrupt-storage fallback |
-| `folded-content.js` | Compiled, immutable region definitions; mounted positions, recipient identity and reference validation |
-| `folded-layout.js` | Terrain support, collision and movement; compatibility exports for content/state readers |
-| `folded-machinery-state.js` | Session-owned lift, pickup and mirror records; mirror motion, carried pickup positions and lift reconstruction |
-| `folded-state.js`, `folded-save-migrations.js` | Session construction, durable serialization, completion notifications and explicit legacy-save recovery |
-| `folded-progression.js` | Receiver commands, completion events, the signal clock and read-only timing queries |
-| `folded-circuits.js`, `folded-signal-state.js` | Cable routes from declared effects; recipient delivery state independent of meshes |
-| `folded-render-policy.js`, `folded-occlusion.js` | Material roles, color/depth pairing, aim visibility and occluder lifetimes |
-| `folded-visibility.js`, `folded-haze.js` | Cutaway shader math and player-centered fog/culling, installed by one scene-rendering context |
-| `folded-world.js` | Procedural world construction, scene objects, world queries and visibility updates |
-| `folded-side-puzzles.js` | Side machinery, its collision positions, presentation and persistence |
-| `folded-bosses.js`, `folded-boss-arenas.js`, `folded-pacing.js` | Boss patterns, arena seals and encounter scheduling |
-| `mechanics.js`, `abilities.js` | Shared heat, movement and ability rules |
-| `folded-hud.js`, `folded-interface.js`, `folded-ending.js` | Ability/threat presentation, menu structure and completion screen |
-| `audio.js` | Audio lifecycle, spatial listener, regional machinery cadence and music state |
-| `sound-effects.js` | Layered SFX recipes, bounded voice and audio-node lifetime, positional attenuation and continuous engine |
-| `soundtrack.js` | Musical track selection, transitions and playback |
+| `combat/enemy-ai.js` | Enemy decisions, movement, attack phases, squad alerts and combat reset |
+| `combat/enemy-state.js` | Session-owned enemy identity, spawn state, health and boss-part records |
+| `combat/enemy-rules.js` | Enemy archetype values and squad healing selection |
+| `rendering/player-death.js` | Player wreck animation, smoke and the death/reconstruction iris |
+| `rendering/enemy-view.js` | Enemy warning geometry, deployment, collapse, animation and camera readability |
+| `app/profiler.js` | Development-only CPU/GPU sampling and query cleanup |
+| `combat/projectiles.js` | Damage application, armour, sanctuary interception, shell flight, hostile launch and direct/blast friendly fire |
+| `combat/damage.js` | Armour and contact-damage rules |
+| `combat/weapons.js` | Current city Cannon/Laser values and hostile projectile damage |
+| `combat/ballistics.js` | Shared mortar flight position and read-only obstruction prediction |
+| `player/upgrades.js` | Saved discovery IDs, derived equipment bonuses and weapon damage scaling |
+| `content/exploration-layout.js` | Optional finds, collision-backed workshop infill and local patrols |
+| `rendering/materials.js` | Cached seamless surface colour and normal maps |
+| `world/architecture.js` | Region-specific wall openings, roof profiles, shared-ceiling clipping and collision-backed structural envelopes |
+| `rendering/regional-scenery.js` | Envelope-attached regional detail and a bounded pool of local task lights |
+| `combat/laser.js` | Read-only trajectory shared by preview and live Laser |
+| `ui/settings.js` | Preference defaults and persistence, control rebinding, quality/audio settings and camera-tuning UI |
+| `rendering/effects.js` | Spark/shield-fragment motion, blast rings and projectile visuals with scene-local material cleanup |
+| `app/input.js` | Keyboard/mouse listeners, pointer capture, raw-input fallback, held mouse chords |
+| `rendering/camera.js`, `world/ground.js` | Camera pose, terrain pose and height-aware aim |
+| `ui/map.js` | Discovered-layer drawing, floor selection and lift-link picking |
+| `progression/save.js` | Campaign/preview storage selection, settings storage, denied/corrupt-storage fallback |
+| `content/compile.js` | Compiled, immutable region definitions; mounted positions, recipient identity and reference validation |
+| `world/terrain.js` | Terrain support, collision and movement; compatibility exports for content/state readers |
+| `machinery/state.js` | Session-owned lift, pickup and mirror records; mirror motion, carried pickup positions and lift reconstruction |
+| `app/state.js`, `progression/save-migrations.js` | Session construction, durable serialization, completion notifications and explicit legacy-save recovery |
+| `progression/commands.js` | Receiver commands, completion events, the signal clock and read-only timing queries |
+| `machinery/circuits.js`, `machinery/signal-state.js` | Cable routes from declared effects; recipient delivery state independent of meshes |
+| `rendering/render-policy.js`, `rendering/occlusion.js` | Material roles, color/depth pairing, aim visibility and occluder lifetimes |
+| `rendering/visibility.js`, `rendering/haze.js` | Cutaway shader math and player-centered fog/culling, installed by one scene-rendering context |
+| `rendering/scene.js` | Procedural world construction, scene objects, world queries and visibility updates |
+| `machinery/side-puzzles.js` | Side machinery, its collision positions, presentation and persistence |
+| `combat/bosses.js`, `combat/boss-arenas.js`, `combat/encounter-pacing.js` | Boss patterns, arena seals and encounter scheduling |
+| `player/mechanics.js`, `player/abilities.js` | Shared heat, movement and ability rules |
+| `ui/hud.js`, `ui/interface.js`, `ui/ending.js` | Ability/threat presentation, menu structure and completion screen |
+| `audio/playback.js` | Audio lifecycle, spatial listener, regional machinery cadence and music state |
+| `audio/sound-effects.js` | Layered SFX recipes, bounded voice and audio-node lifetime, positional attenuation and continuous engine |
+| `audio/soundtrack.js` | Musical track selection, transitions and playback |
 
 `createFoldedCombat` accepts the session clock, world queries and shared projectile lists. Its effects adapter plays audio and creates visuals; its events adapter handles progression, death and machinery. Renderer-free tests and the live game call this same interface. Do not copy function bodies into a test or recover them by parsing source text.
 
@@ -96,13 +122,13 @@ The procedural mesh builders and side-puzzle visual adapters remain substantial 
 
 ## Historical code
 
-`main.js` runs the historical journey and regional prototypes, not the default city. `hoist.js`, `midgame.js`, `small-puzzles.js` and `transit.js` also support those previews. Preserve their routes and save keys.
+`legacy/main.js` runs the historical journey and regional prototypes, not the default city. `legacy/hoist.js`, `legacy/midgame.js`, `legacy/small-puzzles.js` and `legacy/transit.js` also support those previews. Preserve their routes and save keys.
 
-`world.js`, `gardens.js`, `hoist-layout.js` and several early rules modules are shared by the current city. Their names or age do not make them dead code. Moving them into a legacy directory without first separating their shared exports would obscure the real dependencies.
+`rendering/factory-models.js` owns shared primitives and tank/enemy assemblies; `rendering/flotation.js` owns the shared float assembly. Historical map construction and garden simulation live in `legacy/world.js` and `legacy/gardens.js`. `world/deck-geometry.js` contains shared support/tessellation algorithms, while the old shaft placements live in `content/prototypes/hoist-layout.js`. Terrain tessellation receives decks and lift footprints explicitly, including from the historical Hoist caller.
 
 ## Verification layers
 
-1. `npm test`: independently importable rules, layout traversal, storage contracts and the tagged balance baseline.
+1. `npm test` recursively discovers colocated `src/**/*.test.js`: independently importable rules, layout traversal, storage contracts and the tagged balance baseline.
 2. `npm run test:browser`: isolated, serial smoke checks using real world construction. Some cases assign positions or enemy states to reproduce a particular interaction.
 3. `npm run test:browser -- full-journey`: three scripted acquisition orders from new saves; simulated aiming and stepping are assistance, not a blind playtest.
 4. Visual inspection: screenshots in both camera modes and real movement/input checks. Passing source or layout tests alone cannot verify occlusion or readability.
@@ -117,6 +143,6 @@ Run migrated diagnostics with `npm run test:browser -- render-contract occlusion
 
 Formatting currently covers the session coordinator and extracted modules. Expand that set as modules are edited, keeping mechanical formatting separate from gameplay changes. The existing shared-bundle size warning is not evidence of a runtime frame-time regression.
 
-Route traversal tests may use `test-fixtures/settled-control.js` to start from a fully operated mechanism. That fixture is not a game API and does not test signal timing. `folded-progression.test.js` covers actual commands, branch arrival, save restoration, completion ownership and immutable content without a renderer. Browser circuit checks exercise rendered lamps, collision release and lift timing together. `folded-machinery-state.test.js` verifies mechanical lifetimes, reflection during a turn, restoration and lift-mounted rewards without constructing a scene. The render contract also snapshots those records while a mirror has an unfinished turn, checks enemy records for scene-handle leaks, and verifies that scene updates leave combat state unchanged. Enemy-state and combat tests cover independent lifetimes, restoration, lethal impacts and boss-part targeting without models. Obsolete camera-push-in, treadle/E-switch and old mixed presentation/feedback probes have been removed; current rendering contracts replace their private-cache assertions.
+Route traversal tests may use `tests/fixtures/settled-control.js` to start from a fully operated mechanism. That fixture is not a game API and does not test signal timing. `progression/commands.test.js` covers actual commands, branch arrival, save restoration, completion ownership and immutable content without a renderer. Browser circuit checks exercise rendered lamps, collision release and lift timing together. `machinery/state.test.js` verifies mechanical lifetimes, reflection during a turn, restoration and lift-mounted rewards without constructing a scene. The render contract also snapshots those records while a mirror has an unfinished turn, checks enemy records for scene-handle leaks, and verifies that scene updates leave combat state unchanged. Enemy-state and combat tests cover independent lifetimes, restoration, lethal impacts and boss-part targeting without models. Obsolete camera-push-in, treadle/E-switch and old mixed presentation/feedback probes have been removed; current rendering contracts replace their private-cache assertions.
 
-The former mixed feedback probe referenced deleted receivers (`freight` and `bridge-crane`) and assumed all doors wait for the longest branch. Its signal and save checks are superseded by `circuit-arrival`/`circuit-visibility`; combat feedback has `hit-response`, while exhaust geometry is covered by `folded-effects.test.js`. Diagnostic scripts use the same current progression queries as the game.
+The former mixed feedback probe referenced deleted receivers (`freight` and `bridge-crane`) and assumed all doors wait for the longest branch. Its signal and save checks are superseded by `circuit-arrival`/`circuit-visibility`; combat feedback has `hit-response`, while exhaust geometry is covered by `rendering/effects.test.js`. Diagnostic scripts use the same current progression queries as the game.

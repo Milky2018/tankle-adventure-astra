@@ -5,8 +5,8 @@ import { join } from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 let count = 0;
-for (const folder of ['src', 'scripts']) {
-  for (const name of readdirSync(join(root, folder))) {
+for (const folder of ['src', 'scripts', 'tests']) {
+  for (const name of readdirSync(join(root, folder), { recursive: true })) {
     if (!/\.m?js$/.test(name)) continue;
     const result = spawnSync(process.execPath, ['--check', join(root, folder, name)], {
       stdio: 'inherit',
