@@ -25,7 +25,7 @@ async page=>{
       if(a.camera.far>160)throw Error('Backdrop extended camera draw distance');
       return {name,view,backgroundIntensity:a.scene.backgroundIntensity,far:a.camera.far,samples};
     },{name,x,y,z,view,yaw,pitch}));
-    await page.screenshot({path:`v2/output/playwright/regression/backdrop-${name}.png`});
+    await page.screenshot({path:`output/playwright/regression/backdrop-${name}.png`});
   }
   const memory=await page.evaluate(()=>{
     const g=__game,a=g.debug;

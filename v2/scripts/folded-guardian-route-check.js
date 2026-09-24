@@ -30,5 +30,5 @@ async page => {
   function walk(x,z){for(let n=0;n<2400;n++){const dx=x-a.p.x,dz=z-a.p.z;if(Math.hypot(dx,dz)<.25){g.setInput([]);return;}g.setInput(Math.abs(dx)>Math.abs(dz)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD']);g.step(1/60,false);}throw Error('Blocked '+JSON.stringify({at:[a.p.x,a.p.y,a.p.z],target:[x,z]}));}
   for(const [x,z]of [[218,48],[218,70],[254,70],[254,12],[242,12],[242,48],[242,120]])walk(x,z);
   if(a.p.y!==-24||!a.state.guardian)throw Error('Guardian did not release internal descent');a.draw();return {fight,exit:[a.p.x,a.p.y,a.p.z],fixture:'Laser earned; other enemies disabled; real reflected shots, damage, movement and arena rules.'};
- });await page.screenshot({path:'v2/output/playwright/regression/required-guardian-descent.png'});return result;
+ });await page.screenshot({path:'output/playwright/regression/required-guardian-descent.png'});return result;
 }

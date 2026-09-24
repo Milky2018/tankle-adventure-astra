@@ -27,7 +27,7 @@ window.__foldedProbe={
     await page.evaluate(([x,z,y])=>{__game.scenario({player:{x,z,y,hp:50,deployed:y===-16}});__foldedProbe.resetHealth();__game.step(.5);},[x,z,y]);
     const visual=await page.evaluate(()=>__foldedProbe.visual());if(visual.max>visual.pixels*.001)throw Error(`Unstable ${name}: ${JSON.stringify(visual)}`);
     const materials=await page.evaluate(()=>__foldedProbe.materials());if(materials.some(m=>!m.visible||!m.transparent||m.depthWrite||m.alpha!==1||!m.aperture))throw Error('Cutaway material mismatch');
-    await page.screenshot({path:`v2/output/playwright/folded-city/verified-${name}.png`});
+    await page.screenshot({path:`output/playwright/folded-city/verified-${name}.png`});
     const start=await page.evaluate(()=>{__game.manual(false);return {frames:__game.snapshot().frames,now:performance.now()};});await page.waitForTimeout(1300);
     const end=await page.evaluate(()=>{__game.manual(true);return {frames:__game.snapshot().frames,now:performance.now(),calls:__game.snapshot().drawCalls,bytes:__foldedProbe.worldBytes()};});
     const fps=(end.frames-start.frames)/((end.now-start.now)/1000);if(fps<35)throw Error(`Low FPS ${name}: ${fps}`);

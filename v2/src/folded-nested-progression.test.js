@@ -1,6 +1,7 @@
+import {settleControl} from '../test-fixtures/settled-control.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {initialFoldedState,foldedControls,foldedPickups,foldedLiftDefs,foldedSupport,moveFolded,releaseFolded,foldedBlocked} from './folded-layout.js';
+import {initialFoldedState,foldedControls,foldedPickups,foldedLiftDefs,foldedSupport,moveFolded,foldedBlocked} from './folded-layout.js';
 import {stepTransport} from './folded-transport.js';
 import {stepReleasedSlides} from './folded-mechanisms.js';
 import {stepLifts,moveWithConveyor,applyFloorHeat} from './folded-machinery.js';
@@ -22,7 +23,7 @@ function fixtures(saved={},position={x:0,y:0,z:27}){
    assert.ok(n<2400,`stuck ${p.x},${p.y},${p.z} -> ${x},${z}; ${foldedBlocked(p.x,p.y,p.z,s)?.id}`);}
  }
  function wait(seconds){for(let n=0;n<seconds*60;n++)tick(false);}
- function release(id){const c=foldedControls.find(c=>c.id===id);assert.ok(c,id);assert.ok(releaseFolded(id,c.surface==='top'?'mortar':c.kind==='shot'?'cannon':c.kind,p,s,lifts),id);wait(3);}
+ function release(id){const c=foldedControls.find(c=>c.id===id);assert.ok(c,id);assert.ok(settleControl(id,c.surface==='top'?'mortar':c.kind==='shot'?'cannon':c.kind,p,s,lifts),id);wait(3);}
  return {s,p,lifts,walk,wait,release,get time(){return time;}};
 }
 

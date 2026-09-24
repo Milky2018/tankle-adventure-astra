@@ -15,7 +15,7 @@ async page=>{
   await shoot('Repeat gutter impact',[-165,-246],[-165,-251],s=>s.gutter.angles[1]===2);
   await shoot('Pipe opens and water follows the gutters',[-178,-247],[-181,-251],s=>s.gutter.unplugged);
   await page.waitForTimeout(3000);if(!await page.evaluate(()=>__game.snapshot().puzzles.gutter.grown))throw Error('Plant did not grow');
-  await page.screenshot({path:'v2/output/playwright/hoist-wordless/gutters.png'});
+  await page.screenshot({path:'output/playwright/hoist-wordless/gutters.png'});
   await shoot('Pump responds briefly to a shot',[-190,-300],[-190,-295],s=>s.basin.level>0&&s.basin.level<.2);
   await page.waitForTimeout(1000);if(await page.evaluate(()=>__game.snapshot().puzzles.basin.level)!==0)throw Error('Pump did not drain');
   await page.keyboard.press('Escape');return {checks,errors};

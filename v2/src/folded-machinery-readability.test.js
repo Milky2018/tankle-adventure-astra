@@ -1,7 +1,8 @@
+import {settleControl} from '../test-fixtures/settled-control.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {openLiftShafts} from './folded-shafts.js';
-import {foldedDecks,foldedLiftDefs,foldedControls,foldedSolids,deckHeight,initialFoldedState,releaseFolded} from './folded-layout.js';
+import {foldedDecks,foldedLiftDefs,foldedControls,foldedSolids,deckHeight,initialFoldedState} from './folded-layout.js';
 import {pullSlide} from './folded-mechanisms.js';
 import {circuitLinks} from './folded-circuits.js';
 import {Scene} from 'three';
@@ -41,7 +42,7 @@ test('every remote switch has a cable and gameplay switches require weapons',()=
     if(c.kind==='dock')continue;
     assert.ok(['shot','laser','magnet'].includes(c.kind),c.id);
     assert.ok(!c.pressure,c.id);
-    if(c.kind==='shot')assert.equal(releaseFolded(c.id,'use',{},initialFoldedState(),[]),false,c.id);
+    if(c.kind==='shot')assert.equal(settleControl(c.id,'use',{},initialFoldedState(),[]),false,c.id);
     if(!c.mount)assert.ok(links.some(l=>l.id===c.id),`${c.id} has no cable`);
   }
 });

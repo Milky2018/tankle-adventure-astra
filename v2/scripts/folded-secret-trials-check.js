@@ -46,7 +46,7 @@ async page => {
   if(!waves[1].won)throw Error('Mixed warehouse response failed '+JSON.stringify(waves));
   await move(-180,-66);await move(-190,-76);await move(-190,-92);await move(-187,-92);
   if(!await page.evaluate(()=>__game.debug.state['cannon-coil']))throw Error('Cannon collection failed');
-  await page.evaluate(()=>{__game.step(0);});await page.screenshot({path:'v2/output/playwright/regression/secret-stores.png'});
+  await page.evaluate(()=>{__game.step(0);});await page.screenshot({path:'output/playwright/regression/secret-stores.png'});
   const mortar=await page.evaluate(()=>{
     const g=__game,a=g.debug;g.setInput([]);a.clearShots();
     g.scenario({player:{x:161,y:20,z:-146,hp:25,weapon:'mortar',mortar:true,heat:0,lastShot:-100,invincible:1e9},enemies:Object.fromEntries(a.world.enemies.map(e=>[e.id,0]))});
@@ -56,7 +56,7 @@ async page => {
   });
   await move(161,-134);await move(165,-134);
   if(!await page.evaluate(()=>__game.debug.state['mortar-charge']))throw Error('Mortar collection failed');
-  await page.evaluate(()=>__game.step(0));await page.screenshot({path:'v2/output/playwright/regression/secret-mortar.png'});
+  await page.evaluate(()=>__game.step(0));await page.screenshot({path:'output/playwright/regression/secret-mortar.png'});
   const laser=[];
   for(const view of ['overhead','third']){
     await page.evaluate(view=>{
@@ -69,7 +69,7 @@ async page => {
       }else g.aimAt(364,193,-22);
       g.step(0);
     },view);
-    await page.screenshot({path:`v2/output/playwright/regression/secret-laser-before-${view}.png`});
+    await page.screenshot({path:`output/playwright/regression/secret-laser-before-${view}.png`});
     laser.push(await page.evaluate(view=>{
       const g=__game,a=g.debug;g.setInput(['Mouse0']);g.step(.2);g.setInput([]);
       const segments=g.snapshot().laserSegments;
@@ -80,7 +80,7 @@ async page => {
   await page.evaluate(()=>__game.debug.setCameraView('overhead'));
   await move(364,186);await move(350,186);await move(350,193);await move(348,193);
   if(!await page.evaluate(()=>__game.debug.state['laser-focus']))throw Error('Laser collection failed');
-  await page.evaluate(()=>__game.step(0));await page.screenshot({path:'v2/output/playwright/regression/secret-laser.png'});
+  await page.evaluate(()=>__game.step(0));await page.screenshot({path:'output/playwright/regression/secret-laser.png'});
   await page.evaluate(()=>{__game.save();__game.respawn();});await page.reload();await page.waitForFunction(()=>window.__game?.debug);
   const restored=await page.evaluate(()=>{const a=__game.debug;return ['stores-trial','mortar-cache','laser-cache','cannon-coil','mortar-charge','laser-focus'].map(id=>[id,!!a.state[id]]);});
   if(restored.some(([,v])=>!v)||errors.length)throw Error(JSON.stringify({restored,errors}));

@@ -25,7 +25,7 @@ async page=>{
   setup({x:202,y:16,z:54,weapon:'laser'});const e=a.world.enemies.find(e=>e.id==='guardian');e.hp=e.max;e.model.root.visible=true;g.step(.05);const before=e.hp;g.aimAt(214,54,18);g.setInput(['Mouse0']);g.step(.3);g.setInput([]);
   return {covers,mobility,laser:{before,after:e.hp,damage:before-e.hp},errors:[]};
  });
- await page.screenshot({path:'v2/output/playwright/balance/laser.png'});
+ await page.screenshot({path:'output/playwright/balance/laser.png'});
  if(results.covers.some(r=>!r.blocked||!r.warned||r.lobs<3||r.hp>0||r.bossHP<=0))throw Error('Cover response failed '+JSON.stringify(results));
  if(results.mobility.some(r=>r.attacks<2||r.type!=='turret'&&r.distance<2))throw Error('Enemy pressure failed '+JSON.stringify(results));
  if(Math.abs(results.laser.damage-1.35)>.02)throw Error('Laser damage failed '+JSON.stringify(results));
@@ -37,6 +37,6 @@ async page=>{
   for(let i=0;i<240&&!e.zone.visible;i++)g.step(1/60,false);g.step(0);
   if(!e.zone.visible||e.attack!=='barrage')throw Error('Missing ground warning');
  });
- await page.screenshot({path:'v2/output/playwright/balance/keeper-warning.png'});
+ await page.screenshot({path:'output/playwright/balance/keeper-warning.png'});
  if(errors.length)throw Error(JSON.stringify(errors));return {...results,errors};
 }

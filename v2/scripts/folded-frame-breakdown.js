@@ -27,7 +27,7 @@ async page => {
     const matrix=q.scene.updateMatrixWorld;
     const matrixLogic=profile.wrap('matrixLogic',matrix),matrixRender=profile.wrap('matrixRender',matrix);
     q.scene.updateMatrixWorld=function(...args){return (phase==='render'?matrixRender:matrixLogic).apply(this,args);};
-    for(const [obj,key,name] of [[q.world.presentation,'update','presentation'],[q.world,'transport','transport'],[q.world,'advanceSignals','signals'],[q.world,'cast','worldRaycast'],[q.world.presentation.finale,'update','finalMachinery']])obj[key]=profile.wrap(name,obj[key]);
+    for(const [obj,key,name] of [[q.world.presentation,'update','presentation'],[q.world,'transport','transport'],[q.progression,'advance','signals'],[q.world,'cast','worldRaycast'],[q.world.presentation.finale,'update','finalMachinery']])obj[key]=profile.wrap(name,obj[key]);
     const census={nodes:0,meshes:0,casters:0,transparentMeshes:0,matrixAuto:0,materials:new Set(),geometries:new Set()};
     q.scene.traverse(o=>{census.nodes++;if(o.matrixAutoUpdate)census.matrixAuto++;if(o.isMesh){census.meshes++;if(o.castShadow)census.casters++;census.geometries.add(o.geometry.uuid);const mats=Array.isArray(o.material)?o.material:[o.material];if(mats.some(m=>m.transparent))census.transparentMeshes++;for(const m of mats)census.materials.add(m.uuid);}});
     census.materials=census.materials.size;census.geometries=census.geometries.size;

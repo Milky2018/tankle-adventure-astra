@@ -18,7 +18,7 @@ async (page) => {
   await page.locator('#settings').waitFor({ state: 'visible' });
   await page.locator('#resume').click();
   await page.locator('#settings').waitFor({ state: 'hidden' });
-  await page.screenshot({ path: 'v2/output/playwright/regression/production.png' });
+  await page.screenshot({ path: 'output/playwright/regression/production.png' });
   if (errors.length) throw Error(errors.join('\n'));
   return { developmentHooksAbsent: true, cameraSwitch: true, firing: true, pauseResume: true, errors };
 }

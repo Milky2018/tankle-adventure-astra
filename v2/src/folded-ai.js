@@ -15,6 +15,7 @@ import { redContact, angleDelta, BASE_SPEED, PHOENIX_MAX_SPEED } from './mechani
 // Decisions and collision queries do not depend on enemy meshes. The view
 // adapter receives updates at their original points in the simulation step.
 export function createFoldedEnemies({
+  progression,
   player: p,
   state,
   world,
@@ -360,11 +361,10 @@ export function createFoldedEnemies({
     encounterPacing.update(dt, p, resting, now());
     for (const battle of foldedBattles)
       if (
-        !world.signals.active(battle.id) &&
+        !progression.signals.active(battle.id) &&
         world.enemies.filter((e) => e.battle === battle.battle).every((e) => e.hp <= 0)
       ) {
-        world.signals.trigger(battle.id, { [battle.id]: true });
-        world.signalRelease(battle.id, now());
+        progression.complete(battle.id, now(), { delayed: true });
         audio.event('lever');
         save();
       }

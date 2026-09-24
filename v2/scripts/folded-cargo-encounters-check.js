@@ -17,7 +17,7 @@ async page=>{
     const e=foes.sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];g.aimAt(e.x,e.z,e.y+1.5);keys.push('Mouse0');g.setInput(keys);g.step(1/60,false);
    }throw Error(`${scene.name} encounter timed out`);
   },scene);results.push(result);
-  await page.evaluate(()=>__game.debug.draw());await page.screenshot({path:`v2/output/playwright/regression/cargo-${scene.name}-combat.png`});
+  await page.evaluate(()=>__game.debug.draw());await page.screenshot({path:`output/playwright/regression/cargo-${scene.name}-combat.png`});
  }
  return {fixture:true,results};
 }

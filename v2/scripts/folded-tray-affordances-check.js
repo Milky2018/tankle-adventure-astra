@@ -14,20 +14,20 @@ async page=>{
    const up=q.world.cast(new T.Vector3(c.x,c.y-.8,c.z),new T.Vector3(0,1,0),1.2);
    if(down?.target!==c||up?.target===c)throw Error('Wrong contact face '+id);
    q.impact({point:new T.Vector3(c.x,c.y-.05,c.z)},{mortar:true,hostile:false,origin:q.weaponOrigin()});
-   if(q.world.signals.active(id))throw Error('Below-tray blast operated '+id);
+   if(q.progression.signals.active(id))throw Error('Below-tray blast operated '+id);
    aim(c,view);g.setInput(['Mouse0']);g.step(.6,false);g.setInput([]);g.step(2,false);
-   if(q.world.signals.active(id))throw Error('Approach Cannon bypassed tray '+view+'/'+id);
+   if(q.progression.signals.active(id))throw Error('Approach Cannon bypassed tray '+view+'/'+id);
    g.scenario({player:{weapon:'mortar',heat:0,lastShot:-100,lastHeat:-100,overheated:false}});aim(c,view);
    g.setInput(['Mouse0']);g.step(.02,false);g.setInput([]);g.step(3,false);
-   if(!q.world.signals.active(id))throw Error('Mortar missed tray '+view+'/'+id+' '+JSON.stringify({aim:q.aim.toArray(),prediction:q.mortarLanding.userData.prediction}));
-   g.step((q.world.signals.pending(id)?.remaining||0)+.5);if(!q.state[id])throw Error("Tray signal never arrived "+id);if(c.moving.position.y>-.35)throw Error('Tray did not depress '+id);
+   if(!q.progression.signals.active(id))throw Error('Mortar missed tray '+view+'/'+id+' '+JSON.stringify({aim:q.aim.toArray(),prediction:q.mortarLanding.userData.prediction}));
+   g.step((q.progression.signals.pending(id)?.remaining||0)+.5);if(!q.state[id])throw Error("Tray signal never arrived "+id);if(c.moving.position.y>-.35)throw Error('Tray did not depress '+id);
    results.push({view,id,cannonBlocked:true,mortarOpened:true});
   }
   return results;
  });
  for(const view of ['overhead','third']){
   await page.evaluate(view=>{const g=__game;g.setInput([]);g.scenario({enemies:Object.fromEntries(g.debug.world.enemies.map(e=>[e.id,0])),state:{'mortar-cache':false},player:{x:161,y:20,z:-146,weapon:'mortar',heat:0,overheated:false}});g.debug.setCameraView(view);g.look(-.45,.15);g.step(.3);if(view==='overhead')g.aimAt(155.5,-134.5,22.7);},view);
-  await page.screenshot({path:`v2/output/playwright/regression/mortar-tray-${view}.png`});
+  await page.screenshot({path:`output/playwright/regression/mortar-tray-${view}.png`});
  }
  if(errors.length)throw Error(errors.join('\n'));return {result,errors};
 }

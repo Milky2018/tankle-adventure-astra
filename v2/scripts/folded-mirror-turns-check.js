@@ -52,7 +52,7 @@ async page=>{
       return {view,turns:q.state.mirrorTurns[m.id],normal:m.normal.toArray()};
     },view);
     results.push(result);
-    await page.screenshot({path:`v2/output/playwright/regression/mirror-turns-${view}.png`});
+    await page.screenshot({path:`output/playwright/regression/mirror-turns-${view}.png`});
   }
   await page.reload();await page.waitForFunction(()=>window.__game?.debug);
   const restored=await page.evaluate(()=>{const q=__game.debug,m=q.world.mirrors.find(m=>m.id==='return-index');return {turns:q.state.mirrorTurns[m.id],normal:m.normal.toArray()};});

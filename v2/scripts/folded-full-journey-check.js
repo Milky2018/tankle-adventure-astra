@@ -147,7 +147,7 @@ async page=>{
   for(const [x,z]of [[32,-146],[59,-146],[59,-124],[54,-124],[54,-98],[34,-98],[34,-72]])await move(x,z);
   if(!(await page.evaluate(()=>__game.snapshot())).player.mortar)throw Error('Cargo Mortar missed');await record('cargo-mortar');
   await shoot(32,-58,-2,'loading-return','mortar');await move(28,-58);await move(28,-46);await move(18,-46);await arrive(0);await move(18,-34);await move(0,-34);await move(0,27);await use();
-  await page.screenshot({path:`v2/output/playwright/completion/${approach}-pickup.png`});
+  await page.screenshot({path:`output/playwright/completion/${approach}-pickup.png`});
   }
   if(!['water','combined','proving'].includes(resume)){
   await move(-26,27);await shoot(-29,27,1.3,'ballast');await move(-38,27);await arrive(8);
@@ -231,7 +231,7 @@ async page=>{
   if(!end.state.endingSeen||!end.state['lens-return']||!end.state['inner-thermal']||!end.state.load||!end.player.mortar)throw Error('Missing progression milestone');
   if(['overdrive','magnet','mortar','flotation','phoenix','laser','circulation'].some(id=>!end.player[id]))throw Error('Required ability missing');
   if(['prototype','sorter','foundry','guardian','keeper'].some(id=>!end.state[id]))throw Error('Required Boss missing');
-  await record('completed');await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('#ending')).opacity)>.99);await page.screenshot({path:`v2/output/playwright/completion/${approach}-${first}-ending.png`});
+  await record('completed');await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector('#ending')).opacity)>.99);await page.screenshot({path:`output/playwright/completion/${approach}-${first}-ending.png`});
   await page.reload();await page.waitForFunction(()=>window.__game);await page.evaluate(()=>__game.manual(true));const saved=await page.evaluate(()=>__game.snapshot());
   if(!saved.state.endingSeen||!saved.state['lens-return']||!saved.state['inner-thermal']||!saved.player.mortar)throw Error('Reload lost progression');
   const run={approach,first,resume,legs:legs.length,milestones,reload:true};runs.push(run);

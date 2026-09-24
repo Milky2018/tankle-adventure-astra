@@ -16,7 +16,7 @@ async page=>{
   if(preview.time!==before.time||preview.player.x!==before.player.x||preview.player.z!==before.player.z)throw Error('Camera preview advanced the game');
   const overlay=await page.locator('#settings').evaluate(el=>({filter:getComputedStyle(el).backdropFilter,background:getComputedStyle(el).backgroundColor}));
   if(overlay.filter!=='none')throw Error('Camera preview is obscured by the pause blur');
-  await page.screenshot({path:'v2/output/playwright/camera-settings/third-person.png'});
+  await page.screenshot({path:'output/playwright/camera-settings/third-person.png'});
   await page.reload();await page.waitForFunction(()=>window.__game);await page.evaluate(()=>__game.manual(true));
   if(Math.abs((await page.evaluate(()=>__game.snapshot())).camera.pitch-Math.PI/6)>.001)throw Error('Reload lost camera pitch');
   await page.keyboard.press('Escape');await page.getByLabel('Camera view',{exact:true}).selectOption('overhead');await tune();
@@ -25,7 +25,7 @@ async page=>{
   const pose=await page.evaluate(()=>__game.snapshot());
   const dx=pose.camera.position[0]-pose.player.x,dy=pose.camera.position[1]-pose.player.y,dz=pose.camera.position[2]-pose.player.z;
   if(Math.abs(Math.atan2(dy,Math.hypot(dx,dz))*180/Math.PI-65)>.01)throw Error('Overhead angle did not update');
-  await page.screenshot({path:'v2/output/playwright/camera-settings/overhead.png'});
+  await page.screenshot({path:'output/playwright/camera-settings/overhead.png'});
   await page.getByRole('button',{name:'Reset',exact:true}).click();
   if((await prefs()).overhead.scale!==17||(await prefs()).third.distance!==15)throw Error('Reset did not restore both views');
   await page.getByRole('button',{name:'Back to settings',exact:true}).click();await page.getByLabel('Camera view',{exact:true}).selectOption('third');await tune();
@@ -37,7 +37,7 @@ async page=>{
   const defaults=await prefs();if(defaults.third.distance!==15||defaults.third.height!==2.5||defaults.third.shoulder!==0)throw Error('Third-person reset failed');
   await page.setViewportSize({width:640,height:600});
   const bounds=await page.locator('#camera-tuning').boundingBox();if(bounds.x<0||bounds.y<0||bounds.y+bounds.height>600)throw Error('Camera panel overflows the viewport');
-  await page.screenshot({path:'v2/output/playwright/camera-settings/narrow.png'});
+  await page.screenshot({path:'output/playwright/camera-settings/narrow.png'});
   await page.getByRole('button',{name:'Resume',exact:true}).click();
   if(!(await page.locator('#settings').isHidden())||!(await page.locator('#camera-tuning').isHidden()))throw Error('Resume left camera settings visible');
   if(errors.length)throw Error(errors.join('\n'));

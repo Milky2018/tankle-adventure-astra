@@ -6,7 +6,7 @@ async page=>{
  for(const [name,x,y,z,yaw,pitch]of [['hive-through',0,-8,90,0,.22],['upper-floor',110,-8,18,Math.PI,.9],['arsenal-wall',-241,8,18,Math.PI/2,.22],['lens-wall',315,24,-32,Math.PI/2,.22]]){
    const s=await page.evaluate(({x,y,z,yaw,pitch})=>{__game.manual(true);__game.scenario({player:{x,y,z,hp:50,invincible:1e9}});__game.look(yaw,pitch);__game.step(.2);return __game.snapshot();},{x,y,z,yaw,pitch});
    if(s.camera.distance<12)throw Error('Obstacle shortened boom '+name);
-   await page.screenshot({path:`v2/output/playwright/overhaul/${name}.png`});fixtures.push({name,camera:s.camera});
+   await page.screenshot({path:`output/playwright/overhaul/${name}.png`});fixtures.push({name,camera:s.camera});
  }
  await page.keyboard.press('c');if(await page.evaluate(()=>__game.snapshot().camera.view)!=='overhead')throw Error('C did not select overhead');
  await page.goto('http://127.0.0.1:5174/?chapter=folded&test&manual');await page.waitForFunction(()=>window.__game?.debug);

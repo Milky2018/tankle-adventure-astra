@@ -9,9 +9,9 @@ async page=>{
  const result={};
  await fixture({x:0,y:-8,z:86,magnet:true});await aim(0,94,-6);await hold('right',.3);
  result.emptyMagnet=await page.evaluate(()=>({visible:__game.debug.magneticBeam.visible,pulses:__game.debug.magneticBeam.children.length,heat:__game.snapshot().player.heat}));if(!result.emptyMagnet.visible||result.emptyMagnet.pulses<5)throw Error('Empty magnetic scan invisible');
- await page.screenshot({path:'v2/output/playwright/rules-revision/magnet-empty.png'});
+ await page.screenshot({path:'output/playwright/rules-revision/magnet-empty.png'});
  await fixture({x:73,y:0,z:-14,magnet:true});await page.evaluate(()=>{const e=__game.debug.world.enemies.find(e=>e.id==='bench-guard');Object.assign(e,{x:73,y:0,z:-24,hp:3,phase:'idle',timer:10,shieldRemoved:false,shieldPull:0});e.model.root.visible=true;__game.step(.01);});
- await aim(73,-24,1.5);await hold('right',.35);await page.screenshot({path:'v2/output/playwright/rules-revision/magnet-shield.png'});await hold('right',.5);
+ await aim(73,-24,1.5);await hold('right',.35);await page.screenshot({path:'output/playwright/rules-revision/magnet-shield.png'});await hold('right',.5);
  result.shield=await page.evaluate(()=>{const e=__game.debug.world.enemies.find(e=>e.id==='bench-guard');return {removed:e.shieldRemoved,visible:e.model.frontArmor.visible,phase:e.phase};});if(!result.shield.removed||result.shield.visible)throw Error('Blue shield did not detach');
  await fixture({x:73,y:0,z:-14,magnet:true},{'bench-cover':false});await aim(78.5,-23,2.4);await hold('right',.9);if(!(await page.evaluate(()=>__game.snapshot())).state['bench-cover'])throw Error('Blue cover did not move');result.cover=true;
  await fixture({x:0,y:-8,z:86,magnet:true});await page.evaluate(()=>__game.debug.layMine({id:'fixture',x:5,y:-8,z:86}));await aim(5,86,-7.7);await hold('right',.6);result.mine=await page.evaluate(()=>__game.debug.mines.length);if(result.mine)throw Error('Magnetic mine disarm failed');
@@ -25,17 +25,17 @@ async page=>{
  if(Math.abs(result.enemyBelt.live-3.9)>.01||Math.abs(result.enemyBelt.wreck-3.9)>.01)throw Error('Live enemy or wreck ignores conveyor');
  await fixture({x:216,y:24,z:-20,laser:true,weapon:'laser'},{gallery:false,'garden-optical':false,mirrorTurns:{'return-index':0}});await aim(216,-4,26);await hold('left',.5);
  result.singleMirror=await page.evaluate(()=>__game.snapshot().state.gallery);if(!result.singleMirror)throw Error('First visible mirror puzzle failed');if((await page.evaluate(()=>__game.snapshot())).state['garden-optical'])throw Error('Unaligned second mirror released the return');
- await page.screenshot({path:'v2/output/playwright/rules-revision/laser-first.png'});
+ await page.screenshot({path:'output/playwright/rules-revision/laser-first.png'});
  await fixture({x:238,y:24,z:-13,weapon:'cannon'});await aim(232,-4,26);await hold('left',1/60);await page.evaluate(()=>__game.step(1.5));if(!(await page.evaluate(()=>__game.snapshot())).state.mirrorTurns['return-index'])throw Error('Mirror indexing mechanism failed');
  await fixture({x:216,y:24,z:-20,weapon:'laser'});await aim(216,-4,26);await hold('left',.5);
  result.twoMirrors=await page.evaluate(()=>({open:__game.snapshot().state['garden-optical'],segments:__game.snapshot().laserSegments.length/6}));if(!result.twoMirrors.open||result.twoMirrors.segments<3)throw Error('Two-mirror return puzzle failed '+JSON.stringify(result.twoMirrors));
- await page.screenshot({path:'v2/output/playwright/rules-revision/laser-second.png'});
+ await page.screenshot({path:'output/playwright/rules-revision/laser-second.png'});
  for(const [x,z]of [[232,-16],[238,-9.5],[232,6]]){await fixture({x,y:24,z,weapon:'laser'},{'garden-optical':false});await aim(232,-9.5,29.39411255);await hold('left',.3);if((await page.evaluate(()=>__game.snapshot())).state['garden-optical'])throw Error('Direct ray bypasses return mirror housing');}
  result.receiverScreen=true;
  await fixture({x:196,y:16,z:50,weapon:'laser'},{guardian:false});await page.evaluate(()=>{const e=__game.debug.world.enemies.find(e=>e.id==='guardian');e.hp=36;e.model.root.visible=true;e.timer=10;__game.step(.1);});await aim(202,64,18);await hold('left',.5);
  const frontal=await page.evaluate(()=>__game.debug.world.enemies.find(e=>e.id==='guardian').hp);await fixture({x:196,y:16,z:50,weapon:'laser'});await aim(222,50,18);await hold('left',1);
  result.boss=await page.evaluate(()=>({hp:__game.debug.world.enemies.find(e=>e.id==='guardian').hp,segments:__game.snapshot().laserSegments.length/6}));if(frontal!==36||result.boss.hp>=36)throw Error('Reflected rear attack does not beat protected front '+JSON.stringify({frontal,...result.boss}));
- await page.screenshot({path:'v2/output/playwright/rules-revision/laser-boss.png'});
+ await page.screenshot({path:'output/playwright/rules-revision/laser-boss.png'});
  await page.evaluate(()=>{for(const e of __game.debug.world.enemies){e.hp=0;e.model.root.visible=false;}});
  await fixture({x:78,y:8,z:-71},{load:true,brake:true});
  result.lift=await page.evaluate(()=>{const l=__game.debug.world.lifts.find(l=>l.id==='carrier');l.y=l.destination=8;l.wait=0;const samples=[];for(let i=0;i<110;i++){__game.step(.2,false);samples.push(l.y);}return {min:Math.min(...samples),max:Math.max(...samples),changes:samples.filter((y,i)=>i&&Math.abs(y-samples[i-1])>.01).length,player:__game.snapshot().player.y};});
@@ -53,7 +53,7 @@ async page=>{
   },type);
   const required={scout:'charge',turret:'warn',guard:'warn',skirmisher:'burst',sniper:'rail',artillery:'warn',miner:'warn',welder:'flame',repairer:'repair',reflector:'warn'}[type];
   if(!trace.phases.includes(required))throw Error('Enemy never used its distinct attack '+JSON.stringify(trace));if(type==='repairer'&&trace.healed<=1)throw Error('Repairer did not heal its living ally');if(type==='miner'&&!trace.mines)throw Error('Miner laid no mines');
-  await page.screenshot({path:`v2/output/playwright/rules-revision/enemy-${type}.png`});enemyResults.push(trace);
+  await page.screenshot({path:`output/playwright/rules-revision/enemy-${type}.png`});enemyResults.push(trace);
  }
  result.enemies=enemyResults;
  const rail=[];
@@ -64,6 +64,6 @@ async page=>{
  if(rail[0]!==39||rail[1]!==50)throw Error('Locked sniper rail is harmless or cannot be sidestepped '+JSON.stringify(rail));result.railCounterplay=rail;
  await fixture({x:202,y:16,z:69,invincible:0});
  result.flameDamage=await page.evaluate(()=>{for(const e of __game.debug.world.enemies){e.hp=0;e.model.root.visible=false;}const e=__game.debug.world.enemies.find(e=>e.type==='welder');Object.assign(e,{x:202,y:16,z:63,hp:e.max,phase:'flame',timer:1.8,aim:0,stunnedUntil:0});e.model.root.visible=true;__game.step(1.2);return {hp:__game.snapshot().player.hp,visible:e.flame.visible};});
- if(result.flameDamage.hp>=50||!result.flameDamage.visible)throw Error('Welder sweep lacks visible damaging flame');await page.screenshot({path:'v2/output/playwright/rules-revision/welder-sweep.png'});
+ if(result.flameDamage.hp>=50||!result.flameDamage.visible)throw Error('Welder sweep lacks visible damaging flame');await page.screenshot({path:'output/playwright/rules-revision/welder-sweep.png'});
  await page.evaluate(()=>__game.setInput([]));if(errors.length)throw Error(JSON.stringify(errors));return {...result,errors};
 }

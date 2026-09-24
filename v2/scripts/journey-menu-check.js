@@ -12,7 +12,7 @@ async page=>{
   await page.getByRole('button',{name:'New campaign',exact:true}).click();first(await game());
   await page.evaluate(()=>localStorage.setItem('furnace-born-v2-city',JSON.stringify({anchor:'roof',overdrive:true,phoenix:true,magnetModule:true,mortarModule:true,flotation:true,laser:true,circulation:true,discovered:['roof-walk']})));
   await page.goto('http://127.0.0.1:5174/');await page.getByRole('button',{name:'Continue',exact:true}).waitFor();
-  await page.screenshot({path:'v2/output/playwright/journey-main-menu.png'});
+  await page.screenshot({path:'output/playwright/journey-main-menu.png'});
   const cityBefore=await page.evaluate(()=>localStorage.getItem('furnace-born-v2-city'));
   await page.getByRole('button',{name:/Chapter 1 · Foundry/}).click();first(await game());
   if((await page.evaluate(()=>localStorage.getItem('furnace-born-v2-city')))!==cityBefore)throw Error('First-level preview overwrote campaign');
@@ -39,6 +39,6 @@ async page=>{
   await page.goto('http://127.0.0.1:5174/');await page.setViewportSize({width:390,height:760});
   await page.getByRole('heading',{name:'旅程与选关'}).waitFor();
   if(await page.evaluate(()=>document.querySelector('.journey-panel').getBoundingClientRect().right>innerWidth))throw Error('Menu overflows narrow viewport');
-  await page.screenshot({path:'v2/output/playwright/journey-menu-narrow.png',fullPage:true});await page.setViewportSize({width:1280,height:720});
+  await page.screenshot({path:'output/playwright/journey-menu-narrow.png',fullPage:true});await page.setViewportSize({width:1280,height:720});
   if(errors.length)throw Error(JSON.stringify(errors));return {firstLevel:true,independentPreviews:3,continueCheckpoint:true,confirmedRestart:true,historicalEntries:5,escapeStaysPaused:true,narrowLayout:true,errors};
 }

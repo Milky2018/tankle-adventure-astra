@@ -29,7 +29,7 @@ async page => {
     }
     if (counts.join() !== '4,3,2,1,0') throw Error(`Incorrect battery icons: ${counts}`);
     q.updateEnemies(0.01);
-    const pending = q.world.signals.pending('cargo-battery');
+    const pending = q.progression.signals.pending('cargo-battery');
     if (!pending || q.state['cargo-battery']) throw Error('Reward must wait for its cable');
     g.step(pending.remaining + .1, false);
     if (!q.state['cargo-battery']) throw Error('Battery reward stayed locked');

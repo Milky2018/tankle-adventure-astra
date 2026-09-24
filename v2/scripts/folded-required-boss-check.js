@@ -26,5 +26,5 @@ async page => {
   if(!a.state['loading-return']||!a.state['bridge-crane'])throw Error('Mortar first use did not open returns');
   log.push('Mortar acquired behind Sorter; real lob powers the remembered freight return');a.draw();return log;
  });
- await page.screenshot({path:'v2/output/playwright/regression/required-sorter-complete.png'});return result;
+ await page.screenshot({path:'output/playwright/regression/required-sorter-complete.png'});return result;
 }

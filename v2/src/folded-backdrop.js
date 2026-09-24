@@ -115,8 +115,7 @@ export function makeCityBackdrop(scene, aperture, decks, lifts) {
         box(root, 0.5, 0.65, 32, x + (x === bounds.left ? 6.2 : -6.2), y, z + 16, edge, 0);
     }
   for (const m of [stone, iron, edge]) {
-    aperture.apply(m, { radius: 36 });
-    m.depthWrite = true;
+    aperture.material(m, 'backdrop');
   }
   root.traverse((o) => {
     if (o.isMesh) {

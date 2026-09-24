@@ -35,7 +35,7 @@ async page => {
    g.aimAt(q.p.x+6,q.p.z+4,q.p.y+1.5);if(JSON.stringify(g.snapshot().aim)===JSON.stringify(aim))throw Error('Aim locked during hit recovery');
    return {hp:s.player.hp,recoil:q.p.x-start.x,dim,bright,view:s.camera.view};
   });
-  await page.screenshot({path:`v2/output/playwright/hit-response-${view}.png`});
+  await page.screenshot({path:`output/playwright/hit-response-${view}.png`});
   const recovered=await page.evaluate(()=>{
    const g=__game,q=g.debug,before={x:q.p.x,z:q.p.z};g.step(.12);
    if(Math.hypot(q.p.x-before.x,q.p.z-before.z)<.1||!q.shots.some(s=>!s.hostile))throw Error('Held movement/fire failed to resume');

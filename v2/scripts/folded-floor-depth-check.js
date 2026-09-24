@@ -21,19 +21,19 @@ async page=>{
   }
   const fixed=await sample(),difference=colors=>Math.max(...colors[0].map((v,i)=>Math.abs(v-colors[1][i])));
   if(difference(fixed)>14)throw Error('Continuous awakening floor has a false hole: '+JSON.stringify(fixed));
-  await page.screenshot({path:'v2/output/playwright/polish-pass/floor-fixed.png'});
+  await page.screenshot({path:'output/playwright/polish-pass/floor-fixed.png'});
   // Counterfactual: removing only the depth pass must reproduce the original false hole.
   await page.evaluate(()=>__game.debug.scene.traverse(o=>{if(o.name.startsWith('folded-floor-depth:'))o.visible=false;}));
   const broken=await sample();
   if(difference(broken)<30)throw Error('Floor reproduction no longer exercises lower-structure overdraw: '+JSON.stringify(broken));
-  await page.screenshot({path:'v2/output/playwright/polish-pass/floor-counterfactual.png'});
+  await page.screenshot({path:'output/playwright/polish-pass/floor-counterfactual.png'});
   await page.evaluate(()=>{__game.debug.scene.traverse(o=>{if(o.name.startsWith('folded-floor-depth:'))o.visible=true;});__game.debug.renderer.shadowMap.enabled=true;});
   const samples=[];
   for(const [name,x,y,z] of [['relay',-35,-16,49],['hub',0,0,27],['canal',0,-16,-4],['carrier',90,0,-18],['optics',216,24,-20],['inner',254,-24,132]]){
     await page.evaluate(([x,y,z])=>{__game.scenario({player:{x,y,z,hp:50,invincible:1e9}});__game.step(.7);},[x,y,z]);
     const snapshot=await page.evaluate(()=>__game.snapshot());
     samples.push({name,drawCalls:snapshot.drawCalls,translucent:snapshot.surfaces.length});
-    await page.screenshot({path:`v2/output/playwright/polish-pass/floor-${name}.png`});
+    await page.screenshot({path:`output/playwright/polish-pass/floor-${name}.png`});
   }
   const before=await page.evaluate(()=>{__game.scenario({player:{x:90,y:0,z:-18,hp:50,invincible:1e9}});__game.manual(false);return {frames:__game.snapshot().frames,at:performance.now()};});
   await page.waitForTimeout(1500);

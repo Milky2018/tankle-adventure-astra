@@ -14,7 +14,14 @@ const gradient = new T.DataTexture(new Uint8Array([75, 137, 191, 244]), 4, 1, T.
 gradient.needsUpdate = true;
 export const mat = (color, glow = false) => glow ? new T.MeshBasicMaterial({ color }) : new T.MeshToonMaterial({ color, gradientMap: gradient });
 const cache = new Map();
-function material(color) { if (!cache.has(color)) cache.set(color, mat(color)); return cache.get(color); }
+function material(color) {
+  if (!cache.has(color)) {
+    const base = mat(color);
+    Object.defineProperty(base, 'isSharedPrimitive', { value: true });
+    cache.set(color, base);
+  }
+  return cache.get(color);
+}
 const roundCache = new Map();
 const primitiveCache = new Map();
 function primitive(key,create) {

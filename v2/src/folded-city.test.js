@@ -1,8 +1,9 @@
+import {settleControl} from '../test-fixtures/settled-control.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {applyFloorHeat} from './folded-machinery.js';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
-import {initialFoldedState,moveFolded,foldedSupport,foldedBlocked,foldedDecks,foldedEnemies,foldedPickups,foldedLiftDefs,foldedHives,foldedControls,releaseFolded,inRect,deckHeight} from './folded-layout.js';
+import {initialFoldedState,moveFolded,foldedSupport,foldedBlocked,foldedDecks,foldedEnemies,foldedPickups,foldedLiftDefs,foldedHives,foldedControls,inRect,deckHeight} from './folded-layout.js';
 import {cameraMovement} from './folded-camera.js';
 import {cityBelts,cityControls,citySolids} from './folded-city-layout.js';
 import {cityDamage,cityContact} from './folded-combat.js';
@@ -35,11 +36,11 @@ test('awakening faces its open approach before the player learns camera rotation
 test('awakening, local relay sequence, Overdrive return and foundry exit connect continuously',()=>{
   const p=player(0,-8,86),s=initialFoldedState();
   travel(p,s,[[-40,86],[-40,49],[-35,49]]);assert.equal(p.y,-16);
-  releaseFolded('relay-west','cannon',p,s,[]);
-  travel(p,s,[[-57,52],[-57,118]]);releaseFolded('relay-east','cannon',p,s,[]);assert.equal(s.relays,true);
+  settleControl('relay-west','cannon',p,s,[]);
+  travel(p,s,[[-57,52],[-57,118]]);settleControl('relay-east','cannon',p,s,[]);assert.equal(s.relays,true);
   travel(p,s,[[-57,128],[-30,128]]);assert.equal(p.y,-16);
   s.prototype=s['overdrive-return']=true;p.overdrive=true;
-  travel(p,s,[[-28,128],[-28,100]],{boost:true});travel(p,s,[[-28,64]]);releaseFolded('prototype-shortcut','cannon',p,s,[]);travel(p,s,[[-28,52],[-40,52]]);travel(p,s,[[-40,86]],{boost:true});travel(p,s,[[0,86]]);assert.equal(p.y,-8);
+  travel(p,s,[[-28,128],[-28,100]],{boost:true});travel(p,s,[[-28,64]]);settleControl('prototype-shortcut','cannon',p,s,[]);travel(p,s,[[-28,52],[-40,52]]);travel(p,s,[[-40,86]],{boost:true});travel(p,s,[[0,86]]);assert.equal(p.y,-8);
   for(let i=0;i<240;i++){p.clock+=1/60;updateHeat(p,1/60,p.clock,false,false);}
   travel(p,s,[[0,49]],{boost:true});assert.equal(s.foundry,false);
   travel(p,s,[[24,49],[24,4],[10,4],[10,27]]);assert.equal(p.y,0);
@@ -108,8 +109,8 @@ test('the eastern optical return is available before the mandatory Guardian',()=
   const s=initialFoldedState(),p=player(136,24,-30,{overdrive:true,phoenix:true});
   travel(p,s,[[228,-30]],{boost:true});assert.equal(p.y,24);
   travel(p,s,[[242,-20],[242,-30],[254,-30],[254,-98],[64,-98],[64,-86]]);assert.equal(p.y,24);
-  assert.ok(releaseFolded('emitter-cage','cannon',p,s,[]));assert.equal(s.guardian,false);
-  travel(p,s,[[64,-98],[254,-98],[254,-30],[242,-30],[242,-20],[228,-20]]);s.gallery=true;assert.ok(releaseFolded('garden-optical','laser',p,s,[]));assert.equal(foldedControls.some(c=>c.id==='yard-optical'),false);
+  assert.ok(settleControl('emitter-cage','cannon',p,s,[]));assert.equal(s.guardian,false);
+  travel(p,s,[[64,-98],[254,-98],[254,-30],[242,-30],[242,-20],[228,-20]]);s.gallery=true;assert.ok(settleControl('garden-optical','laser',p,s,[]));assert.equal(foldedControls.some(c=>c.id==='yard-optical'),false);
   travel(p,s,[[242,-20],[242,6],[230,6],[230,38],[202,38],[202,6],[110,6]]);assert.equal(p.y,16);
   assert.ok(s['garden-optical']);assert.equal(s.guardian,false);
 });
@@ -117,7 +118,7 @@ test('the eastern optical return is available before the mandatory Guardian',()=
 test('Guardian victory opens the supported inspection descent to Circulation',()=>{
  const s=initialFoldedState(),p=player(162,24,-26,{overdrive:true,phoenix:true});
  for(let i=0;i<120;i++)moveFolded(p,0,.15,s);assert.ok(p.z<-16.5);
- p.laser=true;assert.ok(releaseFolded('lens-return','laser',p,s,[]));for(let i=0;i<120;i++)moveFolded(p,0,.15,s);assert.ok(p.z<-16.5);s.guardian=true;
+ p.laser=true;assert.ok(settleControl('lens-return','laser',p,s,[]));for(let i=0;i<120;i++)moveFolded(p,0,.15,s);assert.ok(p.z<-16.5);s.guardian=true;
  travel(p,s,[[162,30],[174,30],[174,-18],[190,-18],[190,48],[242,48],[242,120],[222,120]]);
  assert.equal(p.y,-24);assert.equal(p.circulation,false);
 });
@@ -126,7 +127,7 @@ test('Guardian victory opens the supported inspection descent to Circulation',()
 test('Circulation opens its local industrial return without requiring a second optical key',()=>{
  const s=initialFoldedState(),p=player(214,-24,128,{overdrive:true,phoenix:true,circulation:true});
  travel(p,s,[[211,128],[211,25],[211,13],[218,13]],{boost:true});
- assert.ok(releaseFolded('pressure-return','cannon',p,s,[]));
+ assert.ok(settleControl('pressure-return','cannon',p,s,[]));
  assert.equal(foldedControls.some(c=>c.id==='inner-optics'),false);
 });
 
@@ -147,7 +148,7 @@ test('compact predecessor rooms link the furnace landing, quiet bays and refuge'
   const s=initialFoldedState(),p=player(82,-40,46,{overdrive:true,phoenix:true,circulation:true});
   travel(p,s,[[82,56],[70,56],[70,46],[82,46],[82,30],[102,30],[102,20],[82,20],[82,6],[76,6],[76,-8],[76,6],[44,6],[44,-10]]);
   assert.equal(p.y,-40);assert.equal(s.keeper,false);
-  assert.ok(releaseFolded('last-cage','cannon',p,s,[]));
+  assert.ok(settleControl('last-cage','cannon',p,s,[]));
   s['core-feed']=true;
   travel(p,s,[[34,-10],[34,68],[0,68],[0,48]]);assert.equal(p.y,-56);
 });

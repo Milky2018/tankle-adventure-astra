@@ -38,9 +38,9 @@ async page => {
     if(!g.snapshot().state['core-feed'])throw Error('Final load-and-reflection receiver was not reached');
     return {magnet,screen:screen.x,platform:platform.y,cabinet:true,finalFeed:g.snapshot().state['core-feed']};
   });
-  await page.screenshot({path:'v2/output/playwright/refuge-final-feed-overhead.png'});
+  await page.screenshot({path:'output/playwright/refuge-final-feed-overhead.png'});
   await page.keyboard.press('c');await page.evaluate(()=>__game.step(.3));
-  await page.screenshot({path:'v2/output/playwright/refuge-final-feed-third.png'});
+  await page.screenshot({path:'output/playwright/refuge-final-feed-third.png'});
   if(errors.length)throw Error(errors.join('\n'));
   return report;
 }

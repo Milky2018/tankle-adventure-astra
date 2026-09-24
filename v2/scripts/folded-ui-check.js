@@ -1,6 +1,6 @@
 async page=>{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  const root='v2/output/playwright/ui-polish/';
+  const root='output/playwright/ui-polish/';
   const check=(value,message)=>{if(!value)throw Error(message);};
   const shot=async name=>{await page.waitForTimeout(300);await page.screenshot({path:root+name+'.png'});};
   await page.setViewportSize({width:1440,height:900});await page.emulateMedia({reducedMotion:'no-preference'});

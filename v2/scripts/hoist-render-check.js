@@ -9,10 +9,10 @@ async page=>{
     const before=await page.evaluate(()=>({frames:__game.snapshot().frames,at:performance.now()}));await page.waitForTimeout(1000);const stats=await page.evaluate(()=>({...__hoistRender(),frames:__game.snapshot().frames,at:performance.now()}));
     const fps=(stats.frames-before.frames)*1000/(stats.at-before.at);samples.push({name,shadows:stats.shadows,calls:stats.calls,triangles:stats.triangles,geometryMiB:stats.geometryMiB,fps});
     if(stats.triangles>2e6||stats.geometryMiB>64||fps<40)throw Error('Rendering budget '+JSON.stringify(samples));
-    if(name==='gallery'||name==='crown')await page.screenshot({path:`v2/output/playwright/hoist/final-${name}.png`});
+    if(name==='gallery'||name==='crown')await page.screenshot({path:`output/playwright/hoist/final-${name}.png`});
   }
-  await page.keyboard.press('Tab');await page.screenshot({path:'v2/output/playwright/hoist/final-map.png'});await page.keyboard.press('Tab');
-  await page.locator('#settings-button').click();await page.locator('#quality').selectOption('low');await page.locator('#resume').click();await page.waitForTimeout(300);await page.screenshot({path:'v2/output/playwright/hoist/low-quality.png'});await page.keyboard.press('Escape');
+  await page.keyboard.press('Tab');await page.screenshot({path:'output/playwright/hoist/final-map.png'});await page.keyboard.press('Tab');
+  await page.locator('#settings-button').click();await page.locator('#quality').selectOption('low');await page.locator('#resume').click();await page.waitForTimeout(300);await page.screenshot({path:'output/playwright/hoist/low-quality.png'});await page.keyboard.press('Escape');
   await page.locator('#quality').selectOption('high');
   if(errors.length)throw Error(JSON.stringify(errors));return {samples,errors};
 }

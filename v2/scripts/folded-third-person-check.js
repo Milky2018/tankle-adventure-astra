@@ -45,7 +45,7 @@ async page=>{
     if(name==='wall'&&s.camera.distance>7)throw Error('Camera passed through the closed wall');
     if(name==='under-furnace'&&s.camera.position[1]>-8.75)throw Error('Camera passed through the upper floor');
     if(s.player.y!==y)throw Error('Camera changed the supporting floor');
-    views.push({name,camera:s.camera});await page.screenshot({path:`v2/output/playwright/third-person/${name}.png`});
+    views.push({name,camera:s.camera});await page.screenshot({path:`output/playwright/third-person/${name}.png`});
   }
   // Looking away must not freeze a physically visible attacker behind the Tank.
   const rear=await page.evaluate(()=>{
@@ -63,7 +63,7 @@ async page=>{
   });
   await page.mouse.down();await page.evaluate(()=>__game.step(1.5));await page.mouse.up();
   const shot=await snapshot();if(shot.enemies.find(e=>e.id==='foundry-west-scout').hp!==0)throw Error('Centered third-person shot missed the live target');
-  await page.screenshot({path:'v2/output/playwright/third-person/shot.png'});
+  await page.screenshot({path:'output/playwright/third-person/shot.png'});
   const traversals=[];
   for(const [name,x,y,z,yaw,seconds,endY]of [
     ['freight-descent',67,8,-84,0,7,0],
@@ -79,7 +79,7 @@ async page=>{
   await page.keyboard.down('w');await page.evaluate(()=>{for(let i=0;i<1800&&__game.snapshot().player.z> -70.9;i++)__game.step(1/60);});await page.keyboard.up('w');
   await page.evaluate(()=>{for(let i=0;i<600&&__game.snapshot().player.y<15.99;i++)__game.step(1/60);});
   const lift=await snapshot();if(Math.abs(lift.player.y-16)>.01)throw Error('Third-person carrier ride failed');
-  await page.screenshot({path:'v2/output/playwright/third-person/lift.png'});
+  await page.screenshot({path:'output/playwright/third-person/lift.png'});
   await page.keyboard.press('Escape');
   // Embedded browsers can deny pointer lock; middle-button look remains playable.
   await page.addInitScript(()=>{HTMLCanvasElement.prototype.requestPointerLock=()=>Promise.reject(new Error('Pointer lock unavailable'));});

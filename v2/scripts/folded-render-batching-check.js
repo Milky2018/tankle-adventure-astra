@@ -16,7 +16,7 @@ async page=>{
         const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0,320,180);
         return Array.from(ctx.getImageData(0,0,320,180).data);
       });
-      await page.screenshot({path:`v2/output/playwright/render-optimization/${name}-${mode}.png`});
+      await page.screenshot({path:`output/playwright/render-optimization/${name}-${mode}.png`});
       const drawCalls=await page.evaluate(()=>__game.snapshot().drawCalls);
       if(unbatched){images.set(name,pixels);calls.set(name,drawCalls);}
       else{

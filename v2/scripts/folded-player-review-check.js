@@ -6,14 +6,14 @@ async page=>{
  await page.evaluate(()=>__game.step(.1));
  if(!await page.locator('#look-hint').isVisible())throw Error('Initial look cue is missing');
  if(await page.locator('#camera-toggle kbd').textContent()!=='C')throw Error('Camera shortcut is not visible');
- await page.screenshot({path:'v2/output/playwright/player-review/opening-third.png'});
+ await page.screenshot({path:'output/playwright/player-review/opening-third.png'});
  await page.keyboard.down('w');await page.evaluate(()=>__game.step(2.5));await page.keyboard.up('w');
  const opening=await page.evaluate(()=>__game.snapshot());if(opening.player.x>-16||Math.abs(opening.player.z-86)>.1)throw Error('Opening forward movement still hits a wall');
- await page.keyboard.press('Tab');await page.screenshot({path:'v2/output/playwright/player-review/opening-map.png'});await page.keyboard.press('Tab');
+ await page.keyboard.press('Tab');await page.screenshot({path:'output/playwright/player-review/opening-map.png'});await page.keyboard.press('Tab');
  await page.keyboard.press('c');if(await page.evaluate(()=>__game.snapshot().camera.view)!=='overhead')throw Error('C did not switch view');
  const map=await page.locator('#minimap-wrap').boundingBox();await page.mouse.move(map.x+map.width/2,map.y+map.height/2);
  await page.waitForFunction(()=>document.querySelector('#minimap-wrap').classList.contains('aim-through'));await page.waitForTimeout(180);
- await page.screenshot({path:'v2/output/playwright/player-review/map-aim-through.png'});
+ await page.screenshot({path:'output/playwright/player-review/map-aim-through.png'});
  await page.mouse.move(500,500);await page.waitForFunction(()=>!document.querySelector('#minimap-wrap').classList.contains('aim-through'));
  const refuge=await page.evaluate(()=>{
   const g=__game,sounds=[],original=__game.debug.audio.event;

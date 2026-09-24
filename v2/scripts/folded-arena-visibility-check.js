@@ -12,7 +12,7 @@ async page=>{
   masses.forEach(w=>w.mesh.visible=true);if(depth)depth.visible=true;
   return {visible,reference,errors:visible.map((pixel,i)=>pixel.reduce((sum,value,c)=>sum+Math.abs(value-reference[i][c]),0)/3)};
  });
- await page.evaluate(()=>__game.step(0));await page.screenshot({path:'v2/output/playwright/craft/arena-visibility.png'});
+ await page.evaluate(()=>__game.step(0));await page.screenshot({path:'output/playwright/craft/arena-visibility.png'});
  if(coverage.errors.some(e=>e>12))throw Error('Upper foundation masks the arena outside the hull ray '+JSON.stringify(coverage));
  const target=await page.evaluate(()=>{
   for(const e of __game.debug.world.enemies)e.hp=0;
@@ -25,7 +25,7 @@ async page=>{
  if(remaining!==0)throw Error('Visible enemy under the faded foundation cannot be aimed at '+remaining);
  const movement=[];
  await page.keyboard.down('s');await page.keyboard.down('d');
- for(let i=0;i<3;i++){await page.evaluate(()=>__game.step(.4));await page.screenshot({path:`v2/output/playwright/craft/arena-movement-${i}.png`});movement.push(await page.evaluate(()=>__game.snapshot().player.x));}
+ for(let i=0;i<3;i++){await page.evaluate(()=>__game.step(.4));await page.screenshot({path:`output/playwright/craft/arena-movement-${i}.png`});movement.push(await page.evaluate(()=>__game.snapshot().player.x));}
  await page.keyboard.up('s');await page.keyboard.up('d');
  if(movement[2]-movement[0]<5)throw Error('Visibility movement fixture did not move');
  if(errors.length)throw Error(JSON.stringify(errors));return {coverage,remaining,movement,errors};

@@ -42,7 +42,7 @@ const routes={
   path:[[-76,58,'repair'],[-76,82],[-76,102,'reservoir-inlet'],[-76,114],[-104,114],[-144,114],[-164,114],[-164,78,'repair'],[-164,64,'pickup']],
   returns:[[-164,64,'float'],[-146,64],[-94,64],[-94,34],[-76,34],[-76,-8],[-52,-8,'float']],
   branches:[[[-104,114],[-104,98],[-122,98],[-122,90]]],
-  controls:[['reservoir-inlet',-72,100,'shot',{rotor:true}]],
+  controls:[['reservoir-inlet',-72,100,'shot',{rotor:true,destinations:[{id:'reservoir-diverter',x:-100,y:-8,z:98}]}]],
   gates:[],
   cover:[[-84,72,3,3],[-97,117,3,5],[-149,117,3,5],[-82,99,4,2]],
   enemies:[['sniper',-82,110,'banks',0,{patrol:{x:-82,z:106,w:12,d:12}}],['guard',-77,95,'banks',0,{patrol:{x:-82,z:88,w:12,d:28}}],['sniper',-142,113,'filter',0,{patrol:{x:-154,z:108,w:20,d:10}}],['skirmisher',-115,111,'filter',0,{patrol:{x:-130,z:108,w:28,d:10}}]],

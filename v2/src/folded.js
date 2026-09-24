@@ -1,4 +1,8 @@
-import { setViewDistance, makePlayerHaze, DEFAULT_VIEW_DISTANCE } from './folded-haze.js';
+import { createSceneRendering } from './folded-render-policy.js';
+import { createProgression } from './folded-progression.js';
+import { circuitLinks, circuitEventSources } from './folded-circuits.js';
+import { foldedControls, foldedBattles, foldedLiftDefs } from './folded-content.js';
+import { DEFAULT_VIEW_DISTANCE } from './folded-haze.js';
 import { makeFoldedLighting } from './folded-lighting.js';
 import { torpedoTargets } from './folded-aquatic.js';
 import { pullSlide } from './folded-mechanisms.js';
@@ -47,7 +51,6 @@ import {
   foldedArchitecture,
   foldedDecks,
   foldedHives,
-  releaseFolded,
   foldedSupport,
   moveFolded,
   deckHeight,
@@ -90,7 +93,7 @@ const scene = new T.Scene();
 scene.matrixAutoUpdate = false;
 scene.background = new T.Color(0x1b3032);
 scene.fog = new T.Fog(0x1b3032, 65, 105);
-makePlayerHaze(scene, p, prefs.viewDistance);
+const rendering = createSceneRendering(scene, p, prefs.viewDistance);
 const renderer = new T.WebGLRenderer({
   canvas: $('game'),
   antialias: true,
@@ -132,7 +135,18 @@ updateOverheadAngle();
 let thirdPerson = (params.get('view') || prefs.cameraView || 'third') !== 'overhead',
   camera = thirdPerson ? follow.camera : overheadCamera;
 const lighting = makeFoldedLighting(scene, foldedArchitecture.rooms);
+const circuitDefs = circuitLinks(
+  [...foldedControls, ...foldedBattles, ...circuitEventSources],
+  foldedSolids,
+  foldedLiftDefs,
+  foldedDecks,
+  foldedArchitecture.solids,
+);
+const progression = createProgression(state, circuitDefs);
 const world = makeFoldedWorld(scene, state, {
+    circuitDefs,
+    rendering,
+    signals: progression.signals,
     batching: !(import.meta.env.DEV && params.has('test') && params.has('unbatched')),
   }),
   model = tankModel();
@@ -312,6 +326,7 @@ const combatEvents = {
   },
 };
 const { hurt, castWeapon, hitEnemy, impact, shootEnemy, updateShots } = createFoldedCombat({
+  progression,
   player: p,
   world,
   state,
@@ -386,6 +401,7 @@ $('journey-button').textContent = 'Main menu';
 $('new-game').textContent = 'Restart';
 
 const enemies = createFoldedEnemies({
+  progression,
   player: p,
   state,
   world,
@@ -402,7 +418,7 @@ const enemies = createFoldedEnemies({
 
 function save() {
   world.sidePuzzles.persist();
-  world.advanceSignals(0, time);
+  progression.advance(0, time);
   state.discovered = [...discovered];
   saves.save(state);
 }
@@ -414,20 +430,6 @@ function rejectImpact(kind, position) {
   }
 }
 function setState(id, kind) {
-  if (id === 'maintenance') {
-    const changed =
-      kind === 'cannon' &&
-      !state['maintenance-started'] &&
-      !state.maintenance &&
-      !world.signals.pending(id);
-    if (changed) {
-      world.signals.trigger(id, { 'maintenance-started': true });
-      world.signalRelease(id, time);
-      audio.event('lever');
-      save();
-    } else rejectImpact(kind);
-    return changed;
-  }
   if (world.sidePuzzles.targets.some((t) => t.id === id)) {
     const changed =
       (kind === 'cannon' || (id === 'rail-signal' && kind === 'use')) && world.sidePuzzles.act(id);
@@ -437,17 +439,10 @@ function setState(id, kind) {
     } else rejectImpact(kind);
     return changed;
   }
-  if (world.signals.active(id)) return false;
-  const next = { ...state };
-  if (!releaseFolded(id, kind, p, next, world.lifts, time)) {
+  if (!progression.activate(id, kind, p, time)) {
     rejectImpact(kind);
     return false;
   }
-  const changes = Object.fromEntries(
-    Object.entries(next).filter(([key, value]) => value === true && !state[key]),
-  );
-  world.signals.trigger(id, changes);
-  world.signalRelease(id, time);
   audio.event('lever');
   save();
   return true;
@@ -471,7 +466,7 @@ function updateCamera(dt) {
     camera.lookAt(focus);
     camera.updateMatrixWorld();
   }
-  setViewDistance(scene, camera, prefs.viewDistance, p);
+  rendering.distance(camera);
   lighting.trackShadows(focus);
   world.updateCameraOcclusion(camera, p, 0);
 }
@@ -727,7 +722,7 @@ function interact() {
   const t = target();
   if (!t || p.hp <= 0) return false;
   if (t.kind === 'pickup') {
-    state[t.id] = true;
+    progression.complete(t.id, time);
     if (t.upgrade) {
       const oldMax = playerMaxHp(p);
       applyUpgrades(p, state);
@@ -915,7 +910,7 @@ function updateMagnet(dt) {
   const candidates = [
     ...world.sidePuzzles.targets.filter((c) => c.kind === 'magnet'),
     ...world.controls.filter(
-      (c) => c.kind === 'magnet' && (c.slide || !world.signals.active(c.id)),
+      (c) => c.kind === 'magnet' && (c.slide || !progression.signals.active(c.id)),
     ),
     ...world.enemies.filter(
       (e) =>
@@ -1017,8 +1012,7 @@ function updateMagnet(dt) {
     if (moved) {
       state.slidePositions[body.id] = body[body.rail.axis];
       if (body.rail.latch && body[body.rail.axis] === body.rail.max && !state[body.rail.latch]) {
-        state[body.rail.latch] = true;
-        world.signalRelease(body.rail.latch, time);
+        progression.complete(body.rail.latch, time);
         audio.event('lever');
         save();
       }
@@ -1124,7 +1118,7 @@ function updateEnding(dt) {
   camera.position.set(...shot.eye);
   camera.lookAt(new T.Vector3(...shot.at));
   camera.updateMatrixWorld();
-  setViewDistance(scene, camera, prefs.viewDistance, p);
+  rendering.distance(camera);
   const view = { ...p, x: shot.at[0], y: shot.at[1], z: shot.at[2] };
   lighting.trackShadows(view);
   world.update(dt, time, view, camera);
@@ -1155,7 +1149,7 @@ function advance(dt) {
   if (paused || mapOpen) return;
   time += dt;
   phoenixExhaust.update(p.hp > 0 && !p.endingTime && phoenixReady(p), time);
-  if (world.advanceSignals(dt, time)) {
+  if (progression.advance(dt, time)) {
     save();
   }
   if (deathAt >= 0) {
@@ -1191,7 +1185,7 @@ function advance(dt) {
     p.endingTime = 0.001;
     p.speed = 1;
     recoil = 0;
-    state.endingSeen = true;
+    progression.complete('endingSeen', time);
     state.anchor = 'last-refuge';
     save();
     keys.clear();
@@ -1663,6 +1657,7 @@ if (import.meta.env.DEV && params.has('test')) {
       T,
       p,
       state,
+      progression,
       world,
       scene,
       renderer,

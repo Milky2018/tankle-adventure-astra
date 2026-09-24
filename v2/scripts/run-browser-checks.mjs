@@ -3,29 +3,35 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 
-const root = fileURLToPath(new URL('../../', import.meta.url));
+const root = fileURLToPath(new URL('../', import.meta.url));
 const cli = process.env.PLAYWRIGHT_CLI || 'playwright-cli';
 const smoke = [
   'friendly-fire',
   'laser-readability',
   'map-connections',
   'save-safety',
-  'side-puzzles',
+  'flower-reward',
+  'circuit-visibility',
+  'circuit-arrival',
+  'occlusion-cone',
+  'render-contract',
+  'fog-boundary',
+  'shadow',
   'automatic-lifts',
   'camera-settings',
   'mouse-scheduling',
 ];
 const checks = process.argv.slice(2);
 if (!checks.length) checks.push(...smoke);
-const output = resolve(root, 'v2/output/playwright/regression');
+const output = resolve(root, 'output/playwright/regression');
 mkdirSync(output, { recursive: true });
 
 // Scripts contain fixture mutations; each gets a fresh browser profile.
 // Run serially and close even after an assertion failure to release GPU memory.
 for (const name of checks) {
   const script = [
-    resolve(root, `v2/scripts/folded-${name}-check.js`),
-    resolve(root, `v2/scripts/folded-${name}.js`),
+    resolve(root, `scripts/folded-${name}-check.js`),
+    resolve(root, `scripts/folded-${name}.js`),
   ].find(existsSync);
   if (!script) throw new Error(`Unknown browser check: ${name}`);
   const session = `furnace-check-${process.pid}-${name}`;

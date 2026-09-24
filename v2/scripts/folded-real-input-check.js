@@ -18,7 +18,7 @@ async page=>{
   await fixture(weapon);await page.mouse.down();await page.waitForTimeout(1500);await page.mouse.up();await page.evaluate(()=>__game.manual(true));
   const run=await page.evaluate(()=>({weapon:__game.snapshot().player.weapon,opened:__game.snapshot().state.load,cameraY:__game.snapshot().camera.position[1],reticles:document.querySelectorAll('#reticle').length}));
   if(run.opened!==(weapon==='mortar')||run.cameraY<3||run.reticles!==1)throw Error(JSON.stringify(run));runs.push(run);
-  await page.screenshot({path:`v2/output/playwright/craft/real-${weapon}-screen.png`});
+  await page.screenshot({path:`output/playwright/craft/real-${weapon}-screen.png`});
  }
  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=third&test');await page.waitForFunction(()=>window.__game);
  await page.evaluate(()=>{
@@ -26,7 +26,7 @@ async page=>{
   __game.look(0,.1);__game.step(.016);
  });
  await page.mouse.click(640,360);await page.waitForFunction(()=>!!document.pointerLockElement);await page.mouse.move(610,354,{steps:15});
- await page.evaluate(()=>__game.manual(false));await page.mouse.down();await page.waitForTimeout(700);await page.screenshot({path:'v2/output/playwright/craft/real-laser.png'});await page.mouse.up();await page.evaluate(()=>__game.manual(true));
+ await page.evaluate(()=>__game.manual(false));await page.mouse.down();await page.waitForTimeout(700);await page.screenshot({path:'output/playwright/craft/real-laser.png'});await page.mouse.up();await page.evaluate(()=>__game.manual(true));
  const laser=await page.evaluate(()=>({opened:__game.snapshot().state.gallery,segments:__game.snapshot().laserSegments.length/6}));
  if(!laser.opened||laser.segments<2)throw Error('Real mouse reflection failed '+JSON.stringify(laser));
  if(errors.length)throw Error(JSON.stringify(errors));return {runs,laser,errors,scope:'Isolated real mouse aiming and firing; not a novice navigation study'};

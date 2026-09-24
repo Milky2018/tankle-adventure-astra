@@ -31,7 +31,7 @@ async page=>{
  });
  for(const view of ['overhead','third']){
   await page.evaluate(view=>{const g=__game;g.scenario({player:{x:-162,y:8,z:-70,hp:50}});g.debug.setCameraView(view);g.look(Math.PI,.25);g.step(.2);},view);
-  await page.screenshot({path:`v2/output/playwright/regression/rail-clearance-${view}.png`});
+  await page.screenshot({path:`output/playwright/regression/rail-clearance-${view}.png`});
  }
  return result;
 }

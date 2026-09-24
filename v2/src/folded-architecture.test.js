@@ -1,7 +1,8 @@
+import {settleControl} from '../test-fixtures/settled-control.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Ray,Vector3,Box3} from 'three';
-import {foldedArchitecture,foldedDecks,foldedLiftDefs,foldedControls,initialFoldedState,releaseFolded,deckHeight} from './folded-layout.js';
+import {foldedArchitecture,foldedDecks,foldedLiftDefs,foldedControls,initialFoldedState,deckHeight} from './folded-layout.js';
 import {architectureIndex,regionAt} from './folded-architecture.js';
 
 test('seven regional envelopes preserve walkable floors and lift travel',()=>{
@@ -31,9 +32,9 @@ test('structural ray index covers diagonal, vertical and reverse rays',()=>{
 
 test('optional rail restoration responds to Magnet and survives reload',()=>{
   const control=foldedControls.find(c=>c.id==='rail-repair'),state=initialFoldedState();assert.ok(control);
-  assert.equal(releaseFolded(control.id,'cannon',{magnet:true},state,[]),false);
-  assert.equal(releaseFolded(control.id,'magnet',{magnet:false},state,[]),false);
-  assert.equal(releaseFolded(control.id,'magnet',{magnet:true},state,[]),true);
+  assert.equal(settleControl(control.id,'cannon',{magnet:true},state,[]),false);
+  assert.equal(settleControl(control.id,'magnet',{magnet:false},state,[]),false);
+  assert.equal(settleControl(control.id,'magnet',{magnet:true},state,[]),true);
   assert.equal(initialFoldedState(state)['rail-repair'],true);
   assert.equal(state.magnet,false);
 });

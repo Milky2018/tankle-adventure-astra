@@ -34,7 +34,7 @@ async page=>{
       const l=__game.debug.world.lifts.find(l=>l.id==='carrier');l.y=16;l.destination=8;l.wait=3;__game.step(.4);
     });
     await shot(78,-77.7,18,'brake');
-    await page.screenshot({path:`v2/output/playwright/late-polish/carrier-${view}.png`});
+    await page.screenshot({path:`output/playwright/late-polish/carrier-${view}.png`});
     await page.evaluate(()=>{__game.scenario({player:{x:242,y:24,z:-4,weapon:'cannon',laser:true,heat:0,overheated:false},state:{mirrorTurns:{'return-index':0}}});__game.step(1);});
     const original=await page.evaluate(()=>__game.debug.world.mirrors.find(m=>m.turnable).normal.toArray());
     await aim(232,-4,26);await page.mouse.down();await page.evaluate(()=>__game.step(1/60));await page.mouse.up();await page.evaluate(()=>__game.step(.8));
@@ -43,7 +43,7 @@ async page=>{
       return {distance:m.normal.distanceTo(new __game.debug.T.Vector3(...original))};
     },original);
     if(rotation.distance<.1)throw Error('Direct hit did not turn the actual mirror');
-    await page.screenshot({path:`v2/output/playwright/late-polish/mirror-${view}.png`});
+    await page.screenshot({path:`output/playwright/late-polish/mirror-${view}.png`});
     await page.evaluate(()=>{__game.scenario({player:{x:156,y:-8,z:34,hp:50,invincible:0,weapon:'cannon',heat:0,overheated:false},state:{pressure:true},enemies:{'yard-inlet-gunner':2,'yard-inlet-flanker':2}});__game.look(0,.22);__game.step(.1);});
     for(const id of ['yard-inlet-gunner','yard-inlet-flanker']){
       for(let i=0;i<24;i++){
@@ -54,7 +54,7 @@ async page=>{
       if(s.player.hp<=0||s.enemies.find(e=>e.id===id).hp)throw Error('Unplayable inlet encounter '+view+' '+id);
     }
     const fightHp=await page.evaluate(()=>__game.snapshot().player.hp);
-    await page.screenshot({path:`v2/output/playwright/late-polish/inlet-${view}.png`});
+    await page.screenshot({path:`output/playwright/late-polish/inlet-${view}.png`});
     await page.evaluate(()=>{__game.scenario({player:{x:250,y:-40,z:6,hp:50,heat:0,overheated:false,overdrive:true,phoenix:true,circulation:true}});__game.look(-Math.PI/2,.22);__game.step(.1);});
     async function move(x,z,boost=false){
       return await page.evaluate(({x,z,boost})=>{
@@ -75,7 +75,7 @@ async page=>{
       await move(x,6);await move(x,-2);await move(x-6,-2);await move(x-6,-9);await move(x-6,-2);await move(x,6);
       const clearance=await page.evaluate(()=>{__game.look(Math.PI,.22);__game.step(.3);return __game.snapshot().camera.distance;});
       if(view==='third'&&clearance<7)throw Error('Bay viewing point collapses the camera '+x+' '+clearance);
-      await page.screenshot({path:`v2/output/playwright/late-polish/bay-${x}-${view}.png`});
+      await page.screenshot({path:`output/playwright/late-polish/bay-${x}-${view}.png`});
     }
     await move(44,6);await move(44,-10);
     await shot(40,-12,-38.6,'last-cage');

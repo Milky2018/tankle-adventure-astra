@@ -34,7 +34,7 @@ async page=>{
     g.step(.1);q.draw();
     return {view,area,traversed:true,sightlines:true};
    },{view,area}));
-   await page.screenshot({path:`v2/output/playwright/regression/route-choices-${area}-${view}.png`});
+   await page.screenshot({path:`output/playwright/regression/route-choices-${area}-${view}.png`});
    await page.evaluate(()=>{for(const e of __game.debug.world.enemies){e.hp=0;e.model.root.visible=false;}});
   }
  }

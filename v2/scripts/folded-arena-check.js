@@ -22,7 +22,7 @@ async page=>{
     }
     g.setInput([]);if(minimumHp>0&&a.state.combatArena!==id)throw Error(id+' left the live arena');g.step(.001);return {moving,hp:minimumHp,shots:seen.size,maxShots,types:[...types],patterns:[...patterns],arena:a.state.combatArena,position:g.snapshot().player};
    },{id,x,z,left,right,moving}));
-   await page.screenshot({path:`v2/output/playwright/enclosed-bosses/${id}-overhead.png`});
+   await page.screenshot({path:`output/playwright/enclosed-bosses/${id}-overhead.png`});
    const lifecycle=await page.evaluate(id=>{
     const a=__game.debug,g=__game,boss=a.world.enemies.find(e=>e.id===id);
     a.state[id]=false;g.respawn();a.clearShots();const arenas={prototype:[-34,-16,132],foundry:[0,-8,53],guardian:[202,16,78],sorter:[126,24,-108],keeper:[0,-56,53]};const [x,y,z]=arenas[id];

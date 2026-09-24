@@ -9,7 +9,7 @@ async page=>{
     const g=__game;g.scenario({enemies:Object.fromEntries(__game.debug.world.enemies.map(e=>[e.id,0])),player:{x,y,z,hp:50,heat:0,endingTime:0}});__game.debug.setCameraView(view);g.look(yaw,.32);g.step(.1);
     return {id,view,camera:g.snapshot().camera,drawCalls:g.snapshot().drawCalls};
    },{view,id,x,y,z,yaw}));
-   await page.screenshot({path:`v2/output/playwright/enclosed-bosses/room-${id}-${view}.png`});
+   await page.screenshot({path:`output/playwright/enclosed-bosses/room-${id}-${view}.png`});
   }
   if(errors.length)throw Error(errors.join('\n'));return {results,errors};
 }

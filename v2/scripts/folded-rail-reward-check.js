@@ -9,7 +9,7 @@ async page=>{
   g.interact();if(g.snapshot().state.magnetModule)throw Error('Reward acquired before lowering');
   return {y:p.y,name:document.querySelector('#minimap-wrap .map-area-name').textContent};
  });
- await page.screenshot({path:'v2/output/playwright/regression/rail-reward-before.png'});
+ await page.screenshot({path:'output/playwright/regression/rail-reward-before.png'});
  const docked=await page.evaluate(()=>{
   const g=__game,w=g.debug.world,q=w.sidePuzzles;
   const shoot=(id,x,z)=>{const t=q.targets.find(t=>t.id===id);g.scenario({player:{x,y:8,z,hp:25,heat:0,overheated:false,lastShot:-100,lastHeat:-100,weapon:'cannon'}});g.aimAt(t.x,t.z,t.y);g.setInput(['Mouse0']);g.step(.1,false);g.setInput([]);g.step(1,false);};
@@ -22,12 +22,12 @@ async page=>{
   if(!g.snapshot().state['rail-crossing']||Math.abs(p.y-8)>.01||p.root.position.y!==lift.y)throw Error('Docking failed to deliver reward '+JSON.stringify({p:p.y,lift:lift.y}));
   g.scenario({player:{x:-156,y:8,z:-60}});g.step(.1);g.save();return {angles,y:p.y};
  });
- await page.screenshot({path:'v2/output/playwright/regression/rail-reward-lowered.png'});
+ await page.screenshot({path:'output/playwright/regression/rail-reward-lowered.png'});
  await page.evaluate(()=>{__game.debug.setCameraView('third');__game.step(.3);});
- await page.screenshot({path:'v2/output/playwright/regression/rail-reward-third.png'});
+ await page.screenshot({path:'output/playwright/regression/rail-reward-third.png'});
  await page.evaluate(()=>{__game.debug.setCameraView('overhead');__game.debug.reveal();});
  if(await page.locator('#region .map-heading h1').textContent()!=='Freight Exchange')throw Error('Full map name missing');
- await page.screenshot({path:'v2/output/playwright/regression/rail-reward-map.png'});
+ await page.screenshot({path:'output/playwright/regression/rail-reward-map.png'});
  await page.evaluate(()=>__game.debug.closeMap());
  await page.reload();await page.waitForFunction(()=>window.__game?.debug);
  const collected=await page.evaluate(()=>{
@@ -38,7 +38,7 @@ async page=>{
   if(!g.snapshot().state.magnetModule)throw Error('Cannot drive onto berth and collect Magnet '+JSON.stringify(g.snapshot().player));
   return {player:g.snapshot().player,y:p.y};
  });
- await page.screenshot({path:'v2/output/playwright/regression/rail-reward-collected.png'});
+ await page.screenshot({path:'output/playwright/regression/rail-reward-collected.png'});
  await page.reload();await page.waitForFunction(()=>window.__game?.debug);
  const names=await page.evaluate(async()=>{
   const g=__game;g.manual(true);if(!g.snapshot().state.magnetModule)throw Error('Collected reward not saved');

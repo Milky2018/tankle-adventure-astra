@@ -1,4 +1,4 @@
-import {circuitReady} from './folded-circuits.js';
+import {circuitReady} from './folded-signal-state.js';
 // A magnetic slide is a solid body throughout its travel. The saved coordinate
 // describes its rail position, including an unfinished pull.
 export function pullSlide(body, player, dt, bodies, supported, occupants = [], moveOccupant) {

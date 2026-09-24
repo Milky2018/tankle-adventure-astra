@@ -11,7 +11,7 @@ async page => {
       return {main:main.textContent,sub:sub.textContent,lines:rects.length,right:rects[0].right,below:sub.getBoundingClientRect().top>rects[0].bottom};
     });
     if(title.main!=='TANKLE ADVENTURE'||title.sub!=='ASTRA'||title.lines!==1||title.right>width||!title.below)throw Error(JSON.stringify({width,title}));
-    titles.push({width,...title});await page.screenshot({path:`v2/output/playwright/regression/title-${width}.png`});
+    titles.push({width,...title});await page.screenshot({path:`output/playwright/regression/title-${width}.png`});
   }
   await page.goto('http://127.0.0.1:5174/?chapter=folded&test&manual');await page.waitForFunction(()=>window.__game?.debug);
   await page.evaluate(async()=>{
@@ -21,6 +21,6 @@ async page => {
     for(const [id,path]of Object.entries(icons)){const cell=document.createElement('div');cell.innerHTML=`<svg width="96" height="96" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg><p>${id}</p>`;sheet.append(cell);}
     document.body.append(sheet);
   });
-  await page.setViewportSize({width:1000,height:800});await page.screenshot({path:'v2/output/playwright/regression/icon-review.png'});
+  await page.setViewportSize({width:1000,height:800});await page.screenshot({path:'output/playwright/regression/icon-review.png'});
   if(errors.length)throw Error(errors.join('\n'));return {titles,errors};
 }

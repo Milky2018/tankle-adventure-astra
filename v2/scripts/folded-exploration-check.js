@@ -22,7 +22,7 @@ async page => {
     return {results,max:playerMaxHp(a.p),hp:a.p.hp,reinforced:document.querySelectorAll('.ability-card.reinforced').length,cooler:!document.querySelector('.cooling-module').hidden};
   });
   if(pickups.max!==50||pickups.hp!==50||pickups.reinforced!==3||!pickups.cooler)throw Error(JSON.stringify(pickups));
-  await page.screenshot({path:'v2/output/playwright/regression/exploration-hud.png'});
+  await page.screenshot({path:'output/playwright/regression/exploration-hud.png'});
   await page.reload();await page.waitForFunction(()=>window.__game?.debug);
   const restored=await page.evaluate(()=>({hp:__game.debug.p.hp,armor:__game.debug.p.armorPacks,cooler:__game.debug.p.coolingUpgrade,cannon:__game.debug.p.cannonUpgrade,mortar:__game.debug.p.mortarUpgrade,laser:__game.debug.p.laserUpgrade,scope:__game.debug.p.scopeUpgrade}));
   if(restored.hp!==50||restored.armor!==5||!restored.cooler||!restored.cannon||!restored.mortar||!restored.laser||!restored.scope)throw Error(JSON.stringify(restored));
@@ -34,7 +34,7 @@ async page => {
       return {cards:cards.map(c=>({id:c.id,label:c.getAttribute('aria-label'),name:c.querySelector('.ability-name')?.textContent,inside:c.getBoundingClientRect().right<=innerWidth})),pips:document.querySelectorAll('.armor-packs .collected').length,overlap:notice.left<tray.right&&notice.right>tray.left&&notice.top<tray.bottom&&notice.bottom>tray.top};
     });
     if(hud.cards.length!==11||hud.pips!==5||hud.overlap||hud.cards.some(c=>!c.label||!c.name||!c.inside))throw Error('Equipment HUD '+width+' '+JSON.stringify(hud));
-    await page.screenshot({path:`v2/output/playwright/regression/equipment-${width}.png`});
+    await page.screenshot({path:`output/playwright/regression/equipment-${width}.png`});
   }
   await page.setViewportSize({width:1440,height:900});
   const landings=[];
@@ -54,7 +54,7 @@ async page => {
     },view);
     if(!landing.marker||landing.error>.12||landing.damage!==4.5)throw Error(JSON.stringify(landing));
     landings.push(landing);await page.evaluate(()=>__game.step(0));
-    await page.screenshot({path:`v2/output/playwright/regression/mortar-landing-${view}.png`});
+    await page.screenshot({path:`output/playwright/regression/mortar-landing-${view}.png`});
   }
   const damage=await page.evaluate(()=>{
     const g=__game,a=g.debug,results=[];a.setCameraView('overhead');
@@ -75,7 +75,7 @@ async page => {
     const a=__game.debug,times=[];for(let i=0;i<160;i++){const t=performance.now();a.updateAim();if(i>=40)times.push(performance.now()-t);}times.sort((a,b)=>a-b);return {median:times[60],p95:times[114]};
   });
   const views=[['stores',-183,8,-79],['water',-104,-8,87],['lens',275,24,-89]];
-  for(const [id,x,y,z]of views){await page.evaluate(({x,y,z})=>{const g=__game,a=g.debug;a.setCameraView('third');g.scenario({player:{x,y,z,weapon:'cannon',deployed:false}});g.look(.25,.15);g.step(.2);},{x,y,z});await page.screenshot({path:`v2/output/playwright/regression/exploration-${id}.png`});}
+  for(const [id,x,y,z]of views){await page.evaluate(({x,y,z})=>{const g=__game,a=g.debug;a.setCameraView('third');g.scenario({player:{x,y,z,weapon:'cannon',deployed:false}});g.look(.25,.15);g.step(.2);},{x,y,z});await page.screenshot({path:`output/playwright/regression/exploration-${id}.png`});}
   if(errors.length)throw Error(JSON.stringify(errors));
   return {pickups,restored,landings,damage,aimCost,errors};
 }

@@ -1,4 +1,4 @@
-import { initialFoldedState } from './folded-layout.js';
+import { initialFoldedState, serializeFoldedState } from './folded-state.js';
 
 export const SETTINGS_KEY = 'furnace-born-v2-settings';
 
@@ -52,7 +52,7 @@ export function createFoldedSave(route, storage = () => localStorage) {
 
   return {
     load,
-    save: (state) => write(key, state),
+    save: (state) => write(key, serializeFoldedState(state)),
     loadSettings: () => read(SETTINGS_KEY) || {},
     saveSettings: (settings) => write(SETTINGS_KEY, settings),
     reset() {

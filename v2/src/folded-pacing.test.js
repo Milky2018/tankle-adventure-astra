@@ -1,8 +1,9 @@
+import {settleControl} from '../test-fixtures/settled-control.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createEncounterPacing,canTelegraph,mechanismReady} from './folded-pacing.js';
 import {expansionRoutes,expansionEnemies,expansionControls,expansionBattles} from './folded-expansion-layout.js';
-import {initialFoldedState,releaseFolded} from './folded-layout.js';
+import {initialFoldedState} from './folded-layout.js';
 
 test('a finite reserve gives four seconds of breathing room, can be provoked, and resets at rest',()=>{
   const first={battle:'court',wave:0,hp:2,x:0,y:0,z:0,spawn:{x:0,y:0,z:0}},second={...first,wave:1},enemies=[first,second];
@@ -48,8 +49,8 @@ test('existing earned abilities and far-side saves preserve access across newly 
 
 test('one reservoir inlet changes the flow without a second duplicate rotor',()=>{
  const c=expansionControls.find(c=>c.id==='reservoir-inlet'),p={x:c.x-8,y:-8,z:c.z},s=initialFoldedState();
- assert.equal(releaseFolded(c.id,'cannon',p,s,[]),true);
- assert.equal(releaseFolded(c.id,'cannon',p,s,[]),false);
+ assert.equal(settleControl(c.id,'cannon',p,s,[]),true);
+ assert.equal(settleControl(c.id,'cannon',p,s,[]),false);
  assert.equal(expansionControls.some(c=>c.id==='reservoir-transfer'),false);
 });
 

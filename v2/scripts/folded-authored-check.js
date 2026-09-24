@@ -27,7 +27,7 @@ async page=>{
   ctx.fill=fill;ctx.fillRect=rect;return samples;
  });
  if(result.map.map(r=>r.arrows).join()!=='1,0,1')throw Error('Map misidentifies the current floor '+JSON.stringify(result.map));
- await page.screenshot({path:'v2/output/playwright/overhaul/map-current-floor.png'});await page.evaluate(()=>__game.debug.selectLayer(0));await page.screenshot({path:'v2/output/playwright/overhaul/map-other-floor.png'});await page.evaluate(()=>__game.debug.closeMap());
+ await page.screenshot({path:'output/playwright/overhaul/map-current-floor.png'});await page.evaluate(()=>__game.debug.selectLayer(0));await page.screenshot({path:'output/playwright/overhaul/map-other-floor.png'});await page.evaluate(()=>__game.debug.closeMap());
  result.rampMap=await page.evaluate(()=>{__game.scenario({player:{x:-40,y:-12,z:68}});__game.debug.reveal();return {layer:__game.snapshot().chosenLayer,marked:document.querySelector('.layer-bar.player-layer').getAttribute('aria-label')};});
  if(result.rampMap.layer!==-16||!result.rampMap.marked.includes('-16'))throw Error('Ramp map layer disagrees with marker');
  await page.evaluate(()=>__game.debug.closeMap());
@@ -37,11 +37,11 @@ async page=>{
    const a=__game.debug,g=__game;g.scenario({player:{x,y,z,hp:50,heat:0,weapon:'cannon'},state:{guardian:false}});a.setCameraView(view);g.look(yaw,.4);g.step(.1);
    if(id==='guardian'){const e=a.world.enemies.find(e=>e.id==='guardian');e.hp=e.max;e.model.root.visible=true;g.step(.01);}
    const floors=a.world.surfaces.filter(s=>s.mesh.material.transparent);return {id,view,floorsBeforeFixtures:floors.every(s=>s.mesh.renderOrder<0),mirrors:id==='guardian'?a.world.mirrors?.map(m=>m.id):null};
-  },{view,id,x,y,z,yaw});result.views.push(sample);await page.screenshot({path:`v2/output/playwright/overhaul/${id}-${view}.png`});
+  },{view,id,x,y,z,yaw});result.views.push(sample);await page.screenshot({path:`output/playwright/overhaul/${id}-${view}.png`});
  }
  for(const view of ['overhead','third'])for(const active of [false,true]){
   await page.evaluate(({view,active})=>{__game.scenario({player:{x:-240,y:8,z:-40,hp:50},state:{'arsenal-transfer':active}});__game.debug.setCameraView(view);__game.look(-Math.PI/2,.4);__game.step(2);},{view,active});
-  await page.screenshot({path:`v2/output/playwright/overhaul/cable-${view}-${active}.png`});
+  await page.screenshot({path:`output/playwright/overhaul/cable-${view}-${active}.png`});
  }
  if(result.views.some(r=>!r.floorsBeforeFixtures))throw Error('Transparent floors can repaint fixtures');
  if(errors.length)throw Error(JSON.stringify(errors));return {...result,errors};

@@ -1,4 +1,4 @@
-import {circuitReady} from './folded-circuits.js';
+import {circuitReady} from './folded-signal-state.js';
 export function mechanismReady(control,player,time,state={}){
   if(control.requires&&!circuitReady(state,control.requires,control))return false;
   if(control.pressure){

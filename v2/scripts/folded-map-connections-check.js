@@ -11,6 +11,6 @@ async page=>{
   await page.mouse.click(link.x,link.y);
   const after=await page.evaluate(()=>({layer:__game.debug.chosenLayer,player:__game.snapshot().player,selected:document.querySelector('.layer-bar.selected').getAttribute('aria-label')}));
   if(after.layer!==link.destination||after.player.x!==before.player.x||after.player.y!==before.player.y||after.player.z!==before.player.z)throw Error('Map connection failed '+JSON.stringify({before,after}));
-  await page.screenshot({path:'v2/output/playwright/craft/map-connection.png'});
+  await page.screenshot({path:'output/playwright/craft/map-connection.png'});
   if(errors.length)throw Error(JSON.stringify(errors));return {from:before.layer,to:after.layer,selected:after.selected,errors};
 }

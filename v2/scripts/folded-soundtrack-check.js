@@ -103,7 +103,7 @@ async page => {
   await page.waitForFunction(() => document.getElementById('status').textContent.includes('Playing'));
   await page.locator('#seam').click();
   await page.waitForFunction(() => document.getElementById('status').textContent.includes('four seconds'));
-  await page.screenshot({ path: 'v2/output/playwright/regression/mz-soundtrack.png' });
+  await page.screenshot({ path: 'output/playwright/regression/mz-soundtrack.png' });
   await page.locator('#stop').click();
   if (errors.length || failedMusic.length) throw Error(JSON.stringify({ errors, failedMusic }));
   return { pickups, battles, tracks, pause, loops, errors, failedMusic };

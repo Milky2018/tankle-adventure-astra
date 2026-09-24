@@ -86,7 +86,7 @@ export const refugeControls = [
   { id: 'workshop-water', x: -180, y: 9.05, z: -39, kind: 'shot', mount: 'workshop-water', facing: [0,0,1] },
   {id:'transit-return',x:33,y:-6.7,z:84,kind:'shot',mount:'transit-return',facing:[1,0,0]},
   { id: 'optical-screen', x: 214, y: 25.3, z: -10, kind: 'shot', mount: 'optical-screen', facing: [0,0,-1] },
-  { id: 'coolant-bypass', x: 278, y: -22.7, z: 117, kind: 'shot', requires: 'coolant-return' },
+  { id: 'coolant-bypass', x: 278, y: -22.7, z: 117, kind: 'shot', requires: 'coolant-return', destinations: [{id:'coolant-runout',x:284,y:-24,z:106}] },
   { id: 'proving-inspection', x: 195.1, y: 20.25, z: -154, kind: 'shot', mount: 'proving-inspection', facing: [1,0,0] },
   { id: 'overseer-service', x: -10, y: -6.7, z: 61, kind: 'shot', mount: 'overseer-service', facing: [0,0,-1] },
 ];

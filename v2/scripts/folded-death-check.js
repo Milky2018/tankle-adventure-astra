@@ -25,11 +25,11 @@ async page => {
         smoke:q.scene.getObjectByName('player-death-smoke').children[0].position.y,hp:q.p.hp};
     });
     if(wreck.hp!==0||wreck.tilt>=early.tilt||wreck.drop>=early.drop||wreck.smoke<=early.smoke)throw Error('Wreck animation froze '+JSON.stringify({early,wreck}));
-    await page.screenshot({path:`v2/output/playwright/regression/death-${view}-wreck.png`});
+    await page.screenshot({path:`output/playwright/regression/death-${view}-wreck.png`});
     await page.evaluate(()=>__game.step(1.4));
     const iris=await page.locator('#death-iris').evaluate(el=>({display:el.style.display,path:el.firstChild.getAttribute('d')}));
     if(iris.display==='none')throw Error('Death iris never closed');
-    await page.screenshot({path:`v2/output/playwright/regression/death-${view}-iris.png`});
+    await page.screenshot({path:`output/playwright/regression/death-${view}-iris.png`});
     await page.evaluate(()=>__game.step(.35));
     await page.waitForFunction(()=>__game.snapshot().music.track==='mz-castle3');
     const respawn=await page.evaluate(()=>{
@@ -39,7 +39,7 @@ async page => {
     if(respawn.hp!==25||respawn.heat!==0||respawn.smoke||respawn.tilt!==0||respawn.y!==-8)throw Error('Reconstruction did not restore the player '+JSON.stringify(respawn));
     await page.evaluate(()=>__game.step(.5));
     if(await page.locator('#death-iris').evaluate(el=>el.style.display!=='none'))throw Error('Respawn iris failed to open');
-    await page.screenshot({path:`v2/output/playwright/regression/death-${view}-respawn.png`});
+    await page.screenshot({path:`output/playwright/regression/death-${view}-respawn.png`});
     results.push({view,early,wreck,respawn});
   }
   // A death that happens while paused must not inherit the pause resume position.

@@ -40,7 +40,7 @@ async page=>{
   if(!(await snapshot()).player.flotation)throw Error('flotation acquisition failed');
   await page.evaluate(()=>window.__game.toggleFlotation());
   await move(-46,27,'launch into water');await move(-36,27,'pool');await move(-36,-4,'canal bend');await move(0,-4,'below the same bridge');
-  await page.screenshot({path:'v2/output/playwright/folded-city/under-bridge.png'});
+  await page.screenshot({path:'output/playwright/folded-city/under-bridge.png'});
   await move(30,-7,'shore approach');await move(36,-7,'east sill');await move(36,-16,'foot of bank');await move(46,-16,'onto bank ramp');await move(46,20,'garden far bank');
   await move(56,20,'bank refuge');await page.evaluate(()=>window.__game.interact());
   await move(86,20,'rear dock across sluice');await page.evaluate(()=>window.__game.toggleFlotation());
@@ -55,7 +55,7 @@ async page=>{
   if(!(await snapshot()).state.launch)throw Error('launch shutter failed');
   await move(166,-35,'roof ascent');await move(32,-35,'roof return',true);await move(32,6,'roof refuge');await page.evaluate(()=>window.__game.interact());
   await move(24,12,'upper cage release');await shoot('cage');
-  await page.screenshot({path:'v2/output/playwright/folded-city/roof.png'});
+  await page.screenshot({path:'output/playwright/folded-city/roof.png'});
   await page.evaluate(()=>{window.__game.setInput([]);window.__game.step(6);});
   await move(10,12,'return cage boarding');await page.evaluate(()=>window.__game.step(6));
   await move(0,27,'same original refuge');

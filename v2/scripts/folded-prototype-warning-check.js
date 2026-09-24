@@ -30,7 +30,7 @@ async page=>{
    for(let i=0;i<3;i++)cannon();
    return {view,vertices:position.count,drawCount:geometry.drawRange.count,angles};
   },view));
-  await page.screenshot({path:`v2/output/playwright/prototype-warning-${view}.png`});
+  await page.screenshot({path:`output/playwright/prototype-warning-${view}.png`});
  }
  if(errors.length)throw Error(errors.join('\n'));return {results,errors};
 }

@@ -23,6 +23,6 @@ async page => {
  await shoot('last-cage');await move(34,-18);await move(22,-18);await arrive(-8);await move(22,-8);await move(18,-8);await move(18,-2);await move(16,-2);await move(16,80);await move(16,86);await move(0,86);await page.keyboard.press('e');
  const a=await page.evaluate(()=>__game.snapshot().state.anchor);if(a!=='awakening')throw Error('Shaft did not reach A');
  await move(16,80);await move(16,-2);await move(18,-2);await move(18,-8);await move(22,-8);await move(22,-18);await arrive(-40);await move(34,-18);await move(44,-10);await page.keyboard.press('e');
- await page.evaluate(()=>__game.step(.1));await page.screenshot({path:'v2/output/playwright/refuge-deep-room.png'});
+ await page.evaluate(()=>__game.step(.1));await page.screenshot({path:'output/playwright/refuge-deep-room.png'});
  if(errors.length)throw Error(errors.join('\n'));const final=await page.evaluate(()=>__game.snapshot());if(final.state.anchor!=='last-refuge'||Math.abs(final.player.y+40)>.1||final.player.hp!==25)throw Error('D repair failed');return {anchor:final.state.anchor,roundTrip:true,errors};
 }

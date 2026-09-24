@@ -14,7 +14,7 @@ async page=>{
   await scenario({x:216,y:24,z:-20,laser:true,weapon:'laser'},{gallery:false});
   await fireAt(216,-4,26,1);
   let s=await snap();if(!s.state.gallery)throw Error('Reflected calibration receiver failed '+JSON.stringify({aim:s.aim,beam:s.laserSegments}));
-  result.mirrorReceiver=true;await page.screenshot({path:'v2/output/playwright/city-mirror.png'});
+  result.mirrorReceiver=true;await page.screenshot({path:'output/playwright/city-mirror.png'});
   await scenario({x:228,y:24,z:5,laser:true,weapon:'laser'},{gallery:false});await fireAt(228,-3.73,28.54,1);
   if((await snap()).state.gallery)throw Error('Receiver allowed a direct shot from the gallery');result.receiverScreen=true;
   await scenario({x:196,y:16,z:50,laser:true,weapon:'laser'},{guardian:false,gallery:true});
@@ -22,7 +22,7 @@ async page=>{
   await scenario({x:196,y:16,z:50,laser:true,weapon:'laser'});await fireAt(222,50,18,1);
   s=await snap();const rear=s.enemies.find(e=>e.id==='guardian').hp;
   if(front!==36||rear>=front-1)throw Error('Guardian rear reflection failed '+JSON.stringify({front,rear,aim:s.aim,beam:s.laserSegments}));
-  result.guardian={front,rear};await page.screenshot({path:'v2/output/playwright/city-guardian.png'});
+  result.guardian={front,rear};await page.screenshot({path:'output/playwright/city-guardian.png'});
   for(const [id,y,z,hp]of [['guardian',16,64,36],['keeper',-56,32,48]]){
     await scenario({x:id==='guardian'?194:-8,y,z,overdrive:true,phoenix:true,circulation:true,overheated:true,heat:100,speed:3.2},{[id]:false});
     await page.evaluate(({id,hp})=>__game.scenario({player:{speed:3.2,heat:100,overheated:true},enemies:{[id]:hp}}),{id,hp});
@@ -38,7 +38,7 @@ async page=>{
   if((await snap()).player.endingTime)throw Error('Ending failed to cancel');result.dockCancel=true;
   await page.keyboard.down('e');await page.evaluate(()=>window.__game.step(2.2));await page.keyboard.up('e');await page.evaluate(()=>window.__game.step(8));
   s=await snap();if(!s.state.endingSeen||s.player.endingTime<7)throw Error('Voluntary ending failed');result.voluntaryEnding=true;
-  await page.screenshot({path:'v2/output/playwright/city-ending.png'});
+  await page.screenshot({path:'output/playwright/city-ending.png'});
   await page.reload();await page.waitForFunction(()=>!!window.__game);await page.evaluate(()=>window.__game.manual(true));
   s=await snap();if(s.player.endingTime||!s.state.endingSeen||!s.state.keeper)throw Error('Continue did not preserve pre-ending world');result.continue=true;
   if(errors.length)throw Error(JSON.stringify(errors));return {...result,errors};

@@ -1,4 +1,4 @@
-import {circuitReady} from './folded-circuits.js';
+import {circuitReady} from './folded-signal-state.js';
 import {currentVelocity} from './folded-mechanisms.js';
 import {expansionCurrents,expansionBelts,expansionHeat} from './folded-expansion-layout.js';
 import {cityBelts} from './folded-city-layout.js';

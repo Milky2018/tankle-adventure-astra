@@ -48,7 +48,7 @@ async page=>{
    Object.assign(hunter,{x:440,y:-24,z:96,hp:hunter.max,phase:'warn',timer:1.2,aim:Math.PI,awake:true,lock:new T.Vector3(440,-23.4,84)});hunter.model.root.visible=true;g.step(.05);aim(451,-22.5,76);g.step(.01);
    return {view,intercept,pumpHp:pump.hp,errors:[]};
   },view);results.push(result);
-  await page.screenshot({path:`v2/output/playwright/regression/aquatic-${view}.png`});
+  await page.screenshot({path:`output/playwright/regression/aquatic-${view}.png`});
  }
  const reset=await page.evaluate(()=>{const q=__game.debug;q.resetEnemies();const e=q.world.enemies.find(e=>e.id==='condensate-dredger');return {hp:e.hp,shield:e.shieldRemoved,visible:e.model.frontArmor.visible};});
  if(reset.hp!==5||reset.shield||!reset.visible)throw Error('Aquatic enemies did not reset');

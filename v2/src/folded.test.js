@@ -1,8 +1,9 @@
+import {settleControl} from '../test-fixtures/settled-control.js';
 import {swims} from './folded-aquatic.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
-import {initialFoldedState,foldedSupport,moveFolded,releaseFolded,foldedDecks,foldedLiftDefs,foldedAimHeight,foldedEnemies,foldedBlocked,foldedControls} from './folded-layout.js';
+import {initialFoldedState,foldedSupport,moveFolded,foldedDecks,foldedLiftDefs,foldedAimHeight,foldedEnemies,foldedBlocked,foldedControls} from './folded-layout.js';
 import {renderDecks} from './hoist-layout.js';
 
 function drive(p,x,z,state,boost=false){
@@ -40,7 +41,7 @@ test('the pump return reveals its closed gate at the machine and reconnects dry 
   for(let i=0;i<90;i++)moveFolded(p,0,-.15,s);
   assert.ok(p.z>-9,'the closed return is visible before entering the long bridge');
   drive(p,58,4,s);p.pumpPressure=.8;
-  assert.ok(releaseFolded('pump','cannon',p,s,[]));
+  assert.ok(settleControl('pump','cannon',p,s,[]));
   drive(p,58,-28,s);drive(p,-26,-28,s);drive(p,-26,-8,s);
   assert.equal(p.y,-8);assert.equal(p.deployed,false);assert.equal(p.afloat,false);
   const restored=initialFoldedState(s);drive(p,-26,-28,restored);drive(p,58,-28,restored);drive(p,58,20,restored);
@@ -66,12 +67,12 @@ test('ordinary Boost cannot break the original orange bulkhead, while Phoenix re
 
 
 test('the roof coupling stays covered before Phoenix and preserves its release on reload',()=>{
-  const p=player(),s=initialFoldedState();assert.equal(releaseFolded('cage','cannon',p,s,[]),false);
-  Object.assign(p,{y:24,phoenix:true});s.phoenix=true;assert.ok(releaseFolded('cage','cannon',p,s,[]));
+  const p=player(),s=initialFoldedState();assert.equal(settleControl('cage','cannon',p,s,[]),false);
+  Object.assign(p,{y:24,phoenix:true});s.phoenix=true;assert.ok(settleControl('cage','cannon',p,s,[]));
   const restored=initialFoldedState({...s,anchor:'roof',flotation:true,phoenix:true,unknown:true});
   assert.equal(restored.cage,true);assert.equal(restored.anchor,'distribution');assert.equal(restored.unknown,undefined);
   assert.deepEqual(foldedControls.find(c=>c.id==='gangway').facing,[1,0,0]);
-  Object.assign(p,{x:86});assert.ok(releaseFolded('gangway','cannon',p,restored,[]));
+  Object.assign(p,{x:86});assert.ok(settleControl('gangway','cannon',p,restored,[]));
 });
 
 test('rendered flat surfaces never overlap at the same height and the shared cage is recessed',()=>{

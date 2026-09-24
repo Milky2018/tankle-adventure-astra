@@ -26,23 +26,29 @@ async page => {
   const timings=[];
   for(const id of [...new Set(connections.map(f=>f.id))].filter(id=>!['cargo-battery','inner-thermal','sorter','guardian','rail-crossing','coolant-return'].includes(id))){
     a.state[id]=false;delete a.state.pendingSignals[id];if(id==='maintenance')a.state['maintenance-started']=false;
-    const changes=id==='maintenance'?{'maintenance-started':true}:{[id]:true};
-    check(a.world.signals.trigger(id,changes),`${id} refused signal`);const started=a.time;a.world.signalRelease(id,started);
-    const duration=a.world.signals.duration(id);a.world.advanceSignals(duration*.5,started+duration*.5);a.world.update(.01,started+duration*.5,a.p,a.camera);
+    const control=L.foldedControls.find(c=>c.id===id);
+    const changes=Object.fromEntries((control?.effects||[id]).map(key=>[key,true]));
+    for(const key of Object.keys(changes))a.state[key]=false;
+    if(control?.requires)a.state[control.requires]=true;
+    const player={...a.p,...control?.pressure,magnet:true};
+    const started=0;
+    const accepted=control?a.progression.activate(id,control.weapons?.[0]||(control.kind==='shot'?'cannon':control.kind),player,started):a.progression.complete(id,started,{delayed:true});
+    check(accepted,`${id} refused signal`);
+    const duration=a.progression.signals.duration(id);a.progression.advance(duration*.5,started+duration*.5);a.world.update(.01,started+duration*.5,a.p,a.camera);
     check(id==='maintenance'?!a.state['maintenance-started']:!a.state[id],`${id} activated before arrival`);
     const f=connections.filter(f=>f.id===id).sort((a,b)=>b.duration-a.duration)[0];check(f.lamps.some(l=>l.color.getHexString()==='85db58')&&f.lamps.some(l=>l.color.getHexString()==='f3d250'),`${id} did not show a traveling front`);
-    a.world.advanceSignals(duration*.5+.05,started+duration+.05);a.world.update(.01,started+duration+.05,a.p,a.camera);
+    a.progression.advance(duration*.5+.05,started+duration+.05);a.world.update(.01,started+duration+.05,a.p,a.camera);
     check(Object.entries(changes).every(([k,v])=>a.state[k]===v),`${id} failed to activate`);
     if(id==='maintenance')check(a.world.controls.find(c=>c.id===id).lamp.material.color.getHexString()==='85db58','Maintenance control reverted to yellow after its drive started');
-    for(const feed of connections.filter(f=>f.id===id))check(feed.lamps.every(l=>l.color.getHexString()==='85db58'),`${id} retained yellow lamps after arrival: ${JSON.stringify({duration,feedDuration:feed.duration,resting:feed.resting,colors:feed.lamps.map(l=>[l.progress,l.color.getHexString()]),pending:a.world.signals.pending(id)})}`);
+    for(const feed of connections.filter(f=>f.id===id))check(feed.lamps.every(l=>l.color.getHexString()==='85db58'),`${id} retained yellow lamps after arrival: ${JSON.stringify({duration,feedDuration:feed.duration,resting:feed.resting,colors:feed.lamps.map(l=>[l.progress,l.color.getHexString()]),pending:a.progression.signals.pending(id)})}`);
     timings.push({id,duration});
   }
-  a.state['coolant-return']=false;a.world.advanceSignals(0,a.time);a.state['coolant-return']=true;a.world.advanceSignals(.01,a.time+.01);
-  check(a.world.signals.pending('coolant-return'),'Broken barrier did not send lift power');
+  a.state['coolant-return']=false;a.progression.complete('coolant-return',a.time);
+  check(a.progression.signals.pending('coolant-return'),'Broken barrier did not send lift power');
   const lift=a.world.lifts.find(l=>l.id==='coolant-maintenance-bridge');lift.y=lift.stops[1];const before=lift.y;stepLifts([lift],a.state,far,1);check(lift.y===before,'Lift moved before its power arrived');
-  a.world.advanceSignals(a.world.signals.duration('coolant-return'),a.time+10);stepLifts([lift],a.state,far,1);check(lift.y<before,'Lift did not move after power arrived');
+  a.progression.advance(a.progression.signals.duration('coolant-return'),a.time+10);stepLifts([lift],a.state,far,1);check(lift.y<before,'Lift did not move after power arrived');
   const local=a.state.bodies.solids.find(s=>s.localControl==='magnet');a.state.magnet=false;delete a.state.pendingSignals.magnet;
-  a.world.signals.trigger('magnet',{magnet:true});check(L.activeSolid(local,a.state),'Local door opened before its short cable');a.world.advanceSignals(.19,a.time);check(!L.activeSolid(local,a.state),'Local door still closed after its short cable');
+  a.progression.activate('magnet','magnet',{...a.p,magnet:true},a.time);check(L.activeSolid(local,a.state),'Local door opened before its short cable');a.progression.advance(.19,a.time);check(!L.activeSolid(local,a.state),'Local door still closed after its short cable');
   return {actualCannon:true,repeatedRail:true,sideCables:6,remoteSources:timings.length,remoteBranches:connections.length,lifts:a.world.lifts.length,localFeeds:a.world.controls.filter(c=>c.localLamps.length).length,automaticLiftTiming:true,localDoorTiming:true,timings,method:'Actual Cannon rail input; isolated signal-pipeline and render checks for every remote source; lift timing through stepLifts'};
  });
 }

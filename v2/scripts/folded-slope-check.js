@@ -15,7 +15,7 @@ async page=>{
    const agreement=shot?direction.dot(shot.dir):null;g.step(.01);
    return {view,name,minClearance:min,agreement,orientation:a.model.root.quaternion.toArray(),patches:patches.map(d=>d.id)};
   },{view,name,z,heading,yaw});samples.push(result);
-  await page.screenshot({path:`v2/output/playwright/slope/${view}-${name}.png`});
+  await page.screenshot({path:`output/playwright/slope/${view}-${name}.png`});
  }
  if(samples.some(s=>s.minClearance<-.015||s.agreement!==null&&s.agreement<.999))throw Error('Slope contact or barrel mismatch '+JSON.stringify(samples));
  const travel=await page.evaluate(async ()=>{

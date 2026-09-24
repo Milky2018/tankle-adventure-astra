@@ -18,7 +18,7 @@ async page=>{
     },[x,y,z]);
     const s=await page.evaluate(()=>__game.snapshot());
     views.push({name,player:s.player,drawCalls:s.drawCalls});
-    await page.screenshot({path:`v2/output/playwright/layout-pass/${name}.png`});
+    await page.screenshot({path:`output/playwright/layout-pass/${name}.png`});
   }
   if(errors.length)throw Error(JSON.stringify(errors));
   return {views,errors,isolated:true};

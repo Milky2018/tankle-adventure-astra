@@ -2,7 +2,7 @@ async page=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
 
  await page.setViewportSize({width:1440,height:900});await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test&manual');await page.waitForFunction(()=>window.__game?.debug);
- await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');});await page.reload();await page.waitForFunction(()=>window.__game?.debug);await page.evaluate(()=>{__game.manual(true);__game.step(.1);});await page.screenshot({path:'v2/output/playwright/finale/opening.png'});
+ await page.evaluate(()=>{localStorage.removeItem('furnace-born-v2-city');});await page.reload();await page.waitForFunction(()=>window.__game?.debug);await page.evaluate(()=>{__game.manual(true);__game.step(.1);});await page.screenshot({path:'output/playwright/finale/opening.png'});
  const fight=await page.evaluate(async()=>{
   const {keeperDodge}=await import('/test-fixtures/keeper-dodge.js');
   const g=__game,a=__game.debug;
@@ -20,7 +20,7 @@ async page=>{
  if(fight.enemy||fight.hp<=0||fight.stops.length!==2)throw Error('Keeper fight '+JSON.stringify(fight));
  const motion=await page.evaluate(()=>{const a=__game.debug,b=a.world.belts.filter(b=>b.id.startsWith('keeper-feed')).map(b=>b.phase);__game.step(3);return {before:b,after:a.world.belts.filter(b=>b.id.startsWith('keeper-feed')).map(b=>b.phase)};});
  if(JSON.stringify(motion.before)!==JSON.stringify(motion.after))throw Error('Defeated feeds move');
- await page.screenshot({path:'v2/output/playwright/finale/keeper-defeated.png'});
+ await page.screenshot({path:'output/playwright/finale/keeper-defeated.png'});
  // Drive the actual cleared approach, then test both ways to cancel commitment.
  const approach=await page.evaluate(()=>{
   const g=__game,a=__game.debug,start=g.snapshot().time;
@@ -37,7 +37,7 @@ async page=>{
  const shots=[];
  for(const t of [1,5,8,11,17,21,24.5,26.05]){
   const sample=await page.evaluate(t=>{const g=__game,a=__game.debug;g.step(Math.max(0,t-a.p.endingTime));return {time:a.p.endingTime,eye:a.world.presentation.finale.eye.material.color.toArray(),cartZ:a.world.presentation.finale.cart.position.z,completed:!document.querySelector('#ending').hidden,camera:a.camera.position.toArray()};},t);shots.push(sample);
-  await page.screenshot({path:`v2/output/playwright/finale/ending-${t}.png`});
+  await page.screenshot({path:`output/playwright/finale/ending-${t}.png`});
  }
  if(!shots.at(-1).completed||shots[0].cartZ!==79||shots.at(-1).cartZ<80.5)throw Error('Ending sequence incomplete');
  await page.getByRole('button',{name:'Continue exploring',exact:true}).click();
@@ -48,7 +48,7 @@ async page=>{
  if(!loaded.state.endingSeen||!loaded.state.keeper||loaded.player.endingTime||loaded.player.y!==-40)throw Error('Reload replayed ending or lost state');
  // Revisit in third person, pause/resume the film, then skip with the real button.
  await page.evaluate(()=>{__game.debug.setCameraView('third');__game.scenario({player:{x:0,y:-56,z:0},state:{pump:true,signal:true,'rail-repair':true}});__game.setInput(['KeyE']);__game.step(3);__game.setInput([]);__game.debug.setPause(true);});
- await page.getByRole('button',{name:'Resume cinematic',exact:true}).click();await page.evaluate(()=>__game.step(10));await page.screenshot({path:'v2/output/playwright/finale/rail-restored.png'});await page.evaluate(()=>__game.step(6));await page.screenshot({path:'v2/output/playwright/finale/pump-restored.png'});
+ await page.getByRole('button',{name:'Resume cinematic',exact:true}).click();await page.evaluate(()=>__game.step(10));await page.screenshot({path:'output/playwright/finale/rail-restored.png'});await page.evaluate(()=>__game.step(6));await page.screenshot({path:'output/playwright/finale/pump-restored.png'});
  await page.getByRole('button',{name:'Skip',exact:true}).click();
  if(!await page.getByRole('heading',{name:'Mission Accomplished'}).isVisible())throw Error('Skip failed');
  await page.getByRole('button',{name:'Continue exploring',exact:true}).click();

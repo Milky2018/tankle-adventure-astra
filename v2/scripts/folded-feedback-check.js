@@ -49,9 +49,9 @@ async page=>{
   },view));
  }
  await page.evaluate(()=>{const g=__game,q=g.debug;g.setInput([]);q.setCameraView('overhead');g.scenario({player:{x:-35,y:-16,z:128,hp:25,hurtUntil:0,speed:3.2,heading:Math.PI,heat:40,phoenix:true,overdrive:true}});g.setInput(['KeyS','KeyA','ShiftLeft']);g.step(1/60);g.setInput([]);});
- await page.screenshot({path:'v2/output/playwright/phoenix-exhaust-overhead.png'});
+ await page.screenshot({path:'output/playwright/phoenix-exhaust-overhead.png'});
  await page.evaluate(()=>{const q=__game.debug;q.setCameraView('third');__game.look(Math.PI,.267);__game.step(0);});
- await page.screenshot({path:'v2/output/playwright/phoenix-exhaust-third.png'});
+ await page.screenshot({path:'output/playwright/phoenix-exhaust-third.png'});
  // Saving halfway through a real signal must not silently unlock its destination.
  const pending=await page.evaluate(()=>{const g=__game,q=g.debug,c=q.world.controls.find(c=>c.id==='freight');q.state[c.id]=false;const point=new q.T.Vector3(c.x,c.y,c.z);q.impact({point,target:c},{origin:point,hostile:false});g.step(.5,false);g.save();return {id:c.id,remaining:q.state.pendingSignals[c.id]?.remaining};});
  if(!pending.remaining)throw Error('No pending signal saved');

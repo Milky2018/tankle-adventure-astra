@@ -1,3 +1,5 @@
+import { initialFoldedState } from './folded-state.js';
+import { createProgression } from './folded-progression.js';
 import { BOSS_ARENAS } from './folded-boss-arenas.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -23,10 +25,10 @@ function enemy(id, x, z, extra = {}) {
 }
 function fixture(enemies, { walls = [], hives = [], controls = [] } = {}) {
   const p = { x: 0, y: 0, z: 20, hp: 50, invincible: 0 },
-    state = {
+    state = Object.assign(initialFoldedState(), {
       mirrorTurns: {},
       combatArena: enemies.find((e) => BOSS_ARENAS.some((a) => a.id === e.id))?.id,
-    },
+    }),
     shots = [],
     events = [],
     sounds = [];
@@ -36,7 +38,6 @@ function fixture(enemies, { walls = [], hives = [], controls = [] } = {}) {
     controls,
     mirrors: [],
     lifts: [],
-    signalRelease() {},
     cast(origin, dir, range, options = {}) {
       const ray = new T.Ray(origin, dir);
       let nearest = null;
@@ -65,6 +66,7 @@ function fixture(enemies, { walls = [], hives = [], controls = [] } = {}) {
   };
   let time = 1;
   const api = createFoldedCombat({
+    progression: createProgression(state, []),
     player: p,
     world,
     state,

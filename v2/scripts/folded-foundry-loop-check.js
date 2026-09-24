@@ -29,10 +29,10 @@ async page=>{
    }
    g.step(.1);q.draw();return {view,passiveEntry:true,noOrdinaryReturn:true,solidRail:true,sealedBeforeVictory:true,boostLoop:true,shelteredCradle:true};
   },view));
-  await page.screenshot({path:`v2/output/playwright/regression/foundry-loop-${view}.png`});
+  await page.screenshot({path:`output/playwright/regression/foundry-loop-${view}.png`});
   for(const location of ['shared-ramp','level-return']){
    await page.evaluate(({view,location})=>{const g=__game;g.scenario({player:location==='shared-ramp'?{x:-40,y:-13.3333333333,z:64}:{x:-28,y:-16,z:108}});if(view==='third')g.look(location==='shared-ramp'?0:Math.PI,.15);g.step(1);g.debug.draw();if(location==='shared-ramp'){const belt=g.debug.world.occluders.find(o=>o.owner?.beltSurface?.id==='foundry-entry');if(belt.opacity<.95)throw Error('The supporting conveyor fades like an overhead obstruction');}},{view,location});
-   await page.screenshot({path:`v2/output/playwright/regression/foundry-${location}-${view}.png`});
+   await page.screenshot({path:`output/playwright/regression/foundry-${location}-${view}.png`});
   }
  }
  if(errors.length)throw Error(errors.join('\n'));return {fixture:true,results,errors};

@@ -14,7 +14,7 @@ async page=>{
    const target=new T.Vector3(c.x,c.y,c.z);if(c.facing)target.addScaledVector(n,.5);
    const cast=origin=>{const dir=target.clone().sub(origin);return q.world.cast(origin,dir.normalize(),origin.distanceTo(target)+.1,{targets:true});};
    const front=cast(target.clone().addScaledVector(n,2.2));
-   if(front?.target?.id!==c.id)throw Error('Front blocked '+JSON.stringify({id:c.id,hit:front?.target?.id,cover:front?.blockedTarget?.id,object:front?.object?.userData,state:q.state[c.id],pending:q.state.pendingSignals[c.id],position:[c.x,c.y,c.z],normal:n.toArray(),active:q.world.signals.active(c.id),radius:c.radius,architecture:front?.architecture?.id}));
+   if(front?.target?.id!==c.id)throw Error('Front blocked '+JSON.stringify({id:c.id,hit:front?.target?.id,cover:front?.blockedTarget?.id,object:front?.object?.userData,state:q.state[c.id],pending:q.state.pendingSignals[c.id],position:[c.x,c.y,c.z],normal:n.toArray(),active:q.progression.signals.active(c.id),radius:c.radius,architecture:front?.architecture?.id}));
    const back=cast(target.clone().addScaledVector(n,-2.2));
    if(back?.target?.id===c.id)throw Error('Back exposed '+c.id);
    if(c.requires){q.state[c.requires]=false;g.step(.6,false);if(cast(target.clone().addScaledVector(n,2.2))?.target?.id===c.id)throw Error('Closed cover passed '+c.id);q.state[c.requires]=true;}
@@ -42,7 +42,7 @@ async page=>{
  });
  for(const view of ['overhead','third'])for(const ready of [false,true]){
   await page.evaluate(({view,ready})=>{const g=__game;g.setInput([]);g.scenario({state:{foundry:ready,'press-return':false},player:{x:-68.2,y:-16,z:54.56,heat:0,overheated:false}});g.debug.setCameraView(view);g.look(Math.PI/2,.2);g.step(.8);},{view,ready});
-  await page.screenshot({path:`v2/output/playwright/regression/control-cover-${view}-${ready?'open':'closed'}.png`});
+  await page.screenshot({path:`output/playwright/regression/control-cover-${view}-${ready?'open':'closed'}.png`});
  }
  if(errors.length)throw Error(errors.join('\n'));return {...report,errors};
 }

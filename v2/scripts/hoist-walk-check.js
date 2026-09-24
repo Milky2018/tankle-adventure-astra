@@ -34,6 +34,6 @@ async page=>{
     if(!g.snapshot().hoist.state.main)throw Error('Main lift '+JSON.stringify(g.snapshot().hoist));
     g.setInput([]);return {legs,damage,shots,player:g.snapshot().player,hoist:g.snapshot().hoist,time:g.snapshot().time};
   });
-  await page.screenshot({path:'v2/output/playwright/hoist/crown.png'});
+  await page.screenshot({path:'output/playwright/hoist/crown.png'});
   await page.keyboard.press('Escape');return {result,errors};
 }

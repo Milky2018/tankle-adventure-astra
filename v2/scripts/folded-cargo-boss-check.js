@@ -1,7 +1,7 @@
 async page=>{
  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test&manual');await page.waitForFunction(()=>window.__game?.debug);
  await page.evaluate(()=>{const g=__game;g.manual(true);g.scenario({player:{x:90,y:8,z:-56,hp:25,mortar:true,overdrive:true,heat:0},state:{load:true},enemies:Object.fromEntries(g.snapshot().enemies.map(e=>[e.id,e.id==='foundry'?14:0]))});g.step(.1);});
- async function record(name){await page.evaluate(()=>{__game.step(.1);__game.debug.draw();});await page.screenshot({path:`v2/output/playwright/regression/cargo-${name}.png`});}
+ async function record(name){await page.evaluate(()=>{__game.step(.1);__game.debug.draw();});await page.screenshot({path:`output/playwright/regression/cargo-${name}.png`});}
  const fight=await page.evaluate(()=>{
   const g=__game,q=g.debug;let destination=70,shots=0;
   for(let i=0;i<60*100;i++){

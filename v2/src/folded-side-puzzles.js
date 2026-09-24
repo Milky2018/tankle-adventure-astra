@@ -1,3 +1,4 @@
+import {recordPuzzleState,completeProgress} from './folded-state.js';
 import {pullSlide} from './folded-mechanisms.js';
 import {foldedSupport,moveFolded,foldedArchitecture,activeSolid} from './folded-layout.js';
 import {createDelivery} from './folded-delivery.js';
@@ -88,7 +89,7 @@ export function makeSidePuzzles(scene,state){
  batchStatic(fixed);roots.splice(roots.indexOf(fixed),1,...fixed.children);
  for(const root of [cart,...targets.filter(t=>t!==brake&&t.handle).map(t=>t.root)])batchRigidParts(root,[...wheels,...targets.flatMap(t=>[t.handle,t.lamp].filter(Boolean))]);
 
- function persist(){state.sidePuzzles={rail:rail.serialize(),gutter:gutter.serialize(),coverX:coverBounds.x,pending};state['rail-crossing']=rail.state.solved;state['garden-bloom']=gutter.state.grown;}
+ function persist(){recordPuzzleState(state,{rail:rail.serialize(),gutter:gutter.serialize(),coverX:coverBounds.x,pending});}
  function operate(id){const changed=id.startsWith('rail-')?rail.act(id):id==='gutter-plug'?gutter.unplug():gutter.act(id);const t=targets.find(t=>t.id===id);if(t?.handle)t.flash=.22;if(changed)persist();return changed;}
  function act(id){
   const feed=feeds.find(f=>f.id===id);
@@ -111,7 +112,7 @@ export function makeSidePuzzles(scene,state){
   for(const plate of shieldPlates){plate.material.emissive.setHex(0xffdf93);plate.material.emissiveIntensity=coverFlash*4;}
   const occupied=position=>[p,...enemies.filter(e=>e.hp>0)].some(b=>Math.abs(b.y-position[1])<2&&Math.hypot(b.x-position[0],b.z-position[2])<2.3);
   let changed=delivery.update(dt,state['maintenance-started'],occupied);
-  if(changed)state.maintenance=true;
+  if(changed)completeProgress(state,'maintenance');
   for(const [id,signal]of Object.entries(pending)){signal.remaining-=dt;if(signal.remaining<=0){delete pending[id];operate(id);changed=true;}}
   const tenderBounds=sideObstacles.find(s=>s.id==='maintenance-cart');Object.assign(tenderBounds,{x:delivery.position[0]-1,y:delivery.position[1],z:delivery.position[2]-1});
   cover.position.set(coverBounds.x,coverBounds.y,coverBounds.z);coverTarget.x=coverBounds.x+2.5;

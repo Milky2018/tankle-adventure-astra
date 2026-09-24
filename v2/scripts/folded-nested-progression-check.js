@@ -33,6 +33,6 @@ async page=>{
   if(g.snapshot().player.y!==24||!g.snapshot().state.pressure)throw Error('Phoenix did not reconnect at C');checks.push('Phoenix lesson and roof return resolve the original orange bulkhead');
   return {checks,fixture:'Acquired abilities and completed combat are provided; movement, projectiles, reflections, machinery and heat use the live game.'};
  });
- await page.screenshot({path:'v2/output/playwright/nested-progression.png'});
+ await page.screenshot({path:'output/playwright/nested-progression.png'});
  if(errors.length)throw Error(errors.join('\n'));return {...results,errors};
 }

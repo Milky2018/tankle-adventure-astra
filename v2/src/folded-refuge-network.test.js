@@ -1,6 +1,7 @@
+import {settleControl} from '../test-fixtures/settled-control.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {foldedHives,foldedLiftDefs,foldedSupport,foldedBlocked,initialFoldedState,moveFolded,releaseFolded,foldedEnemies,foldedControls} from './folded-layout.js';
+import {foldedHives,foldedLiftDefs,foldedSupport,foldedBlocked,initialFoldedState,moveFolded,foldedEnemies,foldedControls} from './folded-layout.js';
 import {pullSlide,currentVelocity,stepReleasedSlides} from './folded-mechanisms.js';
 import {moveWithConveyor,stepLifts} from './folded-machinery.js';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
@@ -43,7 +44,7 @@ test('retired anchors migrate to a reachable refuge without losing equipment or 
 test('the Overseer side release faces its approach and bypasses the opposing belt on retry',()=>{
   const s=initialFoldedState(),p={...newPlayer(),x:-10,y:-8,z:61,overdrive:true};
   assert.ok(foldedControls.find(c=>c.id==='overseer-service').facing); // Physical housing blocks premature rays; exercised in the browser suite.
-  assert.ok(releaseFolded('overseer-service','cannon',p,s,[]));
+  assert.ok(settleControl('overseer-service','cannon',p,s,[]));
   walk(p,s,[[-10,86],[0,86],[-10,86],[-10,60]]);
   assert.equal(s.foundry,false);
 });
@@ -54,7 +55,7 @@ test('the deep maintenance shaft has a housed control and reaches the Foundry',(
   const shaft=foldedLiftDefs.find(l=>l.id==='last-cage'),s=initialFoldedState({foundry:true});
   assert.deepEqual(shaft.stops,[-40,-8]);
   assert.ok(foldedControls.find(c=>c.id==='last-cage').facing); // Physical housing blocks premature rays; exercised in the browser suite.
-  assert.ok(releaseFolded('last-cage','cannon',{x:44,y:-40,z:-10},s,[]));
+  assert.ok(settleControl('last-cage','cannon',{x:44,y:-40,z:-10},s,[]));
   const p={...newPlayer(),x:22,y:-8,z:-8};
   walk(p,s,[[18,-8],[18,-2],[16,-2],[16,80],[0,86]]);
   assert.equal(p.y,-8);
@@ -150,7 +151,7 @@ test('the garden care court opens a direct return to A, with no parallel transit
  walk(p,s,[[46,46],[46,84],[34,84]]);
  moveFolded(p,-12,0,s);assert.ok(p.x>31,'The garden door must initially block the whole walk');
  const c=foldedControls.find(c=>c.id==='transit-return');assert.deepEqual(c.facing,[1,0,0]);
- assert.ok(releaseFolded(c.id,'cannon',p,s,[]));
+ assert.ok(settleControl(c.id,'cannon',p,s,[]));
  const restored=initialFoldedState(JSON.parse(JSON.stringify(s)));
  walk(p,restored,[[0,84],[0,86],[0,84],[46,84],[46,24]]);assert.equal(p.y,-8);
  assert.equal(foldedSupport(26,54,-36/11),null,'The old parallel slope must be removed');

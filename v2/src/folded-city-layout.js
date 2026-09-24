@@ -122,15 +122,15 @@ export const citySolids=[
   gate('gallery-cover',211,32,4,3,16,2,{permanent:true})
 ];
 export const cityControls=[
-  control('relay-west',-35,-14.5,44),control('relay-east',-65,-14.5,114),
+  control('relay-west',-35,-14.5,44),control('relay-east',-65,-14.5,114,'shot',{effects:['relay-east','relays'],feeds:['relays']}),
   control('prototype-shortcut',-28,-12.75,59.1,'shot',{mount:'prototype-shortcut',facing:[0,0,1]}),
-  control('ballast',-29,1.3,27),
-  control('loading-return',32,-2,-58,'shot',{ground:-8,surface:'top'}),control('freight-return',70,1.3,-34,'shot',{mount:'freight-return',facing:[1,0,0]}),
+  control('ballast',-29,1.3,27,'shot',{effects:['ballast','ratchet'],feeds:['ballast']}),
+  control('loading-return',32,-2,-58,'shot',{ground:-8,surface:'top',effects:['loading-return','bridge-crane']}),control('freight-return',70,1.3,-34,'shot',{mount:'freight-return',facing:[1,0,0]}),
   control('emitter-cage',63,25.4,-86,'shot',{facing:[1,0,0]}),control('gallery',228,26,-4,'laser',{ground:24,normal:[-1,0,0]}),
   control('garden-optical',232,26,-9.5,'laser',{ground:24,normal:[0,0,1]}),
   control('pump',58,-5.5,-4,'shot',{ground:-8,mount:'pump',facing:[0,0,1]}),
   control('pressure-return',218,-14.6,18),control('last-cage',40,-38.6,-12,'shot',{facing:[1,0,0]}),
-  control('signal',198,41.3,146,'shot'),control('maintenance',110,-22.1,30,'shot'),
+  control('signal',198,41.3,146,'shot',{destinations:[{id:'signal-dish',x:204,y:40,z:146}]}),control('maintenance',110,-22.1,30,'shot',{weapons:['cannon'],effects:['maintenance-started'],feeds:['maintenance'],destinations:[{id:'tender-drive',x:108,y:-24,z:32}]}),
   control('dock',0,-54.6,0,'dock')
 ];
 export const cityPickups=[

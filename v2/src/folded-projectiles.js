@@ -1,3 +1,5 @@
+import { completionEffects } from './folded-content.js';
+import { turnMirror } from './folded-state.js';
 import { AQUATIC, torpedoTargets } from './folded-aquatic.js';
 import { mortarPosition, mortarGroundTarget, MORTAR_MAX_AGE } from './folded-ballistics.js';
 import * as T from 'three';
@@ -18,6 +20,7 @@ import { CANNON, HOSTILE_DAMAGE, hostileShotDamage, hostileBlastDamage } from '.
 // The clock is supplied by the simulation; presentation and progression remain
 // with their owners. Shots/mines are shared with weapons, arenas, and reset.
 export function createFoldedCombat({
+  progression,
   player: p,
   world,
   state,
@@ -86,9 +89,7 @@ export function createFoldedCombat({
       audio.event('explode', { position: e });
       burst(new T.Vector3(e.x, e.y + 1, e.z), C.orange, 14);
       if (e.persistent) {
-        state[e.id] = true;
-        world.signalRelease(e.id, time);
-        if (e.id === 'prototype') state['overdrive-return'] = true;
+        progression.complete(e.id, time, { effects: completionEffects[e.id] });
         save();
       }
     }
@@ -175,7 +176,7 @@ export function createFoldedCombat({
         if (!obstruction || obstruction.mirror === mirror) turned.add(mirror);
       }
     for (const mirror of turned) {
-      state.mirrorTurns[mirror.id] = (state.mirrorTurns[mirror.id] || 0) + 1;
+      turnMirror(state, mirror.id);
       mirror.flash = 0.25;
       audio.event('lever', { position: hit.point });
       save();

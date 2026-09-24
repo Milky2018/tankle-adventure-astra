@@ -15,7 +15,7 @@ async page=>{
   const e=a.world.enemies.find(e=>e.id==='guardian');e.hp=e.max;e.model.root.visible=true;
   g.scenario({player:{x:202,y:16,z:54,hp:50,heat:0,overheated:false,weapon:'laser',laser:true},state:{guardian:false}});g.step(.05);
   const before=e.hp;g.aimAt(214,54,18);g.setInput(['Mouse0']);g.step(.3);g.setInput([]);return {runs,guardian:{before,after:e.hp,segments:g.snapshot().laserSegments}};
- });await page.screenshot({path:'v2/output/playwright/overhaul/guardian-reflection.png'});result.repairs=await page.evaluate(()=>{
+ });await page.screenshot({path:'output/playwright/overhaul/guardian-reflection.png'});result.repairs=await page.evaluate(()=>{
   const a=__game.debug,g=__game,runs=[];
   for(const district of ['arsenal','lens','coolant','hearth']){
    a.resetEnemies();a.clearShots();const healer=a.world.enemies.find(e=>e.id.startsWith(district+'-')&&e.type==='repairer'),ally=a.world.enemies.find(e=>e.type==='guard'&&e.encounter===healer.encounter);

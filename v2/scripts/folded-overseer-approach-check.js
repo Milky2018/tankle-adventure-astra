@@ -11,5 +11,5 @@ async page=>{
   for(const [x,z]of [[198,-154],[198,-152],[9,-152],[9,-34],[0,-34],[0,27]])walk(x,z);
   const start=a.time;walk(0,-34);walk(3,-34);walk(3,-146,true);walk(3,-154.5);walk(198,-154.5);walk(198,-182,true);walk(218,-182);walk(218,-174);
   if(a.p.y!==16||a.state.foundry||a.state.combatArena)throw Error('Retry entered the wrong encounter');a.draw();return {retrySeconds:a.time-start,position:[a.p.x,a.p.y,a.p.z],fixture:'Middle abilities and previous machinery provided; ordinary opposition disabled; actual counterweight, remote signal and both walking directions tested.'};
- });await page.screenshot({path:'v2/output/playwright/regression/overseer-preparation.png'});return result;
+ });await page.screenshot({path:'output/playwright/regression/overseer-preparation.png'});return result;
 }

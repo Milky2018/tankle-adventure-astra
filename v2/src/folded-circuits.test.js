@@ -1,7 +1,8 @@
+import {settleControl} from '../test-fixtures/settled-control.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {circuitLinks,circuitColor} from './folded-circuits.js';
-import {foldedControls,foldedSolids,foldedLiftDefs,initialFoldedState} from './folded-layout.js';
+import {foldedControls,foldedSolids,foldedLiftDefs,foldedDecks,foldedArchitecture,initialFoldedState} from './folded-layout.js';
 import {SIGNAL} from './folded-visibility.js';
 
 test('circuits include linked shutters, remote returns, carrier and optical returns',()=>{
@@ -37,7 +38,7 @@ test('shared progression commits after all branches while the switch latches imm
 test('remote magnetic connections retain visible cables outside their closed machinery',()=>{
   const controls=foldedControls.filter(c=>c.kind==='magnet'&&!c.slide);
   for(const c of controls){
-    const links=circuitLinks([c],foldedSolids,foldedLiftDefs);
+    const links=circuitLinks([c],foldedSolids,foldedLiftDefs,foldedDecks,foldedArchitecture.solids);
     if(!links.length){assert.ok(c.mount,c.id);continue;}
     for(const link of links.filter(l=>!l.local)){
       let length=0;
@@ -55,11 +56,11 @@ test('remote magnetic connections retain visible cables outside their closed mac
 });
 
 test('the sequential Foundry doors have independent switches and no redundant cross-feed',async()=>{
-  const {releaseFolded}=await import('./folded-layout.js');
+
   const links=circuitLinks(foldedControls,foldedSolids,foldedLiftDefs);
   assert.equal(links.some(l=>l.id==='relay-west'&&l.target==='relays'),false);
   const state=initialFoldedState(),next={...state};
-  assert.ok(releaseFolded('relay-east','cannon',{},next,[]));
+  assert.ok(settleControl('relay-east','cannon',{},next,[]));
   assert.equal(next.relays,true);assert.equal(next['relay-west'],false);
   const {createCircuitSignals}=await import('./folded-circuits.js');
   const signals=createCircuitSignals(state,links);
@@ -72,7 +73,7 @@ test('the sequential Foundry doors have independent switches and no redundant cr
 });
 
 test('the first Foundry switch opens only its door onto a permanently level passage',async()=>{
-  const {foldedSupport,moveFolded,releaseFolded}=await import('./folded-layout.js');
+  const {foldedSupport,moveFolded}=await import('./folded-layout.js');
   assert.equal(foldedLiftDefs.some(l=>l.id==='foundry-loading-frame'),false);
   const links=circuitLinks(foldedControls,foldedSolids,foldedLiftDefs);
   assert.deepEqual(links.filter(l=>l.id==='relay-west').map(l=>l.target),['relay-west']);
@@ -80,7 +81,7 @@ test('the first Foundry switch opens only its door onto a permanently level pass
   const state=initialFoldedState(),p={x:-44,y:-16,z:50,speed:1};
   for(let i=0;i<80;i++)moveFolded(p,-.15,0,state);
   assert.ok(p.x>-47,'first door must still block the passage');
-  releaseFolded('relay-west','cannon',p,state,[]);
+  settleControl('relay-west','cannon',p,state,[]);
   for(let i=0;i<80;i++)moveFolded(p,-.15,0,state);
   assert.ok(p.x<-55);assert.equal(p.y,-16);
 });
@@ -92,7 +93,7 @@ test('each destination opens on its own cable arrival, including after save and 
   const near={id:'relays',x:8,y:0,z:0,w:1,d:4,h:4};
   const far={...near,x:100};
   const lift={id:'relay-lift',lock:'relays',x:45,z:0,w:6,d:6,stops:[0,8],y:0,destination:0,wait:0};
-  const links=circuitLinks([{id:'relay-east',x:0,y:1.3,z:0}],[near,far],[lift]);
+  const links=circuitLinks([{id:'relay-east',x:0,y:1.3,z:0,effects:['relay-east','relays'],feeds:['relays']}],[near,far],[lift]);
   const length=l=>l.points.slice(1).reduce((n,p,i)=>n+Math.hypot(...p.map((v,j)=>v-l.points[i][j])),0);
   const travel=l=>Math.max(1.4,length(l)/18);
   const nearTime=travel(links[0]),liftTime=travel(links.find(l=>l.target===lift.id));

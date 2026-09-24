@@ -1,8 +1,9 @@
+import {settleControl} from '../test-fixtures/settled-control.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newPlayer,updateHeat,BASE_SPEED} from './mechanics.js';
 import {moveWithConveyor} from './folded-machinery.js';
-import {initialFoldedState,foldedSupport,foldedControls,foldedDecks,foldedEnemies,foldedBlocked,foldedSolids,moveFolded,releaseFolded} from './folded-layout.js';
+import {initialFoldedState,foldedSupport,foldedControls,foldedDecks,foldedEnemies,foldedBlocked,foldedSolids,moveFolded} from './folded-layout.js';
 
 const tank=(x,y,z,overdrive=false)=>({...newPlayer(),x,y,z,overdrive});
 function drive(p,s,x,z,seconds,boost=false){
@@ -66,7 +67,7 @@ test('victory teaches Boost on level ground, rejoins the foot, then reverses the
     const p=tank(-28,-16,122,true);
     walk(p,state,[[-28,100]],true);assert.equal(p.y,-16);
     walk(p,state,[[-28,64]]);
-    if(!state['prototype-shortcut'])assert.ok(releaseFolded('prototype-shortcut','cannon',p,state,[]));
+    if(!state['prototype-shortcut'])assert.ok(settleControl('prototype-shortcut','cannon',p,state,[]));
     const restored=initialFoldedState(JSON.parse(JSON.stringify(state)));
     assert.equal(restored['prototype-shortcut'],true);
     walk(p,restored,[[-28,52],[-40,52]]);assert.equal(p.y,-16);

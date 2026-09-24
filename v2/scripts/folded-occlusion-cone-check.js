@@ -4,10 +4,11 @@ async page=>{
   await page.goto('http://127.0.0.1:5174/?chapter=folded&test&manual');
   await page.waitForFunction(()=>window.__game?.debug);
   const result=await page.evaluate(async()=>{
-    const {makeAperture,cameraApertureOpacity}=await import('/src/folded-visibility.js');
+    const {cameraApertureOpacity}=await import('/src/folded-visibility.js');
+    const {createRenderPolicy}=await import('/src/folded-render-policy.js');
     const q=__game.debug,T=q.T,renderer=q.renderer;__game.manual(true);
     const scene=new T.Scene();scene.background=new T.Color(0xffffff);
-    const aperture=makeAperture(),material=new T.MeshBasicMaterial({color:0x660000,side:T.DoubleSide});aperture.apply(material);
+    const aperture=createRenderPolicy(),material=new T.MeshBasicMaterial({color:0x660000,side:T.DoubleSide});aperture.material(material,'scenery');
     const plane=new T.Mesh(new T.PlaneGeometry(.2,.2),material);scene.add(plane);
     const camera=new T.PerspectiveCamera(60,1,.01,1000),target=new T.WebGLRenderTarget(65,65);
     target.texture.colorSpace=T.SRGBColorSpace;

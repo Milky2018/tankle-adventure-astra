@@ -12,11 +12,11 @@ async page=>{
   let point=await page.evaluate(()=>__game.project(282,-99,1));await page.mouse.move(point.x,point.y);await page.mouse.click(point.x,point.y);await page.waitForTimeout(2800);
   let s=await page.evaluate(()=>__game.snapshot());if(s.hoist.state.ballast<5.8)throw Error('Ballast paddle shot failed');
   await walk(287,-88);await walk(287,-103);await walk(284,-109);await page.waitForTimeout(2500);await walk(284,-120);point=await page.evaluate(()=>__game.project(282,-120,9.1));await page.mouse.click(point.x,point.y);await page.waitForTimeout(800);
-  await page.screenshot({path:'v2/output/playwright/hoist-wordless/keyboard-gallery.png'});
+  await page.screenshot({path:'output/playwright/hoist-wordless/keyboard-gallery.png'});
   await walk(283,-127);await walk(296,-126);await page.waitForTimeout(250);
   point=await page.evaluate(()=>__game.project(310,-126,13.1));await page.mouse.click(point.x,point.y);await page.waitForTimeout(850);
   s=await page.evaluate(()=>__game.snapshot());if(!s.hoist.state.balance||!s.hoist.state.bridge||s.player.height!==8)throw Error('Keyboard/mouse ascent failed '+JSON.stringify(s.hoist));
-  await page.keyboard.press('Tab');await page.screenshot({path:'v2/output/playwright/hoist-wordless/floor-map.png'});await page.keyboard.press('Tab');
+  await page.keyboard.press('Tab');await page.screenshot({path:'output/playwright/hoist-wordless/floor-map.png'});await page.keyboard.press('Tab');
   await page.keyboard.press('Escape');await page.waitForTimeout(100);const before=await page.evaluate(()=>__game.snapshot().frames);await page.waitForTimeout(300);const after=await page.evaluate(()=>__game.snapshot().frames);
   if(before!==after)throw Error('Pause kept rendering');return {keyboardMovement:true,mouseBallastShot:true,mouseRatchetShot:true,mouseLatchShot:true,pausedRenderingStopped:true,hp:s.player.hp,errors};
 }

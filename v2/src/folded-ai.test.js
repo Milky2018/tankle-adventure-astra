@@ -1,3 +1,4 @@
+import { createProgression } from './folded-progression.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Vector3 } from 'three';
@@ -5,7 +6,6 @@ import { createFoldedEnemies } from './folded-ai.js';
 import { createEncounterPacing } from './folded-pacing.js';
 import { createBossArenas } from './folded-boss-arenas.js';
 import { initialFoldedState, foldedEnemies, foldedHives } from './folded-layout.js';
-import { createCircuitSignals } from './folded-circuits.js';
 import { expansionBattles } from './folded-expansion-layout.js';
 import { newPlayer } from './mechanics.js';
 
@@ -45,11 +45,9 @@ function fixture(enemies, player = {}) {
     blocked = false;
   const world = {
     enemies,
-    signals: createCircuitSignals(state, []),
     hives: [],
     lifts: [],
     cast: () => (blocked ? { distance: 4 } : null),
-    signalRelease() {},
     sidePuzzles: { coverHeldUntil: 0 },
   };
   const view = { readable: () => true };
@@ -77,6 +75,7 @@ function fixture(enemies, player = {}) {
     view[name] = (e) => events.push({ name, id: e.id, phase: e.phase });
   }
   const ai = createFoldedEnemies({
+    progression: createProgression(state, []),
     player: p,
     state,
     world,

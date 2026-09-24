@@ -1,13 +1,14 @@
+import {settleControl} from '../test-fixtures/settled-control.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { foldedBattles, foldedControls, foldedPickups, foldedSolids, foldedLiftDefs, initialFoldedState, releaseFolded, foldedSupport } from './folded-layout.js';
+import { foldedBattles, foldedControls, foldedPickups, foldedSolids, foldedLiftDefs, initialFoldedState, foldedSupport } from './folded-layout.js';
 import { circuitLinks, createCircuitSignals } from './folded-circuits.js';
 import { pullSlide } from './folded-mechanisms.js';
 import { explorationEnemies } from './folded-exploration-layout.js';
 
 test('one Mortar lesson powers both freight returns only after the cable arrives, including reload',()=>{
   const state=initialFoldedState(),next={...state};
-  assert.ok(releaseFolded('loading-return','mortar',{mortar:true},next,[]));
+  assert.ok(settleControl('loading-return','mortar',{mortar:true},next,[]));
   const links=circuitLinks(foldedControls,foldedSolids,foldedLiftDefs),signals=createCircuitSignals(state,links);
   const changes=Object.fromEntries(Object.entries(next).filter(([k,v])=>v===true&&!state[k]));
   signals.trigger('loading-return',changes);signals.advance(.1);

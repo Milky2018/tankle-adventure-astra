@@ -1,6 +1,7 @@
+import {settleControl} from '../test-fixtures/settled-control.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { initialFoldedState, moveFolded, foldedSupport, releaseFolded, foldedControls } from './folded-layout.js';
+import { initialFoldedState, moveFolded, foldedSupport, foldedControls } from './folded-layout.js';
 
 function walk(p,state,points){
   for(const [x,z]of points){
@@ -19,7 +20,7 @@ test('freight return folds at half height and only one supported route continues
   walk(p,s,[[59,-63],[67,-63]]);assert.equal(p.y,4);
   assert.equal(foldedSupport(67,-76,7.2),null,'A second upper ramp remains');
   walk(p,s,[[67,-34],[70,-34]]);
-  assert.ok(releaseFolded('freight-return','cannon',p,s,[]));
+  assert.ok(settleControl('freight-return','cannon',p,s,[]));
   walk(p,s,[[59,-34],[59,-92]]);assert.equal(p.y,8);
   walk(p,s,[[59,-34],[70,-34]]);assert.equal(p.y,0);
 });

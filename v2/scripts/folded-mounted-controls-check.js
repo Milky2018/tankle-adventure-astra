@@ -40,7 +40,7 @@ async page=>{
    if(view==='third')for(let j=0;j<30;j++){g.look(yaw,pitch);const p=g.project(c.x+c.facing.x*.5,c.z+c.facing.z*.5,c.y+c.facing.y*.5);yaw-=(p.x/innerWidth*2-1)*Math.tan(Math.PI/6)*(innerWidth/innerHeight)*.8;pitch+=(p.y/innerHeight*2-1)*Math.tan(Math.PI/6)*.8;}
    g.look(yaw,pitch);g.aimAt(c.x+c.facing.x*.5,c.z+c.facing.z*.5,c.y+c.facing.y*.5);g.step(.05);
   },{view,fixture});
-  await page.screenshot({path:`v2/output/playwright/regression/mounted-${fixture.id}-${view}.png`});
+  await page.screenshot({path:`output/playwright/regression/mounted-${fixture.id}-${view}.png`});
   const result=await page.evaluate(({view,id})=>{
    const g=__game,q=g.debug,w=q.world,c=w.controls.find(c=>c.id===id),before=c.root.position.clone();
    for(let i=0;i<150&&!w.signals.active(id);i++){
@@ -55,11 +55,11 @@ async page=>{
    return {id,view,attached,immediateLocalRelease:true};
   },{view,id:fixture.id});
   results.push(result);
-  if(['arsenal-return','scope-drawer','overseer-service'].includes(fixture.id))await page.screenshot({path:`v2/output/playwright/regression/mounted-${fixture.id}-${view}-open.png`});
+  if(['arsenal-return','scope-drawer','overseer-service'].includes(fixture.id))await page.screenshot({path:`output/playwright/regression/mounted-${fixture.id}-${view}-open.png`});
  }
  const sheet=await page.context().newPage();await sheet.setViewportSize({width:1400,height:900});
  await sheet.setContent(`<html><body style="margin:0;background:#182d2b;color:white;font:16px sans-serif;display:grid;grid-template-columns:1fr 1fr">${approaches.flatMap(({id})=>['overhead','third'].map(view=>`<div>${id} / ${view}<img style="display:block;width:700px;height:390px;object-fit:contain" src="http://127.0.0.1:5174/output/playwright/regression/mounted-${id}-${view}.png"></div>`)).join('')}</body></html>`);
- await sheet.waitForFunction(()=>[...document.images].every(i=>i.complete&&i.naturalWidth));await sheet.screenshot({path:'v2/output/playwright/regression/mounted-controls-sheet.png',fullPage:true});await sheet.close();
+ await sheet.waitForFunction(()=>[...document.images].every(i=>i.complete&&i.naturalWidth));await sheet.screenshot({path:'output/playwright/regression/mounted-controls-sheet.png',fullPage:true});await sheet.close();
  await page.evaluate(()=>__game.save());await page.reload();await page.waitForFunction(()=>window.__game?.debug);
  const restored=await page.evaluate(async()=>{
   const g=__game,q=g.debug,{foldedControls}=await import('/src/folded-layout.js'),{mountedControlPosition}=await import('/src/folded-control-housing.js');g.step(2);

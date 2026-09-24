@@ -144,7 +144,7 @@ async (page) => {
       reward: a.state['cannon-coil'],
     };
   });
-  await page.screenshot({ path: 'v2/output/playwright/battery-reward.png' });
+  await page.screenshot({ path: 'output/playwright/battery-reward.png' });
   await page.reload();
   await page.waitForFunction(() => window.__game?.debug);
   const restored = await page.evaluate(

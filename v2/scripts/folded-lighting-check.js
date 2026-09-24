@@ -14,7 +14,7 @@ async page=>{
           const img=new Image();img.src=document.getElementById('game').toDataURL();await img.decode();const c=document.createElement('canvas');c.width=1280;c.height=720;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);const a=ctx.getImageData(240,160,800,500).data;let sum=0,white=0;for(let i=0;i<a.length;i+=4){sum+=(a[i]+a[i+1]+a[i+2])/3;if(a[i]>245&&a[i+1]>245&&a[i+2]>245)white++;}
           return {brightness:sum/(a.length/4),clipped:white/(a.length/4),shadows:q.renderer.shadowMap.enabled};
         },legacy);samples.push(sample);
-        if(!legacy)await page.screenshot({path:`v2/output/playwright/camera-input-light/${view}-${name}-fixed.png`});
+        if(!legacy)await page.screenshot({path:`output/playwright/camera-input-light/${view}-${name}-fixed.png`});
       }
       await page.evaluate(()=>{const q=__game.debug;q.scene.children.find(o=>o.isAmbientLight).intensity=1.2;q.scene.children.find(o=>o.isHemisphereLight).groundColor.setHex(0x7e948b);q.draw();});
       if(samples[0].brightness<samples[1].brightness+5)throw Error(`${view}/${name}: shaded scene did not improve`);

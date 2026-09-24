@@ -24,7 +24,7 @@ async page=>{
    return {view,backsideBlocked:true,released:true,roundTrip:true,y:q.p.y};
   },view);results.push(result);
   await page.evaluate(view=>{const g=__game;g.scenario({player:{x:38,y:-8,z:84}});if(view==='third')g.look(-Math.PI/2,.267);g.step(.2);},view);
-  await page.screenshot({path:`v2/output/playwright/regression/garden-foundry-return-${view}.png`});
+  await page.screenshot({path:`output/playwright/regression/garden-foundry-return-${view}.png`});
  }
  await page.reload();await page.waitForFunction(()=>window.__game?.debug);
  const restored=await page.evaluate(()=>__game.snapshot().state['transit-return']);if(!restored)throw Error('Door release lost after reload');

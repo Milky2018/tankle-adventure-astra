@@ -25,7 +25,7 @@ async page=>{
     }
     return results;
   });
-  await page.screenshot({path:'v2/output/playwright/overhaul/pacing-trial.png'});
+  await page.screenshot({path:'output/playwright/overhaul/pacing-trial.png'});
   const waves=await page.evaluate(async()=>{
     const {expansionRoutes}=await import('/src/folded-expansion-layout.js');
     const g=__game,a=__game.debug,route=expansionRoutes.find(r=>r.id==='proving'),point=route.path.find(p=>p[2]==='battle'),r={x:point[0],y:route.y,z:point[1]},group=a.world.enemies.filter(e=>e.battle==='proving-endurance');
@@ -46,7 +46,7 @@ async page=>{
     const s=g.snapshot();if(!s.state['coolant-return']||!s.player.overheated||s.player.x>=q.x+6)throw Error('Cold Circulation runout failed '+JSON.stringify(s.player));
     return {coldStart:true,redContact:true,opened:true,hp:s.player.hp};
   });
-  await page.screenshot({path:'v2/output/playwright/overhaul/pacing-thermal.png'});
+  await page.screenshot({path:'output/playwright/overhaul/pacing-thermal.png'});
   if(errors.length)throw Error(errors.join('\n'));
   return {trials,waves,thermal,errors};
 }

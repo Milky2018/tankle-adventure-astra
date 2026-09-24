@@ -17,7 +17,7 @@ async page=>{
    }else if(hp>=50||phase!=='sweep')throw Error('Uncovered hull is outside the visible sweep '+JSON.stringify({phase,hp}));
    __game.debug.audio.event=original;return {covered,hp,phase,enemyHp:e.hp,armScale:e.model.arm.scale.z,events};
   },covered);sorter.push(result);
-  await page.screenshot({path:`v2/output/playwright/late-review/sorter-${covered?'cover':'open'}.png`});
+  await page.screenshot({path:`output/playwright/late-review/sorter-${covered?'cover':'open'}.png`});
  }
  const warning=await page.evaluate(()=>{
   const {world:w}=__game.debug,e=w.enemies.find(e=>e.id==='sorter');
@@ -28,7 +28,7 @@ async page=>{
   if(!e.zone.visible||points.count!==26||Math.abs(Math.hypot(points.getX(12),points.getZ(12))-18)>.001)throw Error('Warning footprint does not match the actual sweep');
   return {visible:e.zone.visible,reach:Math.hypot(points.getX(12),points.getZ(12))};
  });
- await page.screenshot({path:'v2/output/playwright/late-review/sorter-warning.png'});
+ await page.screenshot({path:'output/playwright/late-review/sorter-warning.png'});
  const architectureHit=await page.evaluate(()=>{
   const {world:w,updateSorter,T}=__game.debug,e=w.enemies.find(e=>e.id==='sorter'),cast=w.cast;
   e.phase='sweep';e.timer=1.2;e.aim=0;
@@ -50,7 +50,7 @@ async page=>{
  for(const view of ['overhead','third']){
   if(await page.evaluate(()=>__game.snapshot().camera.view)!==view)await page.keyboard.press('c');
   await page.evaluate(()=>{__game.scenario({player:{x:0,y:-56,z:45,weapon:'cannon'}});const e=__game.debug.world.enemies.find(e=>e.id==='keeper');e.phase='idle';e.timer=0;__game.look(Math.PI,.18);__game.step(.1);});
-  await page.screenshot({path:`v2/output/playwright/late-review/keeper-core-${view}.png`});
+  await page.screenshot({path:`output/playwright/late-review/keeper-core-${view}.png`});
  }
  if(errors.length)throw Error(errors.join('\n'));return {sorter,warning,architectureHit,cores,errors};
 }

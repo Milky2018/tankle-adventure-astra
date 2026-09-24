@@ -8,7 +8,7 @@ async page=>{
   for(const [name,x,y,z,yaw]of [['yard',-374,8,-74,Math.PI],['care',44,-8,39,Math.PI],['sorter',116,24,-112,Math.PI/2],['tender',134,-16,14,-Math.PI/4]]){
    const result=await page.evaluate(({x,y,z,yaw})=>{__game.scenario({player:{x,y,z,hp:50,invincible:1e9}});__game.look(yaw,.3);__game.step(.2);return {camera:__game.snapshot().camera,position:__game.snapshot().player.height};},{x,y,z,yaw});
    if(result.position!==y||result.camera.distance<11)throw Error('Optional-room camera/support regression '+name);
-   await page.screenshot({path:`v2/output/playwright/completion/${name}-${view}.png`});views.push({name,view,...result});
+   await page.screenshot({path:`output/playwright/completion/${name}-${view}.png`});views.push({name,view,...result});
   }
   if(view==='third'){
    const result=await page.evaluate(()=>{

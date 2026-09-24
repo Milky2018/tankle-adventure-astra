@@ -27,7 +27,7 @@ async page=>{
    if(Math.abs(result.player[1]-y)>.1)throw Error(`${name}: unsupported fixture ${result.player}`);
    if(result.lights!==3)throw Error('Unbounded local light count');
    if(view==='third'&&result.camera.distance<14.95)throw Error(`${name}: camera shortened ${result.camera.distance}`);
-   await page.screenshot({path:`v2/output/playwright/regional-identity/${name}-${view}.png`});
+   await page.screenshot({path:`output/playwright/regional-identity/${name}-${view}.png`});
    views.push({name,view,...result});
   }
  }

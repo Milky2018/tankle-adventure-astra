@@ -59,7 +59,7 @@ window.__heightAimProbe={
   const far=await page.evaluate(()=>window.__game.project(-23,44,0));await page.mouse.move(far.x,far.y);await page.evaluate(()=>window.__game.step(1/60));
   const mortar=await sample(far);
   if(mortar.error>1||Math.abs(Math.hypot(mortar.aim.x,mortar.aim.z-27)-24)>.001)throw Error('Mortar cursor or range failed: '+JSON.stringify(mortar));
-  await page.screenshot({path:'v2/output/playwright/height-aim.png'});
+  await page.screenshot({path:'output/playwright/height-aim.png'});
   if(errors.length)throw Error(JSON.stringify(errors));
   return {edgeSamples:samples.length,maxCursorError:Math.max(...samples.map(s=>s.error)),movingSamples:moving.length,maxMovingAimDrift:Math.max(...moving.map(s=>s.drift)),shotPitch:Math.asin(shot.dir.y)*180/Math.PI,laserPitch:laserPitch*180/Math.PI,mortarCursorError:mortar.error,errors};
 }

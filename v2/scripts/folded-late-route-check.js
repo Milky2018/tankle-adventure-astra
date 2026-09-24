@@ -30,6 +30,6 @@ async page=>{
   if(g.snapshot().state.anchor!=='last-refuge')throw Error('Did not reach D');milestones.push('inner-thermal','last-refuge');
   return {milestones,scope:'Combat isolated; actual acquisitions, shots, reflection, heat, lifts and movement from C through R5/R6 to D.'};
  });
- await page.screenshot({path:'v2/output/playwright/late-progressive-route.png'});
+ await page.screenshot({path:'output/playwright/late-progressive-route.png'});
  if(errors.length)throw Error(errors.join('\n'));return {...result,errors};
 }

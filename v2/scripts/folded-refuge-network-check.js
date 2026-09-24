@@ -10,7 +10,7 @@ async page => {
     g.step(.1);
     return {hives:w.hives.map(h=>({id:h.id,x:h.x,y:h.y,z:h.z})),controls:w.controls.length,lifts:w.lifts.map(l=>({id:l.id,y:l.y,settle:!!l.settle})),player:g.snapshot().player};
   });
-  await page.screenshot({path:'v2/output/playwright/refuge-network-opening.png'});
+  await page.screenshot({path:'output/playwright/refuge-network-opening.png'});
   if(errors.length)throw Error(errors.join('\n'));
   return report;
 }

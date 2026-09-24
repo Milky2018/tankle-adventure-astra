@@ -236,6 +236,7 @@ export const explorationControls = [
   },
   {
     id: 'mortar-cache',
+    cable: { exit: 'east', finish: [161, 20.28, -139.35], via: [[160.5, 20.28, -134.1]] },
     kind: 'shot',
     surface: 'top',
     x: 155.5,
@@ -297,24 +298,20 @@ explorationSolids.push(
   machine('impact-store-south', 'rack', 226, 16, -120.6, 22, 0.6, 4),
   machine('impact-store-end', 'rack', 247.4, 16, -128, 0.6, 8, 4),
 
-  ...explorationPickups
-    .filter(
-      (p) =>
-        p.preview &&
-        p.requires &&
-        !['impact-store', 'mortar-cache', 'collimator-drawer', 'scope-drawer'].includes(p.requires),
-    )
-    .map((p) => ({
-      id: p.requires,
-      x: p.x - 1.8,
-      y: p.y,
-      z: p.z - 1.8,
-      w: 3.6,
-      d: 3.6,
-      h: 3,
-      invisible: true,
-      hidden: true,
-    })),
+  // Sealed reward cabinets have authored collision volumes. Pickup prerequisites
+  // never create geometry; moving an item cannot silently move a barrier.
+  {
+    id: 'cargo-battery',
+    x: 94.2,
+    y: 8,
+    z: -133.8,
+    w: 3.6,
+    d: 3.6,
+    h: 3,
+    invisible: true,
+    hidden: true,
+  },
+  { id: 'signal', x: 208.2, y: 40, z: 146.2, w: 3.6, d: 3.6, h: 3, invisible: true, hidden: true },
 );
 // Two small work spaces provide real approach and recovery room, without scaling
 // the city or obstructing its existing through routes.

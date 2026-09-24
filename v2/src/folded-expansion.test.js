@@ -1,8 +1,9 @@
+import {settleControl} from '../test-fixtures/settled-control.js';
 import {pullSlide,stepReleasedSlides} from './folded-mechanisms.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {expansionRoutes,expansionPickups,expansionControls} from './folded-expansion-layout.js';
-import {foldedDecks,foldedSolids,foldedControls,deckHeight,foldedSupport,foldedLiftDefs,foldedBlocked,moveFolded,initialFoldedState,releaseFolded} from './folded-layout.js';
+import {foldedDecks,foldedSolids,foldedControls,deckHeight,foldedSupport,foldedLiftDefs,foldedBlocked,moveFolded,initialFoldedState} from './folded-layout.js';
 import {cameraApertureOpacity} from './folded-visibility.js';
 import {barrageTargets,RAIL} from './folded-attacks.js';
 import {moveWithConveyor} from './folded-machinery.js';
@@ -28,7 +29,7 @@ for(const route of expansionRoutes)test(`${route.id} acquisition and onward exit
       p[q.ability]=true;s[q.id]=true;
     }else if(action&&action!=='repair'){
       const c=expansionControls.find(c=>c.id===action);assert.ok(c,action);
-      assert.equal(releaseFolded(c.id,c.surface==='top'?'mortar':c.kind==='shot'?'cannon':c.kind,p,s,[]),true,action);
+      assert.equal(settleControl(c.id,c.surface==='top'?'mortar':c.kind==='shot'?'cannon':c.kind,p,s,[]),true,action);
     }
   }
   p.phoenix=true;p.circulation=true;p.overheated=true;p.heat=100;
@@ -50,7 +51,7 @@ for(const route of expansionRoutes)test(`${route.id} acquisition and onward exit
         s.slidePositions[body.id]=body[body.rail.axis];
         walk(p,s,-106,-54);walk(p,s,x,z);
       }
-      assert.equal(releaseFolded(c.id,c.kind==='shot'?'cannon':c.kind,p,s,[]),true,action);
+      assert.equal(settleControl(c.id,c.kind==='shot'?'cannon':c.kind,p,s,[]),true,action);
     }
   }
   assert.equal(p.y,route.returnY??route.y);
@@ -94,9 +95,9 @@ test('all ramp lanes support a full hull in both directions',()=>{
 test('new return routes reject unearned engines, Magnet, Laser and water crossing',()=>{
  for(const [id,ability,kind]of [['arsenal-return','magnet','magnet'],['lens-return','laser','laser']]){
   const c=expansionControls.find(c=>c.id===id),p={x:c.x-5,y:c.y-1.3,z:c.z},s=initialFoldedState();
-  assert.equal(releaseFolded(id,'cannon',p,s,[]),false);
+  assert.equal(settleControl(id,'cannon',p,s,[]),false);
   const gate=foldedSolids.find(w=>w.id===id);assert.ok(foldedBlocked(gate.x+gate.w/2,gate.y,gate.z+gate.d/2,s));
-  p[ability]=true;assert.equal(releaseFolded(id,kind,p,s,[]),true);
+  p[ability]=true;assert.equal(settleControl(id,kind,p,s,[]),true);
  }
  const ordinary={x:202,y:16,z:-82,speed:1.6,overdrive:true,boosting:true},a=initialFoldedState();
  moveFolded(ordinary,-12,0,a);assert.ok(ordinary.x>197);assert.equal(a['phoenix-departure'],false);

@@ -30,7 +30,7 @@ async page => {
   await page.evaluate(()=>{__game.scenario({state:{'cannon-scope':false},player:{x:390,y:24,z:4}});__game.step(.02);});
   for(const view of ['overhead','third']){
     await page.evaluate(view=>{__game.debug.setCameraView(view);__game.look(0,.267);__game.step(.02);},view);
-    await page.screenshot({path:`v2/output/playwright/regression/scope-workshop-${view}.png`});
+    await page.screenshot({path:`output/playwright/regression/scope-workshop-${view}.png`});
   }
   await page.reload();await page.waitForFunction(()=>window.__game?.debug);
   const range=await page.evaluate(()=>{

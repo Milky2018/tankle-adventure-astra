@@ -26,7 +26,7 @@ window.__reticleProbe=()=>{
     if(weapon!=='mortar'&&Math.abs(probe.pitch+angle*Math.PI/180)>.01)throw Error('Barrel disagrees '+JSON.stringify(probe));
     if(!limit&&probe.point.some((v,i)=>Math.abs(v-probe.intent[i])>.001))throw Error('Reachable target moved '+JSON.stringify(probe));
     checks.push({name,angle,pixelError,probe});
-    if(name==='upper limit'||name==='return inside range')await page.screenshot({path:`v2/output/playwright/hoist-reticle/${name.replaceAll(' ','-')}.png`});
+    if(name==='upper limit'||name==='return inside range')await page.screenshot({path:`output/playwright/hoist-reticle/${name.replaceAll(' ','-')}.png`});
   }
   await page.keyboard.press('Escape');if(errors.length)throw Error(JSON.stringify(errors));return {checks,errors};
 }

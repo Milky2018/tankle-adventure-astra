@@ -21,7 +21,7 @@ window.__hoistVisual=()=>{
   for(const [name,x,z,y]of [['entry',300,-84,0],['gallery',296,-126,8],['upper',305,-171,16],['crown',318,-106,24],['sump',300,-106,-8]]){
     await page.evaluate(([x,z,y])=>{__game.scenario({player:{x,z,hoistY:y,hp:50}});__game.step(.5);},[x,z,y]);
     const stats=await page.evaluate(()=>__hoistVisual());samples.push({name,...stats});
-    await page.screenshot({path:`v2/output/playwright/visual-fix/verified-${name}.png`});
+    await page.screenshot({path:`output/playwright/visual-fix/verified-${name}.png`});
     if(stats.max>stats.pixels*.001)throw Error('Subpixel camera motion changed broad surfaces: '+JSON.stringify(samples));
   }
   await page.keyboard.press('Escape');if(errors.length)throw Error(JSON.stringify(errors));return {samples,errors};

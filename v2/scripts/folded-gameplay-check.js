@@ -36,7 +36,7 @@ async page=>{
   const a=e.warning.geometry.attributes.position.array;
   return {phase:e.phase,hp:__game.snapshot().player.hp,reach:Math.hypot(a[3]-a[0],a[5]-a[2])};
  });if(result.cover.phase!=='sweep'||result.cover.hp!==50||result.cover.reach>20)throw Error('Cover must intercept a committed sweep, not cancel it '+JSON.stringify(result.cover));
- await page.screenshot({path:'v2/output/playwright/craft/keeper.png'});
+ await page.screenshot({path:'output/playwright/craft/keeper.png'});
  result.guidance=await page.evaluate(()=>({links:__game.debug.world.controlFeeds.map(f=>f.id),signs:__game.debug.world.signs.length}));
  if(!result.guidance.links.includes('lens-return')||!result.guidance.links.includes('emitter-cage'))throw Error('Missing local consequence link');
  result.innerReturn=await page.evaluate(()=>{

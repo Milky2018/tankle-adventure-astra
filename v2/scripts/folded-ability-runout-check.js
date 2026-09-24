@@ -20,7 +20,7 @@ async page=>{
       g.setInput([]);g.step(0);
       const s=g.snapshot();return {id,acquired:s.player[ability],opened:s.state[id+'-return'],x:s.player.x,destination:b.x,hp:s.player.hp,heat:s.player.heat,squad:squad.map(e=>({id:e.id,hp:e.hp,ram:e.ramAt>0}))};
     },id);
-    await page.screenshot({path:`v2/output/playwright/overhaul/${id}-first-use.png`});
+    await page.screenshot({path:`output/playwright/overhaul/${id}-first-use.png`});
     if(!result.opened||result.x>result.destination+2||result.hp<=0||result.squad.some(e=>e.hp>0||!e.ram))throw Error('First-use ram return failed '+JSON.stringify(result));
     runs.push(result);
   }

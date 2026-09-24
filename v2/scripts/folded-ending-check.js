@@ -5,13 +5,13 @@ async page=>{
   if(await page.locator('#ending').isVisible())throw Error('Keeper defeat alone completed the journey');
   await page.keyboard.down('e');await page.evaluate(()=>__game.step(.8));
   const progress=await page.evaluate(()=>Number(document.querySelector('.dock-fill').style.strokeDashoffset));if(Math.abs(progress-60)>1)throw Error('Dock hold has no matching progress feedback');
-  await page.screenshot({path:'v2/output/playwright/ending/dock-hold.png'});
+  await page.screenshot({path:'output/playwright/ending/dock-hold.png'});
   await page.keyboard.up('e');await page.evaluate(()=>__game.step(.1));
   if((await page.evaluate(()=>__game.snapshot())).player.endingTime)throw Error('A cancelled hold committed the ending');
   await page.keyboard.down('e');await page.evaluate(()=>__game.step(2.2));await page.keyboard.up('e');await page.evaluate(()=>__game.step(8));
   const result=await page.evaluate(()=>({ending:__game.snapshot().state.endingSeen,paused:__game.snapshot().paused,heading:document.querySelector('#ending-title')?.textContent,shown:!!document.querySelector('#ending:not([hidden])'),hud:document.querySelector('#hud').classList.contains('ending-active')}));
   if(!result.ending||!result.shown||result.heading!=='Mission Accomplished'||!result.paused||!result.hud)throw Error('Completed journey lacks an explicit ending screen '+JSON.stringify(result));
-  await page.waitForTimeout(1600);await page.screenshot({path:'v2/output/playwright/ending/complete.png'});
+  await page.waitForTimeout(1600);await page.screenshot({path:'output/playwright/ending/complete.png'});
   await page.keyboard.press('Tab');if(await page.locator('#ending-menu').evaluate(e=>e!==document.activeElement))throw Error('Completion keyboard focus escaped');
   await page.keyboard.press('Shift+Tab');if(await page.locator('#ending-continue').evaluate(e=>e!==document.activeElement))throw Error('Completion reverse focus escaped');
   await page.keyboard.press('Escape');if(await page.locator('#settings').isVisible())throw Error('Pause menu covered completion');

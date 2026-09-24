@@ -1,6 +1,7 @@
+import {settleControl} from '../test-fixtures/settled-control.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {foldedPickups,foldedLiftDefs,initialFoldedState,releaseFolded,foldedSupport,foldedSolids} from './folded-layout.js';
+import {foldedPickups,foldedLiftDefs,initialFoldedState,foldedSupport,foldedSolids} from './folded-layout.js';
 import {BOSS_ARENAS,createBossArenas} from './folded-boss-arenas.js';
 import {moveWithConveyor,stepLifts} from './folded-machinery.js';
 import {stepTransport} from './folded-transport.js';
@@ -36,7 +37,7 @@ test('Mortar release opens a real local return, and the cargo lift cycles withou
  const s=initialFoldedState(),p={...newPlayer(),x:34,y:-8,z:-72,mortar:true};
  route(p,s,[[28,-66]]);
  for(let i=0;i<120;i++)moveWithConveyor(p,0,.1,1/60,s);assert.ok(p.z<-64,'The lesson screen cannot be driven through');
- assert.ok(releaseFolded('loading-return','mortar',p,s,[]));route(p,s,[[28,-58],[28,-46]]);
+ assert.ok(settleControl('loading-return','mortar',p,s,[]));route(p,s,[[28,-58],[28,-46]]);
  const l={...foldedLiftDefs.find(l=>l.id==='loading-return'),y:-8,destination:-8,wait:0};
  route(p,s,[[18,-46]],false,[l]);for(let i=0;i<300;i++)stepLifts([l],s,p,1/60);
  assert.equal(p.y,0);route(p,s,[[18,-34],[0,-34]],false,[l]);

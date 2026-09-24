@@ -11,7 +11,7 @@ async page=>{
   const check=await page.evaluate(({id,weapon})=>({id,weapon,open:__game.snapshot().state[id],aim:__game.snapshot().aim}),{id,weapon});
   const expected=weapon==='mortar'&&id!=='lens-return'||weapon==='laser';
   if(check.open!==expected)throw Error(JSON.stringify({position,target,expected,...check}));result.push(check);
-  await page.screenshot({path:`v2/output/playwright/progression/${id}-${weapon}.png`});
+  await page.screenshot({path:`output/playwright/progression/${id}-${weapon}.png`});
  }
  return {checks:result,isolated:true};
 }

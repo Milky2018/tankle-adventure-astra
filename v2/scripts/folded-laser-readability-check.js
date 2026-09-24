@@ -36,9 +36,9 @@ async page=>{
    const a=__game.debug,g=__game;g.step(.25);return {heat:a.p.heat,open:a.state[id],guide:a.laserGuide.visible,path:Array.from(a.laserGuide.geometry.attributes.position.array.slice(0,a.laserGuide.geometry.drawRange.count*3)),hp:a.world.enemies.map(e=>e.hp)};
   },c.id);
   assert(before.guide&&before.heat===0&&!before.open,`${view}/${c.id}: preview changed heat or the mechanism`);
-  await page.screenshot({path:`v2/output/playwright/laser/${c.id}-${view}-preview.png`});
+  await page.screenshot({path:`output/playwright/laser/${c.id}-${view}-preview.png`});
   await page.mouse.down({button:'left'});await page.evaluate(()=>__game.step(1/60));await page.mouse.up({button:'left'});
-  const after=await page.evaluate(id=>({open:__game.debug.world.signals.active(id),heat:__game.debug.p.heat,path:__game.snapshot().laserSegments,hp:__game.debug.world.enemies.map(e=>e.hp)}),c.id);
+  const after=await page.evaluate(id=>({open:__game.debug.progression.signals.active(id),heat:__game.debug.p.heat,path:__game.snapshot().laserSegments,hp:__game.debug.world.enemies.map(e=>e.hp)}),c.id);
   assert(after.open,`${view}/${c.id}: firing along the guide did not operate the receiver: ${JSON.stringify({before,after})}`);
   assert(Math.abs(after.heat-.4)<1e-8,'Laser heat cost changed');
   assert(after.path.length===before.path.length&&after.path.every((n,i)=>Math.abs(n-before.path[i])<.001),`${view}/${c.id}: Preview and live beam diverged ${JSON.stringify({before:before.path,after:after.path})}`);
@@ -86,7 +86,7 @@ async page=>{
   g.scenario({player:{x:202,z:48}});e.aim=Math.PI;e.phase='vent';e.timer=1;
   const start=new a.T.Vector3(202,18,48),to=new a.T.Vector3(210,18,70),path=a.traceFoldedLaser(start,to.sub(start),(o,d,r)=>a.castWeapon(o,d,r));
   check(path.at(-1).hit?.target===e,'Rear reflection misses the guardian');
-  a.aim.set(210,18,70);a.keys.add('Mouse0');const hp=e.hp;a.updateLaser(.2);a.keys.clear();const rearDamage=hp-e.hp;check(Math.abs(rearDamage-.9)<1e-6,'Reflected rear damage changed');
+  a.aim.set(210,18,70);a.keys.add('Mouse0');const hp=e.hp;a.updateLaser(.2);a.keys.clear();const rearDamage=hp-e.hp;check(Math.abs(rearDamage-.6)<1e-6,'Unupgraded 3/s Laser did not deal 0.6 rear damage over 0.2 seconds');
   g.scenario({player:{x:194,z:54}});e.timer=.01;g.step(.05);g.step(.05);check(Math.abs(e.aim-locked)>.1,'Guardian never reacquires after recovery');
   return {locked,rearDamage,segments:path.length,hp:e.hp};
  });
@@ -112,6 +112,6 @@ async page=>{
  });
  assert(battle.won&&battle.hp>0,'Scripted reflected guardian fight failed '+JSON.stringify(battle));
  await page.evaluate(()=>{__game.setInput([]);__game.debug.setCameraView('third');__game.look(0,.2);__game.step(.01);});
- await page.screenshot({path:'v2/output/playwright/laser/guardian-third.png'});
+ await page.screenshot({path:'output/playwright/laser/guardian-third.png'});
  assert(!errors.length,errors.join('\n'));return {views,...mechanics,guardian,battle,errors};
 }

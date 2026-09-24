@@ -6,7 +6,7 @@ async page=>{
   const sample=await page.evaluate(({view,x,y,z,yaw})=>{
    __game.setInput([]);__game.scenario({player:{x,y,z,hp:50,invincible:100,heat:0,overheated:false,deployed:false},state:{'proving-transfer':true}});__game.debug.setCameraView(view);__game.look(yaw,.28);__game.step(.05);
    return {camera:__game.snapshot().camera,readable:__game.snapshot().enemies.filter(e=>e.hp>0&&e.readable).map(e=>e.id),region:__game.debug.world.presentation.region};
-  },{view,x,y,z,yaw});views.push({name,view,...sample});await page.screenshot({path:`v2/output/playwright/places-${name}-${view}.png`});
+  },{view,x,y,z,yaw});views.push({name,view,...sample});await page.screenshot({path:`output/playwright/places-${name}-${view}.png`});
  }
  const freight=await page.evaluate(async()=>{
   const w=__game.debug.world.walls.find(w=>w.id==='dispatch-carrier-a'),s=w;

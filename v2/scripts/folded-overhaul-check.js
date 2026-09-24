@@ -9,7 +9,7 @@ async page=>{
   for(const [name,x,y,z]of [['hive',0,-8,86],['arsenal',-212,8,18],['reservoir',-212,-8,-174],['proving',64,16,-206],['lens',344,24,-32],['coolant',344,-24,132],['hearth',-124,-40,52]]){
     const result=await page.evaluate(({x,y,z})=>{__game.scenario({player:{x,y,z,hp:100,invincible:1e9}});__game.look(Math.PI/2,.22);__game.step(.1);const distances=[];for(const yaw of [0,Math.PI/2,Math.PI,Math.PI*1.5]){__game.look(yaw,.22);__game.step(.05);distances.push(__game.snapshot().camera.distance);}__game.look(Math.PI/2,.22);__game.step(.1);return {camera:__game.snapshot().camera,distances,region:__game.debug.world.presentation.region};},{x,y,z});
     if(Math.max(...result.distances)-Math.min(...result.distances)>.001)throw Error('Camera retracts '+name);
-    await page.screenshot({path:`v2/output/playwright/overhaul/${name}.png`});views.push({name,...result});
+    await page.screenshot({path:`output/playwright/overhaul/${name}.png`});views.push({name,...result});
   }
   const circuits=await page.evaluate(()=>__game.debug.scene.children.filter(c=>c.name.startsWith('folded-circuit:')).map(c=>c.name));
   if(!circuits.some(n=>n==='folded-circuit:load:carrier')||circuits.some(n=>n==='folded-circuit:mirror-index:return-index'))throw Error('Missing linked circuits');

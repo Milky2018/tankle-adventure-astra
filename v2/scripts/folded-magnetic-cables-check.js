@@ -22,7 +22,7 @@ async page=>{
    if(visiblePixels<20)throw Error('Circuit is present but not legible in the rendered view '+view+'/'+id+' pixels='+visiblePixels);
    return {visiblePixels,feeds:feeds.map(f=>({id:f.id,target:f.target,lamps:f.lamps.length,points:f.points}))};
   },{view,id,x,y,z});
-  await page.screenshot({path:`v2/output/playwright/regression/cable-${id}-${view}.png`});
+  await page.screenshot({path:`output/playwright/regression/cable-${id}-${view}.png`});
   const timing=await page.evaluate(({view,id})=>{
    const g=__game,q=g.debug,w=q.world,c=w.controls.find(c=>c.id===id);
    if(view==='overhead')g.aimAt(c.x,c.z,c.y);
@@ -45,6 +45,6 @@ async page=>{
  // A contact sheet preserves each unmodified gameplay capture for visual review.
  const sheet=await page.context().newPage();await sheet.setViewportSize({width:1400,height:2920});
  await sheet.setContent(`<html><body style="margin:0;background:#182d2b;color:white;font:16px sans-serif;display:grid;grid-template-columns:1fr 1fr">${cases.flatMap(([id])=>['overhead','third'].map(view=>`<div>${id} / ${view}<img style="display:block;width:700px;height:390px;object-fit:contain" src="http://127.0.0.1:5174/output/playwright/regression/cable-${id}-${view}.png"></div>`)).join('')}</body></html>`);
- await sheet.waitForFunction(()=>[...document.images].every(i=>i.complete&&i.naturalWidth));await sheet.screenshot({path:'v2/output/playwright/regression/magnetic-cables-sheet.png',fullPage:true});await sheet.close();
+ await sheet.waitForFunction(()=>[...document.images].every(i=>i.complete&&i.naturalWidth));await sheet.screenshot({path:'output/playwright/regression/magnetic-cables-sheet.png',fullPage:true});await sheet.close();
  if(errors.length)throw Error(errors.join('\n'));return {results,errors};
 }

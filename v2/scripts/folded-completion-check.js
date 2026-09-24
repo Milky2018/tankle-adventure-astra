@@ -46,7 +46,7 @@ async page=>{
   const sounds=[],event=__game.debug.audio.event;__game.debug.audio.event=n=>sounds.push(n);g.aimAt(c.x,c.z,c.y);g.setInput(['Mouse0']);g.step(1,false);g.setInput([]);__game.debug.audio.event=event;
   if(sounds.filter(n=>n==='armor').length>9)throw Error('Rejected laser plays armour sound every frame');g.save();return {coverShift:c.x-before,armorSounds:sounds.filter(n=>n==='armor').length,coverX:g.snapshot().state.sidePuzzles.coverX};
  }));
- await page.screenshot({path:'v2/output/playwright/completion/sorter-overhead.png'});
+ await page.screenshot({path:'output/playwright/completion/sorter-overhead.png'});
  await page.reload();await page.waitForFunction(()=>window.__game?.debug);const savedCover=await page.evaluate(()=>__game.snapshot().state.sidePuzzles.coverX);if(savedCover!==results.at(-1).coverX)throw Error('Magnetic cover arrangement not saved');
  if(errors.length)throw Error(errors.join('\n'));return {results,errors};
 }

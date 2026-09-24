@@ -14,8 +14,8 @@ async page=>{
    if(q.state[id]||!(c.pull>0)||c.moving.position.length()<.02)throw Error('No visible loosening '+view+'/'+id+' '+JSON.stringify({pull:c.pull,target:g.snapshot().magnetic,aim:q.aim.toArray(),c:{x:c.x,y:c.y,z:c.z,cutaway:c.root.userData.cutaway},p:{x:q.p.x,y:q.p.y,z:q.p.z},line:(()=>{const o=q.weaponOrigin(),d=new q.T.Vector3(c.x,c.y,c.z).sub(o),h=q.world.cast(o,d.clone().normalize(),d.length());return {target:h?.target?.id,point:h?.point.toArray(),object:h?.object?.userData};})()}));
    g.step(.5);if(c.pull>.01)throw Error('Released grip did not settle '+id);
    aim();g.setInput(['Mouse2']);g.step(.85);g.setInput([]);
-   if(!q.world.signals.active(id))throw Error('Lock did not release '+view+'/'+id+' '+JSON.stringify({pull:c.pull,target:g.snapshot().magnetic}));
-   g.step((q.world.signals.pending(id)?.remaining||0)+1);if(!q.state[id])throw Error("Signal never reached lock "+id);const fallen=c.moving.getWorldPosition(new q.T.Vector3());if(Math.abs(fallen.y-c.ground-.65)>.02)throw Error('Detached piece did not settle on its floor '+id+' '+fallen.y);
+   if(!q.progression.signals.active(id))throw Error('Lock did not release '+view+'/'+id+' '+JSON.stringify({pull:c.pull,target:g.snapshot().magnetic}));
+   g.step((q.progression.signals.pending(id)?.remaining||0)+1);if(!q.state[id])throw Error("Signal never reached lock "+id);const fallen=c.moving.getWorldPosition(new q.T.Vector3());if(Math.abs(fallen.y-c.ground-.65)>.02)throw Error('Detached piece did not settle on its floor '+id+' '+fallen.y);
    if(q.world.controls.find(t=>t.id===id).slide)throw Error('Lock still uses a rail');
    for(const b of q.state.bodies.solids.filter(b=>b.id===id))if(activeSolid(b,q.state))throw Error('Released passage remains solid '+id);
    results.push({view,id,pullOff:true});
@@ -35,9 +35,9 @@ async page=>{
  if(saved.some(c=>!c.open||!c.detached||c.age<.75))throw Error('Reload reconstructed a torn lock '+JSON.stringify(saved));
  for(const view of ['overhead','third']){
   await page.evaluate(view=>{const g=__game;g.scenario({player:{x:-107,y:8,z:-56,magnet:true},state:{'arsenal-return':false}});g.debug.setCameraView(view);g.look(Math.PI/2,.15);g.step(.4);},view);
-  await page.screenshot({path:`v2/output/playwright/regression/magnetic-lock-${view}-intact.png`});
+  await page.screenshot({path:`output/playwright/regression/magnetic-lock-${view}-intact.png`});
   await page.evaluate(()=>{__game.debug.state['arsenal-return']=true;__game.step(1);});
-  await page.screenshot({path:`v2/output/playwright/regression/magnetic-lock-${view}-removed.png`});
+  await page.screenshot({path:`output/playwright/regression/magnetic-lock-${view}-removed.png`});
  }
  if(errors.length)throw Error(errors.join('\n'));return {...result,saved,errors};
 }

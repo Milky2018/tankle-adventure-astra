@@ -20,7 +20,7 @@ async page=>{
     if(id==='mortar'||id==='laser'){if(s.keys.join(',')!=='KeyQ,Mouse0')throw Error('Weapon demonstration omitted select/fire inputs');}
     if(id==='phoenix'||id==='circulation'){if(card.key!=='ShiftLeft')throw Error('Engine upgrade lost its acceleration binding');}
     demonstrations.push(s.demo);
-    if(id==='mortar'){await page.screenshot({path:'v2/output/playwright/hud-mortar.png'});}
+    if(id==='mortar'){await page.screenshot({path:'output/playwright/hud-mortar.png'});}
   }
   if(s.cards.length!==8||new Set(s.cards.map(c=>c.icon)).size!==8||new Set(demonstrations).size!==7)throw Error('Abilities share an icon or demonstration');
   await page.keyboard.press('q');await page.evaluate(()=>window.__game.step(0));s=await hud();
@@ -36,10 +36,10 @@ async page=>{
   await page.keyboard.down('s');await page.keyboard.down('d');await page.keyboard.down('Shift');await page.evaluate(()=>window.__game.step(1.9));
   s=await hud();for(const id of ['overdrive','phoenix','circulation'])if(!s.cards.find(c=>c.id===id).active)throw Error('Overheated acceleration state is missing: '+id);
   await page.keyboard.up('s');await page.keyboard.up('d');await page.keyboard.up('Shift');
-  await page.screenshot({path:'v2/output/playwright/hud-all-abilities.png'});
+  await page.screenshot({path:'output/playwright/hud-all-abilities.png'});
   await page.setViewportSize({width:375,height:720});await page.evaluate(()=>window.__game.step(0));
   const fits=await page.evaluate(()=>[...document.querySelectorAll('.ability-card'),document.getElementById('acquired')].every(e=>{const r=e.getBoundingClientRect();return r.x>=0&&r.right<=innerWidth&&r.y>=0&&r.bottom<=innerHeight;}));
-  if(!fits)throw Error('Ability HUD leaves the narrow viewport');await page.screenshot({path:'v2/output/playwright/hud-narrow.png'});
+  if(!fits)throw Error('Ability HUD leaves the narrow viewport');await page.screenshot({path:'output/playwright/hud-narrow.png'});
   await page.setViewportSize({width:1280,height:720});
   await page.reload();await page.waitForFunction(()=>!!window.__game);await page.evaluate(()=>{window.__game.manual(true);window.__game.step(0);});
   s=await hud();if(s.cards.length!==8||s.shown||s.cards.some(c=>c.fresh)||s.cards.find(c=>c.id==='mortar').key!=='KeyX')throw Error('Reload lost abilities or replayed acquisition');

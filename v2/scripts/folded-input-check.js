@@ -31,7 +31,7 @@ async page=>{
   await page.getByRole('button',{name:'View discovered floor above'}).click();
   const after=await page.evaluate(()=>window.__game.snapshot());
   if(before.chosenLayer===after.chosenLayer||before.player.y!==after.player.y||before.aim.y!==after.aim.y)throw Error('Map selection changed physical height or aim');
-  await page.screenshot({path:'v2/output/playwright/folded-city/floor-map.png'});
+  await page.screenshot({path:'output/playwright/folded-city/floor-map.png'});
   await page.keyboard.press('Tab');await page.keyboard.press('Escape');
   if(!(await page.evaluate(()=>window.__game.snapshot())).paused)throw Error('Escape failed');
   await page.reload();await page.waitForFunction(()=>!!window.__game);s=await page.evaluate(()=>window.__game.snapshot());

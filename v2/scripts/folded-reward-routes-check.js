@@ -24,7 +24,7 @@ async page=>{
    g.setInput([]);g.step(.05);return {id,outbound,returnDistance:travelled-outbound,seconds,hp:a.p.hp,armorPacks:a.p.armorPacks,pickedUp:a.state[id],returned:Math.hypot(a.p.x-r.returns.at(-1)[0],a.p.z-r.returns.at(-1)[1])<.4};
   },id));
   await page.evaluate(id=>{const q=__game.debug.world.pickups.find(p=>p.id===id);__game.scenario({player:{x:q.x,y:q.y,z:q.z,deployed:false}});__game.step(.05);},id);
-  for(const view of ['overhead','third']){await page.evaluate(view=>{__game.debug.setCameraView(view);__game.look(Math.PI,.267);__game.step(.02);},view);await page.screenshot({path:`v2/output/playwright/regression/detour-${id}-${view}.png`});}
+  for(const view of ['overhead','third']){await page.evaluate(view=>{__game.debug.setCameraView(view);__game.look(Math.PI,.267);__game.step(.02);},view);await page.screenshot({path:`output/playwright/regression/detour-${id}-${view}.png`});}
   await page.evaluate(()=>__game.debug.setCameraView('overhead'));
  }
  if(errors.length)throw Error(errors.join('\n'));return {fresh,results,errors,scope:'Real movement, Phoenix and Magnet inputs; enemies disabled for route/collision isolation. Combat is tested separately.'};
