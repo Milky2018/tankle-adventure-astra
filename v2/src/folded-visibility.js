@@ -3,6 +3,7 @@ import * as T from 'three';
 export const SIGNAL={magnet:0x328fff,ready:0xf3d250,open:0x85db58};
 export const APERTURE_AIM_THRESHOLD=.45;
 export const STRUCTURE_APERTURE_RADIUS=36;
+const CAMERA_APERTURE={inner:1.5,outer:2,eyeInner:.12,eyeOuter:.2};
 const direction=new T.Vector3(28,39.6,28).normalize();
 const smooth=(a,b,x)=>{const t=Math.max(0,Math.min(1,(x-a)/(b-a)));return t*t*(3-2*t);};
 
@@ -24,12 +25,13 @@ export function apertureOpacity(point,player,viewDirection=direction,outerRadius
   return 1-.84*aperture*(1-supportProtection(point,patches));
 }
 
-// Only the corridor from the tank to the eye fades; terrain ahead still blocks shots.
+// Perspective sightlines converge at the eye; a fixed-width tunnel fades unrelated surfaces.
 export function cameraApertureOpacity(point,p,camera,patches=[]){
   const dx=camera.x-p.x,dy=camera.y-p.y-1.6,dz=camera.z-p.z,l2=dx*dx+dy*dy+dz*dz;
   const x=point.x-p.x,y=point.y-p.y-1.6,z=point.z-p.z,t=(x*dx+y*dy+z*dz)/Math.max(.001,l2);
   const r=Math.hypot(x-dx*t,y-dy*t,z-dz*t);
-  return 1-.84*(1-smooth(2.4,4.2,r))*smooth(-.06,.04,t)*(1-smooth(1.03,1.12,t))*smooth(.2,1.4,point.y-p.y)*(1-supportProtection(point,patches));
+  const scale=Math.max(0,Math.min(1,1-t)),a=CAMERA_APERTURE;
+  return 1-.84*(1-smooth(a.eyeInner+a.inner*scale,a.eyeOuter+a.outer*scale,r))*smooth(0,.02,t)*(1-smooth(.99,1,t))*smooth(.2,1.4,point.y-p.y)*(1-supportProtection(point,patches));
 }
 
 export function makeAperture(){
@@ -62,7 +64,8 @@ export function makeAperture(){
         vec3 pointDelta = apertureWorld - aperturePlayer - vec3(0.0, 1.6, 0.0);
         float eyeT = dot(pointDelta,eyeDelta) / max(0.001,dot(eyeDelta,eyeDelta));
         float eyeRadius = length(pointDelta-eyeDelta*eyeT);
-        float eyeCut = (1.0-smoothstep(2.4,4.2,eyeRadius))*smoothstep(-0.06,0.04,eyeT)*(1.0-smoothstep(1.03,1.12,eyeT))*smoothstep(0.2,1.4,apertureWorld.y-aperturePlayer.y);
+        float eyeScale = clamp(1.0-eyeT,0.0,1.0);
+        float eyeCut = (1.0-smoothstep(${CAMERA_APERTURE.eyeInner.toFixed(2)}+${CAMERA_APERTURE.inner.toFixed(2)}*eyeScale,${CAMERA_APERTURE.eyeOuter.toFixed(2)}+${CAMERA_APERTURE.outer.toFixed(2)}*eyeScale,eyeRadius))*smoothstep(0.0,0.02,eyeT)*(1.0-smoothstep(0.99,1.0,eyeT))*smoothstep(0.2,1.4,apertureWorld.y-aperturePlayer.y);
         float cut = mix(${cameraOnly?'0.0':'apertureCut'},eyeCut,apertureMode);
         ${terrain?`float supportKeep = 0.0;
         for (int i = 0; i < 4; i++) {
@@ -79,7 +82,7 @@ export function makeAperture(){
         #include <opaque_fragment>
       `);
     };
-    material.customProgramCacheKey=()=> `folded-continuous-aperture-v10-${terrain}-${cameraOnly}-${radius}-${depthOnly?'depth':'color'}`;
+    material.customProgramCacheKey=()=> `folded-continuous-aperture-v11-${terrain}-${cameraOnly}-${radius}-${depthOnly?'depth':'color'}`;
   }
   return {apply,support:patches=>{for(let i=0;i<4;i++){const d=patches[i];if(d){supportBounds.value[i].set(d.x,d.z,d.x+d.w,d.z+d.d);supportPlanes.value[i].set(d.y,(d.rise||0)/d.d,1,0);}else supportPlanes.value[i].z=0;}},setCamera:(p,c)=>{player.value.set(p.x,p.y,p.z);camera.value.copy(c);},setView:third=>{mode.value=third?1:0;},update:(p,d=direction,focus=0)=>{combatFocus.value=focus;player.value.set(p.x,p.y,p.z);viewDirection.value.copy(d);},enable:value=>{enabled.value=value?1:0;}};
 }

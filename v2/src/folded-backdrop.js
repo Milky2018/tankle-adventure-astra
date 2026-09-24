@@ -119,7 +119,12 @@ export function makeCityBackdrop(scene, aperture, decks, lifts) {
     m.depthWrite = true;
   }
   root.traverse((o) => {
-    if (o.isMesh) o.castShadow = o.receiveShadow = false;
+    if (o.isMesh) {
+      o.castShadow = o.receiveShadow = false;
+      // Exterior color precedes the city's transparent floors (-2) and fixtures.
+      // Otherwise a fog-white background batch can paint over a nearer cutaway.
+      o.renderOrder = -3;
+    }
   });
   batchStatic(root, { preserveGeometry: true });
   root.updateWorldMatrix(true, true);

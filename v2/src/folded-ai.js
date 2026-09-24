@@ -374,8 +374,9 @@ export function createFoldedEnemies({
       const beforeDrift = { x: e.x, y: e.y, z: e.z };
       if (!e.emplacement) moveWithConveyor(e, 0, 0, dt, state, world.lifts, world.enemies);
       if (
-        refugeAt(e, world.hives, state, REFUGE_CLEARANCE + e.radius) ||
-        (e.type === 'dredger' && !e.afloat)
+        (e.x !== beforeDrift.x || e.y !== beforeDrift.y || e.z !== beforeDrift.z) &&
+        (refugeAt(e, world.hives, state, REFUGE_CLEARANCE + e.radius) ||
+          (e.type === 'dredger' && !e.afloat))
       )
         Object.assign(e, beforeDrift);
       view.deployment(e, now());

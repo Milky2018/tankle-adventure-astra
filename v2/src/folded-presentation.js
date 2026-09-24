@@ -34,10 +34,13 @@ export function makeCityPresentation(scene,aperture){
       for(let i=0;i<pos.count;i++)uv.setXY(i,(s.w>s.d?pos.getX(i)+s.x:pos.getZ(i)+s.z)/8,(pos.getY(i)+s.y)/4);
       mesh.geometry=g;
     }
-    const prepass=new T.Mesh(mesh.geometry,depthMaterial);prepass.position.copy(mesh.position);depth.add(prepass);
     colliders.set(s,new T.Box3(new T.Vector3(s.x,s.y,s.z),new T.Vector3(s.x+s.w,s.y+s.h,s.z+s.d)));
     // Frames, drip caps and foundations give even a cut-away wall its construction.
     if(s.kind==='wall'||s.kind==='lintel')box(architecture,s.w+.12,.12,s.d+.12,s.x+s.w/2,s.y+s.h+.04,s.z+s.d/2,material(s.region,'frame'),0);
+  }
+  // Caps and frames need the same depth coverage as the main wall surfaces.
+  for(const mesh of architecture.children){
+    const prepass=new T.Mesh(mesh.geometry,depthMaterial);prepass.position.copy(mesh.position);depth.add(prepass);
   }
   batchStatic(architecture,{preserveGeometry:true});batchStatic(depth,{preserveGeometry:true});
   for(const root of [architecture,depth]){root.updateWorldMatrix(true,true);root.traverse(o=>{o.matrixAutoUpdate=false;o.matrixWorldAutoUpdate=false;});}

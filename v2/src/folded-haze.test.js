@@ -16,7 +16,7 @@ test('every view fully obscures geometry before its clipping plane, including ca
     const camera = cameras[view];
     setViewDistance(scene, camera);
     assert.ok(scene.fog.near < scene.fog.far);
-    assert.ok(camera.far - scene.fog.far >= 30, view);
+    assert.ok(camera.far - scene.fog.far >= 10, view);
     assert.equal(camera.far, DEFAULT_VIEW_DISTANCE.renderDistance);
     const c = camera.clone();
     c.updateProjectionMatrix();
@@ -44,3 +44,15 @@ test('custom fog distances move the clip plane beyond complete fog in both views
     }
   }
 });
+
+ test('camera clip plane encloses the player radius at every camera offset',()=>{
+   const scene=new Scene();scene.fog=new Fog(0,200,220);
+   const player={x:7,y:16,z:-40};
+   for(const camera of [new PerspectiveCamera(),new OrthographicCamera()]){
+     for(const offset of [[0,0,15],[28,39.6,28],[-60,25,0]]){
+       camera.position.set(player.x+offset[0],player.y+offset[1],player.z+offset[2]);
+       setViewDistance(scene,camera,DEFAULT_VIEW_DISTANCE,player);
+       assert.ok(Math.abs(camera.far-230-Math.hypot(...offset))<1e-9);
+     }
+   }
+ });

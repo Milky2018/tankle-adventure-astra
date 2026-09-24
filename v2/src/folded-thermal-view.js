@@ -20,6 +20,8 @@ export function makeThermalFloors(scene,floors){
     batchRigidParts(root);
     const positions=new Float32Array(vents.length*3),geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(positions,3));
     const particles=new T.Points(geometry,new T.PointsMaterial({color:0xffb563,size:.14,transparent:true,opacity:.65,depthWrite:false}));particles.frustumCulled=false;root.add(particles);
+    // Particle positions are world-space; the root cannot sort them against distant batches.
+    particles.renderOrder=1;
     return {f,root,glow,plates,particles,positions,vents};
   });
   return {items,update(time,state){for(const item of items){

@@ -83,7 +83,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
       if(d.id==='roof-return'&&along||d.id==='roof-walk'&&!along)box(trim,along?2:.12,.12,along?.12:2,x,y+.8,z,C.metal,0);
     }
   }
-  const trimMaterials=new Map(),floorTrimMeshes=new T.Group(),floorTrimBatches=new T.Group();scene.add(floorTrimMeshes,floorTrimBatches);
+  const trimMaterials=new Map(),floorTrimMeshes=new T.Group(),floorTrimBatches=new T.Group(),floorTrimDepth=new T.Group();scene.add(floorTrimMeshes,floorTrimBatches,floorTrimDepth);
   for(const [id,g]of trims){
     const parts=surfaces.filter(s=>s.id===id);
     if(!parts.length){scene.remove(g);continue;}
@@ -104,13 +104,18 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
         for(let z=s.z+2;z<s.z+s.d;z+=4){const seam=box(s.trim,s.w-.8,.045,.16,s.x+s.w/2,deckHeight(s,z)+.045,z,0xb5b99a,0);seam.rotation.x=pitch;}
       }
       s.trim.traverse(m=>{if(m.isMesh){if(!trimMaterials.has(m.material)){const material=m.material.clone();aperture.apply(material,{terrain:true});trimMaterials.set(m.material,material);}m.material=trimMaterials.get(m.material);}});
-      for(const mesh of s.trim.children)floorTrimBatches.add(mesh.clone());
+      for(const mesh of s.trim.children){
+        floorTrimBatches.add(mesh.clone());
+        // Rails stay in front of fogged batches; the aperture still opens through them.
+        const depth=new T.Mesh(mesh.geometry,floorDepthMaterial);depth.position.copy(mesh.position);depth.quaternion.copy(mesh.quaternion);floorTrimDepth.add(depth);
+      }
       batchStatic(s.trim);
     }
   }
   batchStatic(floorTrimBatches);floorTrimBatches.visible=false;
+  batchStatic(floorTrimDepth,{preserveGeometry:true});
   // These transforms never change. Freeze both view representations, including the inactive one.
-  for(const root of [floorMeshes,floorBatches,floorDepthBatches,floorTrimMeshes,floorTrimBatches]){
+  for(const root of [floorMeshes,floorBatches,floorDepthBatches,floorTrimMeshes,floorTrimBatches,floorTrimDepth]){
     root.updateWorldMatrix(true,true);root.traverse(object=>{object.matrixAutoUpdate=false;object.matrixWorldAutoUpdate=false;});
   }
   const signs=routeSigns.map(sign=>{
@@ -670,6 +675,8 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
   for(const root of cells.values()){fixed.add(root);batchStatic(root);}
   scene.updateMatrixWorld(true);
   const occluders=[];
+  const circuitDepth=new T.Group();circuitDepth.name='folded-circuit-depth';scene.add(circuitDepth);
+  const circuitDepthMaterial=new T.MeshBasicMaterial({polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1});aperture.apply(circuitDepthMaterial,{depthOnly:true});
   function registerOccluder(root,owner=null,{clone=true,dynamic=false,layered=false,cameraSoft=false}={}){
     const meshes=[],cache=new Map();
     root.traverse(mesh=>{
@@ -686,6 +693,15 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
       });
       mesh.material=Array.isArray(mesh.material)?materials:materials[0];
       meshes.push({mesh,cameraOpacity:1,cameraBounds:cameraSoft?new T.Box3():null,materials:materials.map(material=>({material,opacity:material.opacity,depthWrite:material.depthWrite}))});
+      // Fixed circuits also need depth, including their instanced lamps.
+      if(owner?.circuit){
+        for(let i=0;i<(mesh.isInstancedMesh?mesh.count:1);i++){
+          const depth=new T.Mesh(mesh.geometry,circuitDepthMaterial);depth.matrixAutoUpdate=false;
+          if(mesh.isInstancedMesh){mesh.getMatrixAt(i,depth.matrix);depth.matrix.premultiply(mesh.matrixWorld);}
+          else depth.matrix.copy(mesh.matrixWorld);
+          circuitDepth.add(depth);
+        }
+      }
     });
     const bounds=new T.Box3().setFromObject(root),local=bounds.clone().applyMatrix4(new T.Matrix4().copy(root.matrixWorld).invert());
     if(owner?.model){
@@ -707,6 +723,8 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     registerOccluder(enemy.model.root,enemy,{clone:false,dynamic:true,layered:true});
     for(const part of enemy.parts)registerOccluder(part.root,part,{dynamic:true,layered:true});
   }
+  batchStatic(circuitDepth,{preserveGeometry:true});
+  circuitDepth.updateWorldMatrix(true,true);circuitDepth.traverse(o=>{o.matrixAutoUpdate=false;o.matrixWorldAutoUpdate=false;});
   const sight=new T.Ray(),sightDirection=new T.Vector3(28,39.6,28).normalize(),sightPoint=new T.Vector3(),sightBounds=new T.Box3();
   function updateOcclusion(dt,p){
     if(thirdPerson)return;
@@ -859,6 +877,7 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
       else if(c.kind==='laser'||c.kind==='use')c.moving.rotation.z=c.engaged*Math.PI*.55;
       else if(c.surface==='top')c.moving.position.y=-c.engaged*.4;
       else c.moving.position.z=-c.engaged*.3-(c.flash?Math.sin(c.flash*24)*.08:0);
+      c.root.updateMatrixWorld();
     }
     for(const m of mirrors){m.flash=Math.max(0,(m.flash||0)-dt);m.mesh.material.color.setHex(m.flash?C.lightYellow:0xd3eee4);}
     for(const m of mirrors)if(m.turnable){
@@ -938,7 +957,8 @@ export function makeFoldedWorld(scene,state,{batching=true}={}){
     wheel.rotation.z=Math.sin(time*.08)*.06;
     waterTexture.offset.x=time*.012;waterMaterial.normalMap.offset.copy(waterTexture.offset);
     updateOcclusion(dt,p);
-    scene.updateMatrixWorld();
+    // Interactive roots update locally before raycasts; rendering updates the scene once
+    // after enemies, projectiles and effects have also advanced.
     if(camera)updateCameraOcclusion(camera,p,dt);
   }
   return {transport,sidePuzzles,battleDisplays,signals,advanceSignals,signalRelease,controlFeeds,signs,surfaces,walls,controls,hives,pickups,lifts,enemies,wheel,mirrors,belts,occluders,presentation,pulseHive,cast,update,setThirdPerson,updateCameraOcclusion};

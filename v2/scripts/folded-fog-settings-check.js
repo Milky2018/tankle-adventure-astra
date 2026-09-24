@@ -9,11 +9,13 @@ async page => {
   const tune = () => page.getByRole('button', { name: 'Adjust camera', exact: true }).click();
   const back = () => page.getByRole('button', { name: 'Back to settings', exact: true }).click();
   const check = async (near, far, clip) => {
-    const actual = await page.evaluate(() => [__game.debug.scene.fog.near, __game.debug.scene.fog.far, __game.debug.camera.far]);
-    if (actual.join() !== [near, far, clip].join()) throw Error(JSON.stringify(actual));
+    const actual = await page.evaluate(() => [__game.debug.scene.fog.near, __game.debug.scene.fog.far, __game.debug.camera.far - __game.debug.camera.position.distanceTo(__game.debug.p)]);
+    if (actual.some((v,i)=>Math.abs(v-[near,far,clip][i])>1e-7)) throw Error(JSON.stringify(actual));
   };
   await tune();
-  await check(40, 100, 130);
+  await check(200, 220, 230);
+  await page.getByRole('slider', { name: 'Mouse sensitivity', exact: true }).press('End');
+  await page.getByRole('slider', { name: 'Follow distance', exact: true }).press('End');
   const before = await page.evaluate(() => __game.snapshot().time);
   await page.getByRole('slider', { name: 'Render distance', exact: true }).press('End');
   await page.getByRole('slider', { name: 'Fog end', exact: true }).press('End');
@@ -26,6 +28,7 @@ async page => {
   await page.getByLabel('Camera view', { exact: true }).selectOption('overhead');
   await tune();
   await check(290, 300, 310);
+  await page.getByRole('slider', { name: 'View scale', exact: true }).press('End');
   await page.getByRole('slider', { name: 'Fog start', exact: true }).press('Home');
   await page.getByRole('slider', { name: 'Fog end', exact: true }).press('Home');
   await page.getByRole('slider', { name: 'Render distance', exact: true }).press('Home');
@@ -35,14 +38,18 @@ async page => {
   await check(10, 30, 40);
   await page.evaluate(() => { __game.manual(true); __game.debug.setPause(true); });
   await tune();
-  await page.getByRole('button', { name: 'Reset this view', exact: true }).click();
-  await check(10, 30, 40);
+  if(await page.locator('#camera-tuning button').allTextContents().then(names=>names.join('|')) !== 'Reset|Back to settings|Resume') throw Error('Extra camera reset buttons');
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await check(200, 220, 230);
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('furnace-born-v2-settings')));
+  if(saved.cameraSettings.third.sensitivity!==3 || saved.cameraSettings.third.distance!==15 || saved.cameraSettings.overhead.scale!==17) throw Error('Reset did not restore every view');
   await back();
   await page.getByLabel('Camera view', { exact: true }).selectOption('third');
   await tune();
-  await check(10, 30, 40);
-  await page.getByRole('button', { name: 'Reset fog & distance', exact: true }).click();
-  await check(40, 100, 130);
+  await check(200, 220, 230);
+  if(await page.getByRole('slider', { name: 'Mouse sensitivity', exact: true }).inputValue() !== '3') throw Error('Hidden view did not reset');
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await check(200, 220, 230);
   await page.screenshot({ path: 'output/playwright/shared-distance-settings.png' });
   await page.setViewportSize({ width: 640, height: 600 });
   const bounds = await page.locator('#camera-tuning').boundingBox();
@@ -50,5 +57,5 @@ async page => {
   await page.getByRole('button', { name: 'Resume', exact: true }).click();
   if (!await page.locator('#settings').isHidden()) throw Error('Resume failed');
   if (errors.length) throw Error(errors.join('\n'));
-  return { result: 'PASS', preview: true, persistence: true, sharedViews: true, independentReset: true, clippingMargin: true, bounds, errors };
+  return { result: 'PASS', preview: true, persistence: true, sharedViews: true, unifiedReset: true, clippingMargin: true, bounds, errors };
 }

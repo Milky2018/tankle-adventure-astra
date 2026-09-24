@@ -9,7 +9,7 @@ const player=z=>({x:186,y:deckHeight(ramp,z),z,heading:0});
 test('uphill support stays opaque while an overhead floor still fades',()=>{
  const p=player(110),camera={x:p.x,y:p.y+5,z:p.z+12},patches=groundPatches(p);
  for(const dz of [1,2,4,6,8,12]){const point={x:p.x,y:deckHeight(ramp,p.z+dz),z:p.z+dz};assert.equal(cameraApertureOpacity(point,p,camera,patches),1);assert.equal(apertureOpacity(point,p,undefined,13,patches),1);}
- assert.ok(cameraApertureOpacity({x:p.x,y:p.y+4,z:p.z+4},p,camera,patches)<.3);
+ assert.ok(cameraApertureOpacity({x:p.x,y:p.y+1.6+(5-1.6)/3,z:p.z+4},p,camera,patches)<.3);
  const point={x:p.x,y:deckHeight(ramp,118),z:118};
  assert.ok(cameraApertureOpacity(point,p,camera,[])<.3,'the same ramp can fade when it is no longer the supporting surface');
 });

@@ -22,7 +22,7 @@ test('rebinding swaps occupied controls and resetting keeps live consumers synch
   assert.equal(input.magnet, 'Mouse2');
 });
 
-test('camera settings clamp old values and reset only the selected view', () => {
+test('camera settings clamp old values and reset both views together', () => {
   const prefs = createFoldedPreferences(
     {
       cameraSettings: {
@@ -38,12 +38,14 @@ test('camera settings clamp old values and reset only the selected view', () => 
   assert.equal(third.height, 0);
   assert.equal(third.sensitivity, 3);
   assert.equal(third.pitch, 15.3);
-  prefs.resetCamera('third');
+  prefs.resetCamera();
   assert.equal(cameras.third, third);
   assert.equal(third.distance, 15);
   assert.equal(third.height, 2.5);
-  assert.equal(cameras.overhead.angle, 65);
-  assert.equal(cameras.overhead.scale, 24);
+  assert.deepEqual(
+    cameras.overhead,
+    createFoldedPreferences({}, () => {}).values.cameraSettings.overhead,
+  );
 });
 
 test('preferences round-trip through real settings storage without altering campaign saves', () => {
@@ -85,20 +87,20 @@ test('absolute sensitivity defaults to 3 and preserves saved values within 1–1
       () => {},
     );
     assert.equal(preferences.values.cameraSettings.third.sensitivity, expected);
-    preferences.resetCamera('third');
+    preferences.resetCamera();
     assert.equal(preferences.values.cameraSettings.third.sensitivity, 3);
   }
 });
 
-test('shared fog distances persist, enforce ordering and reset separately from cameras', () => {
+test('shared fog distances persist, enforce ordering and reset with all camera settings', () => {
   let saved;
   const prefs = createFoldedPreferences({}, (values) => {
     saved = structuredClone(values);
   });
-  assert.deepEqual(prefs.values.viewDistance, { fogNear: 40, fogFar: 100, renderDistance: 130 });
-  assert.equal(prefs.setViewDistance('fogNear', 290), 90);
-  assert.equal(prefs.setViewDistance('fogFar', 300), 120);
-  assert.equal(prefs.setViewDistance('renderDistance', 40), 130);
+  assert.deepEqual(prefs.values.viewDistance, { fogNear: 200, fogFar: 220, renderDistance: 230 });
+  assert.equal(prefs.setViewDistance('fogNear', 290), 210);
+  assert.equal(prefs.setViewDistance('fogFar', 300), 220);
+  assert.equal(prefs.setViewDistance('renderDistance', 40), 230);
   prefs.setViewDistance('renderDistance', 260);
   prefs.setViewDistance('fogFar', 220);
   prefs.setViewDistance('fogNear', 100);
@@ -109,13 +111,14 @@ test('shared fog distances persist, enforce ordering and reset separately from c
     fogFar: 220,
     renderDistance: 260,
   });
-  restored.resetCamera('third');
-  restored.resetCamera('overhead');
-  assert.deepEqual(restored.values.viewDistance, prefs.values.viewDistance);
   restored.setCamera('third', 'distance', 20);
-  restored.resetViewDistance();
-  assert.equal(restored.values.cameraSettings.third.distance, 20);
-  assert.deepEqual(restored.values.viewDistance, { fogNear: 40, fogFar: 100, renderDistance: 130 });
+  restored.setCamera('overhead', 'scale', 24);
+  const distance = restored.values.viewDistance;
+  restored.resetCamera();
+  const defaults = createFoldedPreferences({}, () => {}).values;
+  assert.equal(restored.values.viewDistance, distance);
+  assert.deepEqual(restored.values.cameraSettings, defaults.cameraSettings);
+  assert.deepEqual(restored.values.viewDistance, defaults.viewDistance);
 });
 
 test('legacy fog values migrate from the selected view and invalid distances are normalized', () => {
@@ -146,5 +149,5 @@ test('legacy fog values migrate from the selected view and invalid distances are
     { viewDistance: { fogNear: null, fogFar: 'invalid' } },
     () => {},
   );
-  assert.deepEqual(bad.values.viewDistance, { fogNear: 40, fogFar: 100, renderDistance: 130 });
+  assert.deepEqual(bad.values.viewDistance, { fogNear: 200, fogFar: 220, renderDistance: 230 });
 });

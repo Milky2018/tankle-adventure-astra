@@ -1,4 +1,4 @@
-import { setViewDistance, DEFAULT_VIEW_DISTANCE } from './folded-haze.js';
+import { setViewDistance, makePlayerHaze, DEFAULT_VIEW_DISTANCE } from './folded-haze.js';
 import { makeFoldedLighting } from './folded-lighting.js';
 import { torpedoTargets } from './folded-aquatic.js';
 import { pullSlide } from './folded-mechanisms.js';
@@ -87,8 +87,10 @@ Object.assign(
   foldedHives.find((h) => h.id === state.anchor),
 );
 const scene = new T.Scene();
+scene.matrixAutoUpdate = false;
 scene.background = new T.Color(0x1b3032);
 scene.fog = new T.Fog(0x1b3032, 65, 105);
+makePlayerHaze(scene, p, prefs.viewDistance);
 const renderer = new T.WebGLRenderer({
   canvas: $('game'),
   antialias: true,
@@ -460,7 +462,6 @@ function project(x, y, z) {
 }
 function updateCamera(dt) {
   lighting.update(p, dt);
-  setViewDistance(scene, camera, prefs.viewDistance);
   if (thirdPerson) {
     follow.update(p, dt);
     focus.set(p.x, p.y, p.z);
@@ -470,6 +471,7 @@ function updateCamera(dt) {
     camera.lookAt(focus);
     camera.updateMatrixWorld();
   }
+  setViewDistance(scene, camera, prefs.viewDistance, p);
   lighting.trackShadows(focus);
   world.updateCameraOcclusion(camera, p, 0);
 }
@@ -1116,13 +1118,13 @@ function updateEnding(dt) {
   if (camera !== endingCamera) {
     camera = endingCamera;
     world.setThirdPerson(true);
-    setViewDistance(scene, camera, prefs.viewDistance);
   }
   endingCamera.aspect = innerWidth / innerHeight;
   endingCamera.updateProjectionMatrix();
   camera.position.set(...shot.eye);
   camera.lookAt(new T.Vector3(...shot.at));
   camera.updateMatrixWorld();
+  setViewDistance(scene, camera, prefs.viewDistance, p);
   const view = { ...p, x: shot.at[0], y: shot.at[1], z: shot.at[2] };
   lighting.trackShadows(view);
   world.update(dt, time, view, camera);

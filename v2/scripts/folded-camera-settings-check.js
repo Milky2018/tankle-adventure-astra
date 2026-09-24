@@ -26,14 +26,14 @@ async page=>{
   const dx=pose.camera.position[0]-pose.player.x,dy=pose.camera.position[1]-pose.player.y,dz=pose.camera.position[2]-pose.player.z;
   if(Math.abs(Math.atan2(dy,Math.hypot(dx,dz))*180/Math.PI-65)>.01)throw Error('Overhead angle did not update');
   await page.screenshot({path:'v2/output/playwright/camera-settings/overhead.png'});
-  await page.getByRole('button',{name:'Reset this view',exact:true}).click();
-  if((await prefs()).overhead.scale!==17||(await prefs()).third.distance!==16)throw Error('Reset affected the other view');
+  await page.getByRole('button',{name:'Reset',exact:true}).click();
+  if((await prefs()).overhead.scale!==17||(await prefs()).third.distance!==15)throw Error('Reset did not restore both views');
   await page.getByRole('button',{name:'Back to settings',exact:true}).click();await page.getByLabel('Camera view',{exact:true}).selectOption('third');await tune();
   for(const name of ['Pitch','Follow distance','Camera height']){const slider=page.getByRole('slider',{name,exact:true});await slider.focus();await slider.press('End');}
   const ceiling=await page.evaluate(()=>{__game.scenario({player:{x:0,y:-16,z:50,hp:100,invincible:1e9}});__game.look(Math.PI,.95);__game.step(.1);return __game.snapshot().camera;});
   // Camera obstruction is resolved by transparency, without shortening the boom.
-  if(Math.abs(ceiling.distance-Math.hypot(20,5,-1))>1e-6)throw Error('Ceiling changed the configured camera distance');
-  await page.getByRole('button',{name:'Reset this view',exact:true}).click();
+  if(Math.abs(ceiling.distance-Math.hypot(20,5,0))>1e-6)throw Error('Ceiling changed the configured camera distance');
+  await page.getByRole('button',{name:'Reset',exact:true}).click();
   const defaults=await prefs();if(defaults.third.distance!==15||defaults.third.height!==2.5||defaults.third.shoulder!==0)throw Error('Third-person reset failed');
   await page.setViewportSize({width:640,height:600});
   const bounds=await page.locator('#camera-tuning').boundingBox();if(bounds.x<0||bounds.y<0||bounds.y+bounds.height>600)throw Error('Camera panel overflows the viewport');

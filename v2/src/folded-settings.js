@@ -107,12 +107,10 @@ export function createFoldedPreferences(saved, persist) {
       settings[key] = value;
       return value;
     },
-    resetViewDistance() {
+    resetCamera() {
       Object.assign(values.viewDistance, DEFAULT_VIEW_DISTANCE);
-    },
-    resetCamera(view) {
-      for (const [key, , , , , value] of cameraFields[view])
-        values.cameraSettings[view][key] = value;
+      for (const [view, fields] of Object.entries(cameraFields))
+        for (const [key, , , , , value] of fields) values.cameraSettings[view][key] = value;
     },
   };
 }
@@ -285,17 +283,10 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
       };
     }
     const reset = document.createElement('button');
-    reset.textContent = 'Reset this view';
+    reset.textContent = 'Reset';
     reset.onclick = () => {
-      preferences.resetCamera(view);
-      if (thirdPerson) camera.pitch = (cameraSettings.third.pitch * Math.PI) / 180;
-      previewCamera();
-      openCameraTuning();
-    };
-    const resetDistance = document.createElement('button');
-    resetDistance.textContent = 'Reset fog & distance';
-    resetDistance.onclick = () => {
-      preferences.resetViewDistance();
+      preferences.resetCamera();
+      camera.pitch = (cameraSettings.third.pitch * Math.PI) / 180;
       previewCamera();
       openCameraTuning();
     };
@@ -307,7 +298,7 @@ export function mountFoldedSettings({ preferences, audio, renderer, camera, acti
     resume.onclick = () => {
       actions.resume();
     };
-    cameraTuning.append(reset, resetDistance, back, resume);
+    cameraTuning.append(reset, back, resume);
     cameraTuning.querySelector('input').focus();
   }
   tuneButton.onclick = openCameraTuning;

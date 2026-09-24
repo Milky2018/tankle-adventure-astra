@@ -75,7 +75,13 @@ export function batchStatic(fixed,{preserveGeometry=false}={}) {
       const mesh=new T.BatchedMesh(entries.length,vertices,indices,source.material),ids=new Map();
       for(const g of geometries)ids.set(g,mesh.addGeometry(g));
       for(const entry of entries)mesh.setMatrixAt(mesh.addInstance(ids.get(entry.geometry)),entry.matrix);
-      mesh.perObjectFrustumCulled=true;mesh.computeBoundingBox();mesh.computeBoundingSphere();add(mesh,source,key);
+      mesh.perObjectFrustumCulled=true;
+      // Depth testing makes instance sorting unnecessary in the shadow pass.
+      mesh.onBeforeShadow=function(renderer,object,camera,shadowCamera,geometry,material){
+        const sort=this.sortObjects;this.sortObjects=false;
+        try{this.onBeforeRender(renderer,null,shadowCamera,geometry,material);}finally{this.sortObjects=sort;}
+      };
+      mesh.computeBoundingBox();mesh.computeBoundingSphere();add(mesh,source,key);
     }
   }
 }

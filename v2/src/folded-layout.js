@@ -127,6 +127,8 @@ export function foldedBlocked(x,y,z,state,r=.9){
   return (state.bodies?.obstacles||sideObstacles).find(blocks)||(state.bodies?.solids||foldedSolids).find(blocks)||[...architectureGrid.near(x,z,r)].find(s=>y+2>s.y+.12&&y<s.y+s.h-.1&&inRect(x,z,s,r))||foldedDecks.find(d=>!d.water&&inRect(x,z,d,-.01)&&deckHeight(d,z)>y+.45&&deckHeight(d,z)<y+3.25);
 }
 export function moveFolded(p,dx,dz,state,lifts=[]){
+  // A stationary land hull cannot enter water; lifts already move their riders.
+  if(!dx&&!dz&&!p.deployed){p.afloat=false;return;}
   const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.2));
   for(let i=0;i<steps;i++)for(const [ax,az] of [[dx/steps,0],[0,dz/steps]]){
     if(!ax&&!az)continue;

@@ -29,7 +29,7 @@ async page=>{
   await page.getByRole('button',{name:'Resume',exact:true}).click();await page.mouse.move(600,360);await page.mouse.down({button:'middle'});const start=await yaw();await page.mouse.move(680,360);await page.mouse.up({button:'middle'});
   const fast=Math.abs(await yaw()-start);if(Math.abs(fast-.4)>.01)throw Error(`Sensitivity did not double look: ${fast}`);
   await load();const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('furnace-born-v2-settings')).cameraSettings.third.sensitivity);if(saved!==2)throw Error('Sensitivity did not persist');
-  await page.keyboard.press('Escape');await page.getByRole('button',{name:'Adjust camera',exact:true}).click();await page.getByRole('button',{name:'Reset this view',exact:true}).click();
+  await page.keyboard.press('Escape');await page.getByRole('button',{name:'Adjust camera',exact:true}).click();await page.getByRole('button',{name:'Reset',exact:true}).click();
   const defaults=await page.evaluate(()=>JSON.parse(localStorage.getItem('furnace-born-v2-settings')).cameraSettings.third.sensitivity);if(defaults!==3)throw Error('Sensitivity reset failed');
   if(errors.length)throw Error(errors.join('\n'));return {rows,fast,saved,defaults,errors};
 }

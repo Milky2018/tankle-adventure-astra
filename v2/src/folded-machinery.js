@@ -4,6 +4,8 @@ import {expansionCurrents,expansionBelts,expansionHeat} from './folded-expansion
 import {cityBelts} from './folded-city-layout.js';
 import {inRect,deckHeight,moveFolded,foldedSupport} from './folded-layout.js';
 
+const conveyorBelts=[...cityBelts,...expansionBelts];
+
 export function applyFloorHeat(player,dt,time,state){
   const floor=[...expansionHeat,...cityBelts.filter(b=>b.heat)].find(q=>inRect(player.x,player.z,q)&&Math.abs(deckHeight(q,player.z)-player.y)<.5&&(!q.release||!state[q.release])&&(!q.stop||!state[q.stop]));
   if(!floor)return;
@@ -12,7 +14,7 @@ export function applyFloorHeat(player,dt,time,state){
 }
 
 export function conveyorVelocity(body,enemies=[],state={}){
-  const belt=[...cityBelts,...expansionBelts].find(b=>inRect(body.x,body.z,b)&&Math.abs(deckHeight(b,body.z)-body.y)<.5);
+  const belt=conveyorBelts.find(b=>inRect(body.x,body.z,b)&&Math.abs(deckHeight(b,body.z)-body.y)<.5);
   if(!belt||belt.stop&&state[belt.stop])return {x:0,z:0};
   if(belt.id.includes('feed-')){
     const owner=enemies.find(e=>e.id===(belt.id.startsWith('foundry')?'foundry':'keeper'));
