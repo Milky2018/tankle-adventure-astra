@@ -6,9 +6,9 @@ async page=>{
   const natives=w.enemies.filter(e=>['hunter','dredger'].includes(e.type));
   const original=new Map(natives.map(e=>[e.id,{...e.spawn}]));
   function reset(ids,x,y,z){
-   q.clearShots();g.setInput([]);for(const e of w.enemies){e.hp=0;e.model.root.visible=false;}
+   q.clearShots();g.setInput([]);for(const e of w.enemies){e.hp=0;__game.debug.world.views.enemy(e).model.root.visible=false;}
    g.scenario({player:{x,y,z,hp:25,invincible:0,hurtUntil:0,knockX:0,knockZ:0,weapon:'cannon',heat:0,lastHeat:-100,lastShot:-100,overheated:false,flotation:true,deployed:true,afloat:true,magnet:false,mortar:false,laser:false}});
-   for(const e of natives)if(ids.includes(e.id)){Object.assign(e,original.get(e.id),{hp:e.max,phase:'idle',timer:1,awake:true,alertUntil:0,lastSeen:null,shieldRemoved:false,shieldPull:0,stunnedUntil:0,swimWaypoint:0,travelHeading:null});e.model.root.visible=true;}
+   for(const e of natives)if(ids.includes(e.id)){Object.assign(e,original.get(e.id),{hp:e.max,phase:'idle',timer:1,awake:true,alertUntil:0,lastSeen:null,shieldRemoved:false,shieldPull:0,stunnedUntil:0,swimWaypoint:0,travelHeading:null});__game.debug.world.views.enemy(e).model.root.visible=true;}
   }
   function moveKeys(x,z){const dx=x-q.p.x,dz=z-q.p.z;return Math.hypot(dx,dz)<.45?[]:Math.abs(dx)>Math.abs(dz)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD'];}
   reset(natives.map(e=>e.id),-164,-8,64);

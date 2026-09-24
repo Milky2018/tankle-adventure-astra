@@ -310,6 +310,7 @@ let manual = import.meta.env.DEV && params.has('test') && params.has('manual'),
   wakeAt = -1,
   magnetSoundAt = -10;
 const deathView = createPlayerDeath({ model, scene, hullMaterials, project, burst, ripple });
+const enemyView = createEnemyView({ world, project, getCamera: () => camera, burst });
 const combatEvents = {
   alertSquad,
   save,
@@ -336,7 +337,15 @@ const { hurt, castWeapon, hitEnemy, impact, shootEnemy, updateShots } = createFo
   shots,
   mines,
   now: () => time,
-  effects: { burst, ripple, refugeImpact, rejectImpact, audio, projectile },
+  effects: {
+    burst,
+    ripple,
+    refugeImpact,
+    rejectImpact,
+    audio,
+    projectile,
+    enemyKilled: enemyView.hideWarning,
+  },
   events: combatEvents,
 });
 const hp = $('hp');
@@ -415,7 +424,7 @@ const enemies = createFoldedEnemies({
   combat: { hurt, hitEnemy, shootEnemy },
   audio,
   save,
-  view: createEnemyView({ world, project, getCamera: () => camera, burst }),
+  view: enemyView,
 });
 
 function save() {
@@ -524,7 +533,7 @@ function updateAim() {
     if (clamped) aim.y = Math.max(p.y, aim.y);
     // Elevated machinery has a contact surface of its own. Actor hulls and
     // range-clamped aim instead resolve to the supporting ground below them.
-    const machinery = tray || (hit?.target && !hit.target.model && !hit.target.enemy);
+    const machinery = tray || (hit?.target && hit.target.kind !== 'enemy' && !hit.target.enemy);
     if (!machinery || clamped)
       aim.copy(
         mortarGroundTarget(aim, (start, direction, distance) =>
@@ -608,7 +617,7 @@ function updateLaser(dt) {
         t.shot.captured = true;
         burst(end, SIGNAL.magnet, 5);
       } else if (t.kind === 'mine') detonateMine(t);
-      else if (t.enemy || t.model)
+      else if (t.enemy || t.kind === 'enemy')
         hitEnemy(
           t.enemy || t,
           weaponDamage(p, 'laser', LASER.damage) * dt,
@@ -944,7 +953,7 @@ function updateMagnet(dt) {
               body.y + Math.min(1.6, body.h / 2),
               clamp(p.z, body.z - 0.15, body.z + body.d + 0.15),
             )
-          : new T.Vector3(c.x, c.y + (c.model ? 1.5 : 0), c.z),
+          : new T.Vector3(c.x, c.y + (c.kind === 'enemy' ? 1.5 : 0), c.z),
         delta = pos.clone().sub(origin);
       return {
         c,
@@ -1066,7 +1075,7 @@ function updateMagnet(dt) {
   if (p.heat >= 100) p.overheated = true;
   if (!c) return;
   if (c.slide || c.id === 'sorting-cover') return;
-  if (c.model && magnetPullable(c)) {
+  if (c.kind === 'enemy' && magnetPullable(c)) {
     const body = { x: c.x, y: c.y, z: c.z, speed: 1 };
     if (length > c.radius + 1.4)
       moveFolded(body, -dir.x * 5 * dt, -dir.z * 5 * dt, state, world.lifts);
@@ -1077,7 +1086,7 @@ function updateMagnet(dt) {
     }
     c.stunnedUntil = time + 0.2;
     alertSquad(c);
-  } else if (c.model) {
+  } else if (c.kind === 'enemy') {
     c.shieldPull = Math.min(1, c.shieldPull + dt / 0.7);
     c.stunnedUntil = time + 0.2;
     if (c.shieldPull >= 1) {
@@ -1814,7 +1823,7 @@ if (import.meta.env.DEV && params.has('test')) {
         for (const [id, hp] of Object.entries(values.enemies)) {
           const e = world.enemies.find((e) => e.id === id);
           e.hp = hp;
-          e.model.root.visible = hp > 0;
+          world.views.enemy(e).model.root.visible = hp > 0;
         }
       updatePlayerPose(1, true);
       focus.set(p.x, p.y, p.z);

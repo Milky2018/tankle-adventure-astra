@@ -7,12 +7,12 @@ async page=>{
   const a=__game.debug,g=__game,runs=[];
   for(const moving of [false,true]){
    g.scenario({state:{prototype:false,relays:true,'relay-west':true,'relay-east':true},player:{x:-43,y:-16,z:132,hp:50,heat:0,overheated:false,overdrive:false,phoenix:false,circulation:false,deployed:false,weapon:'cannon',invincible:0,shotCooldown:0}});
-   a.resetEnemies();a.clearShots();for(const e of a.world.enemies)if(e.id!=='prototype'){e.hp=0;e.model.root.visible=false;}
+   a.resetEnemies();a.clearShots();for(const e of a.world.enemies)if(e.id!=='prototype'){e.hp=0;__game.debug.world.views.enemy(e).model.root.visible=false;}
    const e=a.world.enemies.find(e=>e.id==='prototype'),start=g.snapshot().time;let destination=-20,warnings=0,highPlate=0;
    for(let i=0;i<1800&&e.hp>0&&a.p.hp>0;i++){
     const p=a.p;g.aimAt(e.x,e.z,e.y+1.5);const keys=['Mouse0'];
     if(moving){if(Math.abs(p.x-destination)<.7)destination=destination===-20?-43:-20;keys.push(...(p.x<destination?['KeyS','KeyD']:['KeyW','KeyA']));}
-    g.setInput(keys);g.step(1/60,false);if(e.phase==='warn')warnings++;highPlate=Math.max(highPlate,e.model.frontArmor.position.y);
+    g.setInput(keys);g.step(1/60,false);if(e.phase==='warn')warnings++;highPlate=Math.max(highPlate,__game.debug.world.views.enemy(e).model.frontArmor.position.y);
    }
    g.setInput([]);g.step(0);runs.push({moving,hp:a.p.hp,enemyHp:e.hp,seconds:g.snapshot().time-start,warnings,highPlate});
   }return runs;
@@ -35,7 +35,7 @@ async page=>{
  for(const view of ['overhead','third'])for(const [id,x,y,z,yaw]of [['arsenal',-220,8,-40,-Math.PI/2],['magnet',-152,8,-118,0],['flotation',-304,-8,-208,Math.PI],['laser',431,24,-27,0],['guardian',202,16,54,0]]){
   const sample=await page.evaluate(({view,id,x,y,z,yaw})=>{
    const a=__game.debug,g=__game;g.scenario({player:{x,y,z,hp:50,heat:0,weapon:'cannon'},state:{guardian:false}});a.setCameraView(view);g.look(yaw,.4);g.step(.1);
-   if(id==='guardian'){const e=a.world.enemies.find(e=>e.id==='guardian');e.hp=e.max;e.model.root.visible=true;g.step(.01);}
+   if(id==='guardian'){const e=a.world.enemies.find(e=>e.id==='guardian');e.hp=e.max;__game.debug.world.views.enemy(e).model.root.visible=true;g.step(.01);}
    const floors=a.world.surfaces.filter(s=>s.mesh.material.transparent);return {id,view,floorsBeforeFixtures:floors.every(s=>s.mesh.renderOrder<0),mirrors:id==='guardian'?a.world.mirrors?.map(m=>m.id):null};
   },{view,id,x,y,z,yaw});result.views.push(sample);await page.screenshot({path:`output/playwright/overhaul/${id}-${view}.png`});
  }

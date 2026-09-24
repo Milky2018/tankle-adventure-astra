@@ -16,7 +16,7 @@ async page=>{
  if(coverage.errors.some(e=>e>12))throw Error('Upper foundation masks the arena outside the hull ray '+JSON.stringify(coverage));
  const target=await page.evaluate(()=>{
   for(const e of __game.debug.world.enemies)e.hp=0;
-  const e=__game.debug.world.enemies.find(e=>e.type==='turret');Object.assign(e,{x:-15,y:-56,z:57,hp:2,max:2,phase:'idle',timer:100,deadAt:null});e.model.root.visible=true;e.model.root.scale.copy(e.baseScale);
+  const e=__game.debug.world.enemies.find(e=>e.type==='turret');Object.assign(e,{x:-15,y:-56,z:57,hp:2,max:2,phase:'idle',timer:100,deadAt:null});__game.debug.world.views.enemy(e).model.root.visible=true;__game.debug.world.views.enemy(e).model.root.scale.copy(__game.debug.world.views.enemy(e).baseScale);
   __game.scenario({player:{weapon:'cannon',heat:0,overheated:false,lastShot:-100,lastHeat:-100}});__game.step(.02);
   return {id:e.id,...__game.project(e.x,e.z,e.y+1.5)};
  });

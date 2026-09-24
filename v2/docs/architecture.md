@@ -7,6 +7,7 @@ The current game boots through `src/entry.js` and `src/folded.js`. The latter cr
 | Module | Owns |
 | --- | --- |
 | `folded-ai.js` | Enemy decisions, movement, attack phases, squad alerts and combat reset |
+| `folded-enemy-state.js` | Session-owned enemy identity, spawn state, health and boss-part records |
 | `folded-enemy-rules.js` | Enemy archetype values and squad healing selection |
 | `folded-death.js` | Player wreck animation, smoke and the death/reconstruction iris |
 | `folded-enemy-view.js` | Enemy warning geometry, deployment, collapse, animation and camera readability |
@@ -67,7 +68,9 @@ Saved machinery progress is reconstructed by its owning puzzle module. Moving a 
 
 `createFoldedEnemies` accepts the session clock, combat actions, arena/pacing controllers and an enemy-view adapter. Decisions use world collision queries; the adapter owns meshes and camera readability. Warning and animation calls remain at their original positions in the update, including the warning frame immediately before a shot. Renderer-free tests exercise the same factory with model-free enemy records.
 
-Live enemy records still contain visual handles used by world construction, damage and rendering. The AI no longer accesses them, but this is not a complete entity-storage migration. Keeping these records compatible avoids changing damage, map, save and diagnostic consumers in the same refactor.
+`state.enemies` is created before the scene and shared by world queries and combat. Enemy and boss-part records carry explicit target kinds; damage and magnetic targeting never infer identity from the presence of a model. Boss parts refer to their owning enemy, without graphical handles. Durable victories and pending encounter completions determine initial health; reserves start dormant. Runtime health and phases are not serialized.
+
+`world.views.enemy(body)` resolves a scene-owned record for either an enemy or a boss part. Models, materials, warning geometry, armour shutters and occlusion opacity live there. World synchronization reads combat records without advancing them; the enemy-view adapter receives animation calls at the existing simulation stages. Combat reports a kill through its effects adapter instead of manipulating a warning mesh. Visual diagnostics resolve the same scene records explicitly.
 
 ## Content and progression contracts
 
@@ -89,7 +92,7 @@ Lift, pickup and mirror models read `state.machinery`. Their collections exposed
 
 The simulation calls `advanceMachineryState` before the world synchronization at the existing frame stage. It advances indexed mirror turns at the established angular speed and follows lift-mounted rewards. Death and ending updates use the same step; camera changes and drawing do not. Lift reconstruction resets riders' machinery through `resetMachineryLifts`, including attached reward positions. The development-only scenario helper explicitly settles machinery when applying a fixture; it does not rely on a render side effect.
 
-The procedural mesh builders and side-puzzle visual adapters remain substantial modules. Enemy records still carry model handles. These boundaries are explicit; this architecture does not claim that every actor has become renderer-independent, nor require an entity framework merely to shorten files.
+The procedural mesh builders and side-puzzle visual adapters remain substantial modules. Controls and side-puzzle actors still mix some runtime and visual fields. These boundaries are explicit; this architecture does not claim that every actor has become renderer-independent, nor require an entity framework merely to shorten files.
 
 ## Historical code
 
@@ -114,6 +117,6 @@ Run migrated diagnostics with `npm run test:browser -- render-contract occlusion
 
 Formatting currently covers the session coordinator and extracted modules. Expand that set as modules are edited, keeping mechanical formatting separate from gameplay changes. The existing shared-bundle size warning is not evidence of a runtime frame-time regression.
 
-Route traversal tests may use `test-fixtures/settled-control.js` to start from a fully operated mechanism. That fixture is not a game API and does not test signal timing. `folded-progression.test.js` covers actual commands, branch arrival, save restoration, completion ownership and immutable content without a renderer. Browser circuit checks exercise rendered lamps, collision release and lift timing together. `folded-machinery-state.test.js` verifies mechanical lifetimes, reflection during a turn, restoration and lift-mounted rewards without constructing a scene. The render contract also snapshots those records while a mirror has an unfinished turn. Obsolete camera-push-in, treadle/E-switch and old mixed presentation/feedback probes have been removed; current rendering contracts replace their private-cache assertions.
+Route traversal tests may use `test-fixtures/settled-control.js` to start from a fully operated mechanism. That fixture is not a game API and does not test signal timing. `folded-progression.test.js` covers actual commands, branch arrival, save restoration, completion ownership and immutable content without a renderer. Browser circuit checks exercise rendered lamps, collision release and lift timing together. `folded-machinery-state.test.js` verifies mechanical lifetimes, reflection during a turn, restoration and lift-mounted rewards without constructing a scene. The render contract also snapshots those records while a mirror has an unfinished turn, checks enemy records for scene-handle leaks, and verifies that scene updates leave combat state unchanged. Enemy-state and combat tests cover independent lifetimes, restoration, lethal impacts and boss-part targeting without models. Obsolete camera-push-in, treadle/E-switch and old mixed presentation/feedback probes have been removed; current rendering contracts replace their private-cache assertions.
 
 The former mixed feedback probe referenced deleted receivers (`freight` and `bridge-crane`) and assumed all doors wait for the longest branch. Its signal and save checks are superseded by `circuit-arrival`/`circuit-visibility`; combat feedback has `hit-response`, while exhaust geometry is covered by `folded-effects.test.js`. Diagnostic scripts use the same current progression queries as the game.

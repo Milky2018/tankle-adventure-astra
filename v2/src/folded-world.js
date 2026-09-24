@@ -67,7 +67,8 @@ export function makeFoldedWorld(
     hives = [],
     pickupViews = [],
     liftViews = [],
-    enemies = [],
+    enemies = state.enemies,
+    enemyViews = new Map(),
     pillars = [],
     floorDetails = [],
     mirrorViews = [],
@@ -1153,7 +1154,7 @@ export function makeFoldedWorld(
     }
     pickupViews.push({ ...p, body: p, root, item, halo, cage });
   }
-  for (const e of foldedEnemies) {
+  for (const e of enemies) {
     const model = foldedEnemyModel(e.id === 'sorter' ? 'sorter' : e.type, e.variant);
     scene.add(model.root);
     model.root.position.set(e.x, e.y, e.z);
@@ -1271,7 +1272,9 @@ export function makeFoldedWorld(
     const siegeZone =
       e.variant === 'siege' ? ring(scene, 4, 0.1, e.x, e.y + 0.1, e.z, mat(C.orange, true)) : null;
     if (siegeZone) siegeZone.visible = false;
-    const enemy = {
+    const view = {
+      body: e,
+      y: e.y,
       siegeZone,
       deployment,
       batteryWarning,
@@ -1279,41 +1282,12 @@ export function makeFoldedWorld(
       zone,
       flame,
       supportBeam,
-      spawn: { x: e.x, y: e.y, z: e.z },
-      ...e,
-      hp:
-        e.reserveFor ||
-        (e.persistent && state[e.id]) ||
-        foldedBattles.some(
-          (b) =>
-            b.battle === e.battle && (state[b.id] || state.pendingSignals?.[b.id]?.changes[b.id]),
-        )
-          ? 0
-          : e.hp,
-      max: e.hp,
       model,
       materials,
       warning,
-      phase: 'idle',
-      timer: e.startup ?? 1,
-      aim: Math.PI / 2,
-      flash: 0,
-      armor: 0,
-      ramAt: -10,
-      shieldPull: 0,
-      shieldRemoved: false,
-      radius:
-        e.type === 'boss'
-          ? 3.2
-          : e.guardian
-            ? 2.4
-            : e.type === 'dredger'
-              ? 2
-              : e.type === 'guard'
-                ? 1.75
-                : 1.35,
     };
-    enemy.barrageWarnings = batteryWarning
+    enemyViews.set(e, view);
+    view.barrageWarnings = batteryWarning
       ? Array.from({ length: 3 }, () => {
           const marker = ring(
             scene,
@@ -1336,34 +1310,23 @@ export function makeFoldedWorld(
       for (const side of [-1, 1]) box(hatch, 3.5, 0.06, 0.18, 0, 0.03, side * 1.4, C.metal, 0);
       floorDetails.push({ root: hatch, x: e.x, y: e.y, z: e.z, radius: 2.3 });
     }
-    enemy.parts = (e.parts || []).map((hp, i) => {
+    for (const part of e.parts) {
       const root = new T.Group();
-      root.position.set(e.x + (i ? 4 : -4), e.y, e.z);
+      root.position.set(part.x, e.y, part.z);
       scene.add(root);
       box(root, 2.4, 1.6, 2.8, 0, 0.8, 0, C.dark);
       const lamp = box(root, 1.5, 1.1, 1.8, 0, 1.7, 0, mat(C.orange, true));
       const shutter = e.id === 'foundry' ? box(root, 1.8, 1.3, 0.2, 0, 1.7, 1.05, C.metal) : null;
-      const part = {
-        shutter,
-        x: root.position.x,
-        y: e.y + 1.7,
-        z: e.z,
-        hp,
-        max: hp,
-        root,
-        lamp,
-        radius: 1.45,
-        enemy,
-      };
-      return part;
-    });
-    if (e.parts) {
+      enemyViews.set(part, { body: part, y: part.y, enemy: e, shutter, root, lamp });
+      root.visible = e.hp > 0;
+    }
+    if (e.parts.length) {
       const lamp = box(model.body, 1.2, 0.95, 0.08, 0, 1.3, 1.49, mat(C.orange, true), 0);
       const panelMaterial = mat(C.metal),
         shutters = [-1, 1].map((side) =>
           box(model.body, 0.65, 1, 0.14, side * 0.325, 1.3, 1.6, panelMaterial, 0),
         );
-      enemy.coreModel = { lamp, shutters };
+      view.coreModel = { lamp, shutters };
     }
     if (e.mirror && e.type !== 'reflector') {
       const plate = box(model.body, 1.65, 1.25, 0.1, 0, 1.4, 1.52, mat(0xd3eee4, true));
@@ -1374,10 +1337,8 @@ export function makeFoldedWorld(
       const weak = box(model.body, 1.8, 1.3, 0.15, 0, 1.3, -1.8, mat(C.orange, true));
       weak.name = 'rear-aperture';
     }
-    enemy.baseScale = model.root.scale.clone();
-    model.root.visible = enemy.hp > 0;
-    for (const part of enemy.parts) part.root.visible = enemy.hp > 0;
-    enemies.push(enemy);
+    view.baseScale = model.root.scale.clone();
+    model.root.visible = e.hp > 0;
   }
   // One split wheel and axle are visible from the bridge, canal and roof.
   const wheel = new T.Group();
@@ -1840,9 +1801,12 @@ export function makeFoldedWorld(
   for (const mesh of [wheel, ...clamps, ...pipeLights.map((p) => p.lamp)])
     registerOccluder(mesh, null, { dynamic: true });
   for (const enemy of enemies) {
-    registerOccluder(enemy.model.root, enemy, { clone: false, dynamic: true, layered: true });
-    for (const part of enemy.parts)
-      registerOccluder(part.root, part, { dynamic: true, layered: true });
+    const view = enemyViews.get(enemy);
+    registerOccluder(view.model.root, view, { clone: false, dynamic: true, layered: true });
+    for (const part of enemy.parts) {
+      const partView = enemyViews.get(part);
+      registerOccluder(partView.root, partView, { dynamic: true, layered: true });
+    }
   }
   occlusion.seal();
   const sightDirection = new T.Vector3(28, 39.6, 28).normalize();
@@ -1979,17 +1943,16 @@ export function makeFoldedWorld(
         ...enemies.filter((e) => e.hp > 0).flatMap((e) => e.parts.filter((p) => p.hp > 0)),
         ...extras.filter((t) => !t.disarmed),
       ]) {
-        const point = new T.Vector3(t.x, t.y + (t.model ? 1.5 : 0), t.z);
+        const point = new T.Vector3(t.x, t.y + (t.kind === 'enemy' ? 1.5 : 0), t.z);
         if (t.facing) point.addScaledVector(t.facing, 0.5);
         // Fading a same-floor magnetic housing must not disable picking its blue grip.
         const accessibleGrip =
           t.kind === 'magnet' && Math.abs((t.ground ?? t.y - 1.3) - viewPlayer.y) < 3;
-        if (
-          aiming &&
-          ((t.root?.userData.cutaway && !accessibleGrip) || t.model?.root.userData.cutaway)
-        )
+        const view = enemyViews.get(t);
+        const targetRoot = view ? view.model?.root || view.root : t.root;
+        if (aiming && targetRoot?.userData.cutaway && !accessibleGrip) continue;
+        if (aiming && ((t.kind === 'enemy' && !t.readable) || (t.enemy && !t.enemy.readable)))
           continue;
-        if (aiming && ((t.model && !t.readable) || (t.enemy && !t.enemy.readable))) continue;
         const normal = t.opticalNormal || t.facing;
         const intersection = normal
           ? raycaster.ray.intersectPlane(
@@ -2299,31 +2262,35 @@ export function makeFoldedWorld(
     }
 
     for (const e of enemies) {
+      const view = enemyViews.get(e);
+      view.y = e.y;
       if (e.id === 'prototype')
-        e.model.frontArmor.position.y = T.MathUtils.damp(
-          e.model.frontArmor.position.y,
+        view.model.frontArmor.position.y = T.MathUtils.damp(
+          view.model.frontArmor.position.y,
           e.phase === 'vent' ? 2.7 : 1.2,
           12,
           dt,
         );
       for (const part of e.parts) {
-        if (part.shutter)
-          part.shutter.position.y = T.MathUtils.damp(
-            part.shutter.position.y,
+        const partView = enemyViews.get(part);
+        partView.y = part.y;
+        if (partView.shutter)
+          partView.shutter.position.y = T.MathUtils.damp(
+            partView.shutter.position.y,
             e.phase === 'vent' ? 3.2 : 1.7,
             10,
             dt,
           );
-        part.lamp.material.color.setHex(part.hp ? C.orange : C.dark);
-        part.root.visible = e.hp > 0;
+        partView.lamp.material.color.setHex(part.hp ? C.orange : C.dark);
+        partView.root.visible = e.hp > 0;
       }
-      if (e.coreModel) {
+      if (view.coreModel) {
         const open =
           e.hp > 0 &&
           e.parts.every((part) => part.hp <= 0) &&
           (e.id !== 'foundry' || e.phase === 'vent');
-        e.coreModel.lamp.material.color.setHex(open ? C.orange : C.dark);
-        e.coreModel.shutters.forEach(
+        view.coreModel.lamp.material.color.setHex(open ? C.orange : C.dark);
+        view.coreModel.shutters.forEach(
           (shutter, i) =>
             (shutter.position.x = T.MathUtils.damp(
               shutter.position.x,
@@ -2404,7 +2371,12 @@ export function makeFoldedWorld(
     enemies,
     wheel,
     mirrors: state.machinery.mirrors,
-    views: { lifts: liftViews, pickups: pickupViews, mirrors: mirrorViews },
+    views: {
+      lifts: liftViews,
+      pickups: pickupViews,
+      mirrors: mirrorViews,
+      enemy: (body) => enemyViews.get(body),
+    },
     belts,
     occluders,
     presentation,

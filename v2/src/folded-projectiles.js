@@ -31,7 +31,7 @@ export function createFoldedCombat({
   effects,
   events,
 }) {
-  const { burst, ripple, refugeImpact, rejectImpact, audio, projectile } = effects;
+  const { burst, ripple, refugeImpact, rejectImpact, audio, projectile, enemyKilled } = effects;
   const { alertSquad, save, setState, detonateMine, layMine } = events;
   function hurt(amount, source) {
     const time = now();
@@ -85,7 +85,7 @@ export function createFoldedCombat({
       e.stunnedUntil = time + (e.variant ? 0.2 : 0.6);
     if (!e.hp) {
       e.deadAt = time;
-      e.warning.visible = false;
+      enemyKilled(e);
       audio.event('explode', { position: e });
       burst(new T.Vector3(e.x, e.y + 1, e.z), C.orange, 14);
       if (e.persistent) {
@@ -135,7 +135,11 @@ export function createFoldedCombat({
         for (const e of world.enemies)
           if (e.hp > 0 && e.id !== shot.owner) {
             for (const target of [e, ...e.parts.filter((part) => part.hp > 0)]) {
-              const center = new T.Vector3(target.x, target.y + (target.model ? 1.5 : 0), target.z),
+              const center = new T.Vector3(
+                  target.x,
+                  target.y + (target.kind === 'enemy' ? 1.5 : 0),
+                  target.z,
+                ),
                 path = center.sub(blastOrigin),
                 length = path.length();
               if (
@@ -236,7 +240,7 @@ export function createFoldedCombat({
     } else if (hit.target) {
       if (hit.target.kind === 'torpedo') return;
       if (hit.target.kind === 'mine') detonateMine(hit.target);
-      else if (hit.target.enemy || hit.target.model)
+      else if (hit.target.enemy || hit.target.kind === 'enemy')
         hitEnemy(
           hit.target.enemy || hit.target,
           shot.damage ?? CANNON.damage,
@@ -404,7 +408,11 @@ export function createFoldedCombat({
         for (const e of world.enemies)
           if (e.hp > 0 && e.id !== s.owner)
             for (const target of [e, ...e.parts.filter((part) => part.hp > 0)]) {
-              const center = new T.Vector3(target.x, target.y + (target.model ? 1.5 : 0), target.z),
+              const center = new T.Vector3(
+                  target.x,
+                  target.y + (target.kind === 'enemy' ? 1.5 : 0),
+                  target.z,
+                ),
                 point = ray.intersectSphere(new T.Sphere(center, target.radius), new T.Vector3());
               if (point) {
                 const length = point.distanceTo(s.position);

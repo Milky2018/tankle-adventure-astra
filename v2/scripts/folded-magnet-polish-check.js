@@ -9,7 +9,7 @@ async (page) => {
     g.manual(true);
     for (const e of a.world.enemies) {
       e.hp = 0;
-      e.model.root.visible = false;
+      __game.debug.world.views.enemy(e).model.root.visible = false;
     }
     const results = [];
     for (const view of ['overhead', 'third']) {

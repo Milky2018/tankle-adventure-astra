@@ -1,3 +1,4 @@
+import { createEnemyState } from './folded-enemy-state.js';
 import { initialFoldedState } from './folded-state.js';
 import { createProgression } from './folded-progression.js';
 import { BOSS_ARENAS } from './folded-boss-arenas.js';
@@ -19,7 +20,7 @@ function enemy(id, x, z, extra = {}) {
     aim: Math.PI,
     phase: 'idle',
     parts: [],
-    model: {},
+    kind: 'enemy',
     ...extra,
   };
 }
@@ -31,7 +32,8 @@ function fixture(enemies, { walls = [], hives = [], controls = [] } = {}) {
     }),
     shots = [],
     events = [],
-    sounds = [];
+    sounds = [],
+    killed = [];
   const world = {
     enemies,
     hives,
@@ -80,6 +82,7 @@ function fixture(enemies, { walls = [], hives = [], controls = [] } = {}) {
       ripple: () => new T.Mesh(),
       refugeImpact() {},
       rejectImpact() {},
+      enemyKilled: (e) => killed.push(e.id),
       audio: { event: (...args) => sounds.push(args) },
     },
     events: {
@@ -96,7 +99,7 @@ function fixture(enemies, { walls = [], hives = [], controls = [] } = {}) {
     time += dt;
     api.updateShots(dt);
   };
-  return { ...api, p, state, shots, events, sounds, world };
+  return { ...api, p, state, shots, events, sounds, killed, world };
 }
 function fireThrough(f, shooter) {
   f.shootEnemy(shooter, 0, null, new T.Vector3(f.p.x, 1.2, f.p.z));
@@ -476,4 +479,32 @@ test('Siege shells shorten actual flight while preserving arc height and blast d
     progress.push(shot.position.z);
   }
   assert.ok(progress[1] > progress[0] * 1.7);
+});
+
+test('direct impacts identify headless enemies and report death exactly once', () => {
+  const [e] = createEnemyState({}, [{ id: 'target', type: 'turret', x: 0, y: 0, z: 0, hp: 2 }]);
+  const f = fixture([e]);
+  const hit = { target: e, point: new T.Vector3(0, 1.5, 0) };
+  const shot = { origin: new T.Vector3(0, 1.5, 10), damage: 2 };
+  f.impact(hit, shot);
+  f.impact(hit, shot);
+  assert.equal(e.hp, 0);
+  assert.equal(e.deadAt, 1);
+  assert.deepEqual(f.killed, [e.id]);
+  assert.deepEqual(f.events, [], 'an enemy is never dispatched as a receiver');
+});
+
+test('boss part impacts preserve part ownership without graphical handles', () => {
+  const state = initialFoldedState();
+  const boss = state.enemies.find((e) => e.id === 'foundry');
+  boss.phase = 'vent';
+  const f = fixture([boss]);
+  const part = boss.parts[0];
+  const hit = { target: part, point: new T.Vector3(part.x, part.y, part.z) };
+  const shot = { origin: new T.Vector3(part.x, part.y, part.z + 10), damage: 1 };
+  f.impact(hit, shot);
+  assert.equal(part.hp, part.max - 1);
+  assert.equal(boss.hp, boss.max - 1);
+  assert.equal(boss.parts[1].hp, boss.parts[1].max);
+  assert.deepEqual(f.events, []);
 });

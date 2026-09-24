@@ -1,7 +1,7 @@
 async page=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'||m.type()==='warning'&&/THREE|WebGL/.test(m.text()))errors.push(m.text());});
  await page.goto('http://127.0.0.1:5174/?chapter=folded&view=overhead&test');await page.waitForFunction(()=>window.__game?.debug);
- await page.evaluate(()=>{__game.manual(true);for(const e of __game.debug.world.enemies){e.hp=0;e.model.root.visible=false;}});
+ await page.evaluate(()=>{__game.manual(true);for(const e of __game.debug.world.enemies){e.hp=0;__game.debug.world.views.enemy(e).model.root.visible=false;}});
  const assert=(ok,message)=>{if(!ok)throw Error(message);};
  const cases=[
   {id:'lens-return',from:[324,24,-32],mirror:[324,26,-14],state:{'lens-return':false}},
@@ -78,7 +78,7 @@ async page=>{
   const a=__game.debug,g=__game,e=a.world.enemies.find(e=>e.guardian),check=(ok,msg)=>{if(!ok)throw Error(msg);};
   a.setCameraView('overhead');g.setInput([]);a.clearShots();g.scenario({player:{x:202,y:16,z:48,hp:25,heat:0,overheated:false,weapon:'laser',invincible:1e9},state:{guardian:false}});
   for(const m of a.world.mirrors.filter(m=>m.id.startsWith('guardian'))){const q=g.project(m.x,m.z,m.y);check(q.x>20&&q.x<innerWidth-20&&q.y>20&&q.y<innerHeight-20,'Guardian mirror centre is outside the playable view');}
-  Object.assign(e,{hp:e.max,phase:'idle',timer:0,stunnedUntil:0});e.model.root.visible=true;for(let i=0;i<120&&e.phase==='idle';i++)g.step(1/60);check(e.phase==='warn','Guardian never committed');const locked=e.aim;
+  Object.assign(e,{hp:e.max,phase:'idle',timer:0,stunnedUntil:0});__game.debug.world.views.enemy(e).model.root.visible=true;for(let i=0;i<120&&e.phase==='idle';i++)g.step(1/60);check(e.phase==='warn','Guardian never committed');const locked=e.aim;
   g.scenario({player:{x:194,z:54}});g.step(.2);check(Math.abs(e.aim-locked)<1e-8,'Guardian tracks during its warning');
   for(let i=0;i<120&&e.phase!=='vent';i++)g.step(1/60);check(e.phase==='vent','Guardian did not expose recovery');
   g.scenario({player:{x:210,z:54}});g.step(.2);g.step(1.3);check(e.phase==='vent'&&Math.abs(e.aim-locked)<1e-8,'Guardian tracks before its recovery window ends');

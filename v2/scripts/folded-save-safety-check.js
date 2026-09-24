@@ -19,7 +19,7 @@ async page=>{
     g.scenario({state:{anchor:h.id}});g.respawn();g.step(2,false);
     g.scenario({enemies:Object.fromEntries(a.world.enemies.map(e=>[e.id,0])),player:{invincible:0}});
     const e=a.world.enemies.find(e=>e.type==='sniper');
-    Object.assign(e,{x:h.x+4,y:h.y,z:h.z});e.lock={clone:()=>new (e.model.root.position.constructor)(h.x,h.y+1.2,h.z)};
+    Object.assign(e,{x:h.x+4,y:h.y,z:h.z});e.lock={clone:()=>new (__game.debug.world.views.enemy(e).model.root.position.constructor)(h.x,h.y+1.2,h.z)};
     a.shootEnemy(e);a.updateShots(.1);
     const projectileHp=a.p.hp;
     Object.assign(e,{x:h.x+11});a.shootEnemy(e);a.updateShots(.06);
@@ -45,9 +45,9 @@ async page=>{
     const chargeDistance=Math.hypot(scout.x-h.x,scout.z-h.z);
     // Damage must resume outside the refuge, with no lingering invulnerability.
     Object.assign(e,{x:h.x+11,y:h.y,z:h.z});
-    e.lock={clone:()=>new (e.model.root.position.constructor)(h.x+7,h.y+1.2,h.z)};
+    e.lock={clone:()=>new (__game.debug.world.views.enemy(e).model.root.position.constructor)(h.x+7,h.y+1.2,h.z)};
     a.shootEnemy(e);a.updateShots(.1);const outsideHp=a.p.hp;
-    const V=e.model.root.position.constructor;
+    const V=__game.debug.world.views.enemy(e).model.root.position.constructor;
     const outbound=a.castWeapon(new V(h.x,h.y+2,h.z),new V(1,0,0),30,{targets:false});
     a.clearShots();g.scenario({player:{x:h.x,y:h.y,z:h.z,hp:25}});
     Object.assign(scout,{phase:'warn',timer:.01,alertUntil:a.time+10,lastSeen:{...a.p}});

@@ -19,8 +19,8 @@ async page => {
         g.setInput(dodge && committed && a.p.x < 423 ? ['KeyS', 'KeyD'] : []);
         g.step(1 / 60, false);
         phases.add(enemy.phase);
-        if (enemy.phase === 'warn' && enemy.warning.visible) {
-          const points = enemy.warning.geometry.attributes.position.array;
+        if (enemy.phase === 'warn' && __game.debug.world.views.enemy(enemy).warning.visible) {
+          const points = __game.debug.world.views.enemy(enemy).warning.geometry.attributes.position.array;
           for (let j = 3; j < points.length; j += 3)
             maxWarning = Math.max(maxWarning, Math.hypot(points[j] - enemy.x, points[j + 2] - enemy.z));
         }

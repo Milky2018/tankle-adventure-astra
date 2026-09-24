@@ -29,13 +29,13 @@ async page=>{
      check(!blocked([312,-22.5,159],[312,-22.8,150]),'Welder cannot contest maintenance lane');
     }
     g.scenario({player:{x:start[0],y:start[1],z:start[2]}});
-    for(const e of w.enemies){const show=area==='optics'?e.id==='lens-collimator-reflector-0':area==='coolant'?e.encounter==='coolant-separator':false;e.hp=show?e.max:0;e.model.root.visible=show;e.stunnedUntil=q.time+1000;}
+    for(const e of w.enemies){const show=area==='optics'?e.id==='lens-collimator-reflector-0':area==='coolant'?e.encounter==='coolant-separator':false;e.hp=show?e.max:0;__game.debug.world.views.enemy(e).model.root.visible=show;e.stunnedUntil=q.time+1000;}
     if(view==='third')g.look(area==='coolant'?.4:area==='optics'?2.7:Math.PI,.1);
     g.step(.1);q.draw();
     return {view,area,traversed:true,sightlines:true};
    },{view,area}));
    await page.screenshot({path:`output/playwright/regression/route-choices-${area}-${view}.png`});
-   await page.evaluate(()=>{for(const e of __game.debug.world.enemies){e.hp=0;e.model.root.visible=false;}});
+   await page.evaluate(()=>{for(const e of __game.debug.world.enemies){e.hp=0;__game.debug.world.views.enemy(e).model.root.visible=false;}});
   }
  }
  if(errors.length)throw Error(errors.join('\n'));return {results,errors};

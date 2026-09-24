@@ -22,12 +22,12 @@ export function prepareEnemyMaterials(model,{batching=true}={}){
 }
 
 const impactTint=new T.Color();
-export function animateEnemy(enemy,time,dt,active){
-  for(const {m,color}of enemy.materials)m.color.copy(color);
-  enemy.model.animate(enemy.phase,enemy.timer,time,dt,active);
+export function animateEnemy(enemy,view,time,dt,active){
+  for(const {m,color}of view.materials)m.color.copy(color);
+  view.model.animate(enemy.phase,enemy.timer,time,dt,active);
   if(enemy.flash||enemy.armor){
     impactTint.setHex(enemy.armor?C.lightYellow:0xffffff);
-    for(const {m}of enemy.materials)m.color.lerp(impactTint,.65);
+    for(const {m}of view.materials)m.color.lerp(impactTint,.65);
   }
 }
 

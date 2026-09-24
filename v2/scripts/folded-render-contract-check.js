@@ -19,7 +19,16 @@ async page => {
       for(const body of q.world[collection])
         if(body.root||body.mesh||body.material)throw Error('Runtime body contains scene handles');
     }
-    const capture = () => JSON.stringify({save:serializeFoldedState(q.state),bodies:q.state.bodies,machinery:q.state.machinery});
+    if(q.world.enemies!==q.state.enemies)throw Error('Scene replaced combat runtime');
+    const seen=new Set();
+    function checkRuntime(value) {
+      if(!value||typeof value!=='object'||seen.has(value))return;
+      seen.add(value);
+      if(value.isObject3D||value.isMaterial||value.isBufferGeometry)throw Error('Combat runtime owns scene data');
+      for(const child of Object.values(value))checkRuntime(child);
+    }
+    checkRuntime(q.state.enemies);
+    const capture = () => JSON.stringify({save:serializeFoldedState(q.state),bodies:q.state.bodies,machinery:q.state.machinery,enemies:q.state.enemies},(key,value)=>key==='enemy'?value.id:value);
     for (const [region,x,y,z] of [
       ['foundry',0,-8,86],['transit',0,0,27],['garden',48,-8,20],
       ['testworks',218,16,-170],['optics',218,24,-20],

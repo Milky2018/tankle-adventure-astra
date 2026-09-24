@@ -6,7 +6,7 @@ async page => {
   const g=__game,q=g.debug,e=q.world.enemies.find(e=>e.id==='prototype');
   g.scenario({state:{relays:true},player:{x:-40,y:-16,z:122,hp:25,invincible:100},enemies:Object.fromEntries(q.world.enemies.map(e=>[e.id,e.id==='prototype'?9:0]))});
   q.traceCombat();e.phase='idle';e.timer=0;
-  for(let i=0;i<90&&e.phase!=='warn';i++)g.step(1/60,false);g.step(1/60);if(e.phase!=='warn'||e.attack!=='cannon'||e.charge.root.visible||!e.warning.visible)throw Error('Cannon warning is absent or displays a charge '+JSON.stringify({phase:e.phase,attack:e.attack,charge:e.charge.root.visible,warning:e.warning.visible,arena:q.state.combatArena}));
+  for(let i=0;i<90&&e.phase!=='warn';i++)g.step(1/60,false);g.step(1/60);if(e.phase!=='warn'||e.attack!=='cannon'||__game.debug.world.views.enemy(e).charge.root.visible||!__game.debug.world.views.enemy(e).warning.visible)throw Error('Cannon warning is absent or displays a charge '+JSON.stringify({phase:e.phase,attack:e.attack,charge:__game.debug.world.views.enemy(e).charge.root.visible,warning:__game.debug.world.views.enemy(e).warning.visible,arena:q.state.combatArena}));
   if(q.enemyShots.length)throw Error('Shot before warning');
   const phases=new Set();let shellsVisible=false;
   for(let i=0;i<240;i++){g.step(.05,false);phases.add(e.phase);if(q.shots.some(s=>s.owner==='prototype'&&s.mesh.visible&&s.distance>2))shellsVisible=true;}
