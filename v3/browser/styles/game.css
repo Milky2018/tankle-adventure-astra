@@ -1,0 +1,94 @@
+#folded-layers{position:absolute;right:38px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:14px;align-items:center}
+#hud.ending-active>:not(#settings-button){visibility:hidden}
+#dock-progress{position:absolute;inset:-11px;width:48px;height:48px;fill:none;stroke-width:2.5;transform:rotate(-90deg);pointer-events:none}
+.dock-track{stroke:#ffdf9870}.dock-fill{stroke:#ffe5a6;stroke-dasharray:100;stroke-dashoffset:100}
+#ending{position:fixed;inset:0;z-index:9;display:grid;place-items:center;overflow:auto;padding:32px 20px;background:radial-gradient(ellipse at 50% 35%,#3d301868,#081a20d9 75%);backdrop-filter:blur(5px);animation:ending-reveal 1.5s ease-out}
+#ending section{text-align:center;width:min(520px,100%);color:#fff0c6}
+#ending h1{font-size:clamp(30px,5vw,48px);letter-spacing:.2em;margin:0 0 42px;font-weight:400}
+.ending-actions{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+.ending-actions button{border:1px solid #e3cb9577;border-radius:5px;padding:13px 24px;background:#132d30d9;color:#eadcbd;font-size:14px;min-width:160px}
+#ending-continue{background:#e9cc89;color:#1b3232;border-color:#e9cc89}
+.ending-actions button:hover{filter:brightness(1.12)}
+@keyframes ending-reveal{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){#ending{animation:none}}
+#folded-layers button{background:#17383a;border:1px solid #a1b29c66;color:#eed597;border-radius:5px;padding:10px;min-width:40px}
+#folded-layers button:disabled{opacity:.25;cursor:default}
+#folded-layer-bars{display:flex;flex-direction:column;gap:10px;align-items:center}
+#folded-layer-bars .layer-bar{position:relative;width:42px;min-width:42px;height:9px;padding:0;background:#80988755;border:0;border-radius:2px}
+#folded-layer-bars .selected{background:#e0c184;box-shadow:0 0 0 3px #e0c18430}
+#folded-layer-bars .player-layer::before{content:'';position:absolute;width:6px;height:6px;left:-15px;top:1px;border-radius:50%;background:#fff0bd}
+#tools.ability-tray{gap:12px;align-items:flex-end;flex-wrap:wrap;max-width:calc(100vw - 72px);bottom:116px}
+.ability-group{display:flex;gap:5px;padding-right:12px;border-right:1px solid #b8c9a83a}
+.ability-group:last-child{padding-right:0;border:0}
+#tools .ability-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:7px;width:48px;min-height:76px;padding:7px 4px 5px;border:1px solid #b8c9a84a;border-radius:7px;color:#bdcbb6;background:#102d2edf;opacity:1;transition:color .2s,border-color .2s,background .2s}
+#tools .ability-card>svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+#tools .ability-card kbd{padding:4px;font-size:9px;border-color:#afc3a854;box-shadow:none;min-height:21px}
+#tools .ability-card kbd.mouse-key{padding:0}
+#tools .ability-card.selected{border-bottom:3px solid #ffe1a0;background:#4a4a2be6}
+#tools .ability-card.active{color:#ffe6a6;border-color:#eed48a}
+#tools .ability-card.hot{color:#f98562}
+#tools .ability-card.new-ability{animation:ability-install 1.2s ease-in-out infinite}
+#tools .ability-upgrade{position:absolute;right:-2px;top:-5px;width:17px;height:17px;border-radius:50%;background:#183b39}
+.ability-upgrade svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:4}
+#acquired.ability-acquired{left:auto;right:28px;bottom:32px;transform:none;gap:18px;padding:17px 20px;border:1px solid #e2c77d80;border-radius:9px;background:#102b2ef2;color:#ffe4a0;box-shadow:0 5px 30px #06191d80;pointer-events:none}
+#acquired.ability-acquired svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;filter:none}
+.ability-reveal{display:flex;flex-direction:column;align-items:center;gap:10px}
+#acquired .ability-reveal>svg{width:42px;height:42px;stroke-width:2.6}
+.ability-input{display:flex;align-items:center;gap:8px}
+.ability-input kbd{padding:5px;font-size:10px}
+.ability-input kbd.mouse-key{padding:0}
+#acquired.ability-acquired>svg{width:180px;height:70px}
+.demo-guide{opacity:.3;stroke-dasharray:4 5}
+.demo-obstacle{color:#9eb09c}
+.demo-hot{color:#ff805f}
+.demo-lob{offset-path:path('M42 28Q94 -22 155 28');animation:ability-lob 2.4s linear infinite;fill:currentColor}
+.demo-beam{stroke-dasharray:160;animation:ability-beam 2.4s ease-out infinite}
+.demo-pull{animation:ability-pull 2.4s ease-in-out infinite}
+.demo-float{animation:ability-float 3s ease-in-out infinite}
+.demo-drive{animation:ability-drive 2.4s ease-in infinite}
+.demo-ram{animation:ability-ram 2.4s ease-in infinite}
+.demo-break{animation:ability-break 2.4s linear infinite}
+@keyframes ability-install{50%{border-color:#fff0ba;box-shadow:0 0 0 3px #e6c87540,0 0 22px #e6c87535;color:#fff0ba}}
+@keyframes ability-lob{0%,15%{offset-distance:0;opacity:0}20%{opacity:1}80%{offset-distance:100%;opacity:1}85%,100%{offset-distance:100%;opacity:0}}
+@keyframes ability-beam{0%,15%{stroke-dashoffset:160}55%,85%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}
+@keyframes ability-pull{0%,15%{transform:translateX(0)}80%,100%{transform:translateX(-68px)}}
+#tools #magnet-tool,#acquired[data-ability="magnet"]{color:#79bbff}
+@keyframes ability-float{0%{transform:translate(0,-2px)}50%{transform:translate(54px,1px)}100%{transform:translate(108px,-2px)}}
+@keyframes ability-drive{0%,15%{transform:translateX(0)}85%,100%{transform:translateX(65px)}}
+@keyframes ability-ram{0%,15%{transform:translateX(0)}75%,100%{transform:translateX(106px)}}
+@keyframes ability-break{0%,74%{opacity:1;transform:translateX(0)}85%,100%{opacity:0;transform:translateX(14px)}}
+@media(max-width:700px){#tools.ability-tray{left:20px;bottom:106px;max-width:calc(100vw - 40px);gap:8px}.ability-group{padding-right:8px;gap:3px}#tools .ability-card{width:39px;min-height:67px}#tools .ability-card>svg{width:25px;height:25px}#acquired.ability-acquired{right:18px;bottom:275px;padding:12px;gap:12px}#glyphs{top:190px;bottom:auto}}
+@media(prefers-reduced-motion:reduce){#tools .ability-card.new-ability{animation:none;border-color:#fff0ba}.ability-acquired svg *{animation:none}.demo-lob{offset-distance:60%}.demo-pull{transform:translateX(-40px)}.demo-ram,.demo-drive{transform:translateX(65px)}}
+
+.third-person:not(.mouse-look) #game{cursor:pointer}
+
+#settings.camera-tuning{display:flex;align-items:center;justify-content:flex-end;padding:20px;background:none;backdrop-filter:none}
+#settings.camera-tuning>.panel{display:none}
+#camera-tuning{width:290px;max-width:calc(100vw - 40px);max-height:calc(100vh - 40px);overflow:auto;padding:22px;background:#173331ed;border:1px solid #b4d1b550;border-radius:12px;box-shadow:0 8px 30px #00100d40}
+#camera-tuning h2{font-size:16px;color:#f0ddab}
+#camera-tuning label{display:grid;grid-template-columns:1fr auto;gap:10px;margin:20px 0;font-size:13px}
+#camera-tuning output{font-variant-numeric:tabular-nums;color:#efcd79}
+#camera-tuning input{grid-column:1/-1;width:100%;accent-color:#e5c36c}
+#camera-tuning button{padding:9px 12px;margin:4px 4px 0 0;border:1px solid #aac5b448;border-radius:5px;background:#223d3b;color:#eceaca;font-size:12px}
+#camera-tuning button:last-child{background:#efcd79;color:#213634}
+
+#threats{position:fixed;inset:0;pointer-events:none;z-index:5}
+#threats i{position:absolute;width:32px;height:12px;border-top:4px solid #ff9b62;border-radius:50%;filter:drop-shadow(0 1px 3px #201509);animation:threat-pulse .5s ease-in-out infinite alternate}
+#threats i[hidden],#threats[hidden]{display:none}
+@keyframes threat-pulse{to{opacity:.5}}
+@media(prefers-reduced-motion:reduce){#threats i{animation:none}}
+#camera-toggle{position:absolute;top:28px;left:80px;width:72px;display:flex;justify-content:center;gap:6px;border-radius:8px}#camera-toggle kbd{padding:3px 4px;font-size:10px}#hud.ending-active #camera-toggle{display:none}@media(max-width:700px){#camera-toggle{left:76px}}
+#look-hint{position:absolute;top:28px;left:164px;height:40px;display:flex;align-items:center;gap:8px;padding:8px 10px;color:#e1ecd0;background:#152f30b8;border:1px solid #b4d1b530;border-radius:8px}#look-hint svg{width:22px;fill:none;stroke:currentColor;stroke-width:1.6}#minimap-wrap{transition:opacity .12s}#minimap-wrap.aim-through{opacity:.1}
+#look-hint kbd.mouse-key{transform:scale(1.25);margin:0 3px}#look-hint kbd.mouse-key::before{background:#ffd477}
+
+#ending-skip{position:fixed;right:28px;bottom:24px;z-index:35;padding:8px 18px;color:#eadcbb;background:#142725c9;border:1px solid #a99b7359;border-radius:5px;font:inherit;font-size:12px;cursor:pointer}#ending-skip:hover,#ending-skip:focus-visible{border-color:#eadcbb;background:#29433e}#ending-skip[hidden]{display:none}
+
+/* Installed optional equipment remains legible after the discovery reveal. */
+.ability-card.reinforced { border-color: #f2d08a; box-shadow: inset 0 -3px #f2d08a; }
+.ability-card.reinforced::after { content: '◆'; position: absolute; right: 4px; top: 1px; color: #ffe3a5; font-size: 10px; }
+.ability-acquired[data-ability="upgrade"] .ability-reveal>strong { font-size: 24px; color: #ffe3a5; font-variant-numeric: tabular-nums; }
+.cooling-module { color: #d7edc5; }
+
+.folded-ui #acquired[data-ability="upgrade"] .ability-reveal { border: 0; padding: 0; min-width: 58px; }
+
+.map-area-name{position:absolute;top:7px;left:7px;right:7px;padding:5px 6px;color:#f3e5bc;background:#102b2ee6;border-left:2px solid #d6bd75;font-size:11px;line-height:1.25;letter-spacing:.025em;pointer-events:none;text-shadow:0 1px 2px #091b1d}

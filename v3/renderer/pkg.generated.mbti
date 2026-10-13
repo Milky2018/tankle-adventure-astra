@@ -1,0 +1,66 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "milky/tankle-astra/renderer"
+
+import {
+  "milky/tankle-astra/simulation",
+  "mizchi/three",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+type Cutaway
+
+type Projectiles
+
+pub(all) struct View {
+  scene : @three.Scene
+  renderer : @three.WebGLRenderer
+  ending : @three.PerspectiveCamera
+  mut film : Bool
+  third : @three.PerspectiveCamera
+  overhead : @three.OrthographicCamera
+  root : @three.Object3D
+  body : @three.Object3D
+  turret : @three.Object3D
+  barrel : @three.Object3D
+  mut distance : Double
+  mut camera_height : Double
+  mut shoulder : Double
+  mut sensitivity : Double
+  mut overhead_angle : Double
+  mut area : Double
+  mut ground_clearance : Double
+  mut yaw : Double
+  mut pitch : Double
+  mut third_person : Bool
+  // private fields
+}
+pub fn View::aim(Self, @simulation.Game, @simulation.Queries, @simulation.Vec2) -> @simulation.Vec3
+pub fn View::aim_player(Self, @simulation.Vec3, @simulation.Weapon) -> Unit
+pub fn View::camera(Self) -> @three.Camera
+pub fn View::draw(Self, @simulation.Player, @simulation.World) -> Unit
+pub fn View::new(@three.Scene, @simulation.Game) -> Self
+pub fn View::position_player(Self, @simulation.Player, @simulation.World, Double) -> Unit
+pub fn View::project(Self, @simulation.Vec3) -> @simulation.Vec2
+pub fn View::queries(Self, @simulation.Game, aiming? : Bool) -> @simulation.Queries
+pub fn View::resize(Self) -> Unit
+pub fn View::set_visibility(Self, Double, Double, Double) -> Unit
+pub fn View::turn(Self, Double, Double) -> Unit
+pub fn View::update_belts(Self, @simulation.Game, Double) -> Unit
+pub fn View::update_effects(Self, @simulation.Game, @simulation.Vec3, @simulation.Queries, Double) -> Unit
+pub fn View::update_ending(Self, @simulation.Game) -> Unit
+pub fn View::update_enemies(Self, @simulation.Game, Double) -> Unit
+pub fn View::update_feeds(Self, @simulation.Game) -> Unit
+pub fn View::update_hives(Self, @simulation.Game, Double) -> Unit
+pub fn View::update_machinery(Self, @simulation.Game, Double) -> Unit
+pub fn View::update_player(Self, @simulation.Game, Double) -> Unit
+pub fn View::update_projectiles(Self, @simulation.Game) -> Unit
+pub fn View::update_renewal(Self, @simulation.Game, Double) -> Unit
+pub fn View::weapon_origin(Self) -> @simulation.Vec3
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,6 @@
+import {
+  "moonbitlang/core/math",
+  "moonbitlang/core/json",
+}
+
+supported_targets = "js"

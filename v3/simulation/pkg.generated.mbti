@@ -1,0 +1,917 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "milky/tankle-astra/simulation"
+
+import {
+  "moonbitlang/core/json",
+  "moonbitlang/core/set",
+}
+
+// Values
+pub fn angle_delta(Double, Double) -> Double
+
+pub fn apply_floor_heat(Player, Array[Belt], Double, Double, Progress) -> Unit
+
+pub fn approach(Double, Double, Double) -> Double
+
+pub fn architecture_grid(Array[Solid]) -> Map[(Int, Int), Array[Solid]]
+
+pub fn authored_architecture() -> Array[Solid]
+
+pub fn authored_belts() -> Array[Belt]
+
+pub fn authored_circuits() -> Array[Circuit]
+
+pub fn authored_controls() -> Array[Control]
+
+pub fn authored_currents() -> Array[Current]
+
+pub fn authored_decks() -> Array[Deck]
+
+pub fn authored_enemies() -> Array[EnemyDef]
+
+pub fn authored_heat() -> Array[Belt]
+
+pub fn authored_hives() -> Array[Hive]
+
+pub fn authored_lifts() -> Array[Lift]
+
+pub fn authored_mirrors() -> Array[Mirror]
+
+pub fn authored_obstacles() -> Array[Solid]
+
+pub fn authored_pickups() -> Array[Pickup]
+
+pub fn authored_solids() -> Array[Solid]
+
+pub fn authored_world() -> World
+
+pub fn barrage_targets(Vec3, Vec3, boss? : Bool) -> Array[BarrageTarget]
+
+pub fn can_telegraph(Int, Array[Enemy]) -> Bool
+
+pub fn clamp(Double, Double, Double) -> Double
+
+pub fn conveyor_velocity(Vec3, Array[Belt], Array[Enemy], Progress) -> Vec2
+
+pub fn ground_height(Double, Double, Double, Array[Deck]) -> Double
+
+pub fn mortar_position(Vec3, Vec3, Double, Double, Double) -> Vec3
+
+pub fn refuge_at(Vec3, Array[Hive], Progress, radius? : Double) -> Hive?
+
+pub fn refuge_ray_distance(Vec3, Vec3, Double, Array[Hive], Progress) -> Double?
+
+pub fn screen_movement(Double, Double) -> Vec2
+
+pub fn segment_circle(Vec2, Vec2, Vec2, Double) -> Bool
+
+pub fn step_transport(Array[Solid], Double, Array[Actor]) -> Unit
+
+pub fn supported_hull((Double, Double) -> Bool, Double, Double, radius? : Double) -> Bool
+
+pub fn wake_squad(Enemy, Array[Enemy]) -> Unit
+
+pub fn wounded_ally(Int, Array[Enemy]) -> Int?
+
+// Errors
+
+// Types and methods
+pub(all) struct Abilities {
+  mut overdrive : Bool
+  mut magnet : Bool
+  mut mortar : Bool
+  mut flotation : Bool
+  mut phoenix : Bool
+  mut laser : Bool
+  mut circulation : Bool
+}
+pub fn Abilities::new() -> Self
+
+pub(all) enum Acquisition {
+  Overdrive
+  Magnet
+  MortarModule
+  Flotation
+  Phoenix
+  LaserModule
+  Circulation
+  Armor
+  Cooling
+  CannonCoil
+  MortarCharge
+  LaserFocus
+  Scope
+}
+
+pub(all) enum Action {
+  CannonAction
+  MortarAction
+  LaserAction
+  MagnetAction
+  Use
+  Dock
+} derive(Eq)
+#deprecated
+pub fn Action::equal(Self, Self) -> Bool
+#deprecated
+pub fn Action::not_equal(Self, Self) -> Bool
+
+pub(all) struct Activation {
+  position : Vec3
+  radius : Double
+}
+
+pub(all) enum Actor {
+  PlayerActor(Player)
+  EnemyActor(Enemy)
+}
+pub fn Actor::alive(Self) -> Bool
+pub fn Actor::position(Self) -> Vec3
+pub fn Actor::set_y(Self, Double) -> Unit
+
+pub(all) struct Arena {
+  id : String
+  rect : Rect
+  y : Double
+}
+pub fn Arena::contains(Self, Vec3, margin? : Double) -> Bool
+
+pub(all) enum ArenaEvent {
+  Sealed(String)
+  Released(String)
+  Reserve(String)
+}
+
+pub(all) enum Attack {
+  Torpedoes
+  SuctionAttack
+  ChargeAttack
+  Shot
+  ShieldShot
+  BurstAttack
+  RailAttack
+  Lob
+  Mine
+  SweepAttack
+  RepairAttack
+  Reflect
+  CannonAttack
+  Barrage
+  Batteries
+  Seekers
+  Fan
+} derive(Eq)
+#deprecated
+pub fn Attack::equal(Self, Self) -> Bool
+#deprecated
+pub fn Attack::not_equal(Self, Self) -> Bool
+
+pub(all) enum Axis {
+  X
+  Z
+} derive(Eq)
+#deprecated
+pub fn Axis::equal(Self, Self) -> Bool
+#deprecated
+pub fn Axis::not_equal(Self, Self) -> Bool
+
+pub(all) struct BarrageTarget {
+  position : Vec3
+  delay : Double
+}
+
+pub(all) struct Beam {
+  enemy : Int
+  origin : Vec3
+  direction : Vec3
+  length : Double
+  width : Double
+}
+
+pub(all) struct Belt {
+  deck : Deck
+  velocity : Vec2
+  heat : Double
+  release : String?
+  stop : String?
+  owner : String?
+  part : Int?
+}
+
+pub(all) struct BossPattern {
+  kind : Attack
+  warn : Double
+  recovery : Double
+  speed : Double
+  offsets : Array[Double]
+  waves : Int
+  spacing : Double
+  overlay : Bool
+}
+
+pub(all) struct Circuit {
+  id : String
+  duration : Double
+  branches : Array[SignalBranch]
+}
+
+pub(all) enum Collision {
+  Barrier(Solid)
+  Ceiling
+}
+
+pub(all) struct Commands {
+  controls : Array[Control]
+  circuits : Map[String, Circuit]
+  starts : Map[String, Double]
+}
+pub fn Commands::activate(Self, Progress, String, Action, Player, Double) -> Bool
+pub fn Commands::active(Self, Progress, String) -> Bool
+pub fn Commands::advance(Self, Progress, Double, Double) -> Bool
+pub fn Commands::complete(Self, Progress, String, Double, delayed? : Bool, effects? : Array[String]) -> Bool
+pub fn Commands::new(Array[Control], Array[Circuit]) -> Self
+
+pub(all) struct Control {
+  id : String
+  mut position : Vec3
+  ground : Double
+  actions : Array[Action]
+  requires : String?
+  effects : Array[String]
+  circuit_key : String
+  mount : String?
+  facing : Vec3?
+  optical_normal : Vec3?
+  top : Bool
+  rotor : Bool
+  counterweight : Bool
+  mut flash : Double
+  mut pull : Double
+}
+
+pub(all) struct Current {
+  rect : Rect
+  y : Double
+  velocity : Vec2
+  sluice : String?
+  diverted : Vec2
+}
+
+pub(all) enum DamageKind {
+  CannonHit
+  MortarHit
+  LaserHit
+  Ram
+  Red
+} derive(Eq)
+#deprecated
+pub fn DamageKind::equal(Self, Self) -> Bool
+#deprecated
+pub fn DamageKind::not_equal(Self, Self) -> Bool
+
+pub(all) struct Deck {
+  id : String
+  rect : Rect
+  y : Double
+  rise : Double
+  water : Bool
+}
+pub fn Deck::height(Self, Double) -> Double
+
+pub(all) struct Delivery {
+  mut position : Vec3
+  mut leg : Int
+  mut heading : Double
+} derive(ToJson, @json.FromJson)
+#deprecated
+pub fn Delivery::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+#deprecated
+pub fn Delivery::to_json(Self) -> Json
+
+pub(all) enum Effect {
+  Fired(Vec3, Weapon)
+  Impact(Vec3, Bool)
+  Armored(Vec3)
+  Killed(Int)
+  Hurt
+  Acquired(String)
+  Activated(String)
+  Repaired(String)
+}
+
+pub(all) struct Encounters {
+  wave_timers : Map[String, Double]
+  used_reserves : @set.Set[String]
+  arenas : Array[Arena]
+}
+pub fn Encounters::new() -> Self
+pub fn Encounters::reset(Self, Array[Enemy], Progress) -> Unit
+pub fn Encounters::update_arenas(Self, Array[Enemy], Progress, Player, Double) -> Array[ArenaEvent]
+pub fn Encounters::update_waves(Self, Array[Enemy], Player, Bool, Double, Double) -> Unit
+
+pub(all) struct Enemy {
+  definition : EnemyDef
+  mut x : Double
+  mut y : Double
+  mut z : Double
+  mut hp : Double
+  max_hp : Double
+  radius : Double
+  parts : Array[EnemyPart]
+  mut phase : Phase
+  mut timer : Double
+  mut aim : Double
+  mut flash : Double
+  mut armor : Double
+  mut ram_at : Double
+  mut shield_pull : Double
+  mut shield_removed : Bool
+  mut awake : Bool
+  mut deploy : Double
+  mut deploy_until : Double
+  mut attack_cycle : Int
+  mut attack : Attack?
+  mut pattern : BossPattern?
+  mut source : Int?
+  mut volley_sources : Array[Int?]
+  mut chain : Bool
+  mut warning_age : Double
+  mut volley_cycle : Int
+  mut lock : Vec3
+  mut second_lock : Vec3?
+  mut sweep_sign : Double
+  mut sweep_right : Bool
+  mut alert_until : Double
+  mut last_seen : Vec3?
+  mut dead_at : Double?
+  mut stunned_until : Double
+  mut resume_phase : Phase?
+  mut resume_timer : Double
+  mut swim_waypoint : Int
+  mut bite_at : Double
+  mut travel_heading : Double?
+  mut deployed : Bool
+  mut afloat : Bool
+  mut readable : Bool
+  mut patient : Int?
+  mut burst_left : Int
+  mut rail_end : Vec3
+  mut flame_at : Double
+  mut pump_sound_at : Double
+}
+pub fn Enemy::armor_absorbs(Self, Double, Vec3, DamageKind, part_index? : Int) -> Bool
+pub fn Enemy::boss_pattern(Self, Bool) -> BossPattern
+pub fn Enemy::contact_damage(Self) -> Double
+pub fn Enemy::damage_amount(Self, Double, Vec3, DamageKind, part_index? : Int) -> Double
+pub fn Enemy::in_suction(Self, Vec3, reach? : Double) -> Bool
+pub fn Enemy::magnet_pullable(Self) -> Bool
+pub fn Enemy::new(EnemyDef, Progress) -> Self
+pub fn Enemy::position(Self) -> Vec3
+pub fn Enemy::shot_damage(Self, Attack?) -> Double
+pub fn Enemy::spec(Self) -> EnemySpec
+pub fn Enemy::swims(Self) -> Bool
+
+pub(all) struct EnemyDef {
+  id : String
+  kind : EnemyKind
+  variant : Variant
+  spawn : Vec3
+  hp : Double
+  guardian : Bool
+  persistent : Bool
+  emplacement : Bool
+  magnetic_shield : Bool
+  coordinated : Bool
+  encounter : String?
+  battle : String?
+  wave : Int
+  startup : Double?
+  spotter_height : Double?
+  detection_range : Double?
+  patrol : Rect?
+  activation : Activation?
+  swim_patrol : Array[Vec2]
+  part_hp : Array[Double]
+  core : Double?
+  mirror : Bool
+  reserve_for : String?
+  reserve_at : Double
+}
+
+pub(all) enum EnemyKind {
+  Hunter
+  Dredger
+  Scout
+  Turret
+  Guard
+  Skirmisher
+  Sniper
+  Artillery
+  Miner
+  Welder
+  Repairer
+  Reflector
+  Elite
+  Boss
+} derive(Eq)
+#deprecated
+pub fn EnemyKind::equal(Self, Self) -> Bool
+#deprecated
+pub fn EnemyKind::not_equal(Self, Self) -> Bool
+
+pub(all) struct EnemyPart {
+  mut position : Vec3
+  mut hp : Double
+  max_hp : Double
+  radius : Double
+}
+
+pub(all) struct EnemySpec {
+  speed : Double
+  reach : Double
+  warn : Double
+  recovery : Double
+  attack : Attack
+  charge_speed : Double?
+  projectile_speed : Double?
+  lob_duration : Double
+}
+
+pub(all) struct Game {
+  mut aim_point : Vec3
+  mut last_hit : String
+  puzzles : Puzzles
+  player : Player
+  world : World
+  progress : Progress
+  commands : Commands
+  enemies : Array[Enemy]
+  encounters : Encounters
+  hives : Array[Hive]
+  pickups : Array[Pickup]
+  mirrors : Array[Mirror]
+  belts : Array[Belt]
+  floor_heat : Array[Belt]
+  currents : Array[Current]
+  mut velocity : Vec2
+  mut previous_player : Vec3
+  mut cover_held_until : Double
+  beams : Array[Beam]
+  shots : Array[Shot]
+  mines : Array[Mine]
+  effects : Array[Effect]
+  mut next_projectile : Int
+  laser_path : Array[LaserSegment]
+  mut magnet_end : Vec3?
+  mut magnet_lock : HitTarget?
+  mut death_at : Double?
+  mut ending_at : Double?
+  mut time : Double
+}
+pub fn Game::advance_world(Self, Double) -> Unit
+pub fn Game::cast(Self, Queries, Ray, Double, targets? : Bool, refuge? : Bool, ground? : Bool, visible? : (Vec3) -> Bool) -> Hit?
+pub fn Game::detonate_mine(Self, Int) -> Unit
+pub fn Game::dock(Self, Bool, Bool, Double) -> Unit
+pub fn Game::drift(Self, Vec3, Bool) -> Vec2
+pub fn Game::fire(Self, Queries, Vec3, Vec3) -> Bool
+pub fn Game::ground_target(Self, Queries, Vec3) -> Vec3
+pub fn Game::hit_enemy(Self, Int, Double, Vec3, DamageKind, part? : Int) -> Double
+pub fn Game::hurt(Self, Double, Vec3) -> Bool
+pub fn Game::impact(Self, Queries, Hit, Shot) -> Unit
+pub fn Game::interact(Self) -> Bool
+pub fn Game::interactable(Self) -> String?
+pub fn Game::laser(Self, Queries, Vec3, Vec3, Bool, Double) -> Unit
+pub fn Game::lay_mine(Self, String, Vec3) -> Unit
+pub fn Game::magnet(Self, Queries, Vec3, Vec3, Bool, Double) -> Unit
+pub fn Game::mortar_target(Self, Queries, Vec3, Vec3) -> Vec3
+pub fn Game::move_enemy(Self, Int, Double, Double, Double) -> Unit
+pub fn Game::move_player(Self, Vec2, Bool, Double) -> Unit
+pub fn Game::new() -> Self
+pub fn Game::predict_mortar(Self, Queries, Vec3, Vec3) -> (Array[Vec3], Hit?, Bool)
+pub fn Game::pull_slide(Self, Solid, Vec3, Double) -> Bool
+pub fn Game::reset_enemies(Self) -> Unit
+pub fn Game::respawn(Self) -> Unit
+pub fn Game::restore(Self, String) -> Bool
+pub fn Game::save(Self) -> String
+pub fn Game::shoot_enemy(Self, Queries, Int, offset? : Double, source? : Int, target? : Vec3, delay? : Double, lob? : Bool, speed? : Double, torpedo? : Bool, homing? : Bool, origin? : Vec3, duration? : Double, range? : Double) -> Unit
+pub fn Game::snapshot(Self) -> String
+pub fn Game::update_enemies(Self, Queries, Double) -> Unit
+pub fn Game::update_mines(Self, Double) -> Unit
+pub fn Game::update_puzzles(Self, Double) -> Unit
+pub fn Game::update_shots(Self, Queries, Double) -> Unit
+
+pub(all) struct GutterPuzzle {
+  angles : Array[Int]
+  rotations : Array[Double]
+  mut fill : Double
+  mut unplugged : Bool
+  mut grown : Bool
+} derive(ToJson, @json.FromJson)
+#deprecated
+pub fn GutterPuzzle::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+#deprecated
+pub fn GutterPuzzle::to_json(Self) -> Json
+
+pub(all) struct Hit {
+  distance : Double
+  point : Vec3
+  normal : Vec3?
+  target : HitTarget
+}
+
+pub(all) enum HitTarget {
+  Terrain
+  SlideTarget(Int)
+  PuzzleTarget(String)
+  CoverTarget
+  EnemyTarget(Int, Int?)
+  ControlTarget(Int)
+  BlockedControl(Int)
+  MirrorTarget(Int)
+  MineTarget(Int)
+  TorpedoTarget(Int)
+  Refuge
+  PlayerTarget
+} derive(Eq)
+#deprecated
+pub fn HitTarget::equal(Self, Self) -> Bool
+#deprecated
+pub fn HitTarget::not_equal(Self, Self) -> Bool
+
+pub(all) struct Hive {
+  id : String
+  name : String
+  position : Vec3
+  heading : Double
+  requires : String?
+}
+
+pub(all) struct Hull {
+  mut x : Double
+  mut y : Double
+  mut z : Double
+  mut speed : Double
+  deployed : Bool
+  mut afloat : Bool
+  red : Bool
+  phoenix : Bool
+}
+
+pub(all) struct LaserSegment {
+  from : Vec3
+  to : Vec3
+  live : Bool
+}
+
+pub(all) struct Lift {
+  id : String
+  rect : Rect
+  stops : Array[Double]
+  lock : String
+  locks : Array[String]
+  circuit_key : String
+  settle : Bool
+  mut y : Double
+  mut destination : Double
+  mut wait : Double
+}
+
+pub(all) struct Mine {
+  id : Int
+  owner : String
+  mut position : Vec3
+  mut age : Double
+  mut trigger : Double
+  mut pull : Double
+  mut disarmed : Bool
+}
+
+pub(all) struct Mirror {
+  id : String
+  mut position : Vec3
+  base_normal : Vec3
+  size : Double
+  turnable : Bool
+  mut flash : Double
+  mut angle : Double
+}
+pub fn Mirror::normal(Self) -> Vec3
+
+pub(all) enum Phase {
+  Idle
+  Warn
+  Charge
+  Burst
+  RailShot
+  Flame
+  Sweep
+  Repair
+  Suction
+  Bite
+  Vent
+  Stunned
+} derive(Eq)
+#deprecated
+pub fn Phase::equal(Self, Self) -> Bool
+#deprecated
+pub fn Phase::not_equal(Self, Self) -> Bool
+
+pub(all) struct Pickup {
+  id : String
+  mut position : Vec3
+  acquisition : Acquisition
+  requires : String?
+  lift : String?
+  hidden : Bool
+  preview : Bool
+}
+
+pub(all) struct Player {
+  mut x : Double
+  mut y : Double
+  mut z : Double
+  mut hp : Double
+  mut heat : Double
+  mut overheated : Bool
+  mut speed : Double
+  mut last_heat : Double
+  mut last_shot : Double
+  mut invincible_until : Double
+  mut heading : Double
+  mut aim : Double
+  abilities : Abilities
+  upgrades : Upgrades
+  mut weapon : Weapon
+  mut deployed : Bool
+  mut afloat : Bool
+  mut boost_cooling : Bool
+  mut action_heat_at : Double
+  mut shot_cooldown : Double
+  mut hurt_at : Double
+  mut hurt_until : Double
+  mut knock : Vec2
+  mut dock_hold : Double
+  mut pump_pressure : Double
+  mut ending_time : Double
+}
+pub fn Player::acquire(Self, Pickup, Progress) -> Bool
+pub fn Player::apply_upgrades(Self, Progress) -> Unit
+pub fn Player::begin_hit(Self, Double, Vec2?) -> Unit
+pub fn Player::contact_damage(Self) -> Double
+pub fn Player::continuous_heat(Self, Double, Double) -> Unit
+pub fn Player::damage(Self, Double, Double, hazard? : Bool) -> Bool
+pub fn Player::enemy_contact(Self, Enemy) -> Double
+pub fn Player::hit_displacement(Self, Double, Double) -> Vec2
+pub fn Player::hit_opacity(Self, Double) -> Double
+pub fn Player::max_hp(Self) -> Double
+pub fn Player::new() -> Self
+pub fn Player::phoenix_ready(Self) -> Bool
+pub fn Player::position(Self) -> Vec3
+pub fn Player::red_contact(Self) -> Bool
+pub fn Player::scope_range(Self, Double) -> Double
+pub fn Player::shoot_heat(Self, Double, cost? : Double, cooldown? : Double) -> Bool
+pub fn Player::stunned(Self, Double) -> Bool
+pub fn Player::toggle_flotation(Self, (Double, Double) -> Bool) -> Bool
+pub fn Player::update_heat(Self, Double, Double, Bool, Bool) -> Unit
+pub fn Player::weapon_damage(Self, Weapon, Double) -> Double
+
+pub(all) struct Progress {
+  flags : Map[String, Bool]
+  events : Array[String]
+  pending : Map[String, Signal]
+  mirror_turns : Map[String, Int]
+  slide_positions : Map[String, Double]
+  discovered : Array[String]
+  mut anchor : String
+  mut combat_arena : String?
+}
+pub fn Progress::advance_signals(Self, Double) -> Array[String]
+pub fn Progress::circuit_ready(Self, String, String, String, is_local? : Bool) -> Bool
+pub fn Progress::complete(Self, String) -> Bool
+pub fn Progress::has(Self, String) -> Bool
+pub fn Progress::new() -> Self
+pub fn Progress::trigger(Self, String, Double, Map[String, Bool], Array[SignalBranch], external? : Bool) -> Bool
+pub fn Progress::turn_mirror(Self, String) -> Int
+
+pub(all) struct Puzzles {
+  mut rail : RailPuzzle
+  mut gutter : GutterPuzzle
+  mut delivery : Delivery
+  pending : Map[String, Double]
+}
+pub fn Puzzles::activate(Self, String) -> Bool
+pub fn Puzzles::new() -> Self
+pub fn Puzzles::targets(Self) -> Array[(String, Vec3)]
+
+pub(all) struct Queries {
+  geometry : (Ray, Double, Bool) -> Hit?
+}
+
+pub(all) struct Rail {
+  axis : Axis
+  min : Double
+  max : Double
+  release : String?
+  latch : String?
+}
+
+pub(all) struct RailPuzzle {
+  switches : Array[Bool]
+  mut solved : Bool
+  mut moving : Bool
+  mut distance : Double
+  mut direction : Double
+  route : Array[Vec2]
+  mut heading : Double
+} derive(ToJson, @json.FromJson)
+#deprecated
+pub fn RailPuzzle::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn RailPuzzle::position(Self, distance? : Double) -> Vec3
+#deprecated
+pub fn RailPuzzle::to_json(Self) -> Json
+
+pub(all) struct Ray {
+  origin : Vec3
+  direction : Vec3
+}
+pub fn Ray::box(Self, Vec3, Vec3) -> (Double, Vec3)?
+pub fn Ray::plane(Self, Vec3, Vec3) -> Double?
+pub fn Ray::point(Self, Double) -> Vec3
+pub fn Ray::sphere(Self, Vec3, Double) -> Double?
+
+pub(all) struct Rect {
+  x : Double
+  z : Double
+  w : Double
+  d : Double
+} derive(Eq)
+pub fn Rect::contains(Self, Double, Double, margin? : Double) -> Bool
+#deprecated
+pub fn Rect::equal(Self, Self) -> Bool
+#deprecated
+pub fn Rect::not_equal(Self, Self) -> Bool
+
+pub(all) struct Shot {
+  id : Int
+  owner : String?
+  origin : Vec3
+  mut position : Vec3
+  mut direction : Vec3
+  target : Vec3
+  damage : Double
+  speed : Double
+  range : Double
+  mortar : Bool
+  duration : Double
+  arc : Double
+  mine_owner : String?
+  source : (Int, Int)?
+  torpedo : Bool
+  mut homing : Bool
+  mut captured : Bool
+  mut delay : Double
+  mut age : Double
+  mut distance : Double
+}
+
+pub(all) struct Signal {
+  duration : Double
+  mut remaining : Double
+  changes : Map[String, Bool]
+  branches : Array[SignalBranch]
+} derive(ToJson, @json.FromJson)
+#deprecated
+pub fn Signal::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+#deprecated
+pub fn Signal::to_json(Self) -> Json
+
+pub(all) struct SignalBranch {
+  key : String
+  target : String
+  duration : Double
+} derive(ToJson, @json.FromJson)
+#deprecated
+pub fn SignalBranch::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+#deprecated
+pub fn SignalBranch::to_json(Self) -> Json
+
+pub(all) struct Solid {
+  id : String
+  mut rect : Rect
+  mut y : Double
+  h : Double
+  permanent : Bool
+  motion : Transport?
+  mut direction : Double
+  red : Bool
+  phoenix : Bool
+  rail : Rail?
+  arena : String?
+  local_control : String?
+  circuit_key : String
+}
+pub fn Solid::active(Self, Progress) -> Bool
+pub fn Solid::coordinate(Self, Axis) -> Double
+pub fn Solid::set_coordinate(Self, Axis, Double) -> Unit
+
+pub(all) struct Support {
+  deck : Deck
+  height : Double
+}
+
+pub(all) struct Transport {
+  axis : Axis
+  min : Double
+  max : Double
+  speed : Double
+}
+
+pub(all) struct Upgrades {
+  mut armor_packs : Int
+  mut cooling : Bool
+  mut cannon : Bool
+  mut mortar : Bool
+  mut laser : Bool
+  mut scope : Bool
+}
+pub fn Upgrades::new() -> Self
+
+pub(all) enum Variant {
+  Ordinary
+  Interceptor
+  Bastion
+  Siege
+  Prism
+  Flanker
+} derive(Eq)
+#deprecated
+pub fn Variant::equal(Self, Self) -> Bool
+#deprecated
+pub fn Variant::not_equal(Self, Self) -> Bool
+
+pub(all) struct Vec2 {
+  x : Double
+  z : Double
+} derive(Eq, ToJson, @json.FromJson)
+pub fn Vec2::distance(Self, Self) -> Double
+#deprecated
+pub fn Vec2::equal(Self, Self) -> Bool
+#deprecated
+pub fn Vec2::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Vec2::length(Self) -> Double
+#deprecated
+pub fn Vec2::not_equal(Self, Self) -> Bool
+#deprecated
+pub fn Vec2::to_json(Self) -> Json
+
+pub(all) struct Vec3 {
+  x : Double
+  y : Double
+  z : Double
+} derive(Eq, ToJson, @json.FromJson)
+pub fn Vec3::add(Self, Self) -> Self
+pub fn Vec3::distance(Self, Self) -> Double
+pub fn Vec3::dot(Self, Self) -> Double
+#deprecated
+pub fn Vec3::equal(Self, Self) -> Bool
+#deprecated
+pub fn Vec3::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Vec3::length(Self) -> Double
+pub fn Vec3::lerp(Self, Self, Double) -> Self
+pub fn Vec3::normalized(Self) -> Self
+#deprecated
+pub fn Vec3::not_equal(Self, Self) -> Bool
+pub fn Vec3::rotate_y(Self, Double) -> Self
+pub fn Vec3::scale(Self, Double) -> Self
+pub fn Vec3::sub(Self, Self) -> Self
+#deprecated
+pub fn Vec3::to_json(Self) -> Json
+
+pub(all) enum Weapon {
+  Cannon
+  Mortar
+  Laser
+} derive(Eq)
+#deprecated
+pub fn Weapon::equal(Self, Self) -> Bool
+#deprecated
+pub fn Weapon::not_equal(Self, Self) -> Bool
+
+pub(all) struct World {
+  decks : Array[Deck]
+  solids : Array[Solid]
+  obstacles : Array[Solid]
+  architecture : Array[Solid]
+  architecture_grid : Map[(Int, Int), Array[Solid]]
+  lifts : Array[Lift]
+}
+pub fn World::blocked(Self, Double, Double, Double, Progress, radius? : Double) -> Collision?
+pub fn World::ground_patches(Self, Player) -> Array[Deck]
+pub fn World::move_hull(Self, Hull, Double, Double, Progress) -> Unit
+pub fn World::move_player(Self, Player, Double, Double, Progress) -> Unit
+pub fn World::step_lifts(Self, Progress, Player, Double, Array[Enemy]) -> Unit
+pub fn World::support(Self, Double, Double, Double, Bool) -> Support?
+
+// Type aliases
+
+// Traits

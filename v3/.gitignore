@@ -1,0 +1,8 @@
+.DS_Store
+_build/
+.mooncakes/
+node_modules/
+dist/
+output/
+.playwright-cli/
+public/art/folded-scene.json

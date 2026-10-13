@@ -1,0 +1,116 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "milky/tankle-astra/host"
+
+import {
+  "mizchi/three",
+}
+
+// Values
+pub fn arrow(Canvas, Double, Double, Double) -> Unit
+
+pub fn attribute(String, String, String) -> Unit
+
+pub fn audio_resume(Audio) -> Unit
+
+pub fn audio_voice(Audio, Bool, Double, Double, Double, Double, Double, Double, Double, String, Double, String, Double) -> Unit
+
+pub fn audio_volume(Audio, Double) -> Unit
+
+pub fn canvas(String) -> Canvas
+
+pub fn canvas_begin(Canvas, Int, Int, Double) -> Unit
+
+pub fn capture_pointer() -> Unit
+
+pub fn class_toggle(String, String, Bool) -> Unit
+
+pub fn create_audio() -> Audio
+
+pub fn create_renderer() -> @three.WebGLRenderer
+
+pub fn diagnostics(() -> String) -> Unit
+
+pub fn direct_entry() -> Bool
+
+pub fn dot(Canvas, Double, Double, Double, String) -> Unit
+
+pub fn frame((Double) -> Unit) -> Unit
+
+pub fn fullscreen() -> Unit
+
+pub fn height() -> Int
+
+pub fn hidden(String, Bool) -> Unit
+
+pub fn html(String, String) -> Unit
+
+pub fn inspect_scene(@three.Scene, @three.Camera) -> Unit
+
+pub fn load_scene(String, (@three.Scene) -> Unit, (String) -> Unit) -> Unit
+
+pub fn music(Audio, String, Double, Bool) -> Unit
+
+pub fn on_blur(() -> Unit) -> Unit
+
+pub fn on_button((Int, Bool) -> Unit) -> Unit
+
+pub fn on_change(String, () -> Unit) -> Unit
+
+pub fn on_click(String, () -> Unit) -> Unit
+
+pub fn on_key((String, Bool, Bool) -> Unit) -> Unit
+
+pub fn on_pointer((Double, Double, Double, Double) -> Unit) -> Unit
+
+pub fn on_resize(() -> Unit) -> Unit
+
+pub fn pixel_ratio() -> Double
+
+pub fn pointer_locked() -> Bool
+
+pub fn query(String) -> String
+
+pub fn read_preferences() -> String
+
+pub fn read_save() -> String
+
+pub fn ready() -> Unit
+
+pub fn rectangle(Canvas, Double, Double, Double, Double, String, Double) -> Unit
+
+pub fn release_pointer() -> Unit
+
+pub fn remove_save() -> Unit
+
+pub fn render_role(@three.Material) -> String
+
+pub fn set_checked(String, Bool) -> Unit
+
+pub fn set_value(String, String) -> Unit
+
+pub fn setting_checked(String) -> Bool
+
+pub fn setting_number(String) -> Double
+
+pub fn setting_value(String) -> String
+
+pub fn style(String, String, String) -> Unit
+
+pub fn text(String, String) -> Unit
+
+pub fn width() -> Int
+
+pub fn write_preferences(String) -> Unit
+
+pub fn write_save(String) -> Unit
+
+// Errors
+
+// Types and methods
+pub type Audio
+
+pub type Canvas
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,23 @@
+{
+  "name": "tankle-astra-moonbit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:moon": "moon build --target js --release",
+    "dev": "npm run build:moon && vite --host 127.0.0.1",
+    "build": "npm run build:moon && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "moon test simulation --target js",
+    "check": "moon check --target js --deny-warn && npm test && npm run build",
+    "refresh:world": "node scripts/authored-world.mjs && moon fmt"
+  },
+  "dependencies": {
+    "@mizchi/three-mbt": "file:./.mooncakes/mizchi/three/js",
+    "three": "0.185.1",
+    "tankle-astra-platform": "file:./browser"
+  },
+  "devDependencies": {
+    "vite": "7.1.0"
+  }
+}

@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "milky/tankle-astra/cmd/play"
+
+// Values
+pub fn start() -> Unit
+
+// Errors
+
+// Types and methods
+type Hud
+
+type Session
+
+type Sound
+
+type Voice
+
+// Type aliases
+
+// Traits

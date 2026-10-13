@@ -1,0 +1,622 @@
+///|
+pub(all) enum Effect {
+  Fired(Vec3, Weapon)
+  Impact(Vec3, Bool)
+  Armored(Vec3)
+  Killed(Int32)
+  Hurt
+  Acquired(String)
+  Activated(String)
+  Repaired(String)
+}
+
+///|
+pub(all) struct Shot {
+  id : Int32
+  owner : String?
+  origin : Vec3
+  mut position : Vec3
+  mut direction : Vec3
+  target : Vec3
+  damage : Double
+  speed : Double
+  range : Double
+  mortar : Bool
+  duration : Double
+  arc : Double
+  mine_owner : String?
+  source : (Int32, Int32)?
+  torpedo : Bool
+  mut homing : Bool
+  mut captured : Bool
+  mut delay : Double
+  mut age : Double
+  mut distance : Double
+}
+
+///|
+pub(all) struct Mine {
+  id : Int32
+  owner : String
+  mut position : Vec3
+  mut age : Double
+  mut trigger : Double
+  mut pull : Double
+  mut disarmed : Bool
+}
+
+///|
+pub fn mortar_position(
+  origin : Vec3,
+  target : Vec3,
+  age : Double,
+  duration : Double,
+  height : Double,
+) -> Vec3 {
+  let t = Double::max(0, age / duration)
+  let point = origin.lerp(target, t)
+  { ..point, y: point.y + 4 * height * t * (1 - t), }
+}
+
+///|
+pub fn Game::ground_target(
+  self : Game,
+  queries : Queries,
+  target : Vec3,
+) -> Vec3 {
+  self
+  .cast(
+    queries,
+    {
+      origin: target.add({ x: 0, y: 0.45, z: 0, }),
+      direction: { x: 0, y: -1, z: 0, },
+    },
+    320,
+    ground=true,
+  )
+  .map(fn(hit) { hit.point })
+  .unwrap_or(target)
+}
+
+///|
+pub fn Game::fire(
+  self : Game,
+  queries : Queries,
+  origin : Vec3,
+  aim : Vec3,
+) -> Bool {
+  let p = self.player
+  if p.stunned(self.time) || p.weapon == Laser {
+    return false
+  }
+  let mortar = p.weapon == Mortar
+  if !p.shoot_heat(
+      self.time,
+      cost=if mortar { 35 } else { 20 },
+      cooldown=if mortar { 1.05 } else { 0.5 },
+    ) {
+    return false
+  }
+  let range = p.scope_range(24)
+  let target = if mortar {
+    self.mortar_target(queries, origin, aim)
+  } else {
+    aim
+  }
+  self.next_projectile += 1
+  self.shots.push({
+    id: self.next_projectile,
+    owner: None,
+    origin,
+    position: origin,
+    direction: aim.sub(origin).normalized(),
+    target,
+    damage: p.weapon_damage(p.weapon, if mortar { 2 } else { 1 }),
+    speed: 38,
+    range,
+    mortar,
+    duration: 1.15,
+    arc: 10,
+    mine_owner: None,
+    source: None,
+    torpedo: false,
+    homing: false,
+    captured: false,
+    delay: 0,
+    age: 0,
+    distance: 0,
+  })
+  self.effects.push(Fired(origin, p.weapon))
+  true
+}
+
+///|
+pub fn Game::shoot_enemy(
+  self : Game,
+  queries : Queries,
+  index : Int32,
+  offset~ : Double = 0,
+  source? : Int32,
+  target? : Vec3,
+  delay~ : Double = 0,
+  lob~ : Bool = false,
+  speed? : Double,
+  torpedo~ : Bool = false,
+  homing~ : Bool = false,
+  origin? : Vec3,
+  duration? : Double,
+  range? : Double,
+) -> Unit {
+  let enemy = self.enemies[index]
+  let spec = enemy.spec()
+  let origin = origin.unwrap_or(
+    source
+    .map(fn(i) { enemy.parts[i].position })
+    .unwrap_or(
+      enemy
+      .position()
+      .add({
+        x: 0,
+        y: if enemy.definition.kind == Boss {
+          4
+        } else if enemy.definition.guardian {
+          2.8
+        } else {
+          1.5
+        },
+        z: 0,
+      }),
+    ),
+  )
+  let aim = target.unwrap_or(enemy.lock)
+  let mortar = lob ||
+    enemy.definition.kind == Artillery ||
+    enemy.definition.kind == Miner
+  let speed = if enemy.definition.id == "keeper" {
+    Double::max(15, origin.distance(aim) / 2.5)
+  } else {
+    speed.unwrap_or(
+      spec.projectile_speed.unwrap_or(
+        if enemy.definition.kind == Sniper {
+          120
+        } else {
+          15
+        },
+      ),
+    )
+  }
+  self.next_projectile += 1
+  self.shots.push({
+    id: self.next_projectile,
+    owner: Some(enemy.definition.id),
+    origin,
+    position: origin,
+    direction: aim.sub(origin).normalized().rotate_y(offset),
+    target: if mortar {
+      self.ground_target(queries, aim)
+    } else {
+      aim
+    },
+    damage: enemy.shot_damage(
+      if lob {
+        Some(Barrage)
+      } else if homing {
+        Some(Seekers)
+      } else {
+        enemy.attack
+      },
+    ),
+    speed,
+    range: range.unwrap_or(
+      if enemy.definition.id == "keeper" {
+        94
+      } else if enemy.definition.kind == Sniper {
+        86
+      } else {
+        55
+      },
+    ),
+    mortar,
+    duration: duration.unwrap_or(spec.lob_duration),
+    arc: if enemy.definition.kind == Boss {
+      10
+    } else {
+      9
+    },
+    mine_owner: if enemy.definition.kind == Miner {
+      Some(enemy.definition.id)
+    } else {
+      None
+    },
+    source: source.map(fn(part) { (index, part) }),
+    torpedo,
+    homing,
+    captured: false,
+    delay,
+    age: 0,
+    distance: 0,
+  })
+  self.effects.push(Fired(origin, if mortar { Mortar } else { Cannon }))
+}
+
+///|
+pub fn Game::update_shots(self : Game, queries : Queries, dt : Double) -> Unit {
+  for i = self.shots.length() - 1; i >= 0; i = i - 1 {
+    let shot = self.shots[i]
+    if shot.delay > 0 &&
+      shot.source is Some((enemy, part)) &&
+      self.enemies[enemy].parts[part].hp <= 0 {
+      shot.captured = true
+    }
+    if shot.captured {
+      self.shots.remove(i) |> ignore
+      continue
+    }
+    if shot.delay > 0 {
+      shot.delay -= dt
+      continue
+    }
+    shot.age += dt
+    if shot.homing {
+      let offset = self.player
+        .position()
+        .add({ x: 0, y: 1.2, z: 0, })
+        .sub(shot.position)
+      if shot.age > 1.65 || offset.length() < 5 {
+        shot.homing = false
+      } else {
+        let heading = @math.atan2(shot.direction.x, shot.direction.z)
+        let delta = clamp(
+          angle_delta(heading, @math.atan2(offset.x, offset.z)),
+          -0.9 * dt,
+          0.9 * dt,
+        )
+        shot.direction = shot.direction.rotate_y(delta)
+      }
+    }
+    let next = if shot.mortar {
+      mortar_position(
+        shot.origin,
+        shot.target,
+        shot.age,
+        shot.duration,
+        shot.arc,
+      )
+    } else {
+      shot.position.add(shot.direction.scale(dt * shot.speed))
+    }
+    let path = next.sub(shot.position)
+    let distance = path.length()
+    let ray = Ray::{ origin: shot.position, direction: path.normalized(), }
+    let hostile = shot.owner is Some(_)
+    let mut hit = self.cast(queries, ray, distance, targets=!hostile)
+    if shot.torpedo && hit is None {
+      let support = self.world.support(next.x, next.z, next.y - 0.55, true)
+      if support is None || (support is Some(s) && !s.deck.water) {
+        hit = Some({ point: next, distance, normal: None, target: Terrain, })
+      }
+    }
+    if hostile && shot.mine_owner is None {
+      let mut limit = hit.map(fn(h) { h.distance }).unwrap_or(distance)
+      for j, enemy in self.enemies {
+        if enemy.hp <= 0 || shot.owner == Some(enemy.definition.id) {
+          continue
+        }
+        if ray.sphere(
+            enemy.position().add({ x: 0, y: 1.5, z: 0, }),
+            enemy.radius,
+          )
+          is Some(d) &&
+          d < limit {
+          limit = d
+          hit = Some({
+            distance: d,
+            point: ray.point(d),
+            normal: None,
+            target: EnemyTarget(j, None),
+          })
+        }
+        for k, part in enemy.parts {
+          if part.hp > 0 &&
+            ray.sphere(part.position, part.radius) is Some(d) &&
+            d < limit {
+            limit = d
+            hit = Some({
+              distance: d,
+              point: ray.point(d),
+              normal: None,
+              target: EnemyTarget(j, Some(k)),
+            })
+          }
+        }
+      }
+      if ray.sphere(self.player.position().add({ x: 0, y: 1.2, z: 0, }), 0.8)
+        is Some(d) &&
+        d < limit {
+        self.hurt(shot.damage, shot.position) |> ignore
+        hit = Some({
+          distance: d,
+          point: ray.point(d),
+          normal: None,
+          target: PlayerTarget,
+        })
+      }
+    }
+    shot.distance += distance
+    if hit is Some(impact) {
+      self.impact(queries, impact, shot)
+    }
+    if hit is Some(_) ||
+      (!shot.mortar && shot.distance > shot.range) ||
+      shot.age >= 4 {
+      self.shots.remove(i) |> ignore
+    } else {
+      shot.position = next
+    }
+  }
+}
+
+///|
+fn Game::blast_visible(
+  self : Game,
+  queries : Queries,
+  origin : Vec3,
+  target : Vec3,
+) -> Bool {
+  let delta = target.sub(origin)
+  delta.length() < 0.0001 ||
+  self.cast(
+    queries,
+    { origin, direction: delta.normalized(), },
+    Double::max(0, delta.length() - 0.2),
+    targets=false,
+    refuge=false,
+  )
+  is None
+}
+
+///|
+pub fn Game::impact(
+  self : Game,
+  queries : Queries,
+  hit : Hit,
+  shot : Shot,
+) -> Unit {
+  self.last_hit = match hit.target {
+    EnemyTarget(i, _) => "enemy:" + self.enemies[i].definition.id
+    ControlTarget(i) => "control:" + self.commands.controls[i].id
+    BlockedControl(i) => "housing:" + self.commands.controls[i].id
+    Terrain => "terrain"
+    _ => "other"
+  }
+
+  if hit.target is Refuge {
+    self.effects.push(Armored(hit.point))
+    return
+  }
+  if hit.target is BlockedControl(_) && !shot.mortar {
+    self.effects.push(Armored(hit.point))
+    return
+  }
+  let blast = hit.point.add(
+    hit.normal
+    .unwrap_or({ x: 0, y: 0, z: 0, })
+    .scale(if shot.mortar { 0.05 } else { 0 }),
+  )
+  self.effects.push(Impact(hit.point, shot.mortar))
+  let hostile = shot.owner is Some(_)
+  if hostile && shot.mine_owner is Some(owner) {
+    if self.world.support(hit.point.x, hit.point.z, hit.point.y, false)
+      is Some(support) {
+      self.lay_mine(owner, { ..hit.point, y: support.height, })
+    }
+    return
+  }
+  if hostile && !shot.mortar {
+    if hit.target is EnemyTarget(index, part) {
+      self.hit_enemy(index, 1, shot.origin, CannonHit, part?) |> ignore
+    }
+    return
+  }
+  if !hostile && !shot.mortar && hit.target is PuzzleTarget(id) {
+    self.puzzles.activate(id) |> ignore
+  }
+  if !hostile &&
+    hit.target is MirrorTarget(index) &&
+    self.mirrors[index].turnable {
+    self.progress.turn_mirror(self.mirrors[index].id) |> ignore
+  }
+  if !hostile && hit.target is TorpedoTarget(index) {
+    self.shots[index].captured = true
+  }
+  if shot.mortar {
+    let radius = if hostile { 4.0 } else { 3.0 }
+    if hostile &&
+      self.player.position().add({ x: 0, y: 1, z: 0, }).distance(blast) < radius &&
+      self.blast_visible(
+        queries,
+        blast,
+        self.player.position().add({ x: 0, y: 1, z: 0, }),
+      ) {
+      self.hurt(10, blast) |> ignore
+    }
+    for index, enemy in self.enemies {
+      if enemy.hp <= 0 || (hostile && shot.owner == Some(enemy.definition.id)) {
+        continue
+      }
+      let center = enemy.position().add({ x: 0, y: 1.5, z: 0, })
+      if center.distance(hit.point) < radius + enemy.radius &&
+        self.blast_visible(queries, blast, center) {
+        self.hit_enemy(
+          index,
+          if hostile {
+            3
+          } else {
+            shot.damage
+          },
+          shot.origin,
+          MortarHit,
+        )
+        |> ignore
+      }
+      for part, body in enemy.parts {
+        if body.hp > 0 &&
+          body.position.distance(hit.point) < radius &&
+          self.blast_visible(queries, blast, body.position) {
+          self.hit_enemy(
+            index,
+            if hostile {
+              3
+            } else {
+              shot.damage
+            },
+            shot.origin,
+            MortarHit,
+            part~,
+          )
+          |> ignore
+        }
+      }
+    }
+    if !hostile {
+      for control in self.commands.controls {
+        if control.position.distance(hit.point) < 2 &&
+          (!control.top || blast.y >= control.position.y - 0.01) &&
+          self.blast_visible(queries, blast, control.position) {
+          control.flash = 0.2
+          self.commands.activate(
+            self.progress,
+            control.id,
+            MortarAction,
+            self.player,
+            self.time,
+          )
+          |> ignore
+        }
+      }
+      for index, mirror in self.mirrors {
+        if !mirror.turnable || (hit.target is MirrorTarget(j) && j == index) {
+          continue
+        }
+        if mirror.position.distance(blast) < radius &&
+          self.blast_visible(queries, blast, mirror.position) {
+          self.progress.turn_mirror(mirror.id) |> ignore
+          mirror.flash = 0.25
+        }
+      }
+    }
+  } else {
+    match hit.target {
+      EnemyTarget(index, part) =>
+        self.hit_enemy(index, shot.damage, shot.origin, CannonHit, part?)
+        |> ignore
+      ControlTarget(index) => {
+        let c = self.commands.controls[index]
+        c.flash = 0.2
+        self.commands.activate(
+          self.progress,
+          c.id,
+          CannonAction,
+          self.player,
+          self.time,
+        )
+        |> ignore
+      }
+      MineTarget(index) => self.detonate_mine(index)
+      _ => ()
+    }
+  }
+}
+
+///|
+pub fn Game::lay_mine(self : Game, owner : String, position : Vec3) -> Unit {
+  self.next_projectile += 1
+  self.mines.push({
+    id: self.next_projectile,
+    owner,
+    position,
+    age: 0,
+    trigger: 0,
+    pull: 0,
+    disarmed: false,
+  })
+}
+
+///|
+pub fn Game::detonate_mine(self : Game, index : Int32) -> Unit {
+  let mine = self.mines[index]
+  if mine.disarmed {
+    return
+  }
+  mine.disarmed = true
+  self.effects.push(Impact(mine.position, true))
+  if (mine.position.y - self.player.y).abs() < 2 &&
+    Vec2::{
+      x: mine.position.x - self.player.x,
+      z: mine.position.z - self.player.z,
+    }.length() <
+    3.4 {
+    self.hurt(5, mine.position) |> ignore
+  }
+  for i, enemy in self.enemies {
+    if enemy.hp > 0 &&
+      (enemy.y - mine.position.y).abs() < 2 &&
+      Vec2::{ x: enemy.x - mine.position.x, z: enemy.z - mine.position.z, }.length() <
+      3 {
+      self.hit_enemy(i, 2, mine.position, MortarHit) |> ignore
+    }
+  }
+}
+
+///|
+pub fn Game::mortar_target(
+  self : Game,
+  queries : Queries,
+  origin : Vec3,
+  aim : Vec3,
+) -> Vec3 {
+  let offset = Vec2::{ x: aim.x - origin.x, z: aim.z - origin.z, }
+  let factor = Double::min(
+    1,
+    self.player.scope_range(24) / Double::max(0.001, offset.length()),
+  )
+  let target = Vec3::{
+    x: origin.x + offset.x * factor,
+    y: aim.y,
+    z: origin.z + offset.z * factor,
+  }
+  if self.commands.controls.any(fn(c) {
+      c.top && c.position.distance(target) < 1.2
+    }) {
+    target
+  } else {
+    self.ground_target(queries, target)
+  }
+}
+
+///|
+pub fn Game::predict_mortar(
+  self : Game,
+  queries : Queries,
+  origin : Vec3,
+  aim : Vec3,
+) -> (Array[Vec3], Hit?, Bool) {
+  let target = self.mortar_target(queries, origin, aim)
+  let points = [origin]
+  for i in 1..<=120 {
+    let age = i.to_double() / 30
+    let point = mortar_position(origin, target, age, 1.15, 10)
+    let from = points[points.length() - 1]
+    let delta = point.sub(from)
+    let hit = self.cast(
+      queries,
+      { origin: from, direction: delta.normalized(), },
+      delta.length(),
+    )
+    points.push(hit.map(fn(h) { h.point }).unwrap_or(point))
+    if hit is Some(_) {
+      return (points, hit, age < 1.15 - 1.0 / 30)
+    }
+  }
+  (points, None, false)
+}
