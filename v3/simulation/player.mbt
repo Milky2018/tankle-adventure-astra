@@ -190,9 +190,9 @@ pub fn Player::update_heat(
     !self.deployed
   let target = if active {
     if self.abilities.phoenix {
-      3.2
+      drive_tuning.phoenix
     } else {
-      1.6
+      drive_tuning.overdrive
     }
   } else {
     1.0
@@ -200,11 +200,20 @@ pub fn Player::update_heat(
   self.speed = approach(
     self.speed,
     target,
-    dt * (1.6 - 1) / (if active { 0.5 } else { 0.35 }),
+    dt *
+    (drive_tuning.overdrive - 1) /
+    (if active {
+      drive_tuning.acceleration_time
+    } else {
+      drive_tuning.deceleration_time
+    }),
   )
   if active {
     self.boost_cooling = true
-    self.heat = Double::min(100, self.heat + 15 * dt)
+    self.heat = Double::min(
+      100,
+      self.heat + drive_tuning.boost_heat_per_second * dt,
+    )
     self.last_heat = time
   } else if (!boost && self.boost_cooling && time - self.action_heat_at >= 0.75) ||
     time - self.last_heat >= 0.75 {

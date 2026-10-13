@@ -37,7 +37,12 @@ pub(all) struct View {
 pub fn View::new(scene : @three.Scene, game : @sim.Game) -> View {
   scene.update_matrix_world(true)
   let nodes : Map[String, @three.Object3D] = Map([])
-  scene.traverse(fn(node) { if node.name() != "" { nodes[node.name()] = node } })
+  scene.traverse(fn(node) {
+    let binding = @host.scene_binding(node)
+    if binding != "" {
+      nodes[binding] = node
+    }
+  })
   let renderer = @host.create_renderer()
   renderer.set_pixel_ratio(@host.pixel_ratio())
   renderer.set_shadows_enabled(true)
@@ -45,8 +50,8 @@ pub fn View::new(scene : @three.Scene, game : @sim.Game) -> View {
   renderer.set_tone_mapping(@three.NeutralToneMapping)
   renderer.set_tone_mapping_exposure(1.1)
   let root = nodes.get("player/root").unwrap()
-  let body = root.get_object_by_name("player/body").unwrap()
-  let turret = root.get_object_by_name("player/turret").unwrap()
+  let body = nodes.get("player/body").unwrap()
+  let turret = nodes.get("player/turret").unwrap()
   for object in [root, body, turret] {
     object.set_matrix_auto_update(true)
   }
@@ -64,7 +69,7 @@ pub fn View::new(scene : @three.Scene, game : @sim.Game) -> View {
     root,
     body,
     turret,
-    barrel: root.get_object_by_name("player/barrel").unwrap(),
+    barrel: nodes.get("player/barrel").unwrap(),
     distance: 15,
     camera_height: 2.5,
     shoulder: 0,
@@ -74,7 +79,7 @@ pub fn View::new(scene : @three.Scene, game : @sim.Game) -> View {
     ground_clearance: 0,
     cutaway: Cutaway::new(scene),
     projectiles: Projectiles::new(),
-    enemies: enemy_visuals(nodes),
+    enemies: enemy_visuals(nodes, game),
     ending: @three.PerspectiveCamera::PerspectiveCamera(55, 1, 0.15, 290),
     film: false,
     third: @three.PerspectiveCamera::PerspectiveCamera(60, 1, 0.15, 290),

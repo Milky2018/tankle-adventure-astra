@@ -22,10 +22,10 @@ fn belts(
   game : @sim.Game,
 ) -> Array[BeltVisual] {
   let sizes = belt_segments()
-  game.belts.mapi(fn(i, body) {
+  game.belts.map(fn(body) {
     let segments : Array[BeltSegment] = []
-    for j, (travel, heat_count) in sizes[i] {
-      let prefix = "world/belts/\{i}/segments/\{j}"
+    for j, (travel, heat_count) in sizes.get(body.deck.id).unwrap() {
+      let prefix = "world/belts/\{body.deck.id}/segments/\{j}"
       if nodes.get(prefix + "/mesh") is Some(node) {
         let rollers : Array[(@three.Object3D, @three.Quaternion)] = []
         for k in 0..<2 {

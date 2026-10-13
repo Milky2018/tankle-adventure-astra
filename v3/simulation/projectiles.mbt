@@ -90,14 +90,11 @@ pub fn Game::fire(
     return false
   }
   let mortar = p.weapon == Mortar
-  if !p.shoot_heat(
-      self.time,
-      cost=if mortar { 35 } else { 20 },
-      cooldown=if mortar { 1.05 } else { 0.5 },
-    ) {
+  let tuning = if mortar { mortar_tuning } else { cannon_tuning }
+  if !p.shoot_heat(self.time, cost=tuning.heat, cooldown=tuning.cooldown) {
     return false
   }
-  let range = p.scope_range(24)
+  let range = p.scope_range(tuning.range)
   let target = if mortar {
     self.mortar_target(queries, origin, aim)
   } else {
@@ -111,12 +108,12 @@ pub fn Game::fire(
     position: origin,
     direction: aim.sub(origin).normalized(),
     target,
-    damage: p.weapon_damage(p.weapon, if mortar { 2 } else { 1 }),
-    speed: 38,
+    damage: p.weapon_damage(p.weapon, tuning.damage),
+    speed: tuning.speed,
     range,
     mortar,
-    duration: 1.15,
-    arc: 10,
+    duration: tuning.duration,
+    arc: tuning.arc,
     mine_owner: None,
     source: None,
     torpedo: false,
@@ -578,7 +575,8 @@ pub fn Game::mortar_target(
   let offset = Vec2::{ x: aim.x - origin.x, z: aim.z - origin.z, }
   let factor = Double::min(
     1,
-    self.player.scope_range(24) / Double::max(0.001, offset.length()),
+    self.player.scope_range(mortar_tuning.range) /
+    Double::max(0.001, offset.length()),
   )
   let target = Vec3::{
     x: origin.x + offset.x * factor,
@@ -605,7 +603,13 @@ pub fn Game::predict_mortar(
   let points = [origin]
   for i in 1..<=120 {
     let age = i.to_double() / 30
-    let point = mortar_position(origin, target, age, 1.15, 10)
+    let point = mortar_position(
+      origin,
+      target,
+      age,
+      mortar_tuning.duration,
+      mortar_tuning.arc,
+    )
     let from = points[points.length() - 1]
     let delta = point.sub(from)
     let hit = self.cast(
@@ -615,7 +619,7 @@ pub fn Game::predict_mortar(
     )
     points.push(hit.map(fn(h) { h.point }).unwrap_or(point))
     if hit is Some(_) {
-      return (points, hit, age < 1.15 - 1.0 / 30)
+      return (points, hit, age < mortar_tuning.duration - 1.0 / 30)
     }
   }
   (points, None, false)

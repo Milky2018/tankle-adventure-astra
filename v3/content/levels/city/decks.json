@@ -1,0 +1,3295 @@
+[
+  {
+    "id": "turntable",
+    "x": -16,
+    "z": 10,
+    "w": 32,
+    "d": 26,
+    "y": 0
+  },
+  {
+    "id": "hub-entry",
+    "x": 30,
+    "z": -2,
+    "w": 12,
+    "d": 38,
+    "y": 0
+  },
+  {
+    "id": "hub-entry-neck",
+    "x": 16,
+    "z": 26,
+    "w": 14,
+    "d": 10,
+    "y": 0
+  },
+  {
+    "id": "transport-bridge",
+    "x": -6,
+    "z": -28,
+    "w": 12,
+    "d": 38,
+    "y": 0
+  },
+  {
+    "id": "west-landing",
+    "x": -32,
+    "z": 22,
+    "w": 16,
+    "d": 12,
+    "y": 0
+  },
+  {
+    "id": "garden-descent",
+    "x": -32,
+    "z": -2,
+    "w": 12,
+    "d": 24,
+    "y": -8,
+    "rise": 8
+  },
+  {
+    "id": "ferry-approach",
+    "x": -40,
+    "z": -14,
+    "w": 20,
+    "d": 12,
+    "y": -8
+  },
+  {
+    "id": "ferry-cradle",
+    "x": -52,
+    "z": -14,
+    "w": 12,
+    "d": 16,
+    "y": -8
+  },
+  {
+    "id": "launch-ramp",
+    "x": -52,
+    "z": 2,
+    "w": 12,
+    "d": 24,
+    "y": -8,
+    "rise": -8
+  },
+  {
+    "id": "launch-pool",
+    "x": -52,
+    "z": 16,
+    "w": 22,
+    "d": 18,
+    "y": -16,
+    "water": true
+  },
+  {
+    "id": "canal-bend",
+    "x": -42,
+    "z": -10,
+    "w": 12,
+    "d": 32,
+    "y": -16,
+    "water": true
+  },
+  {
+    "id": "bridge-underside",
+    "x": -42,
+    "z": -10,
+    "w": 74,
+    "d": 12,
+    "y": -16,
+    "water": true
+  },
+  {
+    "id": "canal-landing",
+    "x": 28,
+    "z": -22,
+    "w": 12,
+    "d": 12,
+    "y": -16
+  },
+  {
+    "id": "east-sill",
+    "x": 32,
+    "z": -22,
+    "w": 8,
+    "d": 22,
+    "y": -16
+  },
+  {
+    "id": "bank-foot",
+    "x": 40,
+    "z": -22,
+    "w": 12,
+    "d": 10,
+    "y": -16
+  },
+  {
+    "id": "bank-ascent",
+    "x": 40,
+    "z": -12,
+    "w": 12,
+    "d": 24,
+    "y": -16,
+    "rise": 8
+  },
+  {
+    "id": "garden-bank",
+    "x": 32,
+    "z": 12,
+    "w": 32,
+    "d": 16,
+    "y": -8
+  },
+  {
+    "id": "sluice",
+    "x": 64,
+    "z": 12,
+    "w": 12,
+    "d": 16,
+    "y": -8,
+    "water": true
+  },
+  {
+    "id": "rear-dock",
+    "x": 76,
+    "z": 12,
+    "w": 18,
+    "d": 16,
+    "y": -8
+  },
+  {
+    "id": "gangway-west",
+    "x": 54,
+    "z": 24,
+    "w": 10,
+    "d": 14,
+    "y": -8
+  },
+  {
+    "id": "gangway",
+    "x": 58,
+    "z": 30,
+    "w": 30,
+    "d": 8,
+    "y": -8
+  },
+  {
+    "id": "gangway-east",
+    "x": 82,
+    "z": 24,
+    "w": 12,
+    "d": 14,
+    "y": -8
+  },
+  {
+    "id": "common-benches",
+    "x": 104,
+    "z": -10,
+    "w": 24,
+    "d": 8,
+    "y": 0
+  },
+  {
+    "id": "inspection-front",
+    "x": 68,
+    "z": -28,
+    "w": 12,
+    "d": 6,
+    "y": 0
+  },
+  {
+    "id": "inspection-turn",
+    "x": 92,
+    "z": -22,
+    "w": 12,
+    "d": 20,
+    "y": 0,
+    "water": true,
+    "region": "garden"
+  },
+  {
+    "id": "inspection-channel",
+    "x": 68,
+    "z": -22,
+    "w": 36,
+    "d": 12,
+    "y": 0,
+    "water": true,
+    "region": "garden"
+  },
+  {
+    "id": "inspection-load-bed",
+    "x": 104,
+    "z": -18,
+    "w": 12,
+    "d": 8,
+    "y": 0
+  },
+  {
+    "id": "inspection-tray-plinth",
+    "x": 118,
+    "z": -18,
+    "w": 10,
+    "d": 8,
+    "y": 0
+  },
+  {
+    "id": "loading",
+    "x": -6,
+    "z": -40,
+    "w": 42,
+    "d": 12,
+    "y": 0
+  },
+  {
+    "id": "freight",
+    "x": 36,
+    "z": -40,
+    "w": 40,
+    "d": 12,
+    "y": 0
+  },
+  {
+    "id": "bench-ascent",
+    "x": 104,
+    "z": -42,
+    "w": 12,
+    "d": 24,
+    "y": 8,
+    "rise": -8
+  },
+  {
+    "id": "bench-head",
+    "x": 104,
+    "z": -56,
+    "w": 12,
+    "d": 14,
+    "y": 8
+  },
+  {
+    "id": "carrier-landing",
+    "x": 64,
+    "z": -78,
+    "w": 52,
+    "d": 26,
+    "y": 8
+  },
+  {
+    "id": "phoenix-cradle",
+    "x": 64,
+    "z": -94,
+    "w": 8,
+    "d": 16,
+    "y": 16
+  },
+  {
+    "id": "phoenix-cradle",
+    "x": 84,
+    "z": -94,
+    "w": 8,
+    "d": 16,
+    "y": 16
+  },
+  {
+    "id": "phoenix-cradle",
+    "x": 72,
+    "z": -94,
+    "w": 12,
+    "d": 4,
+    "y": 16
+  },
+  {
+    "id": "bulkhead-ascent",
+    "x": 148,
+    "z": -92,
+    "w": 12,
+    "d": 90,
+    "y": 24,
+    "rise": -24,
+    "region": "transit"
+  },
+  {
+    "id": "roof-junction",
+    "x": 132,
+    "z": -40,
+    "w": 40,
+    "d": 18,
+    "y": 24
+  },
+  {
+    "id": "roof-return",
+    "x": 26,
+    "z": -38,
+    "w": 118,
+    "d": 6,
+    "y": 24
+  },
+  {
+    "id": "roof-walk",
+    "x": 29,
+    "z": -32,
+    "w": 6,
+    "d": 30,
+    "y": 24
+  },
+  {
+    "id": "cage-landing",
+    "x": 16,
+    "z": -2,
+    "w": 22,
+    "d": 16,
+    "y": 24
+  },
+  {
+    "id": "observatory-outlook",
+    "x": 172,
+    "z": -36,
+    "w": 24,
+    "d": 12,
+    "y": 24
+  },
+  {
+    "id": "circulation-outlook",
+    "x": 156,
+    "z": -22,
+    "w": 12,
+    "d": 22,
+    "y": 24
+  },
+  {
+    "id": "foundry-awakening",
+    "x": -14,
+    "z": 74,
+    "w": 28,
+    "d": 24,
+    "y": -8
+  },
+  {
+    "id": "foundry-west",
+    "x": -46,
+    "z": 80,
+    "w": 32,
+    "d": 12,
+    "y": -8
+  },
+  {
+    "id": "foundry-west-ramp",
+    "x": -46,
+    "z": 56,
+    "w": 12,
+    "d": 24,
+    "y": -16,
+    "rise": 8,
+    "solidRails": true
+  },
+  {
+    "id": "press-working-floor",
+    "x": -46,
+    "z": 38,
+    "w": 24,
+    "d": 18,
+    "y": -16
+  },
+  {
+    "id": "press-service-link",
+    "x": -62,
+    "z": 44,
+    "w": 16,
+    "d": 12,
+    "y": -16
+  },
+  {
+    "id": "reclaim-entry-verge",
+    "x": -50,
+    "z": 44,
+    "w": 4,
+    "d": 48,
+    "y": -16
+  },
+  {
+    "id": "foundry-reclaim-track",
+    "x": -62,
+    "z": 44,
+    "w": 12,
+    "d": 96,
+    "y": -16
+  },
+  {
+    "id": "reclaim-sorting-bay",
+    "x": -70,
+    "z": 94,
+    "w": 20,
+    "d": 22,
+    "y": -16
+  },
+  {
+    "id": "prototype-court",
+    "x": -50,
+    "z": 116,
+    "w": 36,
+    "d": 24,
+    "y": -16
+  },
+  {
+    "id": "prototype-return",
+    "x": -33,
+    "z": 56,
+    "w": 10,
+    "d": 60,
+    "y": -16
+  },
+  {
+    "id": "foundry-belt",
+    "x": -6,
+    "z": 58,
+    "w": 12,
+    "d": 16,
+    "y": -8
+  },
+  {
+    "id": "recycling-furnace",
+    "x": -18,
+    "z": 34,
+    "w": 48,
+    "d": 24,
+    "y": -8
+  },
+  {
+    "id": "foundry-exit-rise",
+    "x": 18,
+    "z": 10,
+    "w": 12,
+    "d": 24,
+    "y": 0,
+    "rise": -8
+  },
+  {
+    "id": "exit-terrace",
+    "x": 6,
+    "z": -2,
+    "w": 24,
+    "d": 12,
+    "y": 0
+  },
+  {
+    "id": "cargo-canal",
+    "x": -78,
+    "z": -10,
+    "w": 36,
+    "d": 12,
+    "y": -16,
+    "water": true
+  },
+  {
+    "id": "press-canal",
+    "x": -78,
+    "z": 2,
+    "w": 12,
+    "d": 42,
+    "y": -16,
+    "water": true
+  },
+  {
+    "id": "press-maintenance",
+    "x": -78,
+    "z": 44,
+    "w": 16,
+    "d": 12,
+    "y": -16
+  },
+  {
+    "id": "canal-launch-loop",
+    "x": -78,
+    "z": 22,
+    "w": 26,
+    "d": 12,
+    "y": -16,
+    "water": true
+  },
+  {
+    "id": "training-gallery",
+    "x": -56,
+    "z": 22,
+    "w": 12,
+    "d": 18,
+    "y": 8
+  },
+  {
+    "id": "loading-descent-top",
+    "x": -18,
+    "z": -40,
+    "w": 12,
+    "d": 74,
+    "y": 0
+  },
+  {
+    "id": "loading-descent",
+    "x": -18,
+    "z": -64,
+    "w": 12,
+    "d": 24,
+    "y": -8,
+    "rise": 8
+  },
+  {
+    "id": "loading-west",
+    "x": -18,
+    "z": -80,
+    "w": 14,
+    "d": 16,
+    "y": -8
+  },
+  {
+    "id": "loading-conveyor",
+    "x": -4,
+    "z": -76,
+    "w": 28,
+    "d": 8,
+    "y": -8
+  },
+  {
+    "id": "mortar-apron",
+    "x": 24,
+    "z": -80,
+    "w": 22,
+    "d": 16,
+    "y": -8
+  },
+  {
+    "id": "loading-return-top",
+    "x": 12,
+    "z": -40,
+    "w": 12,
+    "d": 12,
+    "y": 0
+  },
+  {
+    "id": "loading-return-bottom",
+    "x": 24,
+    "z": -64,
+    "w": 12,
+    "d": 24,
+    "y": -8
+  },
+  {
+    "id": "freight-half-rise",
+    "x": 56,
+    "z": -60,
+    "w": 6,
+    "d": 20,
+    "y": 4,
+    "rise": -4
+  },
+  {
+    "id": "freight-half-landing",
+    "x": 56,
+    "z": -66,
+    "w": 14,
+    "d": 6,
+    "y": 4
+  },
+  {
+    "id": "outer-ring-ascent",
+    "x": 56,
+    "z": -86,
+    "w": 6,
+    "d": 20,
+    "y": 8,
+    "rise": -4
+  },
+  {
+    "id": "observatory-outer-west",
+    "x": 56,
+    "z": -94,
+    "w": 10,
+    "d": 8,
+    "y": 8
+  },
+  {
+    "id": "receiving-descent",
+    "x": 64,
+    "z": -60,
+    "w": 6,
+    "d": 20,
+    "y": 4,
+    "rise": -4
+  },
+  {
+    "id": "outer-ring-back",
+    "x": 56,
+    "z": -112,
+    "w": 10,
+    "d": 18,
+    "y": 8
+  },
+  {
+    "id": "outer-freight-span",
+    "x": 56,
+    "z": -112,
+    "w": 38,
+    "d": 12,
+    "y": 8
+  },
+  {
+    "id": "observatory-outer-east",
+    "x": 196,
+    "z": -100,
+    "w": 28,
+    "d": 24,
+    "y": 8
+  },
+  {
+    "id": "outer-calibration-rise",
+    "x": 212,
+    "z": -76,
+    "w": 12,
+    "d": 40,
+    "y": 8,
+    "rise": 16
+  },
+  {
+    "id": "calibration",
+    "x": 196,
+    "z": -36,
+    "w": 52,
+    "d": 24,
+    "y": 24
+  },
+  {
+    "id": "sorting-junction",
+    "x": 120,
+    "z": -36,
+    "w": 24,
+    "d": 8,
+    "y": 24
+  },
+  {
+    "id": "emitter-return",
+    "x": 120,
+    "z": -104,
+    "w": 140,
+    "d": 12,
+    "y": 24
+  },
+  {
+    "id": "emitter-service",
+    "x": 248,
+    "z": -92,
+    "w": 12,
+    "d": 56,
+    "y": 24
+  },
+  {
+    "id": "emitter-return-neck",
+    "x": 236,
+    "z": -36,
+    "w": 24,
+    "d": 12,
+    "y": 24
+  },
+  {
+    "id": "mirror-bay",
+    "x": 204,
+    "z": -12,
+    "w": 18,
+    "d": 4,
+    "y": 24
+  },
+  {
+    "id": "mirror-turntable",
+    "x": 228,
+    "z": -8,
+    "w": 8,
+    "d": 8,
+    "y": 24
+  },
+  {
+    "id": "mirror-bypass",
+    "x": 236,
+    "z": -12,
+    "w": 12,
+    "d": 24,
+    "y": 24
+  },
+  {
+    "id": "gallery-top",
+    "x": 216,
+    "z": 0,
+    "w": 32,
+    "d": 12,
+    "y": 24
+  },
+  {
+    "id": "gallery-descent",
+    "x": 224,
+    "z": 12,
+    "w": 12,
+    "d": 24,
+    "y": 24,
+    "rise": -8
+  },
+  {
+    "id": "mirror-service-gallery",
+    "x": 196,
+    "z": 24,
+    "w": 40,
+    "d": 16,
+    "y": 16
+  },
+  {
+    "id": "guardian-neck",
+    "x": 196,
+    "z": 40,
+    "w": 12,
+    "d": 4,
+    "y": 16
+  },
+  {
+    "id": "guardian-court",
+    "x": 180,
+    "z": 44,
+    "w": 48,
+    "d": 46,
+    "y": 16
+  },
+  {
+    "id": "guardian-exit",
+    "x": 228,
+    "z": 64,
+    "w": 32,
+    "d": 12,
+    "y": 16,
+    "region": "optics"
+  },
+  {
+    "id": "guardian-descent",
+    "x": 248,
+    "z": 16,
+    "w": 12,
+    "d": 48,
+    "y": -8,
+    "rise": 24,
+    "region": "circulation"
+  },
+  {
+    "id": "guardian-descent-foot",
+    "x": 236,
+    "z": 8,
+    "w": 24,
+    "d": 16,
+    "y": -8,
+    "region": "circulation"
+  },
+  {
+    "id": "guardian-descent-landing",
+    "x": 236,
+    "z": 24,
+    "w": 12,
+    "d": 12,
+    "y": -8,
+    "region": "circulation"
+  },
+  {
+    "id": "signal-ascent",
+    "x": 180,
+    "z": 90,
+    "w": 12,
+    "d": 48,
+    "y": 16,
+    "rise": 24
+  },
+  {
+    "id": "signal-deck",
+    "x": 180,
+    "z": 138,
+    "w": 36,
+    "d": 16,
+    "y": 40
+  },
+  {
+    "id": "garden-optical-bridge",
+    "x": 116,
+    "z": -4,
+    "w": 80,
+    "d": 12,
+    "y": 16
+  },
+  {
+    "id": "optical-bridge-neck",
+    "x": 196,
+    "z": -4,
+    "w": 12,
+    "d": 28,
+    "y": 16
+  },
+  {
+    "id": "optical-lift-north",
+    "x": 104,
+    "z": -4,
+    "w": 12,
+    "d": 16,
+    "y": 16
+  },
+  {
+    "id": "garden-optical-foot",
+    "x": 94,
+    "z": 12,
+    "w": 10,
+    "d": 12,
+    "y": -8
+  },
+  {
+    "id": "pump-service-walk",
+    "x": 94,
+    "z": -24,
+    "w": 10,
+    "d": 36,
+    "y": -8
+  },
+  {
+    "id": "pump-terrace",
+    "x": 52,
+    "z": -36,
+    "w": 52,
+    "d": 12,
+    "y": -8
+  },
+  {
+    "id": "pump-wrap",
+    "x": 52,
+    "z": -24,
+    "w": 12,
+    "d": 36,
+    "y": -8
+  },
+  {
+    "id": "pump-return-bridge",
+    "x": -32,
+    "z": -36,
+    "w": 84,
+    "d": 12,
+    "y": -8
+  },
+  {
+    "id": "pump-return-shore",
+    "x": -32,
+    "z": -24,
+    "w": 12,
+    "d": 10,
+    "y": -8
+  },
+  {
+    "id": "pressure-descent-one",
+    "x": 156,
+    "z": 0,
+    "w": 12,
+    "d": 24,
+    "y": 24,
+    "rise": -8
+  },
+  {
+    "id": "pressure-braking-court",
+    "x": 148,
+    "z": 24,
+    "w": 32,
+    "d": 12,
+    "y": 16
+  },
+  {
+    "id": "pressure-descent-two",
+    "x": 168,
+    "z": -12,
+    "w": 12,
+    "d": 36,
+    "y": 8,
+    "rise": 8
+  },
+  {
+    "id": "pressure-middle-court",
+    "x": 168,
+    "z": -24,
+    "w": 28,
+    "d": 12,
+    "y": 8
+  },
+  {
+    "id": "pressure-descent-three",
+    "x": 184,
+    "z": -12,
+    "w": 12,
+    "d": 36,
+    "y": 8,
+    "rise": -16
+  },
+  {
+    "id": "old-service-spur",
+    "x": 30,
+    "z": 2,
+    "w": 130,
+    "d": 8,
+    "y": 0
+  },
+  {
+    "id": "bulkhead-ascent-foot",
+    "x": 148,
+    "z": -2,
+    "w": 12,
+    "d": 12,
+    "y": 0
+  },
+  {
+    "id": "pressure-approach",
+    "x": 148,
+    "z": 24,
+    "w": 48,
+    "d": 12,
+    "y": -8
+  },
+  {
+    "id": "circulation-yard",
+    "x": 148,
+    "z": 36,
+    "w": 100,
+    "d": 16,
+    "y": -8
+  },
+  {
+    "id": "circulation-dry-descent",
+    "x": 236,
+    "z": 52,
+    "w": 12,
+    "d": 48,
+    "y": -8,
+    "rise": -16
+  },
+  {
+    "id": "circulation-rig",
+    "x": 208,
+    "z": 100,
+    "w": 52,
+    "d": 36,
+    "y": -24
+  },
+  {
+    "id": "inner-runup",
+    "x": 260,
+    "z": 112,
+    "w": 12,
+    "d": 24,
+    "y": -24
+  },
+  {
+    "id": "sustained-return",
+    "x": 208,
+    "z": 28,
+    "w": 12,
+    "d": 72,
+    "y": -16,
+    "rise": -8
+  },
+  {
+    "id": "pressure-release-court",
+    "x": 208,
+    "z": 4,
+    "w": 52,
+    "d": 24,
+    "y": -16
+  },
+  {
+    "id": "pressure-bypass",
+    "x": 248,
+    "z": 28,
+    "w": 12,
+    "d": 72,
+    "y": -16,
+    "rise": -8
+  },
+  {
+    "id": "industrial-return",
+    "x": 64,
+    "z": 12,
+    "w": 52,
+    "d": 12,
+    "y": -16
+  },
+  {
+    "id": "industrial-return-east",
+    "x": 128,
+    "z": 12,
+    "w": 80,
+    "d": 12,
+    "y": -16
+  },
+  {
+    "id": "industrial-return-elbow",
+    "x": 104,
+    "z": 24,
+    "w": 36,
+    "d": 12,
+    "y": -16
+  },
+  {
+    "id": "industrial-ascent",
+    "x": 64,
+    "z": -24,
+    "w": 12,
+    "d": 36,
+    "y": -8,
+    "rise": -8
+  },
+  {
+    "id": "predecessor-gallery",
+    "x": 28,
+    "z": 0,
+    "w": 80,
+    "d": 12,
+    "y": -40
+  },
+  {
+    "id": "predecessor-service-link",
+    "x": 76,
+    "z": 18,
+    "w": 32,
+    "d": 12,
+    "y": -40
+  },
+  {
+    "id": "predecessor-mount",
+    "x": 66,
+    "z": 44,
+    "w": 22,
+    "d": 18,
+    "y": -40
+  },
+  {
+    "id": "predecessor-cooling",
+    "x": 88,
+    "z": 18,
+    "w": 20,
+    "d": 16,
+    "y": -40
+  },
+  {
+    "id": "predecessor-dock",
+    "x": 72,
+    "z": -12,
+    "w": 20,
+    "d": 12,
+    "y": -40
+  },
+  {
+    "id": "last-refuge",
+    "x": 28,
+    "z": -24,
+    "w": 28,
+    "d": 24,
+    "y": -40
+  },
+  {
+    "id": "last-cage-top",
+    "x": 16,
+    "z": -12,
+    "w": 12,
+    "d": 10,
+    "y": -8
+  },
+  {
+    "id": "predecessor-descent",
+    "x": 28,
+    "z": 12,
+    "w": 12,
+    "d": 48,
+    "y": -40,
+    "rise": -16
+  },
+  {
+    "id": "keeper-forecourt",
+    "x": -28,
+    "z": 60,
+    "w": 68,
+    "d": 16,
+    "y": -56
+  },
+  {
+    "id": "keeper-court",
+    "x": -28,
+    "z": 12,
+    "w": 56,
+    "d": 48,
+    "y": -56
+  },
+  {
+    "id": "central-furnace",
+    "x": -16,
+    "z": -16,
+    "w": 32,
+    "d": 28,
+    "y": -56
+  },
+  {
+    "id": "loading-water",
+    "x": 0,
+    "z": -40,
+    "w": 12,
+    "d": 30,
+    "y": -16,
+    "water": true
+  },
+  {
+    "id": "loading-water-bend",
+    "x": 12,
+    "z": -40,
+    "w": 8,
+    "d": 12,
+    "y": -16,
+    "water": true
+  },
+  {
+    "id": "loading-water-rise",
+    "x": 8,
+    "z": -64,
+    "w": 12,
+    "d": 24,
+    "y": -8,
+    "rise": -8
+  },
+  {
+    "id": "loading-water-apron",
+    "x": 8,
+    "z": -88,
+    "w": 24,
+    "d": 24,
+    "y": -8
+  },
+  {
+    "id": "maintenance-sump",
+    "x": 116,
+    "z": 24,
+    "w": 24,
+    "d": 24,
+    "y": -24,
+    "water": true
+  },
+  {
+    "id": "sump-dock",
+    "x": 104,
+    "z": 24,
+    "w": 12,
+    "d": 12,
+    "y": -24
+  },
+  {
+    "id": "sump-descent",
+    "x": 116,
+    "z": 0,
+    "w": 12,
+    "d": 24,
+    "y": -16,
+    "rise": -8
+  },
+  {
+    "id": "sump-upper-dock",
+    "x": 116,
+    "z": -12,
+    "w": 12,
+    "d": 12,
+    "y": -16
+  },
+  {
+    "id": "sump-upper-walk",
+    "x": 128,
+    "z": -12,
+    "w": 12,
+    "d": 36,
+    "y": -16
+  },
+  {
+    "id": "arsenal-dispatch",
+    "x": -146,
+    "z": -12,
+    "w": 82,
+    "d": 54,
+    "y": 8,
+    "region": "transit",
+    "district": "arsenal"
+  },
+  {
+    "id": "arsenal-armature",
+    "x": -158,
+    "z": -70,
+    "w": 46,
+    "d": 30,
+    "y": 8,
+    "region": "transit",
+    "district": "arsenal"
+  },
+  {
+    "id": "arsenal-rail-shop",
+    "x": -192,
+    "z": -98,
+    "w": 60,
+    "d": 56,
+    "y": 8,
+    "region": "transit",
+    "district": "arsenal"
+  },
+  {
+    "id": "arsenal-inspection",
+    "x": -94,
+    "z": -68,
+    "w": 20,
+    "d": 66,
+    "y": 8,
+    "region": "transit",
+    "district": "arsenal"
+  },
+  {
+    "id": "arsenal-route-0-1",
+    "x": -82,
+    "z": 25,
+    "w": 32,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-1-1",
+    "x": -110,
+    "z": 25,
+    "w": 40,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-1-2",
+    "x": -110,
+    "z": 6,
+    "w": 12,
+    "d": 31,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-1-3-a",
+    "x": -142,
+    "z": 6,
+    "w": 44,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-1-3-b",
+    "x": -142,
+    "z": 0,
+    "w": 12,
+    "d": 18,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-1-4",
+    "x": -142,
+    "z": -30,
+    "w": 12,
+    "d": 42,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-1-5",
+    "x": -152,
+    "z": -30,
+    "w": 22,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-1-6",
+    "x": -152,
+    "z": -44,
+    "w": 12,
+    "d": 26,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-1-7-a",
+    "x": -152,
+    "z": -44,
+    "w": 22,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-1-7-b",
+    "x": -142,
+    "z": -60,
+    "w": 12,
+    "d": 28,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-1-8",
+    "x": -142,
+    "z": -60,
+    "w": 20,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-1-9",
+    "x": -162,
+    "z": -60,
+    "w": 40,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-1-10",
+    "x": -162,
+    "z": -74,
+    "w": 12,
+    "d": 26,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-3-1",
+    "x": -110,
+    "z": 25,
+    "w": 40,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-3-2",
+    "x": -82,
+    "z": -8,
+    "w": 12,
+    "d": 45,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-3-3",
+    "x": -110,
+    "z": -8,
+    "w": 40,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-3-4",
+    "x": -142,
+    "z": -8,
+    "w": 44,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-4-1",
+    "x": -168,
+    "z": -60,
+    "w": 38,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-4-2",
+    "x": -168,
+    "z": -72,
+    "w": 12,
+    "d": 24,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-4-3",
+    "x": -182,
+    "z": -72,
+    "w": 26,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-4-4",
+    "x": -182,
+    "z": -82,
+    "w": 12,
+    "d": 22,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-5-1",
+    "x": -142,
+    "z": -60,
+    "w": 66,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-5-2",
+    "x": -88,
+    "z": -60,
+    "w": 12,
+    "d": 36,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-5-3",
+    "x": -88,
+    "z": -36,
+    "w": 12,
+    "d": 28,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-route-5-4",
+    "x": -88,
+    "z": -20,
+    "w": 12,
+    "d": 57,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "reservoir-east-bank",
+    "x": -84,
+    "z": 46,
+    "w": 16,
+    "d": 72,
+    "y": -8,
+    "region": "garden",
+    "district": "reservoir"
+  },
+  {
+    "id": "reservoir-filter-bank",
+    "x": -172,
+    "z": 106,
+    "w": 104,
+    "d": 16,
+    "y": -8,
+    "region": "garden",
+    "district": "reservoir"
+  },
+  {
+    "id": "reservoir-drydock",
+    "x": -174,
+    "z": 54,
+    "w": 20,
+    "d": 52,
+    "y": -8,
+    "region": "garden",
+    "district": "reservoir"
+  },
+  {
+    "id": "reservoir-pump-island",
+    "x": -130,
+    "z": 70,
+    "w": 14,
+    "d": 16,
+    "y": -8,
+    "region": "garden",
+    "district": "reservoir"
+  },
+  {
+    "id": "reservoir-route-0-1",
+    "x": -82,
+    "z": -14,
+    "w": 36,
+    "d": 12,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-route-0-2",
+    "x": -82,
+    "z": -14,
+    "w": 12,
+    "d": 78,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-route-1-1",
+    "x": -82,
+    "z": 52,
+    "w": 12,
+    "d": 36,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-route-1-2",
+    "x": -82,
+    "z": 76,
+    "w": 12,
+    "d": 32,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-route-1-3",
+    "x": -82,
+    "z": 96,
+    "w": 12,
+    "d": 24,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-route-1-4",
+    "x": -110,
+    "z": 108,
+    "w": 40,
+    "d": 12,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-route-1-5",
+    "x": -150,
+    "z": 108,
+    "w": 52,
+    "d": 12,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-route-1-6",
+    "x": -170,
+    "z": 108,
+    "w": 32,
+    "d": 12,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-route-1-7",
+    "x": -170,
+    "z": 72,
+    "w": 12,
+    "d": 48,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-route-1-8",
+    "x": -170,
+    "z": 58,
+    "w": 12,
+    "d": 26,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-route-2-1",
+    "x": -170,
+    "z": 58,
+    "w": 30,
+    "d": 12,
+    "y": -8,
+    "region": "garden",
+    "water": true
+  },
+  {
+    "id": "reservoir-route-2-2",
+    "x": -152,
+    "z": 58,
+    "w": 64,
+    "d": 12,
+    "y": -8,
+    "region": "garden",
+    "water": true
+  },
+  {
+    "id": "reservoir-route-2-3",
+    "x": -100,
+    "z": 28,
+    "w": 12,
+    "d": 42,
+    "y": -8,
+    "region": "garden",
+    "water": true
+  },
+  {
+    "id": "reservoir-route-2-4",
+    "x": -100,
+    "z": 28,
+    "w": 30,
+    "d": 12,
+    "y": -8,
+    "region": "garden",
+    "water": true
+  },
+  {
+    "id": "reservoir-route-2-5",
+    "x": -82,
+    "z": -14,
+    "w": 12,
+    "d": 54,
+    "y": -8,
+    "region": "garden",
+    "water": true
+  },
+  {
+    "id": "reservoir-route-2-6",
+    "x": -82,
+    "z": -14,
+    "w": 36,
+    "d": 12,
+    "y": -8,
+    "region": "garden",
+    "water": true
+  },
+  {
+    "id": "reservoir-route-3-1",
+    "x": -110,
+    "z": 92,
+    "w": 12,
+    "d": 28,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-route-3-2",
+    "x": -128,
+    "z": 92,
+    "w": 30,
+    "d": 12,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-route-3-3",
+    "x": -128,
+    "z": 84,
+    "w": 12,
+    "d": 20,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "proving-receiving",
+    "x": 64,
+    "z": -146,
+    "w": 32,
+    "d": 32,
+    "y": 16,
+    "region": "testworks",
+    "district": "proving"
+  },
+  {
+    "id": "proving-recoil",
+    "x": 64,
+    "z": -176,
+    "w": 24,
+    "d": 20,
+    "y": 16,
+    "region": "testworks",
+    "district": "proving"
+  },
+  {
+    "id": "proving-impact",
+    "x": 108,
+    "z": -196,
+    "w": 94,
+    "d": 42,
+    "y": 16,
+    "region": "testworks",
+    "district": "proving"
+  },
+  {
+    "id": "proving-observation",
+    "x": 102,
+    "z": -150,
+    "w": 96,
+    "d": 10,
+    "y": 20,
+    "region": "testworks",
+    "district": "proving"
+  },
+  {
+    "id": "proving-repair",
+    "x": 202,
+    "z": -164,
+    "w": 42,
+    "d": 40,
+    "y": 16,
+    "region": "testworks",
+    "district": "proving"
+  },
+  {
+    "id": "proving-engine",
+    "x": 204,
+    "z": -118,
+    "w": 28,
+    "d": 28,
+    "y": 16,
+    "region": "testworks",
+    "district": "proving"
+  },
+  {
+    "id": "proving-route-0-1",
+    "x": 71,
+    "z": -130,
+    "w": 1,
+    "d": 42,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-0-1",
+    "x": 72,
+    "z": -130,
+    "w": 11,
+    "d": 40,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-1-1",
+    "x": 71,
+    "z": -156,
+    "w": 12,
+    "d": 38,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-1-2",
+    "x": 71,
+    "z": -164,
+    "w": 12,
+    "d": 20,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-1-3",
+    "x": 71,
+    "z": -164,
+    "w": 29,
+    "d": 12,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-1-4",
+    "x": 88,
+    "z": -186,
+    "w": 12,
+    "d": 34,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-1-5",
+    "x": 88,
+    "z": -186,
+    "w": 30,
+    "d": 12,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-1-6-a",
+    "x": 106,
+    "z": -186,
+    "w": 30,
+    "d": 12,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-1-6-b",
+    "x": 124,
+    "z": -186,
+    "w": 12,
+    "d": 20,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-1-7",
+    "x": 124,
+    "z": -178,
+    "w": 34,
+    "d": 12,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-1-8",
+    "x": 146,
+    "z": -178,
+    "w": 42,
+    "d": 12,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-1-9",
+    "x": 176,
+    "z": -188,
+    "w": 12,
+    "d": 22,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-1-10",
+    "x": 176,
+    "z": -188,
+    "w": 48,
+    "d": 12,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-1-11",
+    "x": 212,
+    "z": -188,
+    "w": 12,
+    "d": 24,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-1-12",
+    "x": 212,
+    "z": -176,
+    "w": 12,
+    "d": 50,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-route-1-13",
+    "x": 212,
+    "z": -138,
+    "w": 12,
+    "d": 30,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "lens-vestibule",
+    "x": 264,
+    "z": -38,
+    "w": 28,
+    "d": 28,
+    "y": 24,
+    "region": "optics",
+    "district": "lens"
+  },
+  {
+    "id": "lens-west-gallery",
+    "x": 264,
+    "z": -96,
+    "w": 14,
+    "d": 70,
+    "y": 24,
+    "region": "optics",
+    "district": "lens"
+  },
+  {
+    "id": "lens-north-gallery",
+    "x": 264,
+    "z": -100,
+    "w": 80,
+    "d": 18,
+    "y": 24,
+    "region": "optics",
+    "district": "lens"
+  },
+  {
+    "id": "lens-east-gallery",
+    "x": 328,
+    "z": -100,
+    "w": 20,
+    "d": 68,
+    "y": 24,
+    "region": "optics",
+    "district": "lens"
+  },
+  {
+    "id": "lens-emitter",
+    "x": 308,
+    "z": -46,
+    "w": 40,
+    "d": 28,
+    "y": 24,
+    "region": "optics",
+    "district": "lens"
+  },
+  {
+    "id": "lens-route-0-1",
+    "x": 242,
+    "z": -30,
+    "w": 40,
+    "d": 12,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-route-1-1-a",
+    "x": 265,
+    "z": -30,
+    "w": 17,
+    "d": 12,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-route-1-1-b",
+    "x": 265,
+    "z": -68,
+    "w": 12,
+    "d": 50,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-route-1-2",
+    "x": 265,
+    "z": -94,
+    "w": 12,
+    "d": 38,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-route-1-3",
+    "x": 265,
+    "z": -94,
+    "w": 45,
+    "d": 12,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-route-1-4",
+    "x": 298,
+    "z": -94,
+    "w": 46,
+    "d": 12,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-route-1-5",
+    "x": 332,
+    "z": -94,
+    "w": 12,
+    "d": 42,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-route-1-6",
+    "x": 318,
+    "z": -64,
+    "w": 26,
+    "d": 12,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-route-1-7",
+    "x": 318,
+    "z": -64,
+    "w": 12,
+    "d": 42,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-route-2-1",
+    "x": 290,
+    "z": -34,
+    "w": 40,
+    "d": 12,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-route-2-2",
+    "x": 270,
+    "z": -34,
+    "w": 32,
+    "d": 12,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-route-2-3-a",
+    "x": 242,
+    "z": -34,
+    "w": 40,
+    "d": 12,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-route-2-3-b",
+    "x": 242,
+    "z": -34,
+    "w": 12,
+    "d": 16,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-route-3-1",
+    "x": 265,
+    "z": -68,
+    "w": 31,
+    "d": 12,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-route-3-2",
+    "x": 284,
+    "z": -94,
+    "w": 12,
+    "d": 38,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "coolant-intake",
+    "x": 274,
+    "z": 106,
+    "w": 28,
+    "d": 30,
+    "y": -24,
+    "region": "circulation",
+    "district": "coolant"
+  },
+  {
+    "id": "coolant-west-service",
+    "x": 282,
+    "z": 136,
+    "w": 20,
+    "d": 56,
+    "y": -24,
+    "region": "circulation",
+    "district": "coolant"
+  },
+  {
+    "id": "coolant-separator",
+    "x": 292,
+    "z": 176,
+    "w": 76,
+    "d": 20,
+    "y": -24,
+    "region": "circulation",
+    "district": "coolant"
+  },
+  {
+    "id": "coolant-east-service",
+    "x": 350,
+    "z": 136,
+    "w": 20,
+    "d": 56,
+    "y": -24,
+    "region": "circulation",
+    "district": "coolant"
+  },
+  {
+    "id": "coolant-jacket",
+    "x": 352,
+    "z": 94,
+    "w": 36,
+    "d": 34,
+    "y": -24,
+    "region": "circulation",
+    "district": "coolant"
+  },
+  {
+    "id": "coolant-route-0-1",
+    "x": 254,
+    "z": 111,
+    "w": 38,
+    "d": 12,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-1-1-a",
+    "x": 280,
+    "z": 111,
+    "w": 18,
+    "d": 12,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-1-1-b",
+    "x": 286,
+    "z": 111,
+    "w": 12,
+    "d": 38,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-1-2",
+    "x": 286,
+    "z": 137,
+    "w": 12,
+    "d": 35,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-1-3",
+    "x": 286,
+    "z": 160,
+    "w": 12,
+    "d": 32,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-1-4",
+    "x": 286,
+    "z": 180,
+    "w": 45,
+    "d": 12,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-1-5",
+    "x": 319,
+    "z": 158,
+    "w": 12,
+    "d": 34,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-1-6",
+    "x": 319,
+    "z": 158,
+    "w": 27,
+    "d": 12,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-1-7",
+    "x": 334,
+    "z": 158,
+    "w": 12,
+    "d": 34,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-1-8",
+    "x": 334,
+    "z": 180,
+    "w": 32,
+    "d": 12,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-1-9",
+    "x": 354,
+    "z": 154,
+    "w": 12,
+    "d": 38,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-1-10",
+    "x": 354,
+    "z": 154,
+    "w": 26,
+    "d": 12,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-1-11",
+    "x": 368,
+    "z": 110,
+    "w": 12,
+    "d": 56,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-2-1",
+    "x": 368,
+    "z": 100,
+    "w": 12,
+    "d": 22,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-2-2",
+    "x": 278,
+    "z": 100,
+    "w": 102,
+    "d": 12,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-2-3",
+    "x": 278,
+    "z": 100,
+    "w": 12,
+    "d": 23,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-2-4",
+    "x": 254,
+    "z": 111,
+    "w": 36,
+    "d": 12,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-3-1",
+    "x": 286,
+    "z": 137,
+    "w": 32,
+    "d": 12,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-3-2",
+    "x": 306,
+    "z": 137,
+    "w": 12,
+    "d": 33,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-3-3",
+    "x": 306,
+    "z": 158,
+    "w": 40,
+    "d": 12,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-route-3-4",
+    "x": 334,
+    "z": 158,
+    "w": 12,
+    "d": 34,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "hearth-receiving",
+    "x": 52,
+    "z": 50,
+    "w": 28,
+    "d": 22,
+    "y": -40,
+    "region": "furnace",
+    "district": "hearth"
+  },
+  {
+    "id": "hearth-mounts",
+    "x": 8,
+    "z": 76,
+    "w": 54,
+    "d": 28,
+    "y": -40,
+    "region": "furnace",
+    "district": "hearth"
+  },
+  {
+    "id": "hearth-feed",
+    "x": 4,
+    "z": 100,
+    "w": 64,
+    "d": 22,
+    "y": -40,
+    "region": "furnace",
+    "district": "hearth"
+  },
+  {
+    "id": "hearth-route-0-1",
+    "x": 22,
+    "z": -16,
+    "w": 28,
+    "d": 12,
+    "y": -40,
+    "region": "furnace"
+  },
+  {
+    "id": "hearth-route-0-2",
+    "x": 38,
+    "z": -16,
+    "w": 12,
+    "d": 28,
+    "y": -40,
+    "region": "furnace"
+  },
+  {
+    "id": "hearth-route-0-3",
+    "x": 38,
+    "z": 0,
+    "w": 36,
+    "d": 12,
+    "y": -40,
+    "region": "furnace"
+  },
+  {
+    "id": "hearth-route-0-4",
+    "x": 62,
+    "z": 0,
+    "w": 12,
+    "d": 66,
+    "y": -40,
+    "region": "furnace"
+  },
+  {
+    "id": "hearth-route-1-1",
+    "x": 42,
+    "z": 54,
+    "w": 32,
+    "d": 12,
+    "y": -40,
+    "region": "furnace"
+  },
+  {
+    "id": "hearth-route-1-2",
+    "x": 42,
+    "z": 54,
+    "w": 12,
+    "d": 42,
+    "y": -40,
+    "region": "furnace"
+  },
+  {
+    "id": "hearth-route-1-3",
+    "x": 14,
+    "z": 84,
+    "w": 40,
+    "d": 12,
+    "y": -40,
+    "region": "furnace"
+  },
+  {
+    "id": "hearth-route-1-4",
+    "x": 14,
+    "z": 84,
+    "w": 12,
+    "d": 22,
+    "y": -40,
+    "region": "furnace"
+  },
+  {
+    "id": "hearth-route-1-5",
+    "x": 14,
+    "z": 94,
+    "w": 16,
+    "d": 12,
+    "y": -40,
+    "region": "furnace"
+  },
+  {
+    "id": "hearth-route-2-1",
+    "x": 18,
+    "z": 52,
+    "w": 12,
+    "d": 54,
+    "y": -40,
+    "region": "furnace"
+  },
+  {
+    "id": "hearth-route-2-2",
+    "x": 18,
+    "z": -16,
+    "w": 12,
+    "d": 80,
+    "y": -40,
+    "region": "furnace"
+  },
+  {
+    "id": "hearth-route-2-3",
+    "x": 18,
+    "z": -16,
+    "w": 16,
+    "d": 12,
+    "y": -40,
+    "region": "furnace"
+  },
+  {
+    "id": "arsenal-return-link",
+    "x": -82,
+    "z": -60,
+    "w": 34,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-cart-berth",
+    "x": -132,
+    "z": -38,
+    "w": 18,
+    "d": 8,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "lens-screen-berth",
+    "x": 307,
+    "z": -84,
+    "w": 8,
+    "d": 24,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "coolant-service-walk",
+    "x": 332,
+    "z": 158,
+    "w": 8,
+    "d": 36,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "proving-recovery-approach",
+    "x": 178,
+    "z": -128,
+    "w": 50,
+    "d": 12,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-gallery-west",
+    "x": 102,
+    "z": -176,
+    "w": 8,
+    "d": 26,
+    "y": 16,
+    "rise": 4,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-gallery-east",
+    "x": 188,
+    "z": -176,
+    "w": 8,
+    "d": 26,
+    "y": 16,
+    "rise": 4,
+    "region": "testworks"
+  },
+  {
+    "id": "lens-mirror-plinth",
+    "x": 320,
+    "z": -20,
+    "w": 8,
+    "d": 10,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "lens-receiver-plinth",
+    "x": 304,
+    "z": -20,
+    "w": 8,
+    "d": 10,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "reservoir-basin",
+    "x": -156,
+    "z": 28,
+    "w": 72,
+    "d": 78,
+    "y": -8,
+    "water": true,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-current-exit",
+    "x": -100,
+    "z": 28,
+    "w": 30,
+    "d": 12,
+    "y": -8,
+    "water": true,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-preview-bank",
+    "x": -102,
+    "z": 38,
+    "w": 34,
+    "d": 10,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "reservoir-eddy",
+    "x": -102,
+    "z": 47,
+    "w": 8,
+    "d": 9,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "rail-crossing",
+    "x": -88,
+    "z": -26,
+    "w": 12,
+    "d": 16,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "garden-care",
+    "x": 32,
+    "z": 28,
+    "w": 22,
+    "d": 22,
+    "y": -8,
+    "region": "garden"
+  },
+  {
+    "id": "sorting-bay",
+    "x": 24,
+    "z": -164,
+    "w": 40,
+    "d": 36,
+    "y": -8,
+    "region": "transit"
+  },
+  {
+    "id": "sorting-approach",
+    "x": 28,
+    "z": -104,
+    "w": 32,
+    "d": 24,
+    "y": -8,
+    "region": "transit"
+  },
+  {
+    "id": "sorting-approach-turn",
+    "x": 48,
+    "z": -140,
+    "w": 12,
+    "d": 60,
+    "y": -8,
+    "region": "transit"
+  },
+  {
+    "id": "sorting-entry",
+    "x": 24,
+    "z": -124,
+    "w": 36,
+    "d": 12,
+    "y": -8,
+    "region": "transit"
+  },
+  {
+    "id": "mortar-installation",
+    "x": 24,
+    "z": -188,
+    "w": 24,
+    "d": 24,
+    "y": -8,
+    "region": "transit"
+  },
+  {
+    "id": "sorting-retry-head",
+    "x": 36,
+    "z": -100,
+    "w": 8,
+    "d": 60,
+    "y": 0,
+    "region": "transit"
+  },
+  {
+    "id": "sorting-retry-landing",
+    "x": 12,
+    "z": -112,
+    "w": 32,
+    "d": 12,
+    "y": 0,
+    "region": "transit"
+  },
+  {
+    "id": "sorting-walk",
+    "x": 120,
+    "z": -94,
+    "w": 12,
+    "d": 62,
+    "y": 24,
+    "region": "testworks"
+  },
+  {
+    "id": "reservoir-inspection-island",
+    "x": -149,
+    "y": -8,
+    "z": 88,
+    "w": 8,
+    "d": 8,
+    "region": "garden"
+  },
+  {
+    "id": "mortar-window-foot",
+    "x": 152,
+    "y": 20,
+    "z": -139,
+    "w": 7,
+    "d": 9,
+    "region": "testworks"
+  },
+  {
+    "id": "mortar-inspection-neck",
+    "x": 158,
+    "y": 20,
+    "z": -142,
+    "w": 6,
+    "d": 8,
+    "region": "testworks"
+  },
+  {
+    "id": "mortar-inspection-room",
+    "x": 152,
+    "y": 20,
+    "z": -138,
+    "w": 18,
+    "d": 8,
+    "region": "testworks",
+    "district": "inspection"
+  },
+  {
+    "id": "impact-store-spur",
+    "x": 222,
+    "y": 16,
+    "z": -128,
+    "w": 26,
+    "d": 8,
+    "region": "testworks"
+  },
+  {
+    "id": "rangefinder-approach",
+    "x": 372,
+    "y": 24,
+    "z": -58,
+    "w": 8,
+    "d": 52,
+    "region": "transit"
+  },
+  {
+    "id": "rangefinder-workshop",
+    "x": 366,
+    "y": 24,
+    "z": -10,
+    "w": 38,
+    "d": 30,
+    "region": "transit",
+    "district": "rangefinder"
+  },
+  {
+    "id": "rangefinder-return",
+    "x": 396,
+    "y": 24,
+    "z": -58,
+    "w": 8,
+    "d": 52,
+    "region": "transit"
+  },
+  {
+    "id": "crash-runout",
+    "x": 234,
+    "y": 16,
+    "z": -156,
+    "w": 14,
+    "d": 32,
+    "region": "testworks",
+    "district": "crash"
+  },
+  {
+    "id": "crash-recovery",
+    "x": 234,
+    "y": 16,
+    "z": -180,
+    "w": 30,
+    "d": 24,
+    "region": "testworks",
+    "district": "crash"
+  },
+  {
+    "id": "crash-return",
+    "x": 252,
+    "y": 16,
+    "z": -156,
+    "w": 12,
+    "d": 48,
+    "region": "testworks",
+    "district": "crash"
+  },
+  {
+    "id": "crash-runway-return",
+    "x": 238,
+    "y": 16,
+    "z": -114,
+    "w": 26,
+    "d": 12,
+    "region": "testworks"
+  },
+  {
+    "id": "mirror-service-approach",
+    "x": 338,
+    "y": 24,
+    "z": -118,
+    "w": 10,
+    "d": 30,
+    "region": "optics"
+  },
+  {
+    "id": "mirror-service-neck",
+    "x": 338,
+    "y": 24,
+    "z": -118,
+    "w": 28,
+    "d": 12,
+    "region": "optics"
+  },
+  {
+    "id": "mirror-service-rise",
+    "x": 354,
+    "y": 24,
+    "z": -106,
+    "w": 12,
+    "d": 20,
+    "rise": 8,
+    "region": "optics"
+  },
+  {
+    "id": "mirror-cleaning-hall",
+    "x": 354,
+    "y": 32,
+    "z": -86,
+    "w": 14,
+    "d": 36,
+    "region": "optics",
+    "district": "mirror-service"
+  },
+  {
+    "id": "mirror-repair-workshop",
+    "x": 368,
+    "y": 32,
+    "z": -86,
+    "w": 26,
+    "d": 36,
+    "region": "optics",
+    "district": "mirror-service"
+  },
+  {
+    "id": "rangefinder-neck",
+    "x": 342,
+    "y": 24,
+    "z": -32,
+    "w": 38,
+    "d": 8,
+    "region": "optics"
+  },
+  {
+    "id": "condensate-neck",
+    "x": 382,
+    "y": -24,
+    "z": 110,
+    "w": 36,
+    "d": 12,
+    "region": "circulation"
+  },
+  {
+    "id": "condensate-pump-room",
+    "x": 396,
+    "y": -24,
+    "z": 62,
+    "w": 30,
+    "d": 60,
+    "region": "circulation",
+    "district": "condensate"
+  },
+  {
+    "id": "condensate-basin",
+    "x": 426,
+    "y": -24,
+    "z": 46,
+    "w": 40,
+    "d": 64,
+    "water": true,
+    "region": "garden"
+  },
+  {
+    "id": "condensate-filter-island",
+    "x": 448,
+    "y": -24,
+    "z": 54,
+    "w": 10,
+    "d": 14,
+    "region": "circulation"
+  },
+  {
+    "id": "condensate-north-bank",
+    "x": 408,
+    "y": -24,
+    "z": 40,
+    "w": 58,
+    "d": 8,
+    "region": "circulation"
+  },
+  {
+    "id": "condensate-bank-return",
+    "x": 408,
+    "y": -24,
+    "z": 40,
+    "w": 12,
+    "d": 30,
+    "region": "circulation"
+  },
+  {
+    "id": "retired-hull-neck",
+    "x": 42,
+    "y": -40,
+    "z": 6,
+    "w": 8,
+    "d": 16,
+    "region": "furnace"
+  },
+  {
+    "id": "retired-hull-workshop",
+    "x": 42,
+    "y": -40,
+    "z": 16,
+    "w": 22,
+    "d": 18,
+    "region": "furnace",
+    "district": "retired"
+  },
+  {
+    "id": "retired-hull-return",
+    "x": 56,
+    "y": -40,
+    "z": 26,
+    "w": 18,
+    "d": 8,
+    "region": "furnace"
+  },
+  {
+    "id": "battery-west",
+    "x": -46,
+    "y": 0,
+    "z": -82,
+    "w": 10,
+    "d": 28,
+    "region": "transit"
+  },
+  {
+    "id": "battery-east",
+    "x": 12,
+    "y": 0,
+    "z": -82,
+    "w": 10,
+    "d": 28,
+    "region": "transit"
+  },
+  {
+    "id": "scrap-inspection-neck",
+    "x": -64,
+    "y": -16,
+    "z": 40,
+    "w": 16,
+    "d": 10,
+    "region": "foundry"
+  },
+  {
+    "id": "scrap-inspection-bay",
+    "x": -64,
+    "y": -16,
+    "z": 34,
+    "w": 16,
+    "d": 10,
+    "region": "foundry"
+  },
+  {
+    "id": "press-return-channel",
+    "x": -64,
+    "y": -16,
+    "z": 26,
+    "w": 16,
+    "d": 8,
+    "water": true,
+    "region": "garden"
+  },
+  {
+    "id": "battery-firing-bay",
+    "x": -28,
+    "y": -8,
+    "z": -82,
+    "w": 14,
+    "d": 18,
+    "region": "transit"
+  },
+  {
+    "id": "freight-battery-stores",
+    "x": 88,
+    "y": 8,
+    "z": -136,
+    "w": 12,
+    "d": 36,
+    "region": "transit"
+  },
+  {
+    "id": "workshop-water-foot",
+    "x": -186,
+    "z": 22,
+    "w": 40,
+    "d": 12,
+    "y": -8,
+    "water": true,
+    "region": "garden"
+  },
+  {
+    "id": "phoenix-cage-bypass",
+    "x": -28,
+    "z": -80,
+    "w": 96,
+    "d": 12,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "workshop-water-ramp",
+    "x": -186,
+    "z": -42,
+    "w": 12,
+    "d": 64,
+    "y": 8,
+    "rise": -16,
+    "region": "garden"
+  },
+  {
+    "id": "workshop-water-head",
+    "x": -186,
+    "z": -50,
+    "w": 12,
+    "d": 8,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "optical-screen-track",
+    "x": 216,
+    "z": -8,
+    "w": 5,
+    "d": 16,
+    "y": 24,
+    "region": "optics"
+  },
+  {
+    "id": "overseer-service-door",
+    "x": -14,
+    "z": 58,
+    "w": 8,
+    "d": 28,
+    "y": -8,
+    "region": "foundry"
+  },
+  {
+    "id": "arsenal-transit-head",
+    "x": -66,
+    "z": -60,
+    "w": 18,
+    "d": 12,
+    "y": 8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-transit-ramp",
+    "x": -60,
+    "z": -48,
+    "w": 12,
+    "d": 32,
+    "y": 8,
+    "rise": -8,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-transit-walk",
+    "x": -60,
+    "z": -16,
+    "w": 12,
+    "d": 48,
+    "y": 0,
+    "region": "transit"
+  },
+  {
+    "id": "arsenal-transit-door",
+    "x": -48,
+    "z": 22,
+    "w": 16,
+    "d": 10,
+    "y": 0,
+    "region": "transit"
+  },
+  {
+    "id": "proving-inspection-head",
+    "x": 0,
+    "z": -158,
+    "w": 200,
+    "d": 8,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-retry-apron",
+    "x": 194,
+    "z": -182,
+    "w": 12,
+    "d": 32,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-inspection-ramp",
+    "x": 0,
+    "z": -150,
+    "w": 12,
+    "d": 64,
+    "y": 16,
+    "rise": -16,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-inspection-foot",
+    "x": 0,
+    "z": -86,
+    "w": 12,
+    "d": 46,
+    "y": 0,
+    "region": "transit"
+  },
+  {
+    "id": "phoenix-engine-exit",
+    "x": 218,
+    "z": -120,
+    "w": 32,
+    "d": 12,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "phoenix-departure",
+    "x": 232,
+    "z": -114,
+    "w": 12,
+    "d": 38,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "phoenix-roof-rise",
+    "x": -28,
+    "z": -68,
+    "w": 12,
+    "d": 64,
+    "y": 16,
+    "rise": -16,
+    "region": "testworks"
+  },
+  {
+    "id": "phoenix-return-foot",
+    "x": -28,
+    "z": -4,
+    "w": 70,
+    "d": 8,
+    "y": 0,
+    "region": "transit"
+  },
+  {
+    "id": "carrier-south-bypass",
+    "x": 60,
+    "z": -78,
+    "w": 44,
+    "d": 8,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "phoenix-roof-apron",
+    "x": 56,
+    "z": -88,
+    "w": 16,
+    "d": 12,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "phoenix-roof-apron",
+    "x": 84,
+    "z": -88,
+    "w": 160,
+    "d": 12,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "phoenix-roof-apron",
+    "x": 72,
+    "z": -78,
+    "w": 12,
+    "d": 2,
+    "y": 16,
+    "region": "testworks"
+  },
+  {
+    "id": "coolant-roof-walk",
+    "x": 272,
+    "z": -28,
+    "w": 12,
+    "d": 140,
+    "y": 24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-roof-boarding",
+    "x": 272,
+    "z": 100,
+    "w": 12,
+    "d": 12,
+    "y": 24,
+    "region": "circulation"
+  },
+  {
+    "id": "coolant-lower-boarding",
+    "x": 272,
+    "z": 112,
+    "w": 24,
+    "d": 12,
+    "y": -24,
+    "region": "circulation"
+  },
+  {
+    "id": "vestibule-approach",
+    "x": 148,
+    "z": 44,
+    "w": 28,
+    "d": 8,
+    "y": -8,
+    "region": "circulation"
+  },
+  {
+    "id": "vestibule-hot-lane",
+    "x": 148,
+    "z": 52,
+    "w": 28,
+    "d": 50,
+    "y": -8,
+    "region": "circulation"
+  },
+  {
+    "id": "vestibule-end",
+    "x": 148,
+    "z": 102,
+    "w": 28,
+    "d": 12,
+    "y": -8,
+    "region": "circulation"
+  },
+  {
+    "id": "vestibule-shaft-neck",
+    "x": 100,
+    "z": 102,
+    "w": 48,
+    "d": 12,
+    "y": -8,
+    "region": "furnace"
+  },
+  {
+    "id": "vestibule-shaft-boarding",
+    "x": 88,
+    "z": 90,
+    "w": 12,
+    "d": 12,
+    "y": -8,
+    "region": "furnace"
+  },
+  {
+    "id": "vestibule-shaft-foot",
+    "x": 76,
+    "z": 102,
+    "w": 12,
+    "d": 12,
+    "y": -40,
+    "region": "furnace"
+  },
+  {
+    "id": "vestibule-predecessor-walk",
+    "x": 76,
+    "z": 12,
+    "w": 12,
+    "d": 102,
+    "y": -40,
+    "region": "furnace"
+  },
+  {
+    "id": "old-shaft-top",
+    "x": 16,
+    "z": -12,
+    "w": 12,
+    "d": 8,
+    "y": -8,
+    "region": "foundry"
+  },
+  {
+    "id": "old-shaft-service",
+    "x": 14,
+    "z": -4,
+    "w": 8,
+    "d": 88,
+    "y": -8,
+    "region": "foundry"
+  }
+]

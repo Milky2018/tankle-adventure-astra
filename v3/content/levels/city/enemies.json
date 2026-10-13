@@ -1,0 +1,1491 @@
+[
+  {
+    "id": "bank-gunner",
+    "x": 35,
+    "y": -16,
+    "z": -20,
+    "hp": 2,
+    "type": "turret",
+    "encounter": "garden-bank"
+  },
+  {
+    "id": "bank-scout",
+    "x": 44,
+    "y": -16,
+    "z": -19,
+    "hp": 3,
+    "type": "guard",
+    "magneticShield": true,
+    "encounter": "garden-bank"
+  },
+  {
+    "id": "dock-gunner",
+    "x": 89,
+    "y": -8,
+    "z": 17,
+    "hp": 3,
+    "type": "artillery",
+    "encounter": "rear-dock"
+  },
+  {
+    "id": "dock-scout",
+    "x": 87,
+    "y": -8,
+    "z": 25,
+    "hp": 2,
+    "type": "skirmisher",
+    "encounter": "rear-dock"
+  },
+  {
+    "id": "bench-guard",
+    "magneticShield": true,
+    "x": 86,
+    "y": 8,
+    "z": -61,
+    "hp": 3,
+    "type": "guard",
+    "encounter": "test-benches"
+  },
+  {
+    "id": "bench-scout",
+    "x": 99,
+    "y": 8,
+    "z": -66,
+    "hp": 3,
+    "type": "welder",
+    "encounter": "test-benches"
+  },
+  {
+    "id": "track-scout",
+    "x": 142,
+    "y": 16,
+    "z": -82,
+    "hp": 2,
+    "type": "scout"
+  },
+  {
+    "id": "service-lancer",
+    "type": "sniper",
+    "x": 88,
+    "y": 0,
+    "z": 3,
+    "hp": 4,
+    "encounter": "service-ambush"
+  },
+  {
+    "id": "service-flanker",
+    "type": "skirmisher",
+    "x": 96,
+    "y": 0,
+    "z": 7,
+    "hp": 4,
+    "encounter": "service-ambush"
+  },
+  {
+    "id": "freight-watch",
+    "type": "sniper",
+    "x": 184,
+    "y": 24,
+    "z": -100,
+    "hp": 3,
+    "encounter": "freight-cargo"
+  },
+  {
+    "id": "freight-miner",
+    "type": "miner",
+    "x": 139,
+    "y": 24,
+    "z": -97,
+    "hp": 4,
+    "encounter": "freight-cargo"
+  },
+  {
+    "id": "stores-shield",
+    "type": "guard",
+    "magneticShield": true,
+    "x": -180,
+    "y": 8,
+    "z": -76,
+    "hp": 5,
+    "encounter": "stores-patrol"
+  },
+  {
+    "id": "stores-watch",
+    "type": "sniper",
+    "patrol": {
+      "x": -153,
+      "z": -89,
+      "w": 10,
+      "d": 7
+    },
+    "x": -148,
+    "y": 8,
+    "z": -86,
+    "hp": 3,
+    "encounter": "stores-patrol"
+  },
+  {
+    "id": "rangefinder-turret",
+    "type": "turret",
+    "x": 392,
+    "y": 24,
+    "z": -3,
+    "hp": 3,
+    "encounter": "rangefinder",
+    "activation": {
+      "x": 376,
+      "y": 24,
+      "z": -24,
+      "radius": 14
+    },
+    "battle": "rangefinder"
+  },
+  {
+    "id": "rangefinder-flanker",
+    "type": "skirmisher",
+    "x": 379,
+    "y": 24,
+    "z": 2,
+    "hp": 3,
+    "encounter": "rangefinder",
+    "activation": {
+      "x": 376,
+      "y": 24,
+      "z": -24,
+      "radius": 14
+    },
+    "battle": "rangefinder"
+  },
+  {
+    "id": "crash-range-sniper",
+    "type": "sniper",
+    "x": 252,
+    "y": 16,
+    "z": -160,
+    "hp": 3,
+    "encounter": "crash-range",
+    "activation": {
+      "x": 241,
+      "y": 16,
+      "z": -156,
+      "radius": 18
+    },
+    "battle": "crash-range"
+  },
+  {
+    "id": "crash-range-skirmisher",
+    "type": "skirmisher",
+    "x": 258,
+    "y": 16,
+    "z": -176,
+    "hp": 3,
+    "encounter": "crash-range",
+    "activation": {
+      "x": 241,
+      "y": 16,
+      "z": -156,
+      "radius": 18
+    },
+    "battle": "crash-range"
+  },
+  {
+    "id": "mirror-workshop-reflector",
+    "type": "reflector",
+    "x": 382,
+    "y": 32,
+    "z": -76,
+    "hp": 4,
+    "encounter": "mirror-workshop",
+    "activation": {
+      "x": 378,
+      "y": 32,
+      "z": -80,
+      "radius": 12
+    },
+    "battle": "mirror-workshop"
+  },
+  {
+    "id": "mirror-workshop-skirmisher",
+    "type": "skirmisher",
+    "x": 386,
+    "y": 32,
+    "z": -56,
+    "hp": 3,
+    "encounter": "mirror-workshop",
+    "activation": {
+      "x": 378,
+      "y": 32,
+      "z": -80,
+      "radius": 12
+    },
+    "battle": "mirror-workshop"
+  },
+  {
+    "id": "mirror-workshop-repairer",
+    "type": "repairer",
+    "x": 380,
+    "y": 32,
+    "z": -56,
+    "hp": 3,
+    "encounter": "mirror-workshop",
+    "activation": {
+      "x": 378,
+      "y": 32,
+      "z": -80,
+      "radius": 12
+    },
+    "battle": "mirror-workshop"
+  },
+  {
+    "id": "condensate-welder",
+    "type": "welder",
+    "x": 412,
+    "y": -24,
+    "z": 86,
+    "hp": 4,
+    "encounter": "condensate",
+    "activation": {
+      "x": 414,
+      "y": -24,
+      "z": 103,
+      "radius": 14
+    },
+    "battle": "condensate"
+  },
+  {
+    "id": "condensate-turret",
+    "type": "turret",
+    "x": 408,
+    "y": -24,
+    "z": 68,
+    "hp": 3,
+    "encounter": "condensate",
+    "activation": {
+      "x": 414,
+      "y": -24,
+      "z": 103,
+      "radius": 14
+    },
+    "battle": "condensate"
+  },
+  {
+    "id": "condensate-hunter",
+    "type": "hunter",
+    "hp": 4,
+    "x": 440,
+    "y": -24,
+    "z": 90,
+    "encounter": "condensate-water",
+    "swimPatrol": [
+      [
+        436,
+        92
+      ],
+      [
+        458,
+        92
+      ]
+    ]
+  },
+  {
+    "id": "condensate-dredger",
+    "type": "dredger",
+    "hp": 5,
+    "magneticShield": true,
+    "x": 451,
+    "y": -24,
+    "z": 76,
+    "encounter": "condensate-water",
+    "swimPatrol": [
+      [
+        454,
+        78
+      ],
+      [
+        444,
+        72
+      ]
+    ]
+  },
+  {
+    "id": "battery-west-0",
+    "type": "artillery",
+    "x": -41,
+    "y": 0,
+    "z": -58,
+    "hp": 5,
+    "emplacement": true,
+    "spotterHeight": 9,
+    "detectionRange": 55,
+    "battle": "cargo-battery",
+    "encounter": "cargo-battery",
+    "wave": 0,
+    "activation": {
+      "x": -12,
+      "y": -4,
+      "z": -52,
+      "radius": 14
+    }
+  },
+  {
+    "id": "battery-west-1",
+    "type": "artillery",
+    "x": -41,
+    "y": 0,
+    "z": -75,
+    "hp": 5,
+    "emplacement": true,
+    "spotterHeight": 9,
+    "detectionRange": 55,
+    "battle": "cargo-battery",
+    "encounter": "cargo-battery",
+    "wave": 0,
+    "activation": {
+      "x": -12,
+      "y": -4,
+      "z": -52,
+      "radius": 14
+    }
+  },
+  {
+    "id": "battery-east-0",
+    "type": "artillery",
+    "x": 17,
+    "y": 0,
+    "z": -58,
+    "hp": 5,
+    "emplacement": true,
+    "spotterHeight": 9,
+    "detectionRange": 55,
+    "battle": "cargo-battery",
+    "encounter": "cargo-battery",
+    "wave": 0,
+    "activation": {
+      "x": -12,
+      "y": -4,
+      "z": -52,
+      "radius": 14
+    }
+  },
+  {
+    "id": "battery-east-1",
+    "type": "artillery",
+    "x": 17,
+    "y": 0,
+    "z": -75,
+    "hp": 5,
+    "emplacement": true,
+    "spotterHeight": 9,
+    "detectionRange": 55,
+    "battle": "cargo-battery",
+    "encounter": "cargo-battery",
+    "wave": 0,
+    "activation": {
+      "x": -12,
+      "y": -4,
+      "z": -52,
+      "radius": 14
+    }
+  },
+  {
+    "id": "foundry-west-scout",
+    "x": -40,
+    "y": -16,
+    "z": 54,
+    "hp": 1,
+    "type": "scout"
+  },
+  {
+    "id": "press-gunner",
+    "x": -32,
+    "y": -16,
+    "z": 42,
+    "hp": 2,
+    "type": "turret",
+    "encounter": "press-relay"
+  },
+  {
+    "id": "press-scout",
+    "x": -43,
+    "y": -16,
+    "z": 46,
+    "hp": 1,
+    "type": "scout",
+    "encounter": "press-relay"
+  },
+  {
+    "id": "reclaim-scout",
+    "x": -66,
+    "y": -16,
+    "z": 104,
+    "hp": 3,
+    "type": "welder",
+    "encounter": "prototype-approach",
+    "patrol": {
+      "x": -70,
+      "z": 94,
+      "w": 18,
+      "d": 18
+    }
+  },
+  {
+    "id": "reclaim-guard",
+    "x": -55,
+    "y": -16,
+    "z": 110,
+    "hp": 3,
+    "type": "guard",
+    "encounter": "prototype-approach",
+    "patrol": {
+      "x": -70,
+      "z": 94,
+      "w": 18,
+      "d": 18
+    }
+  },
+  {
+    "id": "prototype",
+    "x": -30,
+    "y": -16,
+    "z": 126,
+    "hp": 9,
+    "type": "elite",
+    "persistent": true
+  },
+  {
+    "id": "foundry",
+    "x": 218,
+    "y": 16,
+    "z": -144,
+    "hp": 14,
+    "type": "boss",
+    "parts": [
+      4,
+      4
+    ],
+    "core": 6,
+    "persistent": true
+  },
+  {
+    "id": "workroom-gunner",
+    "x": 12,
+    "y": -8,
+    "z": 38,
+    "hp": 2,
+    "type": "turret",
+    "encounter": "foundry-workroom",
+    "patrol": {
+      "x": -16,
+      "z": 36,
+      "w": 44,
+      "d": 20
+    }
+  },
+  {
+    "id": "workroom-flanker",
+    "x": -10,
+    "y": -8,
+    "z": 42,
+    "hp": 2,
+    "type": "skirmisher",
+    "encounter": "foundry-workroom",
+    "patrol": {
+      "x": -16,
+      "z": 36,
+      "w": 44,
+      "d": 20
+    }
+  },
+  {
+    "id": "workroom-guard",
+    "x": 22,
+    "y": -8,
+    "z": 47,
+    "hp": 3,
+    "type": "guard",
+    "encounter": "foundry-workroom",
+    "patrol": {
+      "x": -16,
+      "z": 36,
+      "w": 44,
+      "d": 20
+    }
+  },
+  {
+    "id": "freight-lobber",
+    "x": 55,
+    "y": 0,
+    "z": -36,
+    "hp": 3,
+    "type": "artillery",
+    "encounter": "freight-battery"
+  },
+  {
+    "id": "freight-flanker",
+    "x": 53,
+    "y": 0,
+    "z": -30,
+    "hp": 2,
+    "type": "skirmisher",
+    "encounter": "freight-battery"
+  },
+  {
+    "id": "dispatch-turret",
+    "x": -15,
+    "y": 0,
+    "z": -24,
+    "hp": 2,
+    "type": "turret",
+    "encounter": "dispatch-crossing",
+    "patrol": {
+      "x": -18,
+      "z": -36,
+      "w": 12,
+      "d": 28
+    }
+  },
+  {
+    "id": "dispatch-flanker",
+    "x": -9,
+    "y": 0,
+    "z": -18,
+    "hp": 2,
+    "type": "skirmisher",
+    "encounter": "dispatch-crossing",
+    "patrol": {
+      "x": -18,
+      "z": -36,
+      "w": 12,
+      "d": 28
+    }
+  },
+  {
+    "id": "outer-sentry",
+    "x": 202,
+    "y": 8,
+    "z": -78,
+    "hp": 4,
+    "type": "sniper",
+    "encounter": "outer-calibration"
+  },
+  {
+    "id": "outer-scout",
+    "x": 213,
+    "y": 8,
+    "z": -77,
+    "hp": 4,
+    "type": "miner",
+    "encounter": "outer-calibration"
+  },
+  {
+    "id": "calibration-guard",
+    "x": 221,
+    "y": 24,
+    "z": -29,
+    "hp": 5,
+    "type": "reflector",
+    "mirror": true,
+    "encounter": "emitter"
+  },
+  {
+    "id": "calibration-scout",
+    "x": 233,
+    "y": 24,
+    "z": -29,
+    "hp": 4,
+    "type": "skirmisher",
+    "encounter": "emitter"
+  },
+  {
+    "id": "gallery-sentry",
+    "x": 220,
+    "y": 16,
+    "z": 34,
+    "hp": 4,
+    "type": "reflector",
+    "encounter": "optical-releases"
+  },
+  {
+    "id": "gallery-scout",
+    "magneticShield": true,
+    "x": 211,
+    "y": 16,
+    "z": 28,
+    "hp": 5,
+    "type": "guard",
+    "encounter": "optical-releases"
+  },
+  {
+    "id": "guardian",
+    "x": 202,
+    "y": 16,
+    "z": 64,
+    "hp": 36,
+    "type": "guard",
+    "guardian": true,
+    "persistent": true
+  },
+  {
+    "id": "yard-inlet-gunner",
+    "x": 160,
+    "y": -8,
+    "z": 40,
+    "hp": 4,
+    "type": "turret",
+    "encounter": "pressure-inlet"
+  },
+  {
+    "id": "yard-inlet-flanker",
+    "x": 158,
+    "y": -8,
+    "z": 47,
+    "hp": 4,
+    "type": "skirmisher",
+    "encounter": "pressure-inlet"
+  },
+  {
+    "id": "yard-guard",
+    "x": 230,
+    "y": -8,
+    "z": 46,
+    "hp": 5,
+    "type": "welder",
+    "encounter": "rig-approach"
+  },
+  {
+    "id": "yard-scout",
+    "x": 232,
+    "y": -8,
+    "z": 44,
+    "hp": 4,
+    "type": "skirmisher",
+    "encounter": "rig-approach"
+  },
+  {
+    "id": "rig-gunner",
+    "x": 242,
+    "y": -24,
+    "z": 122,
+    "hp": 5,
+    "type": "artillery",
+    "encounter": "circulation-cradle"
+  },
+  {
+    "id": "rig-scout",
+    "x": 234,
+    "y": -24,
+    "z": 114,
+    "hp": 4,
+    "type": "miner",
+    "encounter": "circulation-cradle"
+  },
+  {
+    "id": "hot-obstruction",
+    "magneticShield": true,
+    "x": 211,
+    "y": -16,
+    "z": 24,
+    "hp": 5,
+    "type": "guard",
+    "encounter": "pressure-release"
+  },
+  {
+    "id": "pressure-gunner",
+    "x": 218,
+    "y": -16,
+    "z": 6,
+    "hp": 4,
+    "type": "sniper",
+    "encounter": "pressure-release"
+  },
+  {
+    "id": "gallery-repairer",
+    "x": 223,
+    "y": 16,
+    "z": 28,
+    "hp": 4,
+    "type": "repairer",
+    "encounter": "optical-releases"
+  },
+  {
+    "id": "yard-repairer",
+    "x": 220,
+    "y": -8,
+    "z": 40,
+    "hp": 4,
+    "type": "repairer",
+    "encounter": "rig-approach"
+  },
+  {
+    "id": "rig-shield",
+    "x": 230,
+    "y": -24,
+    "z": 128,
+    "hp": 5,
+    "type": "guard",
+    "magneticShield": true,
+    "encounter": "circulation-cradle"
+  },
+  {
+    "id": "keeper",
+    "x": 0,
+    "y": -56,
+    "z": 32,
+    "hp": 63,
+    "type": "boss",
+    "parts": [
+      6.75,
+      6.75
+    ],
+    "core": 49.5,
+    "persistent": true
+  },
+  {
+    "id": "canal-hunter",
+    "type": "hunter",
+    "hp": 3,
+    "x": -72,
+    "y": -16,
+    "z": 26,
+    "swimPatrol": [
+      [
+        -72,
+        26
+      ],
+      [
+        -72,
+        32
+      ]
+    ]
+  },
+  {
+    "id": "arsenal-dispatch-sniper-0",
+    "type": "sniper",
+    "hp": 3,
+    "x": -134,
+    "y": 8,
+    "z": -5,
+    "battle": "arsenal-dispatch",
+    "activation": {
+      "x": -126,
+      "y": 8,
+      "z": 2,
+      "radius": 18
+    },
+    "patrol": {
+      "x": -144,
+      "z": -10,
+      "w": 32,
+      "d": 24
+    },
+    "encounter": "arsenal-dispatch",
+    "startup": 1.2
+  },
+  {
+    "id": "arsenal-dispatch-guard-1",
+    "type": "guard",
+    "hp": 5,
+    "x": -118,
+    "y": 8,
+    "z": 7,
+    "battle": "arsenal-dispatch",
+    "activation": {
+      "x": -126,
+      "y": 8,
+      "z": 2,
+      "radius": 18
+    },
+    "patrol": {
+      "x": -144,
+      "z": -10,
+      "w": 32,
+      "d": 24
+    },
+    "encounter": "arsenal-dispatch",
+    "startup": 1.6,
+    "magneticShield": true
+  },
+  {
+    "id": "arsenal-dispatch-skirmisher-2",
+    "type": "skirmisher",
+    "hp": 3,
+    "x": -84,
+    "y": 8,
+    "z": 24,
+    "patrol": {
+      "x": -110,
+      "z": 14,
+      "w": 40,
+      "d": 25
+    },
+    "encounter": "arsenal-entry",
+    "startup": 2
+  },
+  {
+    "id": "arsenal-assembly-artillery-3",
+    "type": "artillery",
+    "hp": 5,
+    "x": -143,
+    "y": 8,
+    "z": -42,
+    "encounter": "arsenal-assembly",
+    "startup": 1.2
+  },
+  {
+    "id": "arsenal-assembly-scout-4",
+    "type": "scout",
+    "hp": 2,
+    "x": -125,
+    "y": 8,
+    "z": -45,
+    "encounter": "arsenal-assembly",
+    "startup": 1.6
+  },
+  {
+    "id": "arsenal-return-guard-5",
+    "type": "guard",
+    "hp": 5,
+    "x": -82,
+    "y": 8,
+    "z": -20,
+    "startup": 2,
+    "magneticShield": true
+  },
+  {
+    "id": "arsenal-entry-turret-6",
+    "type": "turret",
+    "hp": 4,
+    "x": -108,
+    "y": 8,
+    "z": 22,
+    "encounter": "arsenal-entry",
+    "startup": 1.2
+  },
+  {
+    "id": "reservoir-banks-sniper-0",
+    "type": "sniper",
+    "hp": 3,
+    "x": -82,
+    "y": -8,
+    "z": 110,
+    "patrol": {
+      "x": -82,
+      "z": 106,
+      "w": 12,
+      "d": 12
+    },
+    "encounter": "reservoir-banks",
+    "startup": 1.2
+  },
+  {
+    "id": "reservoir-banks-guard-1",
+    "type": "guard",
+    "hp": 5,
+    "x": -77,
+    "y": -8,
+    "z": 95,
+    "patrol": {
+      "x": -82,
+      "z": 88,
+      "w": 12,
+      "d": 28
+    },
+    "encounter": "reservoir-banks",
+    "startup": 1.6,
+    "magneticShield": true
+  },
+  {
+    "id": "reservoir-filter-sniper-2",
+    "type": "sniper",
+    "hp": 3,
+    "x": -142,
+    "y": -8,
+    "z": 113,
+    "patrol": {
+      "x": -154,
+      "z": 108,
+      "w": 20,
+      "d": 10
+    },
+    "encounter": "reservoir-filter",
+    "startup": 2
+  },
+  {
+    "id": "reservoir-filter-skirmisher-3",
+    "type": "skirmisher",
+    "hp": 3,
+    "x": -115,
+    "y": -8,
+    "z": 111,
+    "patrol": {
+      "x": -130,
+      "z": 108,
+      "w": 28,
+      "d": 10
+    },
+    "encounter": "reservoir-filter",
+    "startup": 1.2
+  },
+  {
+    "id": "proving-receiving-turret-0",
+    "type": "turret",
+    "hp": 5,
+    "x": 82,
+    "y": 16,
+    "z": -148,
+    "startup": 1.2
+  },
+  {
+    "id": "proving-impact-artillery-1",
+    "type": "artillery",
+    "hp": 7,
+    "x": 169,
+    "y": 16,
+    "z": -183,
+    "encounter": "proving-impact",
+    "startup": 1.6
+  },
+  {
+    "id": "proving-impact-guard-2",
+    "type": "guard",
+    "hp": 7,
+    "x": 143,
+    "y": 16,
+    "z": -178,
+    "encounter": "proving-impact",
+    "startup": 2,
+    "magneticShield": true
+  },
+  {
+    "id": "proving-return-scout-3",
+    "type": "scout",
+    "hp": 3,
+    "x": 180,
+    "y": 16,
+    "z": -82,
+    "startup": 1.2
+  },
+  {
+    "id": "proving-return-guard-4",
+    "type": "guard",
+    "hp": 7,
+    "x": 172,
+    "y": 16,
+    "z": -82,
+    "startup": 1.6,
+    "magneticShield": true
+  },
+  {
+    "id": "lens-collimator-reflector-0",
+    "type": "reflector",
+    "hp": 8,
+    "x": 272,
+    "y": 24,
+    "z": -74,
+    "patrol": {
+      "x": 266,
+      "z": -80,
+      "w": 10,
+      "d": 16
+    },
+    "startup": 1.2
+  },
+  {
+    "id": "lens-gallery-sniper-1",
+    "type": "sniper",
+    "hp": 5,
+    "x": 332,
+    "y": 24,
+    "z": -90,
+    "coordinated": true,
+    "battle": "lens-gallery",
+    "activation": {
+      "x": 310,
+      "y": 24,
+      "z": -89,
+      "radius": 22
+    },
+    "patrol": {
+      "x": 304,
+      "z": -98,
+      "w": 40,
+      "d": 14
+    },
+    "encounter": "lens-gallery",
+    "startup": 1.6
+  },
+  {
+    "id": "lens-gallery-skirmisher-2",
+    "type": "skirmisher",
+    "hp": 15,
+    "x": 284,
+    "y": 24,
+    "z": -30,
+    "variant": "flanker",
+    "battle": "lens-entry",
+    "activation": {
+      "x": 276,
+      "y": 24,
+      "z": -24,
+      "radius": 14
+    },
+    "patrol": {
+      "x": 267,
+      "z": -36,
+      "w": 20,
+      "d": 23
+    },
+    "encounter": "lens-entry",
+    "startup": 0.7
+  },
+  {
+    "id": "lens-gallery-reflector-3",
+    "type": "reflector",
+    "hp": 20,
+    "x": 318,
+    "y": 24,
+    "z": -89,
+    "variant": "prism",
+    "coordinated": true,
+    "battle": "lens-gallery",
+    "activation": {
+      "x": 310,
+      "y": 24,
+      "z": -89,
+      "radius": 22
+    },
+    "patrol": {
+      "x": 304,
+      "z": -98,
+      "w": 40,
+      "d": 14
+    },
+    "encounter": "lens-gallery",
+    "startup": 0.4
+  },
+  {
+    "id": "lens-entry-turret-4",
+    "type": "turret",
+    "hp": 6,
+    "x": 286,
+    "y": 24,
+    "z": -16,
+    "battle": "lens-entry",
+    "activation": {
+      "x": 276,
+      "y": 24,
+      "z": -24,
+      "radius": 14
+    },
+    "encounter": "lens-entry",
+    "startup": 1.6
+  },
+  {
+    "id": "coolant-separator-welder-0",
+    "type": "welder",
+    "hp": 8,
+    "x": 345,
+    "y": -24,
+    "z": 177,
+    "coordinated": true,
+    "battle": "coolant-separator",
+    "activation": {
+      "x": 340,
+      "y": -24,
+      "z": 177,
+      "radius": 18
+    },
+    "patrol": {
+      "x": 338,
+      "z": 172,
+      "w": 28,
+      "d": 22
+    },
+    "encounter": "coolant-separator",
+    "startup": 1.2
+  },
+  {
+    "id": "coolant-separator-artillery-1",
+    "type": "artillery",
+    "hp": 20,
+    "x": 348,
+    "y": -24,
+    "z": 185,
+    "variant": "siege",
+    "coordinated": true,
+    "battle": "coolant-separator",
+    "activation": {
+      "x": 340,
+      "y": -24,
+      "z": 177,
+      "radius": 18
+    },
+    "patrol": {
+      "x": 338,
+      "z": 178,
+      "w": 28,
+      "d": 16
+    },
+    "encounter": "coolant-separator",
+    "startup": 0.55
+  },
+  {
+    "id": "coolant-separator-miner-2",
+    "type": "miner",
+    "hp": 5,
+    "x": 294,
+    "y": -24,
+    "z": 142,
+    "patrol": {
+      "x": 284,
+      "z": 138,
+      "w": 16,
+      "d": 32
+    },
+    "encounter": "coolant-service",
+    "startup": 2
+  },
+  {
+    "id": "coolant-return-guard-3",
+    "type": "guard",
+    "hp": 8,
+    "x": 338,
+    "y": -24,
+    "z": 106,
+    "startup": 1.2,
+    "magneticShield": true
+  },
+  {
+    "id": "coolant-return-welder-4",
+    "type": "welder",
+    "hp": 8,
+    "x": 292,
+    "y": -24,
+    "z": 103,
+    "startup": 1.6
+  },
+  {
+    "id": "coolant-separator-guard-5",
+    "type": "guard",
+    "hp": 24,
+    "x": 292,
+    "y": -24,
+    "z": 158,
+    "variant": "bastion",
+    "patrol": {
+      "x": 284,
+      "z": 138,
+      "w": 16,
+      "d": 32
+    },
+    "encounter": "coolant-service",
+    "startup": 0.7,
+    "magneticShield": true
+  },
+  {
+    "id": "hearth-intake-sniper-0",
+    "type": "sniper",
+    "hp": 6,
+    "x": 75,
+    "y": -40,
+    "z": 55,
+    "patrol": {
+      "x": 54,
+      "z": 52,
+      "w": 24,
+      "d": 18
+    },
+    "encounter": "hearth-receiving",
+    "startup": 1.2
+  },
+  {
+    "id": "hearth-intake-guard-1",
+    "type": "guard",
+    "hp": 27,
+    "x": 10,
+    "y": -40,
+    "z": 92,
+    "variant": "bastion",
+    "battle": "hearth-feed",
+    "activation": {
+      "x": 20,
+      "y": -40,
+      "z": 91,
+      "radius": 12
+    },
+    "patrol": {
+      "x": 6,
+      "z": 80,
+      "w": 23,
+      "d": 24
+    },
+    "encounter": "hearth-feed",
+    "startup": 0.55,
+    "magneticShield": true
+  },
+  {
+    "id": "hearth-intake-scout-2",
+    "type": "scout",
+    "hp": 12,
+    "x": 68,
+    "y": -40,
+    "z": 61,
+    "variant": "interceptor",
+    "patrol": {
+      "x": 54,
+      "z": 52,
+      "w": 24,
+      "d": 18
+    },
+    "encounter": "hearth-receiving",
+    "startup": 0.7
+  },
+  {
+    "id": "hearth-intake-repairer-3",
+    "type": "repairer",
+    "hp": 6,
+    "x": 12,
+    "y": -40,
+    "z": 100,
+    "battle": "hearth-feed",
+    "activation": {
+      "x": 20,
+      "y": -40,
+      "z": 91,
+      "radius": 12
+    },
+    "patrol": {
+      "x": 6,
+      "z": 80,
+      "w": 23,
+      "d": 24
+    },
+    "encounter": "hearth-feed",
+    "startup": 1.2
+  },
+  {
+    "id": "hearth-intake-skirmisher-4",
+    "type": "skirmisher",
+    "hp": 18,
+    "x": 54,
+    "y": -40,
+    "z": 96,
+    "variant": "flanker",
+    "battle": "hearth-intake",
+    "activation": {
+      "x": 48,
+      "y": -40,
+      "z": 91,
+      "radius": 12
+    },
+    "patrol": {
+      "x": 35,
+      "z": 84,
+      "w": 25,
+      "d": 18
+    },
+    "encounter": "hearth-intake",
+    "startup": 0.55
+  },
+  {
+    "id": "hearth-intake-scout-5",
+    "type": "scout",
+    "hp": 12,
+    "x": 46,
+    "y": -40,
+    "z": 89,
+    "variant": "interceptor",
+    "battle": "hearth-intake",
+    "activation": {
+      "x": 48,
+      "y": -40,
+      "z": 91,
+      "radius": 12
+    },
+    "patrol": {
+      "x": 35,
+      "z": 84,
+      "w": 25,
+      "d": 18
+    },
+    "encounter": "hearth-intake",
+    "startup": 0.7
+  },
+  {
+    "id": "spillway-turret",
+    "type": "turret",
+    "hp": 3,
+    "x": -96,
+    "y": -8,
+    "z": 44,
+    "encounter": "spillway"
+  },
+  {
+    "id": "spillway-guard",
+    "type": "guard",
+    "magneticShield": true,
+    "hp": 3,
+    "x": -94,
+    "y": -8,
+    "z": 42,
+    "encounter": "spillway"
+  },
+  {
+    "id": "reservoir-patrol-hunter",
+    "type": "hunter",
+    "hp": 3,
+    "x": -114,
+    "y": -8,
+    "z": 44,
+    "patrol": {
+      "x": -128,
+      "z": 32,
+      "w": 24,
+      "d": 24
+    },
+    "swimPatrol": [
+      [
+        -114,
+        47
+      ],
+      [
+        -126,
+        47
+      ],
+      [
+        -126,
+        56
+      ],
+      [
+        -110,
+        56
+      ],
+      [
+        -110,
+        47
+      ]
+    ]
+  },
+  {
+    "id": "reservoir-pump-dredger",
+    "type": "dredger",
+    "hp": 5,
+    "magneticShield": true,
+    "x": -134,
+    "y": -8,
+    "z": 88,
+    "patrol": {
+      "x": -148,
+      "z": 78,
+      "w": 26,
+      "d": 24
+    },
+    "swimPatrol": [
+      [
+        -140,
+        86
+      ],
+      [
+        -132,
+        96
+      ]
+    ]
+  },
+  {
+    "id": "sorter",
+    "type": "boss",
+    "x": 44,
+    "y": -8,
+    "z": -154,
+    "hp": 12,
+    "persistent": true
+  },
+  {
+    "id": "sorting-walk-sniper",
+    "type": "sniper",
+    "x": 125,
+    "y": 24,
+    "z": -85,
+    "hp": 4,
+    "encounter": "sorting-patrol"
+  },
+  {
+    "id": "sorting-walk-skirmisher",
+    "type": "skirmisher",
+    "x": 126,
+    "y": 24,
+    "z": -70,
+    "hp": 4,
+    "encounter": "sorting-patrol"
+  },
+  {
+    "id": "sorting-walk-guard",
+    "type": "guard",
+    "magneticShield": true,
+    "x": 124,
+    "y": 24,
+    "z": -53,
+    "hp": 5,
+    "encounter": "sorting-patrol"
+  },
+  {
+    "id": "foundry-reserve-left",
+    "reserveFor": "foundry",
+    "reserveAt": 0.6,
+    "type": "skirmisher",
+    "x": 205,
+    "y": 16,
+    "z": -156,
+    "hp": 3
+  },
+  {
+    "id": "foundry-reserve-right",
+    "reserveFor": "foundry",
+    "reserveAt": 0.6,
+    "type": "scout",
+    "x": 239,
+    "y": 16,
+    "z": -156,
+    "hp": 2
+  },
+  {
+    "id": "keeper-reserve-west",
+    "reserveFor": "keeper",
+    "reserveAt": 0.65,
+    "type": "skirmisher",
+    "x": -23,
+    "y": -56,
+    "z": 30,
+    "hp": 4
+  },
+  {
+    "id": "keeper-reserve-east",
+    "reserveFor": "keeper",
+    "reserveAt": 0.65,
+    "type": "miner",
+    "x": 22,
+    "y": -56,
+    "z": 44,
+    "hp": 3
+  },
+  {
+    "id": "keeper-reserve-flank",
+    "reserveFor": "keeper",
+    "reserveAt": 0.32,
+    "type": "scout",
+    "x": -23,
+    "y": -56,
+    "z": 38,
+    "hp": 3
+  },
+  {
+    "id": "keeper-reserve-support",
+    "reserveFor": "keeper",
+    "reserveAt": 0.32,
+    "type": "skirmisher",
+    "x": 22,
+    "y": -56,
+    "z": 51,
+    "hp": 4
+  }
+]

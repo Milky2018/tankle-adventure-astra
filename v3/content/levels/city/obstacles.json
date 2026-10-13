@@ -1,0 +1,59 @@
+[
+  {
+    "id": "rail-cart",
+    "x": -177.1,
+    "z": -77.1,
+    "w": 2.2,
+    "d": 2.2,
+    "y": 8,
+    "h": 1.6,
+    "permanent": true
+  },
+  {
+    "id": "care-screen",
+    "x": 32,
+    "z": 32,
+    "w": 3,
+    "d": 12,
+    "y": -8,
+    "h": 3,
+    "permanent": true
+  },
+  {
+    "id": "care-planter",
+    "x": 42,
+    "z": 33,
+    "w": 2,
+    "d": 2,
+    "y": -8,
+    "h": 1,
+    "permanent": true
+  },
+  {
+    "id": "maintenance-cart",
+    "x": 109,
+    "z": 29,
+    "w": 2,
+    "d": 2,
+    "y": -24,
+    "h": 1.5,
+    "permanent": true
+  },
+  {
+    "id": "sorter-cover",
+    "x": 28,
+    "z": -144,
+    "w": 5,
+    "d": 2,
+    "y": -8,
+    "h": 2.8,
+    "permanent": true,
+    "railMin": 28,
+    "railMax": 50,
+    "rail": {
+      "axis": "x",
+      "min": 28,
+      "max": 50
+    }
+  }
+]

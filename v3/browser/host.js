@@ -11,7 +11,7 @@ export async function loadScene(url, ready, failed) {
     }
     const [json,binary]=await Promise.all([
       unpack(url).then(r=>r.json()),
-      unpack('/art/folded-buffers.bin.gz').then(r=>r.arrayBuffer())
+      unpack('/generated/art/folded-buffers.bin.gz').then(r=>r.arrayBuffer())
     ]);
     performance.mark("art-decoded");
     function attribute(data) {

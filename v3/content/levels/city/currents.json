@@ -1,0 +1,31 @@
+[
+  {
+    "id": "reservoir-preview-water",
+    "x": -100,
+    "z": 34,
+    "w": 16,
+    "d": 72,
+    "y": -8,
+    "current": {
+      "x": 0,
+      "z": -4.2
+    },
+    "sluice": "reservoir-inlet",
+    "diverted": {
+      "x": 0,
+      "z": -0.8
+    }
+  },
+  {
+    "id": "reservoir-mouth",
+    "x": -156,
+    "z": 58,
+    "w": 72,
+    "d": 12,
+    "y": -8,
+    "current": {
+      "x": 3,
+      "z": 0
+    }
+  }
+]

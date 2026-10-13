@@ -21,11 +21,11 @@ pub fn Game::laser(
   }
   let live = firing && !p.overheated && !p.stunned(self.time)
   if live {
-    p.continuous_heat(24 * dt, self.time)
+    p.continuous_heat(laser_tuning.heat_per_second * dt, self.time)
   }
   let mut ray = Ray::{ origin, direction: aim.sub(origin).normalized(), }
-  let mut remaining = 90.0
-  for _ in 0..<5 {
+  let mut remaining = laser_tuning.range
+  for _ in 0..<laser_tuning.segments {
     let hit = self.cast(queries, ray, remaining)
     let end = hit.map(fn(h) { h.point }).unwrap_or(ray.point(remaining))
     self.laser_path.push({ from: ray.origin, to: end, live, })
@@ -55,7 +55,7 @@ pub fn Game::laser(
           if normal is None {
             self.hit_enemy(
               i,
-              p.weapon_damage(Laser, 3) * dt,
+              p.weapon_damage(Laser, laser_tuning.damage_per_second) * dt,
               ray.origin,
               LaserHit,
               part?,
@@ -128,7 +128,13 @@ pub fn Game::magnet(
     let distance = offset.length()
     let locked = self.magnet_lock == Some(target)
     let body = target is SlideTarget(_) || target is CoverTarget
-    if distance >= (if locked && body { 18.0 } else { 13.0 }) || distance < 0.01 {
+    if distance >=
+      (if locked && body {
+        magnet_tuning.locked_range
+      } else {
+        magnet_tuning.range
+      }) ||
+      distance < 0.01 {
       return
     }
     let alignment = offset.normalized().dot(direction)
@@ -255,7 +261,15 @@ pub fn Game::magnet(
       return
     }
   }
-  p.continuous_heat((if best is Some(_) { 12.0 } else { 3.0 }) * dt, self.time)
+  p.continuous_heat(
+    (if best is Some(_) {
+      magnet_tuning.pull_heat_per_second
+    } else {
+      magnet_tuning.idle_heat_per_second
+    }) *
+    dt,
+    self.time,
+  )
   guard best is Some((target, _, _)) else {
     self.magnet_lock = None
     return

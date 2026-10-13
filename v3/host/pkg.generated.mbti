@@ -84,6 +84,8 @@ pub fn remove_save() -> Unit
 
 pub fn render_role(@three.Material) -> String
 
+pub fn scene_binding(@three.Object3D) -> String
+
 pub fn set_checked(String, Bool) -> Unit
 
 pub fn set_value(String, String) -> Unit

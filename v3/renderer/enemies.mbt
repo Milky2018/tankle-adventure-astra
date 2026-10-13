@@ -25,11 +25,14 @@ extern "js" fn line_points(
   #| (line,points) => { line.geometry.setFromPoints(points); line.geometry.setDrawRange(0,points.length); line.geometry.computeBoundingSphere(); }
 
 ///|
-fn enemy_visuals(nodes : Map[String, @three.Object3D]) -> Array[EnemyVisual] {
+fn enemy_visuals(
+  nodes : Map[String, @three.Object3D],
+  game : @sim.Game,
+) -> Array[EnemyVisual] {
   let visuals : Array[EnemyVisual] = []
-  for i = 0; ; i = i + 1 {
-    let prefix = "enemies/\{i}"
-    guard nodes.get(prefix + "/model/root") is Some(root) else { break }
+  for enemy in game.enemies {
+    let prefix = "enemies/\{enemy.definition.id}"
+    let root = nodes.get(prefix + "/model/root").unwrap()
     fn get(suffix : String) -> @three.Object3D? {
       let node = nodes.get(prefix + suffix)
       if node is Some(node) {

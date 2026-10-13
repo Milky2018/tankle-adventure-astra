@@ -51,28 +51,28 @@ fn Machinery::new(
     result
   }
   let walls : Array[WallVisual] = []
-  for i, body in game.world.solids {
-    if get("world/walls/\{i}/mesh") is Some(mesh) {
+  for body in game.world.solids {
+    if get("world/walls/\{body.circuit_key}/mesh") is Some(mesh) {
       walls.push({ body, mesh, open: 0, })
     }
   }
   let controls : Array[ControlVisual] = []
-  for i, body in game.commands.controls {
-    if get("world/controls/\{i}/root") is Some(node) {
+  for body in game.commands.controls {
+    if get("world/controls/\{body.id}/root") is Some(node) {
       let wall = walls
         .iter()
         .find_first(fn(w) { Some(w.body.id) == body.mount })
       let offset = wall
         .map(fn(w) { body.position.sub(point(w.mesh.position())) })
         .unwrap_or({ x: 0, y: 0, z: 0, })
-      let cover = get("world/controls/\{i}/cover")
+      let cover = get("world/controls/\{body.id}/cover")
       controls.push({
         body,
         root: node,
-        lamp: get("world/controls/\{i}/lamp"),
-        moving: get("world/controls/\{i}/moving"),
+        lamp: get("world/controls/\{body.id}/lamp"),
+        moving: get("world/controls/\{body.id}/moving"),
         cover,
-        back: get("world/controls/\{i}/housing/0"),
+        back: get("world/controls/\{body.id}/housing/0"),
         cover_base: cover
         .map(fn(o) { point(o.position()) })
         .unwrap_or({ x: 0, y: 0, z: 0, }),
@@ -91,28 +91,28 @@ fn Machinery::new(
     }
   }
   let lifts : Array[(@sim.Lift, @three.Object3D)] = []
-  for i, body in game.world.lifts {
-    if get("world/views/lifts/\{i}/root") is Some(node) {
+  for body in game.world.lifts {
+    if get("world/views/lifts/\{body.id}/root") is Some(node) {
       lifts.push((body, node))
     }
   }
   let mirrors : Array[(@sim.Mirror, @three.Object3D)] = []
-  for i, body in game.mirrors {
-    if get("world/views/mirrors/\{i}/root") is Some(node) {
+  for body in game.mirrors {
+    if get("world/views/mirrors/\{body.id}/root") is Some(node) {
       mirrors.push((body, node))
     }
   }
   let pickups : Array[
     (@sim.Pickup, @three.Object3D, @three.Object3D?, @three.Object3D?),
   ] = []
-  for i, body in game.pickups {
-    if get("world/views/pickups/\{i}/root") is Some(node) {
+  for body in game.pickups {
+    if get("world/views/pickups/\{body.id}/root") is Some(node) {
       pickups.push(
         (
           body,
           node,
-          get("world/views/pickups/\{i}/item"),
-          get("world/views/pickups/\{i}/cage"),
+          get("world/views/pickups/\{body.id}/item"),
+          get("world/views/pickups/\{body.id}/cage"),
         ),
       )
     }

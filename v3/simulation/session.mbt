@@ -39,7 +39,7 @@ pub fn Game::move_player(
   let moving = movement.length() > 0
   p.update_heat(dt, self.time, boost, moving)
   let knock = p.hit_displacement(self.time, dt)
-  let speed = 10.0 *
+  let speed = drive_tuning.speed *
     p.speed *
     (if p.deployed { if p.afloat { 1.15 } else { 0.75 } } else { 1.0 })
   if moving {

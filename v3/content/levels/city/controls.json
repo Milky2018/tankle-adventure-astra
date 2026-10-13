@@ -1,0 +1,613 @@
+[
+  {
+    "id": "rail-repair",
+    "x": -18,
+    "y": 1.4,
+    "z": 23,
+    "kind": "magnet",
+    "ground": 0,
+    "destinations": [
+      {
+        "id": "cargo-rail",
+        "x": -18,
+        "y": 0,
+        "z": 25
+      }
+    ],
+    "cable": {
+      "finish": [
+        -2,
+        9.65,
+        18
+      ],
+      "risers": [
+        [
+          -11.35,
+          0.28,
+          8
+        ],
+        [
+          -11.35,
+          9.65,
+          8
+        ],
+        [
+          -2,
+          9.65,
+          8
+        ]
+      ]
+    },
+    "circuitKey": "rail-repair:-18.0000:0.0000:23.0000"
+  },
+  {
+    "id": "magnet",
+    "x": 74,
+    "y": 3.25,
+    "z": -23.1,
+    "kind": "magnet",
+    "ground": 0,
+    "mount": "magnet",
+    "facing": [
+      0,
+      0,
+      -1
+    ],
+    "circuitKey": "magnet:74.0000:0.0000:-23.1000"
+  },
+  {
+    "id": "gangway",
+    "x": 70.6,
+    "y": -5.75,
+    "z": 34,
+    "kind": "shot",
+    "mount": "gangway",
+    "facing": [
+      1,
+      0,
+      0
+    ],
+    "ground": -8,
+    "circuitKey": "gangway:70.6000:-8.0000:34.0000"
+  },
+  {
+    "id": "load",
+    "x": 123,
+    "y": 6.8,
+    "z": -13,
+    "ground": 0,
+    "kind": "shot",
+    "surface": "top",
+    "effects": [
+      "load",
+      "brake"
+    ],
+    "feeds": [
+      "load"
+    ],
+    "circuitKey": "load:123.0000:0.0000:-13.0000"
+  },
+  {
+    "id": "cage",
+    "x": 150,
+    "y": 25.4,
+    "z": -23,
+    "kind": "shot",
+    "requires": "phoenix",
+    "facing": [
+      0,
+      0,
+      -1
+    ],
+    "circuit": [
+      [
+        150,
+        24.12,
+        -23
+      ],
+      [
+        150,
+        24.12,
+        -35
+      ],
+      [
+        32,
+        24.12,
+        -35
+      ],
+      [
+        32,
+        24.12,
+        8
+      ],
+      [
+        16,
+        24.12,
+        8
+      ],
+      [
+        10,
+        24.12,
+        16
+      ]
+    ],
+    "circuitKey": "cage:150.0000:24.1000:-23.0000"
+  },
+  {
+    "id": "relay-west",
+    "x": -35,
+    "y": -14.5,
+    "z": 44,
+    "kind": "shot",
+    "circuitKey": "relay-west:-35.0000:-15.8000:44.0000"
+  },
+  {
+    "id": "relay-east",
+    "x": -65,
+    "y": -14.5,
+    "z": 114,
+    "kind": "shot",
+    "effects": [
+      "relay-east",
+      "relays"
+    ],
+    "feeds": [
+      "relays"
+    ],
+    "circuitKey": "relay-east:-65.0000:-15.8000:114.0000"
+  },
+  {
+    "id": "prototype-shortcut",
+    "x": -28,
+    "y": -12.75,
+    "z": 59.1,
+    "kind": "shot",
+    "mount": "prototype-shortcut",
+    "facing": [
+      0,
+      0,
+      1
+    ],
+    "ground": -16,
+    "circuitKey": "prototype-shortcut:-28.0000:-16.0000:59.1000"
+  },
+  {
+    "id": "ballast",
+    "x": -29,
+    "y": 1.3,
+    "z": 27,
+    "kind": "shot",
+    "effects": [
+      "ballast",
+      "ratchet"
+    ],
+    "feeds": [
+      "ballast"
+    ],
+    "circuitKey": "ballast:-29.0000:0.0000:27.0000"
+  },
+  {
+    "id": "loading-return",
+    "x": 32,
+    "y": -2,
+    "z": -58,
+    "kind": "shot",
+    "ground": -8,
+    "surface": "top",
+    "effects": [
+      "loading-return",
+      "bridge-crane"
+    ],
+    "circuitKey": "loading-return:32.0000:-8.0000:-58.0000"
+  },
+  {
+    "id": "freight-return",
+    "x": 63.6,
+    "y": 3.25,
+    "z": -34,
+    "kind": "shot",
+    "mount": "freight-return",
+    "facing": [
+      1,
+      0,
+      0
+    ],
+    "ground": 0,
+    "circuitKey": "freight-return:63.6000:0.0000:-34.0000"
+  },
+  {
+    "id": "gallery",
+    "x": 228,
+    "y": 26,
+    "z": -4,
+    "kind": "laser",
+    "ground": 24,
+    "normal": [
+      -1,
+      0,
+      0
+    ],
+    "circuitKey": "gallery:228.0000:24.0000:-4.0000"
+  },
+  {
+    "id": "garden-optical",
+    "x": 232,
+    "y": 26,
+    "z": -9.5,
+    "kind": "laser",
+    "ground": 24,
+    "normal": [
+      0,
+      0,
+      1
+    ],
+    "circuitKey": "garden-optical:232.0000:24.0000:-9.5000"
+  },
+  {
+    "id": "pump",
+    "x": 58,
+    "y": -4.75,
+    "z": -8.9,
+    "kind": "shot",
+    "ground": -8,
+    "mount": "pump",
+    "facing": [
+      0,
+      0,
+      1
+    ],
+    "circuitKey": "pump:58.0000:-8.0000:-8.9000"
+  },
+  {
+    "id": "pressure-return",
+    "x": 218,
+    "y": -14.6,
+    "z": 18,
+    "kind": "shot",
+    "circuitKey": "pressure-return:218.0000:-15.9000:18.0000"
+  },
+  {
+    "id": "last-cage",
+    "x": 40,
+    "y": -38.6,
+    "z": -12,
+    "kind": "shot",
+    "facing": [
+      1,
+      0,
+      0
+    ],
+    "circuitKey": "last-cage:40.0000:-39.9000:-12.0000"
+  },
+  {
+    "id": "signal",
+    "x": 198,
+    "y": 41.3,
+    "z": 146,
+    "kind": "shot",
+    "destinations": [
+      {
+        "id": "signal-dish",
+        "x": 204,
+        "y": 40,
+        "z": 146
+      }
+    ],
+    "circuitKey": "signal:198.0000:40.0000:146.0000"
+  },
+  {
+    "id": "maintenance",
+    "x": 110,
+    "y": -22.1,
+    "z": 30,
+    "kind": "shot",
+    "weapons": [
+      "cannon"
+    ],
+    "effects": [
+      "maintenance-started"
+    ],
+    "feeds": [
+      "maintenance"
+    ],
+    "destinations": [
+      {
+        "id": "tender-drive",
+        "x": 108,
+        "y": -24,
+        "z": 32
+      }
+    ],
+    "circuitKey": "maintenance:110.0000:-23.4000:30.0000"
+  },
+  {
+    "id": "dock",
+    "x": 0,
+    "y": -54.6,
+    "z": 0,
+    "kind": "dock",
+    "circuitKey": "dock:0.0000:-55.9000:0.0000"
+  },
+  {
+    "id": "arsenal-return",
+    "x": -101.1,
+    "y": 10.75,
+    "z": -54,
+    "kind": "magnet",
+    "height": 4.1,
+    "ground": 8,
+    "mount": "arsenal-return",
+    "facing": [
+      -1,
+      0,
+      0
+    ],
+    "circuitKey": "arsenal-return:-101.1000:8.0000:-54.0000"
+  },
+  {
+    "id": "reservoir-inlet",
+    "x": -72,
+    "y": -6.7,
+    "z": 100,
+    "kind": "shot",
+    "rotor": true,
+    "destinations": [
+      {
+        "id": "reservoir-diverter",
+        "x": -100,
+        "y": -8,
+        "z": 98
+      }
+    ],
+    "circuitKey": "reservoir-inlet:-72.0000:-8.0000:100.0000"
+  },
+  {
+    "id": "proving-transfer",
+    "x": 77,
+    "y": 17.3,
+    "z": -170,
+    "kind": "shot",
+    "ground": 16,
+    "height": 1.3,
+    "counterweight": true,
+    "circuitKey": "proving-transfer:77.0000:16.0000:-170.0000"
+  },
+  {
+    "id": "lens-return",
+    "x": 308,
+    "y": 26,
+    "z": -14,
+    "kind": "laser",
+    "height": 2,
+    "via": [
+      324,
+      26,
+      -14
+    ],
+    "circuitKey": "lens-return:308.0000:24.7000:-14.0000"
+  },
+  {
+    "id": "hearth-transfer",
+    "x": 42,
+    "y": -37.4,
+    "z": 96,
+    "kind": "shot",
+    "surface": "top",
+    "ground": -40,
+    "height": 2.6,
+    "circuitKey": "hearth-transfer:42.0000:-40.0000:96.0000"
+  },
+  {
+    "id": "core-feed",
+    "x": 12,
+    "y": -38,
+    "z": 110,
+    "kind": "laser",
+    "height": 2,
+    "normal": [
+      1,
+      0,
+      0
+    ],
+    "via": [
+      24,
+      -38,
+      110
+    ],
+    "circuit": [
+      [
+        12,
+        -39.88,
+        110
+      ],
+      [
+        24,
+        -39.88,
+        110
+      ],
+      [
+        24,
+        -39.88,
+        58
+      ],
+      [
+        24,
+        -39.88,
+        6
+      ],
+      [
+        34,
+        -39.88,
+        6
+      ],
+      [
+        34,
+        -39.88,
+        13.5
+      ]
+    ],
+    "circuitKey": "core-feed:12.0000:-39.3000:110.0000"
+  },
+  {
+    "id": "hearth-return",
+    "x": 24,
+    "y": -37.25,
+    "z": 59.1,
+    "kind": "shot",
+    "mount": "hearth-return",
+    "facing": [
+      0,
+      0,
+      1
+    ],
+    "ground": -40,
+    "circuitKey": "hearth-return:24.0000:-40.0000:59.1000"
+  },
+  {
+    "id": "scope-drawer",
+    "kind": "shot",
+    "x": 378,
+    "y": 26.25,
+    "z": -9.1,
+    "mount": "scope-screen",
+    "facing": [
+      0,
+      0,
+      -1
+    ],
+    "ground": 24,
+    "circuitKey": "scope-drawer:378.0000:24.0000:-9.1000"
+  },
+  {
+    "id": "mortar-cache",
+    "cable": {
+      "exit": "east",
+      "finish": [
+        161,
+        20.28,
+        -139.35
+      ],
+      "via": [
+        [
+          160.5,
+          20.28,
+          -134.1
+        ]
+      ]
+    },
+    "kind": "shot",
+    "surface": "top",
+    "x": 155.5,
+    "y": 22.7,
+    "ground": 20,
+    "z": -134.5,
+    "circuitKey": "mortar-cache:155.5000:20.0000:-134.5000"
+  },
+  {
+    "id": "collimator-drawer",
+    "kind": "magnet",
+    "x": 367.9,
+    "y": 34.25,
+    "z": -80,
+    "ground": 32,
+    "mount": "collimator-drawer",
+    "facing": [
+      -1,
+      0,
+      0
+    ],
+    "circuitKey": "collimator-drawer:367.9000:32.0000:-80.0000"
+  },
+  {
+    "id": "sorter-retry",
+    "x": 24.6,
+    "y": -4.75,
+    "z": -118,
+    "kind": "shot",
+    "mount": "sorter-retry",
+    "facing": [
+      1,
+      0,
+      0
+    ],
+    "ground": -8,
+    "circuitKey": "sorter-retry:24.6000:-8.0000:-118.0000"
+  },
+  {
+    "id": "workshop-water",
+    "x": -180,
+    "y": 12,
+    "z": -39.9,
+    "kind": "shot",
+    "mount": "workshop-water",
+    "facing": [
+      0,
+      0,
+      1
+    ],
+    "ground": 7.75,
+    "circuitKey": "workshop-water:-180.0000:7.7500:-39.9000"
+  },
+  {
+    "id": "optical-screen",
+    "x": 219.7,
+    "y": 26.25,
+    "z": -5.6,
+    "kind": "shot",
+    "mount": "optical-screen",
+    "facing": [
+      0,
+      0,
+      -1
+    ],
+    "ground": 24,
+    "circuitKey": "optical-screen:219.7000:24.0000:-5.6000"
+  },
+  {
+    "id": "coolant-bypass",
+    "x": 278,
+    "y": -22.7,
+    "z": 117,
+    "kind": "shot",
+    "requires": "coolant-return",
+    "destinations": [
+      {
+        "id": "coolant-runout",
+        "x": 284,
+        "y": -24,
+        "z": 106
+      }
+    ],
+    "circuitKey": "coolant-bypass:278.0000:-24.0000:117.0000"
+  },
+  {
+    "id": "proving-inspection",
+    "x": 195.1,
+    "y": 20.25,
+    "z": -154,
+    "kind": "shot",
+    "mount": "proving-inspection",
+    "facing": [
+      1,
+      0,
+      0
+    ],
+    "ground": 16,
+    "circuitKey": "proving-inspection:195.1000:16.0000:-154.0000"
+  },
+  {
+    "id": "overseer-service",
+    "x": -10,
+    "y": -3.75,
+    "z": 67.9,
+    "kind": "shot",
+    "mount": "overseer-service",
+    "facing": [
+      0,
+      0,
+      -1
+    ],
+    "ground": -8,
+    "circuitKey": "overseer-service:-10.0000:-8.0000:67.9000"
+  }
+]

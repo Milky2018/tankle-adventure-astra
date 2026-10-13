@@ -15,9 +15,9 @@ fn hives(
   nodes : Map[String, @three.Object3D],
   game : @sim.Game,
 ) -> Array[HiveVisual] {
-  game.hives.mapi(fn(i, body) {
+  game.hives.map(fn(body) {
     fn get(suffix : String) -> @three.Object3D? {
-      let node = nodes.get("world/hives/\{i}/" + suffix)
+      let node = nodes.get("world/hives/\{body.id}/" + suffix)
       if node is Some(node) {
         node.set_matrix_auto_update(true)
       }

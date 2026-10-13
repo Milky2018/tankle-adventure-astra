@@ -259,3 +259,8 @@ pub extern "js" fn direct_entry() -> Bool =
 ///|
 pub extern "js" fn query(key : String) -> String =
   #| key => new URLSearchParams(location.search).get(key) ?? ''
+
+///|
+/// Stable authoring identity, independent of the editor's display name.
+pub extern "js" fn scene_binding(object : @three.Object3D) -> String =
+  #| object => object.userData.binding ?? ''

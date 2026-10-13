@@ -48,13 +48,13 @@ pub fn View::queries(
   let housings : Array[Collider] = []
   let mirrors : Array[Collider] = []
   root.traverse(fn(object) {
-    let name = object.name()
+    let name = @host.scene_binding(object)
     if name.has_prefix("world/surfaces/") && name.has_suffix("/mesh") {
       surfaces.push(collider(object, @sim.Terrain))
     }
     if name.has_prefix("world/controls/") && name.contains("/housing/") {
-      for index in 0..<game.commands.controls.length() {
-        if name.has_prefix("world/controls/\{index}/housing/") {
+      for index, control in game.commands.controls {
+        if name.has_prefix("world/controls/\{control.id}/housing/") {
           housings.push(collider(object, @sim.BlockedControl(index)))
           break
         }
@@ -62,19 +62,19 @@ pub fn View::queries(
     }
   })
   let walls : Array[(@sim.Solid, @three.Object3D)] = []
-  for i, wall in game.world.solids {
-    if self.nodes.get("world/walls/\{i}/mesh") is Some(object) {
+  for wall in game.world.solids {
+    if self.nodes.get("world/walls/\{wall.circuit_key}/mesh") is Some(object) {
       walls.push((wall, object))
     }
   }
   let lifts : Array[(@sim.Lift, @three.Object3D)] = []
-  for i, lift in game.world.lifts {
-    if self.nodes.get("world/views/lifts/\{i}/mesh") is Some(object) {
+  for lift in game.world.lifts {
+    if self.nodes.get("world/views/lifts/\{lift.id}/mesh") is Some(object) {
       lifts.push((lift, object))
     }
   }
-  for i, _ in game.mirrors {
-    if self.nodes.get("world/views/mirrors/\{i}/mesh") is Some(object) {
+  for i, mirror in game.mirrors {
+    if self.nodes.get("world/views/mirrors/\{mirror.id}/mesh") is Some(object) {
       mirrors.push(collider(object, @sim.MirrorTarget(i)))
     }
   }

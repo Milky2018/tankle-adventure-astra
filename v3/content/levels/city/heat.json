@@ -1,0 +1,36 @@
+[
+  {
+    "id": "coolant-runout",
+    "x": 284,
+    "z": 100,
+    "w": 96,
+    "d": 12,
+    "y": -24,
+    "heat": 28,
+    "stop": "coolant-bypass"
+  },
+  {
+    "id": "vestibule-heat",
+    "x": 148,
+    "z": 52,
+    "w": 28,
+    "d": 50,
+    "y": -8,
+    "vx": 0,
+    "vz": 0,
+    "heat": 28
+  },
+  {
+    "id": "return",
+    "x": 208,
+    "z": 28,
+    "w": 12,
+    "d": 48,
+    "y": -16,
+    "rise": -5.333333333333333,
+    "vx": 0,
+    "vz": 10.15,
+    "release": "pressure-return",
+    "heat": 28
+  }
+]

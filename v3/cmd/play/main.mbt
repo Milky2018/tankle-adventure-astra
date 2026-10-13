@@ -159,7 +159,7 @@ fn Session::advance(self : Session, milliseconds : Double) -> Unit {
 ///|
 pub fn start() -> Unit {
   @host.load_scene(
-    "/art/folded-scene.json.gz",
+    "/generated/art/folded-scene.json.gz",
     fn(scene) {
       let game = @sim.Game::new()
       game.restore(@host.read_save()) |> ignore

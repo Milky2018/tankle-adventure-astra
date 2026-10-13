@@ -1,5 +1,6 @@
 // Real browser input only. The diagnostic callback is read-only.
 async page => {
+  await page.setViewportSize({width:1280,height:720});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('http://127.0.0.1:5175/?chapter=folded&test&view=overhead');
   await page.waitForFunction(()=>window.__typedRead);

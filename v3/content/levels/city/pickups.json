@@ -1,0 +1,161 @@
+[
+  {
+    "id": "cannon-scope",
+    "upgrade": "scope",
+    "x": 400,
+    "y": 24,
+    "z": 16,
+    "place": "Detached rangefinding workshop off the optical service gallery",
+    "requires": "scope-drawer",
+    "preview": true,
+    "hidden": true
+  },
+  {
+    "id": "armor-foundry",
+    "upgrade": "armor",
+    "x": 46,
+    "y": -8,
+    "z": 34,
+    "place": "Beside the mechanical flower after restoring its water supply",
+    "requires": "garden-bloom",
+    "hidden": true
+  },
+  {
+    "id": "cannon-coil",
+    "upgrade": "cannon",
+    "x": 96,
+    "y": 8,
+    "z": -132,
+    "place": "Freight battery stores at the end of the upper inspection spur",
+    "requires": "cargo-battery",
+    "preview": true,
+    "hidden": true
+  },
+  {
+    "id": "armor-reservoir",
+    "upgrade": "armor",
+    "x": 91,
+    "y": -8,
+    "z": 25,
+    "place": "Rear dock corner beyond the flooded bridge foundation",
+    "hidden": true
+  },
+  {
+    "id": "cooling-filter",
+    "upgrade": "cooling",
+    "x": 453,
+    "y": -24,
+    "z": 60,
+    "place": "Condensate recovery island beyond the cooling works",
+    "hidden": true
+  },
+  {
+    "id": "armor-proving",
+    "upgrade": "armor",
+    "x": 260,
+    "y": 16,
+    "z": -176,
+    "place": "Discarded chassis beside the test runway",
+    "requires": "impact-store",
+    "preview": true,
+    "hidden": true
+  },
+  {
+    "id": "mortar-charge",
+    "upgrade": "mortar",
+    "x": 165,
+    "y": 20,
+    "z": -134,
+    "place": "Counterweight inspection annex",
+    "requires": "mortar-cache",
+    "preview": true,
+    "hidden": true
+  },
+  {
+    "id": "armor-lens",
+    "upgrade": "armor",
+    "x": 382,
+    "y": 32,
+    "z": -66,
+    "place": "Rail-screened optical maintenance mezzanine",
+    "requires": "collimator-drawer",
+    "preview": true,
+    "hidden": true
+  },
+  {
+    "id": "laser-focus",
+    "upgrade": "laser",
+    "x": 210,
+    "y": 40,
+    "z": 148,
+    "place": "Signal tower instrument recess beyond the Guardian",
+    "requires": "signal",
+    "preview": true,
+    "hidden": true
+  },
+  {
+    "id": "armor-hearth",
+    "upgrade": "armor",
+    "x": 56,
+    "y": -40,
+    "z": 23,
+    "place": "Retired service room beside the furnace refuge",
+    "hidden": true
+  },
+  {
+    "id": "overdrive",
+    "ability": "overdrive",
+    "x": -28,
+    "y": -16,
+    "z": 124,
+    "requires": "prototype",
+    "preview": true
+  },
+  {
+    "id": "mortarModule",
+    "ability": "mortar",
+    "x": 32,
+    "y": -8,
+    "z": -178,
+    "requires": "sorter",
+    "preview": true
+  },
+  {
+    "id": "magnetModule",
+    "ability": "magnet",
+    "x": -156,
+    "y": 14,
+    "z": -68,
+    "lift": "rail-inspection-bridge"
+  },
+  {
+    "id": "flotation",
+    "ability": "flotation",
+    "x": -164,
+    "y": -8,
+    "z": 64
+  },
+  {
+    "id": "phoenix",
+    "ability": "phoenix",
+    "x": 218,
+    "y": 16,
+    "z": -114,
+    "requires": "foundry",
+    "preview": true
+  },
+  {
+    "id": "laser",
+    "ability": "laser",
+    "x": 324,
+    "y": 24,
+    "z": -28
+  },
+  {
+    "id": "circulation",
+    "ability": "circulation",
+    "x": 374,
+    "y": -24,
+    "z": 116
+  }
+]

@@ -4,13 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:moon": "moon build --target js --release",
+    "build:moon": "npm run build:content && moon build --target js --release",
     "dev": "npm run build:moon && vite --host 127.0.0.1",
     "build": "npm run build:moon && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "moon test simulation --target js",
-    "check": "moon check --target js --deny-warn && npm test && npm run build",
-    "refresh:world": "node scripts/authored-world.mjs && moon fmt"
+    "test": "npm run build:content && moon test simulation --target js",
+    "check": "npm run build:content && moon check --target js --deny-warn && npm run test:content && moon test simulation --target js && npm run build",
+    "build:content": "node scripts/build-content.mjs",
+    "scene:export": "node scripts/scene-editor.mjs export",
+    "scene:import": "node scripts/scene-editor.mjs import",
+    "content:check": "node scripts/check-content.mjs",
+    "test:content": "node --test tests/content/*.test.mjs"
   },
   "dependencies": {
     "@mizchi/three-mbt": "file:./.mooncakes/mizchi/three/js",

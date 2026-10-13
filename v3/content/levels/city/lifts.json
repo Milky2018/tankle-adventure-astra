@@ -1,0 +1,203 @@
+[
+  {
+    "id": "carrier",
+    "x": 72,
+    "z": -90,
+    "w": 12,
+    "d": 12,
+    "stops": [
+      8,
+      16
+    ],
+    "lock": "load",
+    "circuitKey": "carrier:72.0000:8.0000:-90.0000"
+  },
+  {
+    "id": "cage",
+    "x": 4,
+    "z": 10,
+    "w": 12,
+    "d": 12,
+    "stops": [
+      0,
+      24
+    ],
+    "recess": 0.6,
+    "circuitKey": "cage:4.0000:0.0000:10.0000"
+  },
+  {
+    "id": "training",
+    "x": -44,
+    "z": 22,
+    "w": 12,
+    "d": 12,
+    "stops": [
+      0,
+      8
+    ],
+    "lock": "ballast",
+    "circuitKey": "training:-44.0000:0.0000:22.0000"
+  },
+  {
+    "id": "loading-return",
+    "x": 12,
+    "z": -52,
+    "w": 12,
+    "d": 12,
+    "stops": [
+      -8,
+      0
+    ],
+    "lock": "loading-return",
+    "circuitKey": "loading-return:12.0000:-8.0000:-52.0000"
+  },
+  {
+    "id": "garden-lift",
+    "x": 104,
+    "z": 12,
+    "w": 12,
+    "d": 12,
+    "stops": [
+      -8,
+      16
+    ],
+    "lock": "garden-optical",
+    "circuitKey": "garden-lift:104.0000:-8.0000:12.0000"
+  },
+  {
+    "id": "last-cage",
+    "x": 16,
+    "z": -24,
+    "w": 12,
+    "d": 12,
+    "stops": [
+      -40,
+      -8
+    ],
+    "lock": "last-cage",
+    "circuitKey": "last-cage:16.0000:-40.0000:-24.0000"
+  },
+  {
+    "id": "sorter-retry-lift",
+    "x": 12,
+    "z": -124,
+    "w": 12,
+    "d": 12,
+    "stops": [
+      -8,
+      0
+    ],
+    "lock": "sorter-retry",
+    "circuitKey": "sorter-retry-lift:12.0000:-8.0000:-124.0000"
+  },
+  {
+    "id": "inspection-load",
+    "x": 104,
+    "z": -18,
+    "w": 12,
+    "d": 8,
+    "stops": [
+      0,
+      5
+    ],
+    "lock": "load",
+    "settle": true,
+    "circuitKey": "inspection-load:104.0000:0.0000:-18.0000"
+  },
+  {
+    "id": "furnace-service-lift",
+    "x": 88,
+    "z": 102,
+    "w": 12,
+    "d": 12,
+    "stops": [
+      -40,
+      -8
+    ],
+    "lock": "inner-thermal",
+    "circuitKey": "furnace-service-lift:88.0000:-40.0000:102.0000"
+  },
+  {
+    "id": "coolant-return-lift",
+    "x": 284,
+    "z": 100,
+    "w": 12,
+    "d": 12,
+    "stops": [
+      -24,
+      24
+    ],
+    "lock": "coolant-return",
+    "circuitKey": "coolant-return-lift:284.0000:-24.0000:100.0000"
+  },
+  {
+    "id": "rail-inspection-bridge",
+    "x": -160,
+    "z": -72,
+    "w": 8,
+    "d": 8,
+    "stops": [
+      8,
+      14
+    ],
+    "lock": "rail-crossing",
+    "settle": true,
+    "circuitKey": "rail-inspection-bridge:-160.0000:8.0000:-72.0000"
+  },
+  {
+    "id": "coolant-maintenance-bridge",
+    "x": 300,
+    "z": 100,
+    "w": 12,
+    "d": 12,
+    "stops": [
+      -24,
+      -19
+    ],
+    "lock": "coolant-return",
+    "settle": true,
+    "circuitKey": "coolant-maintenance-bridge:300.0000:-24.0000:100.0000"
+  },
+  {
+    "id": "proving-load",
+    "x": 92,
+    "z": -164,
+    "w": 8,
+    "d": 12,
+    "stops": [
+      16,
+      22
+    ],
+    "lock": "proving-transfer",
+    "settle": true,
+    "circuitKey": "proving-load:92.0000:16.0000:-164.0000"
+  },
+  {
+    "id": "final-load",
+    "x": 32,
+    "z": 84,
+    "w": 8,
+    "d": 12,
+    "stops": [
+      -40,
+      -34
+    ],
+    "lock": "hearth-transfer",
+    "settle": true,
+    "circuitKey": "final-load:32.0000:-40.0000:84.0000"
+  },
+  {
+    "id": "freight-platform",
+    "x": -6,
+    "z": -28,
+    "w": 12,
+    "d": 8,
+    "stops": [
+      0,
+      5
+    ],
+    "lock": "bridge-crane",
+    "settle": true,
+    "circuitKey": "freight-platform:-6.0000:0.0000:-28.0000"
+  }
+]
