@@ -21,6 +21,7 @@ Open http://127.0.0.1:5175/. `npm run build` produces `dist/`; `npm run preview`
 - `content/levels/city/`: editable JSON definitions for floors, collision, enemies, controls, circuits, lifts, pickups and repair hives.
 - `content/abilities.json`: weapon damage, heat, range and movement parameters. `content/sounds.json` contains sound synthesis parameters.
 - `content/art/`: packed Three.js scene resources. Use the official editor workflow below to edit them.
+- `editor/` and `scripts/editor-server.mjs`: local authoring UI and loopback-only content/save/build service.
 - `scripts/build-content.mjs`: compiles content into typed MoonBit constants and copies scene assets to `public/generated/`. Generated `.mbt` files and asset copies are ignored build outputs.
 
 The published MoonBit binding module is named `mizchi/three`, not `mizchi/threejs`.
@@ -39,25 +40,25 @@ Browser input checks are in `tests/browser/`. They use keyboard and mouse events
 
 ## Editing content
 
-See [the authoring guide](docs/authoring.md) for the official Three.js editor workflow, the data model, runtime ownership and current limits. For a small editable example:
+Start the local project editor:
 
 ```sh
-npm run scene:export -- output/editor/prototype.json --entity enemies:prototype
+npm run editor
 ```
 
-Open that project with **File → Open** in <https://threejs.org/editor/>, edit its objects, and use **File → Save**. Then import the saved project:
+Open <http://127.0.0.1:5176/>. It uses the official Three.js editor viewport and undo commands, with project-specific navigation and forms. The first launch downloads and verifies about 2 MB of pinned upstream editor source into ignored `.editor/`; subsequent launches use that local cache.
 
-```sh
-npm run scene:import -- /path/to/project.json --check
-npm run scene:import -- /path/to/project.json
-npm run build
-```
+- **关卡与角色**: search enemies, controls, pickups, checkpoints and player parts; select an object to focus its floor. Edit position and gameplay properties, or choose a model part to change its transform and color.
+- **技能数值**: edit weapon and movement parameters in forms.
+- **保存到项目**: write content directly to v3. **保存并试玩** also builds and opens the game in a reusable tab.
 
-The round-trip format is the editor's native **project JSON**. glTF/GLB is useful for exchanging model geometry and materials; it is not this game's level, collision, progression or skill format. Runtime behavior stays in normal MoonBit types and functions.
+Use [the authoring guide](docs/authoring.md) for collision editing, runtime ownership, limits and the alternative official website import/export workflow. Native Three.js project JSON retains level metadata; glTF/GLB is only a model interchange format. Gameplay behavior stays in MoonBit.
 
 ## Verified behavior
 
 The simulation suite covers collision, heat, incoming damage, enemy armor, weapon selection, laser reflections, magnetic locks, moving lifts, delayed circuits, rail and gutter puzzles, save restoration, death and ending docking. Content tests cover editor round trips, stable identities, collision changes and invalid imports. A project saved by the live official editor was also imported and checked against both the gameplay catalog and packed scene.
+
+The local editor was exercised through search, floor focus, gizmo dragging, property changes, undo/redo, repeated saves, character part scale/color editing and save/build/play. The running game reflected edited enemy position/health and cannon heat. Test content was restored afterwards.
 
 Browser acceptance uses a fresh save and real keyboard/mouse input: both opening relays, the Prototype fight, Overdrive acquisition, the reverse conveyor, the local shortcut and a return to the repair hive (10 to 25 hull). Third-person movement and firing, rebinding, pause, map layer selection and camera settings were also exercised. This is an opening-loop acceptance run, not a claim that every later encounter has been played through.
 

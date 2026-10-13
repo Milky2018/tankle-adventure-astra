@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>Tankle · 项目编辑器</title>
+    <link rel="stylesheet" href="/upstream/css/main.css" />
+    <link rel="stylesheet" href="/style.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/build/three.module.js",
+          "three/webgpu": "/build/three.webgpu.js",
+          "three/addons/": "/examples/jsm/",
+          "three/examples/": "/examples/",
+          "three-gpu-pathtracer": "/pathtracer/index.module.js",
+          "three-mesh-bvh": "/bvh/index.module.js"
+        }
+      }
+    </script>
+    <script src="/upstream/js/libs/signals.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <strong>Tankle <small>项目编辑器</small></strong>
+      <nav>
+        <button id="level-tab" aria-pressed="true">关卡与角色</button
+        ><button id="skills-tab" aria-pressed="false">技能数值</button>
+      </nav>
+      <span id="status" role="status">正在读取本地项目…</span
+      ><button id="save" disabled>保存到项目</button
+      ><button id="preview" class="primary" disabled>保存并试玩</button>
+    </header>
+    <main id="level-workspace">
+      <aside id="navigation">
+        <h2>城市关卡 <small>City</small></h2>
+        <p class="hint">
+          先选区域，再搜索或选择对象。点击对象即可定位，自动切换到所在楼层。
+        </p>
+        <label
+          >快速定位
+          <select id="landmark">
+            <option value="">选择存档点 / 区域</option>
+          </select></label
+        >
+        <label
+          >查找对象
+          <input
+            id="search"
+            type="search"
+            placeholder="名称、ID、类型、战斗区域…"
+            autocomplete="off"
+        /></label>
+        <label
+          >对象分类
+          <select id="category">
+            <option value="gameplay">所有游戏对象</option>
+            <option value="player">玩家角色</option>
+            <option value="enemies">敌人</option>
+            <option value="controls">机关</option>
+            <option value="barriers">门与屏障</option>
+            <option value="pickups">拾取物</option>
+            <option value="hives">存档点</option>
+            <option value="lifts">升降机</option>
+            <option value="mirrors">反射镜</option>
+            <option value="decks">地面碰撞</option>
+            <option value="architecture">建筑碰撞</option>
+            <option value="obstacles">障碍碰撞</option>
+          </select></label
+        >
+        <label
+          >编辑楼层
+          <select id="floor">
+            <option value="all">全部楼层</option>
+          </select></label
+        >
+        <label class="check"
+          ><input type="checkbox" id="collisions" />显示当前楼层碰撞框</label
+        >
+        <div id="count" class="hint"></div>
+        <div id="objects" role="list" aria-label="关卡对象"></div>
+      </aside>
+      <div id="view-tools">
+        <button id="focus">定位 F</button><button id="overview">区域俯视</button
+        ><button id="undo" disabled>撤销 ⌘Z</button
+        ><button id="redo" disabled>重做 ⇧⌘Z</button
+        ><span>左键旋转 · 右键平移 · 滚轮缩放</span>
+      </div>
+      <aside id="properties">
+        <h2>对象属性</h2>
+        <p class="hint">从左侧列表选择对象，或在视口中点击模型。</p>
+      </aside>
+      <footer>
+        拖动箭头移动对象；角色零件可单独旋转和缩放。楼层过滤和碰撞框仅影响编辑视图。<span
+          id="selection-note"
+        ></span>
+      </footer>
+    </main>
+    <main id="skills-workspace" hidden>
+      <h1>技能数值</h1>
+      <p class="hint">
+        直接编辑 content/abilities.json 中的参数。保存并试玩后生效；技能行为仍由
+        MoonBit 实现。
+      </p>
+      <div id="skills"></div>
+    </main>
+    <div id="loading">
+      <strong>正在打开城市关卡</strong>
+      <p>读取场景与关卡对象…</p>
+    </div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

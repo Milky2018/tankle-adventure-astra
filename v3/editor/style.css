@@ -1,0 +1,291 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+  color: #e5eaf0;
+  background: #121820;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-size: 13px;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  background: #26313e;
+  border: 1px solid #3b495b;
+  border-radius: 5px;
+}
+button {
+  padding: 7px 10px;
+  cursor: pointer;
+}
+button:hover,
+button[aria-pressed="true"] {
+  background: #364d63;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+button.primary {
+  background: #246859;
+  border-color: #398876;
+}
+input,
+select,
+textarea {
+  padding: 7px;
+  width: 100%;
+  min-width: 0;
+}
+input:focus,
+select:focus {
+  outline: 2px solid #65c6bf;
+  outline-offset: 1px;
+}
+label {
+  display: block;
+  margin: 12px 0;
+  color: #bbc9d6;
+}
+label > input,
+label > select {
+  margin-top: 6px;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.check input {
+  width: auto;
+  margin: 0;
+}
+header {
+  position: fixed;
+  z-index: 10;
+  height: 60px;
+  inset: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: #18212c;
+  border-bottom: 1px solid #354252;
+}
+header strong {
+  white-space: nowrap;
+  font-size: 17px;
+}
+small {
+  font-size: 11px;
+  color: #91a5b6;
+  font-weight: normal;
+}
+nav {
+  display: flex;
+  gap: 5px;
+}
+#status {
+  flex: 1;
+  font-size: 12px;
+  text-align: right;
+  max-height: 48px;
+  overflow: auto;
+}
+#status.error {
+  color: #ffb7a9;
+}
+aside {
+  position: fixed;
+  top: 60px;
+  bottom: 28px;
+  width: 266px;
+  padding: 14px;
+  background: #18212c;
+  overflow: auto;
+}
+#navigation {
+  left: 0;
+  border-right: 1px solid #354252;
+  display: flex;
+  flex-direction: column;
+}
+#navigation > * {
+  flex-shrink: 0;
+}
+#navigation label {
+  margin: 6px 0;
+}
+#objects {
+  overflow-y: auto;
+  flex-shrink: 1;
+  margin: 8px -5px 0;
+  min-height: 100px;
+}
+#objects button {
+  text-align: left;
+  display: block;
+  width: 100%;
+  margin: 3px 0;
+  padding: 8px;
+  overflow-wrap: anywhere;
+}
+#objects small {
+  display: block;
+  margin-top: 4px;
+}
+#objects button[aria-current="true"] {
+  border-color: #65c6bf;
+  background: #264946;
+}
+#properties {
+  right: 0;
+  width: 290px;
+  border-left: 1px solid #354252;
+}
+h2 {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+h3 {
+  font-size: 14px;
+  margin: 22px 0 10px;
+}
+.hint {
+  color: #9daebd;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 5px 0 12px;
+}
+#viewport {
+  position: fixed !important;
+  top: 105px !important;
+  left: 266px !important;
+  right: 290px !important;
+  bottom: 28px !important;
+}
+#viewport .Panel {
+  background: transparent;
+}
+#viewport .Text,
+#viewport .Select {
+  color: #dce7ef;
+}
+#viewport canvas {
+  outline: none;
+}
+#view-tools {
+  position: fixed;
+  top: 60px;
+  height: 45px;
+  left: 266px;
+  right: 290px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  background: #202b37;
+}
+#view-tools span {
+  font-size: 11px;
+  color: #a6b7c6;
+  margin-left: auto;
+}
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  padding: 6px 15px;
+  color: #9fb4c6;
+  background: #111923;
+  font-size: 11px;
+}
+#selection-note {
+  float: right;
+}
+.axes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+.axes label {
+  margin: 0;
+}
+.property {
+  display: grid;
+  grid-template-columns: minmax(95px, 1fr) minmax(75px, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+.property input {
+  margin: 0;
+}
+.property input[type="checkbox"] {
+  width: auto;
+  justify-self: start;
+}
+details {
+  margin: 15px 0;
+}
+summary {
+  cursor: pointer;
+  color: #8ecbc5;
+}
+#skills-workspace {
+  position: fixed;
+  inset: 60px 0 0;
+  overflow: auto;
+  padding: 30px max(30px, calc((100vw - 1100px) / 2));
+}
+#skills {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 18px;
+}
+#skills section {
+  background: #1c2734;
+  padding: 20px;
+  border: 1px solid #354252;
+  border-radius: 8px;
+}
+#skills h2 {
+  color: #8ecbc5;
+}
+#loading {
+  position: fixed;
+  inset: 60px 0 0;
+  z-index: 20;
+  display: grid;
+  align-content: center;
+  justify-content: center;
+  text-align: center;
+  background: #121820;
+}
+#loading strong {
+  font-size: 22px;
+}
+[hidden] {
+  display: none !important;
+}
+@media (max-width: 1150px) {
+  #view-tools span,
+  header strong small {
+    display: none;
+  }
+}
+
+#viewport select.Select {
+  width: auto;
+  background: #26313e;
+  color: #dce7ef;
+  text-transform: none;
+}

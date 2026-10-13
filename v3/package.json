@@ -14,14 +14,17 @@
     "scene:export": "node scripts/scene-editor.mjs export",
     "scene:import": "node scripts/scene-editor.mjs import",
     "content:check": "node scripts/check-content.mjs",
-    "test:content": "node --test tests/content/*.test.mjs"
+    "test:content": "node --test tests/content/*.test.mjs",
+    "editor": "node scripts/editor-server.mjs"
   },
   "dependencies": {
     "@mizchi/three-mbt": "file:./.mooncakes/mizchi/three/js",
-    "three": "0.185.1",
-    "tankle-astra-platform": "file:./browser"
+    "tankle-astra-platform": "file:./browser",
+    "three": "0.185.1"
   },
   "devDependencies": {
+    "three-gpu-pathtracer": "0.0.23",
+    "three-mesh-bvh": "0.7.4",
     "vite": "7.1.0"
   }
 }

@@ -2,6 +2,23 @@
 
 The game has three independent concerns: authored content, gameplay simulation and presentation. Change the content files or use the editor for placement and art. Change MoonBit functions for behavior. Do not edit `*.generated.mbt`, `_build/`, `dist/` or `public/generated/`.
 
+## Local project editor
+
+Run `npm run editor` in v3, then open <http://127.0.0.1:5176/>. Keep this server running while editing. The initial setup caches verified upstream r185 editor source and its MIT license in `.editor/three-r185/`; the viewport uses the project's installed Three.js 0.185.1. No external editor website is needed after setup.
+
+1. Use **快速定位** to choose a checkpoint region, or search by object ID, name, type or encounter. Search spans floors; without search, the list follows **编辑楼层**. Categories include enemies, controls, barriers, pickups, checkpoints, lifts, mirrors, player art and collision volumes.
+2. Click an object to select it, switch to its floor and focus the camera. Left-drag rotates, right-drag pans, and the wheel zooms. **定位 F** returns to the selection; **区域俯视** gives a top view.
+3. Edit the position or gameplay fields on the right. Select a model part under **编辑目标** to edit its transform or color. Changes use the official editor's undo/redo commands. Color edits clone shared materials so other objects retain their colors.
+4. For collision work, select a collision category and enable **显示当前楼层碰撞框**. Move or resize the selected box. Art and collision remain separate; update both for passage changes.
+5. **技能数值** edits `content/abilities.json` through numeric forms. These forms save separately from scene data and do not share the scene undo stack.
+6. **保存到项目** validates and writes authored content directly. **保存并试玩** then rebuilds the game and opens/reuses a preview tab. Close the preview tab after testing to release the running game. A save retains scene undo history; reloading discards that history. Unsaved edits trigger the browser's leave-page prompt.
+
+Floor clipping, the editor background and collision visibility are view preferences, not saved game content. A revision check rejects stale scene/skill saves from another tab or an external file edit. On conflict, keep the current tab open while reconciling changes; do not blindly reload unsaved work. Scene and skill saves are independent: if one fails, the status reports the error and the remaining unsaved edits stay in memory.
+
+The local interface covers edits to existing gameplay objects and character parts. It is not a general modeler or a visual prefab/spawn system. Use the official website workflow below for model import, detailed material/geometry editing and decorative additions. New gameplay identities, circuit definitions and bespoke puzzle behavior still require their source files. The player model's root position is an art preview; spawn position comes from checkpoint data. Runtime-controlled pivots may overwrite authored transforms, so adjust their mesh children.
+
+The local implementation is deliberately small: `editor/app.js` connects selection, view filtering and official commands; `editor/fields.js` builds property forms; `scripts/editor-server.mjs` serves pinned modules, validates content saves and runs the normal game build. Upstream editor source is cached unchanged rather than maintained as a fork. The editor renders on changes and does not expose path tracing. Large scene JSON operations run one at a time in `scripts/editor-scene-worker.mjs`; the process exits after each load/save so the service does not retain the unpacked scene heap.
+
 ## Where to make a change
 
 | Change | Source |
@@ -98,6 +115,6 @@ The large scene is stored as compressed Three.js metadata and binary vertex buff
 
 Use `npm run build:content` after editing JSON if working directly with `moon check`, `moon test` or `moon ide`. `npm run dev`, `npm run build`, `npm test` and `npm run check` already generate content first. After source changes, run `moon info --target js && moon fmt`; review interface changes intentionally.
 
-The scene editor workflow was exercised against the live official r186 editor; the game pins Three.js 0.185.1. Re-run the round-trip and browser checks when upgrading either side. Browser checks under `tests/browser/` use real input and read-only diagnostics; they do not teleport the player or grant abilities.
+The standalone import/export workflow was exercised against the live official r186 editor; the local entry pins upstream r185 and Three.js 0.185.1. Re-run the round-trip and browser checks when upgrading either side. Browser checks under `tests/browser/` use real input and read-only diagnostics; they do not teleport the player or grant abilities.
 
 Temporary editor projects, test screenshots and logs belong under ignored `output/`. Remove stale exports after importing, close test browsers, and keep only the preview server currently in use.

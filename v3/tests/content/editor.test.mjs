@@ -10,7 +10,15 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Scene, Group, Mesh, BoxGeometry, MeshBasicMaterial } from "three";
+import {
+  Scene,
+  Group,
+  Mesh,
+  BoxGeometry,
+  MeshBasicMaterial,
+  BatchedMesh,
+  ObjectLoader,
+} from "three";
 import { exportProject, importProject } from "../../scripts/scene-editor.mjs";
 import { readScene, writeScene } from "../../scripts/content/scene.mjs";
 
@@ -49,6 +57,18 @@ beforeEach(() => {
 afterEach(() => {
   process.chdir(workspace);
   rmSync(sandbox, { recursive: true, force: true });
+});
+
+test("batched architecture survives the editor loader and Save serialization", () => {
+  const scene = new Scene();
+  const batch = new BatchedMesh(1, 24, 36, new MeshBasicMaterial());
+  batch.addInstance(batch.addGeometry(new BoxGeometry()));
+  scene.add(batch);
+  writeScene(scene.toJSON());
+  const project = exportProject();
+  const loaded = new ObjectLoader().parse(project.scene);
+  project.scene = loaded.toJSON();
+  assert.doesNotThrow(() => importProject(project));
 });
 
 test("editor translation and user data update gameplay without depending on display names", () => {
@@ -189,5 +209,29 @@ test("the shipped city and all colliders round trip without changing gameplay de
   importProject(exportProject(undefined, { colliders: true }));
   names.forEach((name, index) =>
     assert.deepEqual(records(name), before[index], name),
+  );
+});
+
+test("consecutive local saves and undo keep absolute placement and reject stale tabs", () => {
+  const before = records("enemies").find((record) => record.id === "prototype");
+  const project = exportProject("enemies:prototype");
+  const stale = structuredClone(project);
+  const root = project.scene.object.children[0];
+  root.matrix[12] += 2;
+  project.scene.object.userData.tankle.revision =
+    importProject(project).revision;
+  root.matrix[12] += 1;
+  project.scene.object.userData.tankle.revision =
+    importProject(project).revision;
+  assert.equal(
+    records("enemies").find((record) => record.id === "prototype").x,
+    before.x + 3,
+  );
+  assert.throws(() => importProject(stale), /Content changed since export/);
+  root.matrix[12] -= 3;
+  importProject(project);
+  assert.deepEqual(
+    records("enemies").find((record) => record.id === "prototype"),
+    before,
   );
 });

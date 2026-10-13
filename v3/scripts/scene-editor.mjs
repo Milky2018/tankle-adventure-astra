@@ -164,6 +164,12 @@ export function exportProject(selection, { colliders = false } = {}) {
   };
   walk(object, (node) => {
     node.matrixAutoUpdate = true;
+    // Three r185/r186 ObjectLoader reads underscored free-list keys, while
+    // Object3D.toJSON writes the public names. Supply both for editor saves.
+    if (node.type === "BatchedMesh") {
+      node._availableInstanceIds = node.availableInstanceIds;
+      node._availableGeometryIds = node.availableGeometryIds;
+    }
     if (/^(enemies|world)\/(?:[^/]+\/)?\d+(\/|$)/.test(node.name ?? ""))
       node.name = node.userData?.binding ?? node.name;
     const entity = node.userData?.entity;
@@ -181,11 +187,17 @@ export function exportProject(selection, { colliders = false } = {}) {
   });
   const camera = new PerspectiveCamera(50, 1.5, 0.1, 2000);
   camera.name = "Camera";
-  const anchor = roots.find((root) => root.userData?.entity) ?? roots[0];
+  const anchor =
+    (!selection &&
+      roots.find((root) => root.userData?.entity?.collection === "hives")) ||
+    roots.find((root) => root.userData?.entity) ||
+    roots[0];
   const center = new Vector3().setFromMatrixPosition(
     new Matrix4().fromArray(anchor.matrix),
   );
-  camera.position.copy(center).add(new Vector3(15, 12, 18));
+  camera.position
+    .copy(center)
+    .add(selection ? new Vector3(15, 12, 18) : new Vector3(55, 65, 75));
   camera.lookAt(center);
   camera.updateMatrixWorld();
   if (selection) {
@@ -392,7 +404,12 @@ export function importProject(project, dryRun = false) {
         JSON.stringify(records, null, 2) + "\n",
       );
   }
-  return { roots: metadata.roots.length, checked: true, written: !dryRun };
+  return {
+    roots: metadata.roots.length,
+    checked: true,
+    written: !dryRun,
+    revision: revision(),
+  };
 }
 
 const [command, file, ...options] = process.argv.slice(2);
