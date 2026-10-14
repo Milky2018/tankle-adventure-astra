@@ -99,6 +99,23 @@ export function createEditorServer() {
     let ownsLock = false;
     try {
       const url = new URL(request.url, "http://localhost");
+      if (request.method === "GET" && url.pathname === "/api/templates") {
+        response.writeHead(200, {
+          "Content-Type": "application/json",
+          "Content-Encoding": "gzip",
+          "Cache-Control": "no-cache",
+        });
+        return response.end(
+          await readFile("content/editor/templates.scene.json.gz"),
+        );
+      }
+      if (
+        request.method === "GET" &&
+        url.pathname === "/api/template-definitions"
+      )
+        return json(
+          JSON.parse(await readFile("content/editor/templates.json", "utf8")),
+        );
       if (
         request.method === "POST" &&
         request.headers.origin !== `http://${request.headers.host}`

@@ -1,0 +1,322 @@
+[
+  {
+    "id": "enemy-scout",
+    "label": "侦察兵",
+    "collection": "enemies",
+    "source": "track-scout",
+    "defaults": {
+      "type": "scout",
+      "hp": 2
+    }
+  },
+  {
+    "id": "enemy-turret",
+    "label": "炮台",
+    "collection": "enemies",
+    "source": "bank-gunner",
+    "defaults": {
+      "type": "turret",
+      "hp": 2
+    }
+  },
+  {
+    "id": "enemy-guard",
+    "label": "护卫",
+    "collection": "enemies",
+    "source": "bank-scout",
+    "defaults": {
+      "type": "guard",
+      "hp": 3,
+      "magneticShield": true
+    }
+  },
+  {
+    "id": "enemy-hunter",
+    "label": "水域猎手",
+    "collection": "enemies",
+    "source": "condensate-hunter",
+    "defaults": {
+      "type": "hunter",
+      "hp": 4
+    }
+  },
+  {
+    "id": "enemy-dredger",
+    "label": "疏浚机",
+    "collection": "enemies",
+    "source": "condensate-dredger",
+    "defaults": {
+      "type": "dredger",
+      "hp": 5,
+      "magneticShield": true
+    }
+  },
+  {
+    "id": "enemy-skirmisher",
+    "label": "游击兵",
+    "collection": "enemies",
+    "source": "dock-scout",
+    "defaults": {
+      "type": "skirmisher",
+      "hp": 2
+    }
+  },
+  {
+    "id": "enemy-sniper",
+    "label": "狙击手",
+    "collection": "enemies",
+    "source": "service-lancer",
+    "defaults": {
+      "type": "sniper",
+      "hp": 4
+    }
+  },
+  {
+    "id": "enemy-artillery",
+    "label": "火炮",
+    "collection": "enemies",
+    "source": "dock-gunner",
+    "defaults": {
+      "type": "artillery",
+      "hp": 3
+    }
+  },
+  {
+    "id": "enemy-miner",
+    "label": "布雷兵",
+    "collection": "enemies",
+    "source": "freight-miner",
+    "defaults": {
+      "type": "miner",
+      "hp": 4
+    }
+  },
+  {
+    "id": "enemy-welder",
+    "label": "焊接兵",
+    "collection": "enemies",
+    "source": "bench-scout",
+    "defaults": {
+      "type": "welder",
+      "hp": 3
+    }
+  },
+  {
+    "id": "enemy-repairer",
+    "label": "维修兵",
+    "collection": "enemies",
+    "source": "mirror-workshop-repairer",
+    "defaults": {
+      "type": "repairer",
+      "hp": 3
+    }
+  },
+  {
+    "id": "enemy-reflector",
+    "label": "反射护卫",
+    "collection": "enemies",
+    "source": "mirror-workshop-reflector",
+    "defaults": {
+      "type": "reflector",
+      "hp": 4
+    }
+  },
+  {
+    "id": "enemy-elite",
+    "label": "精英",
+    "collection": "enemies",
+    "source": "prototype",
+    "defaults": {
+      "type": "elite",
+      "hp": 9
+    }
+  },
+  {
+    "id": "control-shot",
+    "label": "射击开关",
+    "collection": "controls",
+    "source": "relay-west",
+    "defaults": {
+      "kind": "shot",
+      "ground": -15.8
+    }
+  },
+  {
+    "id": "control-magnet",
+    "label": "磁力开关",
+    "collection": "controls",
+    "source": "rail-repair",
+    "defaults": {
+      "kind": "magnet",
+      "ground": 0
+    }
+  },
+  {
+    "id": "control-laser",
+    "label": "激光接收器",
+    "collection": "controls",
+    "source": "gallery",
+    "defaults": {
+      "kind": "laser",
+      "ground": 24,
+      "normal": [
+        -1,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "id": "control-use",
+    "label": "交互开关",
+    "collection": "controls",
+    "source": "relay-west",
+    "defaults": {
+      "kind": "use",
+      "ground": -15.8
+    }
+  },
+  {
+    "id": "pickup-upgrade-scope",
+    "label": "瞄具升级",
+    "collection": "pickups",
+    "source": "cannon-scope",
+    "defaults": {
+      "upgrade": "scope",
+      "hidden": false,
+      "preview": false
+    }
+  },
+  {
+    "id": "pickup-upgrade-armor",
+    "label": "装甲升级",
+    "collection": "pickups",
+    "source": "armor-foundry",
+    "defaults": {
+      "upgrade": "armor",
+      "hidden": false,
+      "preview": false
+    }
+  },
+  {
+    "id": "pickup-upgrade-cannon",
+    "label": "主炮升级",
+    "collection": "pickups",
+    "source": "cannon-coil",
+    "defaults": {
+      "upgrade": "cannon",
+      "hidden": false,
+      "preview": false
+    }
+  },
+  {
+    "id": "pickup-upgrade-cooling",
+    "label": "冷却升级",
+    "collection": "pickups",
+    "source": "cooling-filter",
+    "defaults": {
+      "upgrade": "cooling",
+      "hidden": false,
+      "preview": false
+    }
+  },
+  {
+    "id": "pickup-upgrade-mortar",
+    "label": "迫击炮升级",
+    "collection": "pickups",
+    "source": "mortar-charge",
+    "defaults": {
+      "upgrade": "mortar",
+      "hidden": false,
+      "preview": false
+    }
+  },
+  {
+    "id": "pickup-upgrade-laser",
+    "label": "激光升级",
+    "collection": "pickups",
+    "source": "laser-focus",
+    "defaults": {
+      "upgrade": "laser",
+      "hidden": false,
+      "preview": false
+    }
+  },
+  {
+    "id": "pickup-ability-overdrive",
+    "label": "overdrive 能力模块",
+    "collection": "pickups",
+    "source": "overdrive",
+    "defaults": {
+      "ability": "overdrive",
+      "hidden": false,
+      "preview": false
+    }
+  },
+  {
+    "id": "pickup-ability-mortar",
+    "label": "mortar 能力模块",
+    "collection": "pickups",
+    "source": "mortarModule",
+    "defaults": {
+      "ability": "mortar",
+      "hidden": false,
+      "preview": false
+    }
+  },
+  {
+    "id": "pickup-ability-magnet",
+    "label": "magnet 能力模块",
+    "collection": "pickups",
+    "source": "magnetModule",
+    "defaults": {
+      "ability": "magnet",
+      "hidden": false,
+      "preview": false
+    }
+  },
+  {
+    "id": "pickup-ability-flotation",
+    "label": "flotation 能力模块",
+    "collection": "pickups",
+    "source": "flotation",
+    "defaults": {
+      "ability": "flotation",
+      "hidden": false,
+      "preview": false
+    }
+  },
+  {
+    "id": "pickup-ability-phoenix",
+    "label": "phoenix 能力模块",
+    "collection": "pickups",
+    "source": "phoenix",
+    "defaults": {
+      "ability": "phoenix",
+      "hidden": false,
+      "preview": false
+    }
+  },
+  {
+    "id": "pickup-ability-laser",
+    "label": "laser 能力模块",
+    "collection": "pickups",
+    "source": "laser",
+    "defaults": {
+      "ability": "laser",
+      "hidden": false,
+      "preview": false
+    }
+  },
+  {
+    "id": "pickup-ability-circulation",
+    "label": "circulation 能力模块",
+    "collection": "pickups",
+    "source": "circulation",
+    "defaults": {
+      "ability": "circulation",
+      "hidden": false,
+      "preview": false
+    }
+  }
+]

@@ -79,7 +79,7 @@ pub fn Game::restore(self : Game, text : String) -> Bool {
   for id, left in saved.puzzle_signals {
     self.puzzles.pending[id] = left
   }
-  self.player.apply_upgrades(self.progress)
+  self.player.apply_upgrades(self.progress, pickups=self.pickups)
   self.progress.events.clear()
   self.respawn()
   true

@@ -133,22 +133,36 @@ pub fn Progress::advance_signals(self : Progress, dt : Double) -> Array[String] 
 }
 
 ///|
-pub fn Player::apply_upgrades(self : Player, state : Progress) -> Unit {
-  let mut armor = 0
-  for
-    id in [
-      "armor-foundry", "armor-reservoir", "armor-proving", "armor-lens", "armor-hearth",
-    ] {
-    if state.has(id) {
-      armor += 1
+pub fn Player::apply_upgrades(
+  self : Player,
+  state : Progress,
+  pickups~ : Array[Pickup] = authored_pickups(),
+) -> Unit {
+  let upgrades = Upgrades::new()
+  for pickup in pickups {
+    if state.has(pickup.id) {
+      upgrades.install(pickup.acquisition)
     }
   }
-  self.upgrades.armor_packs = armor
-  self.upgrades.cooling = state.has("cooling-filter")
-  self.upgrades.cannon = state.has("cannon-coil")
-  self.upgrades.mortar = state.has("mortar-charge")
-  self.upgrades.laser = state.has("laser-focus")
-  self.upgrades.scope = state.has("cannon-scope")
+  self.upgrades.armor_packs = upgrades.armor_packs
+  self.upgrades.cooling = upgrades.cooling
+  self.upgrades.cannon = upgrades.cannon
+  self.upgrades.mortar = upgrades.mortar
+  self.upgrades.laser = upgrades.laser
+  self.upgrades.scope = upgrades.scope
+}
+
+///|
+fn Upgrades::install(self : Upgrades, acquisition : Acquisition) -> Unit {
+  match acquisition {
+    Armor => self.armor_packs += 1
+    Cooling => self.cooling = true
+    CannonCoil => self.cannon = true
+    MortarCharge => self.mortar = true
+    LaserFocus => self.laser = true
+    Scope => self.scope = true
+    _ => ()
+  }
 }
 
 ///|

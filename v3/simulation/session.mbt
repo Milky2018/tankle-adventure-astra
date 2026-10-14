@@ -86,6 +86,19 @@ pub fn Game::interactable(self : Game) -> String? {
     }
   }
   for c in self.commands.controls {
+    if c.actions.contains(Use) &&
+      !self.commands.active(self.progress, c.id) &&
+      (
+        c.requires is None ||
+        (
+          c.requires is Some(required) &&
+          self.progress.circuit_ready(required, c.circuit_key, c.id)
+        )
+      ) &&
+      (c.ground - p.y).abs() < 0.6 &&
+      Vec2::{ x: c.position.x - p.x, z: c.position.z - p.z, }.length() < 3 {
+      return Some(c.id)
+    }
     if c.actions.contains(Dock) &&
       self.progress.has("keeper") &&
       (c.position.y - 1.3 - p.y).abs() < 0.6 &&
@@ -109,6 +122,21 @@ pub fn Game::interact(self : Game) -> Bool {
         self.effects.push(Acquired(id))
       }
       return acquired
+    }
+  }
+  for control in self.commands.controls {
+    if control.id == id && control.actions.contains(Use) {
+      let activated = self.commands.activate(
+        self.progress,
+        id,
+        Use,
+        self.player,
+        self.time,
+      )
+      if activated {
+        control.flash = 1
+      }
+      return activated
     }
   }
   if id == "dock" {

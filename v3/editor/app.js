@@ -7,6 +7,7 @@ import { SetScaleCommand } from "/upstream/js/commands/SetScaleCommand.js";
 import { SetMaterialCommand } from "/upstream/js/commands/SetMaterialCommand.js";
 import { SetValueCommand } from "/upstream/js/commands/SetValueCommand.js";
 import { element, fields, replaceField } from "./fields.js";
+import { entityTools } from "./entity-tools.js";
 
 const $ = (id) => document.getElementById(id);
 const editor = new Editor();
@@ -37,6 +38,7 @@ let mode = "level",
 let floor = -8;
 let saveVersion = 0;
 let gameBackground;
+let objectTools;
 const editorBackground = new THREE.Color(0x222d38);
 const floorOf = (object) => {
   const placement = object.userData.placement;
@@ -62,6 +64,7 @@ function status(message, error = false) {
   $("status").classList.toggle("error", error);
 }
 function refreshButtons() {
+  objectTools?.refresh(busy || !ready);
   $("level-workspace").inert = busy;
   $("skills-workspace").inert = busy;
   $("save").disabled = busy || !ready;
@@ -227,7 +230,11 @@ function partLabel(node, index) {
     pivot: "转轴",
   };
   const binding = node.userData.binding;
-  if (binding && !binding.startsWith("world/occluders/")) {
+  if (
+    binding &&
+    !binding.startsWith("world/occluders/") &&
+    !binding.includes("/art/")
+  ) {
     const path = binding.replace(
       /^(enemies\/[^/]+\/model|world\/hives\/[^/]+|player)\//,
       "",
@@ -241,6 +248,7 @@ function partLabel(node, index) {
   return `${node.isMesh ? "装饰网格" : "组件"} ${index}`;
 }
 function renderProperties() {
+  objectTools?.refresh(busy || !ready);
   const root = activeRoot,
     object = editor.selected;
   const panel = $("properties");
@@ -334,8 +342,13 @@ function renderProperties() {
     }
     if (root.userData.game) {
       panel.append(element("h3", "游戏属性"));
+      const formValues = { ...root.userData.game };
+      if (["controls", "pickups"].includes(categoryOf(root)))
+        formValues.requires ??= "";
+      if (categoryOf(root) === "controls")
+        formValues.effects ??= [root.userData.entity.id];
       const values = Object.fromEntries(
-        Object.entries(root.userData.game).filter(
+        Object.entries(formValues).filter(
           ([key]) =>
             !["id", "circuitKey"].includes(key) &&
             !(root.userData.editorOnly && ["w", "h", "d"].includes(key)),
@@ -365,6 +378,26 @@ editor.signals.objectSelected.add((object) => {
   renderProperties();
   renderList();
 });
+function entityChanged(selected) {
+  entities = editor.scene.children.filter(
+    (object) =>
+      object.userData.entity || object.userData.binding === "player/root",
+  );
+  collisionObjects = entities.filter((object) => object.userData.editorOnly);
+  activeRoot = selected;
+  partMode = false;
+  if (selected) {
+    $("search").value = "";
+    $("category").value = selected.userData.entity.collection;
+    selectEntity(selected);
+  } else {
+    editor.deselect();
+    $("selection-note").textContent = "";
+    renderProperties();
+    renderList();
+  }
+  dirty();
+}
 editor.signals.objectChanged.add((object) => {
   if (ready) {
     if (object === activeRoot && floor !== null && floorOf(object) !== floor) {
@@ -455,6 +488,8 @@ async function save(preview = false) {
       }
       const result = await api("scene", project);
       editor.scene.userData.tankle.revision = result.revision;
+      editor.scene.userData.tankle.roots = result.rootIds;
+      editor.scene.userData.tankle.deleted = [];
       sceneDirty = false;
     }
     if (skillsDirty) {
@@ -537,6 +572,12 @@ try {
   abilities = skills.values;
   abilitiesRevision = skills.revision;
   renderSkills();
+  objectTools = await entityTools(editor, {
+    selection: () => activeRoot,
+    floor: () => floor,
+    changed: entityChanged,
+    status,
+  });
   ready = true;
   busy = false;
   selectEntity(

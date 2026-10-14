@@ -1,5 +1,7 @@
 // Forms stay separate from Three.js selection and commands.
 export const labels = {
+  effects: "触发信号（每行一个）",
+  weapons: "可触发动作（每行一个）",
   hp: "生命值",
   type: "类型",
   name: "名称",
@@ -50,6 +52,24 @@ export function element(tag, text, className) {
 export function fields(container, values, change, path = []) {
   for (const [key, value] of Object.entries(values)) {
     const keys = [...path, key];
+    if (Array.isArray(value) && ["effects", "weapons"].includes(key)) {
+      const label = element("label", labels[key]);
+      const input = document.createElement("textarea");
+      input.rows = 3;
+      input.value = value.join("\n");
+      input.setAttribute("aria-label", key);
+      input.onchange = () =>
+        change(
+          keys,
+          input.value
+            .split(/[\n,]/)
+            .map((s) => s.trim())
+            .filter(Boolean),
+        );
+      label.append(input);
+      container.append(label);
+      continue;
+    }
     if (value !== null && typeof value === "object") {
       const group = element("details");
       group.append(element("summary", labels[key] ?? key));
@@ -93,6 +113,13 @@ export function replaceField(value, path, next) {
   const copy = structuredClone(value);
   let target = copy;
   for (const key of path.slice(0, -1)) target = target[key];
-  target[path.at(-1)] = next;
+  if (
+    next === "" &&
+    ["requires", "lift", "mount", "encounter", "battle", "reserveFor"].includes(
+      path.at(-1),
+    )
+  )
+    delete target[path.at(-1)];
+  else target[path.at(-1)] = next;
   return copy;
 }

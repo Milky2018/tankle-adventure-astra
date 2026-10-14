@@ -116,6 +116,12 @@ export function validateCatalog(catalog) {
         require(["shot", "magnet", "laser", "use", "dock"].includes(
           record.kind,
         ), `${path}.kind is unknown`);
+        if (record.effects != null)
+          require(Array.isArray(record.effects) &&
+            record.effects.length > 0 &&
+            record.effects.every(
+              (value) => typeof value === "string" && value.trim().length > 0,
+            ), `${path}.effects must contain at least one signal`);
         if (record.weapons)
           require(record.weapons.every((value) =>
             ["cannon", "mortar", "laser", "magnet", "use", "dock"].includes(

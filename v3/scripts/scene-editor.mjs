@@ -15,6 +15,15 @@ import {
   selectResources,
 } from "./content/scene.mjs";
 import { validateCatalog } from "./content/validate.mjs";
+import { editorReferences } from "./content/editor-references.mjs";
+import {
+  editableCollections,
+  entityKey,
+  entityPrefix,
+  belongsTo,
+  requiredEntityBindings,
+  validateNewIdentity,
+} from "../editor/entity-data.js";
 
 import {
   collisionCollections,
@@ -68,22 +77,6 @@ function recordFor(catalog, entity) {
       entity.key,
   );
 }
-function entityPrefix(entity) {
-  return (
-    {
-      enemies: "enemies",
-      barriers: "world/walls",
-      controls: "world/controls",
-      lifts: "world/views/lifts",
-      mirrors: "world/views/mirrors",
-      pickups: "world/views/pickups",
-      hives: "world/hives",
-    }[entity.collection] +
-    "/" +
-    entity.key
-  );
-}
-
 export function exportProject(selection, { colliders = false } = {}) {
   const scene = readScene();
   const catalog = readCatalog();
@@ -156,6 +149,7 @@ export function exportProject(selection, { colliders = false } = {}) {
         version: 1,
         fullScene: !selection,
         revision: revision(),
+        references: editorReferences(catalog),
         roots: roots
           .filter((root) => !root.userData?.editorOnly)
           .map((root) => root.uuid),
@@ -178,6 +172,10 @@ export function exportProject(selection, { colliders = false } = {}) {
     if (!record) throw new Error(`Missing ${entity.collection}:${entity.key}`);
     const { x, y, z, ...properties } = record;
     node.userData.game = properties;
+    if (entity.collection === "controls") {
+      const circuit = catalog.circuits.find((value) => value.id === entity.id);
+      if (circuit) node.userData.circuit = structuredClone(circuit);
+    }
     node.userData.placement = {
       origin: [x, y ?? record.stops?.[0], z],
       matrix: world.get(node.uuid).toArray(),
@@ -257,7 +255,37 @@ export function importProject(project, dryRun = false) {
   const editedObjects = new Map();
   const bindings = new Set();
   walk(edited.object, (object) => {
+    if (editedObjects.has(object.uuid))
+      throw new Error(`Duplicate object UUID: ${object.uuid}`);
     editedObjects.set(object.uuid, object);
+  });
+  const removedRoots = new Set();
+  for (const entity of metadata.deleted ?? []) {
+    if (!metadata.fullScene || !editableCollections.has(entity.collection))
+      throw new Error(
+        "Entity deletion requires a full project and an enemy, control or pickup.",
+      );
+    validateNewIdentity(entity, { id: entity.id });
+    const prefix = entityPrefix(entity);
+    for (const object of oldObjects.values()) {
+      if (
+        !metadata.roots.includes(object.uuid) ||
+        !belongsTo(object.userData?.binding, prefix)
+      )
+        continue;
+      if (editedObjects.has(object.uuid))
+        throw new Error(`Delete the complete entity: ${entityKey(entity)}`);
+      removedRoots.add(object.uuid);
+    }
+    // Circuits describe logical signals, not physical switches. Keep their consumers
+    // and timings intact so another control can take over the same signal explicitly.
+    catalog[entity.collection] = catalog[entity.collection].filter(
+      (record) => record.id !== entity.id,
+    );
+  }
+  const addedEntities = [];
+  const seenEntities = new Set();
+  walk(edited.object, (object) => {
     const binding = object.userData?.binding;
     if (binding && bindings.has(binding))
       throw new Error(
@@ -268,11 +296,26 @@ export function importProject(project, dryRun = false) {
       throw new Error(`Non-finite transform on ${object.name}`);
     const entity = object.userData?.entity;
     if (!entity) return;
+    const identity = Number.isInteger(entity.index)
+      ? `${entityKey(entity)}:${entity.index}`
+      : `${entity.collection}:${entity.key}`;
+    if (seenEntities.has(identity))
+      throw new Error(`Duplicate gameplay identity: ${identity}`);
+    seenEntities.add(identity);
+    const oldEntity = oldObjects.get(object.uuid)?.userData?.entity;
+    if (oldEntity && entityKey(oldEntity) !== entityKey(entity))
+      throw new Error(`Keep stable IDs unchanged on ${object.name}`);
     const original = recordFor(catalog, entity);
-    if (!original)
-      throw new Error(
-        `Unknown gameplay identity ${entity.collection}:${entity.key}`,
-      );
+    if (!original) {
+      if (!metadata.fullScene || oldObjects.has(object.uuid))
+        throw new Error(`Unknown gameplay identity ${identity}`);
+      validateNewIdentity(entity, object.userData.game ?? {});
+      if (!edited.object.children.includes(object))
+        throw new Error("New gameplay roots must be at the scene's top level.");
+      addedEntities.push(entity);
+    } else if (!oldEntity && !object.userData.editorOnly) {
+      throw new Error(`Duplicate gameplay identity: ${identity}`);
+    }
     const placement = object.userData.placement;
     if (!placement || !object.userData.game)
       throw new Error(`Missing authoring properties on ${object.name}`);
@@ -296,7 +339,10 @@ export function importProject(project, dryRun = false) {
     };
     if (object.userData.editorOnly)
       resizeCollision(record, matrix, placement.matrix, entity.collection);
-    if (record.id !== original.id || record.circuitKey !== original.circuitKey)
+    if (
+      original &&
+      (record.id !== original.id || record.circuitKey !== original.circuitKey)
+    )
       throw new Error(
         `Keep stable IDs unchanged on ${object.name}; references are stored in saves and circuits.`,
       );
@@ -320,15 +366,42 @@ export function importProject(project, dryRun = false) {
           y: record.activation.y + delta[1],
           z: record.activation.z + delta[2],
         };
+      if (record.swimPatrol)
+        record.swimPatrol = record.swimPatrol.map(([x, z]) => [
+          x + delta[0],
+          z + delta[2],
+        ]);
     }
     const records = catalog[entity.collection];
-    records[records.indexOf(original)] = record;
+    if (original) records[records.indexOf(original)] = record;
+    else {
+      records.push(record);
+      if (
+        entity.collection === "controls" &&
+        object.userData.circuit &&
+        !catalog.circuits.some((c) => c.id === entity.id)
+      ) {
+        if (object.userData.circuit.id !== entity.id)
+          throw new Error("A copied circuit must use its control's ID.");
+        catalog.circuits.push(structuredClone(object.userData.circuit));
+      }
+    }
     delete object.userData.game;
     delete object.userData.placement;
+    delete object.userData.circuit;
   });
+  for (const entity of addedEntities)
+    for (const binding of requiredEntityBindings(entity))
+      if (!bindings.has(binding))
+        throw new Error(`Missing scene role: ${binding}`);
   for (const uuid of metadata.roots) {
     const original = oldObjects.get(uuid);
     const replacement = editedObjects.get(uuid);
+    if (removedRoots.has(uuid)) {
+      const parent = parents.get(uuid);
+      parent.children = parent.children.filter((child) => child.uuid !== uuid);
+      continue;
+    }
     if (!original || !replacement)
       throw new Error(
         `An exported root was removed (${uuid}). Remove gameplay objects through the catalog with their references.`,
@@ -355,14 +428,10 @@ export function importProject(project, dryRun = false) {
     });
     parent.children[parent.children.indexOf(original)] = replacement;
   }
-  // Added decorative roots are safe; gameplay roles must be added deliberately in the catalog.
+  // New gameplay roots have already passed identity and role validation above.
   for (const object of edited.object.children ?? [])
     if (!metadata.roots.includes(object.uuid)) {
       if (oldObjects.has(object.uuid) || object.userData?.editorOnly) continue;
-      if (object.userData?.entity)
-        throw new Error(
-          "New gameplay entities require catalog and binding setup; arbitrary decorations are supported.",
-        );
       scene.object.children.push(object);
     }
   for (const kind of [
@@ -409,6 +478,9 @@ export function importProject(project, dryRun = false) {
     checked: true,
     written: !dryRun,
     revision: revision(),
+    rootIds: edited.object.children
+      .filter((object) => !object.userData?.editorOnly)
+      .map((object) => object.uuid),
   };
 }
 

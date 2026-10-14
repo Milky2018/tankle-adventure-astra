@@ -215,7 +215,6 @@ pub fn Player::acquire(
   let old_max = self.max_hp()
   self.install(pickup.acquisition)
   state.complete(pickup.id) |> ignore
-  self.apply_upgrades(state)
   self.hp = Double::min(self.max_hp(), self.hp + self.max_hp() - old_max)
   true
 }
@@ -246,6 +245,6 @@ fn Player::install(self : Player, acquisition : Acquisition) -> Unit {
     Phoenix => self.abilities.phoenix = true
     LaserModule => self.abilities.laser = true
     Circulation => self.abilities.circulation = true
-    _ => ()
+    _ => self.upgrades.install(acquisition)
   }
 }

@@ -141,3 +141,75 @@ test "boss firing patterns enter a real warning before emitting projectiles" {
   assert_true(game.shots.length() >= 3)
   assert_true(enemy.phase == @simulation.Vent)
 }
+
+///|
+test "authored pickup IDs grant upgrades once and survive saving" {
+  let game = @simulation.Game::new()
+  let source = game.pickups[0]
+  let armor = {
+    ..source,
+    id: "editor-armor",
+    acquisition: @simulation.Armor,
+    requires: None,
+  }
+  let cannon = {
+    ..source,
+    id: "editor-cannon",
+    acquisition: @simulation.CannonCoil,
+    requires: None,
+  }
+  game.pickups.push(armor)
+  game.pickups.push(cannon)
+  game.player.hp = 7
+  assert_true(game.player.acquire(armor, game.progress))
+  assert_eq(game.player.max_hp(), 30)
+  assert_eq(game.player.hp, 12)
+  assert_false(game.player.acquire(armor, game.progress))
+  assert_eq(game.player.max_hp(), 30)
+  assert_true(game.player.acquire(cannon, game.progress))
+  assert_true(game.player.upgrades.cannon)
+  let restored = @simulation.Game::new()
+  restored.pickups.push(armor)
+  restored.pickups.push(cannon)
+  assert_true(restored.restore(game.save()))
+  assert_eq(restored.player.max_hp(), 30)
+  assert_true(restored.player.upgrades.cannon)
+}
+
+///|
+test "authored use controls respect proximity, prerequisites and emit their signals" {
+  let game = @simulation.Game::new()
+  let source = game.commands.controls[0]
+  let control = {
+    ..source,
+    id: "editor-switch",
+    position: { x: 500, y: 1.3, z: 500, },
+    ground: 0,
+    actions: [@simulation.Use],
+    requires: Some("editor-key"),
+    effects: ["editor-gate"],
+    circuit_key: "editor-switch",
+  }
+  game.commands.controls.push(control)
+  game.player.x = 500
+  game.player.y = 0
+  game.player.z = 500
+  let anchor = game.progress.anchor
+  game.player.hp = 7
+  assert_eq(game.interactable(), None)
+  assert_false(game.interact())
+  game.progress.complete("editor-key") |> ignore
+  game.player.y = 8
+  assert_eq(game.interactable(), None)
+  game.player.y = 0
+  game.player.x = 505
+  assert_eq(game.interactable(), None)
+  game.player.x = 500
+  assert_eq(game.interactable(), Some("editor-switch"))
+  assert_true(game.interact())
+  game.commands.advance(game.progress, 1, 1) |> ignore
+  assert_true(game.progress.has("editor-gate"))
+  assert_false(game.interact())
+  assert_eq(game.progress.anchor, anchor)
+  assert_eq(game.player.hp, 7)
+}

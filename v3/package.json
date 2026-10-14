@@ -15,7 +15,8 @@
     "scene:import": "node scripts/scene-editor.mjs import",
     "content:check": "node scripts/check-content.mjs",
     "test:content": "node --test tests/content/*.test.mjs",
-    "editor": "node scripts/editor-server.mjs"
+    "editor": "node scripts/editor-server.mjs",
+    "editor:templates": "node scripts/build-editor-templates.mjs"
   },
   "dependencies": {
     "@mizchi/three-mbt": "file:./.mooncakes/mizchi/three/js",

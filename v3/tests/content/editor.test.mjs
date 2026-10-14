@@ -235,3 +235,220 @@ test("consecutive local saves and undo keep absolute placement and reject stale 
     before,
   );
 });
+
+test("new enemies clone all roles and own animated resources; save, delete and restore work repeatedly", async () => {
+  const { cloneEntity, entityBundle } = await import(
+    "../../editor/entity-model.js"
+  );
+  const { Vector3 } = await import("three");
+  const original = new ObjectLoader().parse(exportProject().scene);
+  const source = original.children[0];
+  const effect = new Mesh(new BoxGeometry(), new MeshBasicMaterial());
+  effect.userData.binding = "enemies/prototype/warning";
+  original.add(effect);
+  // Store the detached effect in the baseline city before creating the editable project.
+  source.traverse((node) => {
+    delete node.userData.game;
+    delete node.userData.placement;
+  });
+  writeScene(original.toJSON());
+  const project = exportProject();
+  const loaded = new ObjectLoader().parse(project.scene);
+  const root = loaded.children.find((node) => node.userData.entity);
+  const bundle = cloneEntity(
+    loaded,
+    root,
+    "editor-enemy",
+    root.position.clone().add(new Vector3(3, 0, 0)),
+  );
+  assert.equal(bundle.objects.length, 2);
+  assert.notEqual(bundle.root.children[0].geometry, root.children[0].geometry);
+  assert.notEqual(bundle.root.children[0].material, root.children[0].material);
+  loaded.add(...bundle.objects);
+  const save = () => {
+    project.scene = loaded.toJSON();
+    const result = importProject(project);
+    loaded.userData.tankle.revision = result.revision;
+    loaded.userData.tankle.roots = result.rootIds;
+    loaded.userData.tankle.deleted = [];
+  };
+  save();
+  save();
+  assert.equal(
+    records("enemies").filter((e) => e.id === "editor-enemy").length,
+    1,
+  );
+  assert.equal(
+    records("enemies").find((e) => e.id === "editor-enemy").x,
+    records("enemies").find((e) => e.id === "prototype").x + 3,
+  );
+  loaded.remove(...entityBundle(loaded, bundle.root));
+  loaded.userData.tankle.deleted = [bundle.root.userData.entity];
+  save();
+  assert.equal(
+    records("enemies").some((e) => e.id === "editor-enemy"),
+    false,
+  );
+  const remaining = new ObjectLoader().parse(exportProject().scene);
+  assert.equal(
+    remaining.children.some((o) =>
+      o.userData.binding?.startsWith("enemies/editor-enemy/"),
+    ),
+    false,
+  );
+  loaded.add(...bundle.objects);
+  save();
+  assert.equal(
+    records("enemies").filter((e) => e.id === "editor-enemy").length,
+    1,
+  );
+});
+
+test("duplicate identities, missing roles and incomplete entity deletion fail before writing", async () => {
+  const { cloneEntity, entityBundle } = await import(
+    "../../editor/entity-model.js"
+  );
+  const project = exportProject();
+  const loaded = new ObjectLoader().parse(project.scene);
+  const source = loaded.children[0];
+  const copy = cloneEntity(
+    loaded,
+    source,
+    "prototype",
+    source.position.clone(),
+  );
+  loaded.add(...copy.objects);
+  project.scene = loaded.toJSON();
+  assert.throws(
+    () => importProject(project),
+    /Duplicate (gameplay identity|binding)/,
+  );
+  loaded.remove(...copy.objects);
+  const invalid = cloneEntity(
+    loaded,
+    source,
+    "new-enemy",
+    source.position.clone(),
+  );
+  invalid.root.remove(invalid.root.children[1]);
+  loaded.add(...invalid.objects);
+  project.scene = loaded.toJSON();
+  assert.throws(() => importProject(project), /Missing scene role/);
+  loaded.remove(...invalid.objects);
+  loaded.userData.tankle.deleted = [source.userData.entity];
+  project.scene = loaded.toJSON();
+  assert.throws(() => importProject(project), /Delete the complete entity/);
+  assert.equal(
+    records("enemies").some((e) => e.id === "new-enemy"),
+    false,
+  );
+});
+
+test("standalone templates support additions after their city source was removed", async () => {
+  const { gunzipSync } = await import("node:zlib");
+  const { cloneEntity, creationPosition } = await import(
+    "../../editor/entity-model.js"
+  );
+  const definitions = JSON.parse(
+    readFileSync(join(workspace, "content/editor/templates.json")),
+  );
+  const palette = new ObjectLoader().parse(
+    JSON.parse(
+      gunzipSync(
+        readFileSync(join(workspace, "content/editor/templates.scene.json.gz")),
+      ),
+    ),
+  );
+  const project = exportProject();
+  const loaded = new ObjectLoader().parse(project.scene);
+  for (const definition of definitions) {
+    const collection = definition.collection;
+    const source = palette.children.find(
+      (o) =>
+        o.userData.entity?.collection === collection &&
+        o.userData.entity.id === definition.source,
+    );
+    const id = `new-${definition.id}`;
+    const bundle = cloneEntity(
+      palette,
+      source,
+      id,
+      creationPosition(source, 3, -8, 86),
+      definition.defaults,
+    );
+    loaded.add(...bundle.objects);
+  }
+  project.scene = loaded.toJSON();
+  importProject(project);
+  const control = records("controls").find((c) => c.id === "new-control-shot");
+  assert.equal(control.ground, -8);
+  assert.deepEqual(control.effects, ["new-control-shot"]);
+  assert.equal(control.mount, undefined);
+  const pickup = records("pickups").find(
+    (c) => c.id === "new-pickup-upgrade-scope",
+  );
+  assert.equal(pickup.hidden, false);
+  assert.equal(pickup.requires, undefined);
+  assert.equal(pickup.x, 3);
+  for (const definition of definitions)
+    assert.ok(
+      records(definition.collection).some(
+        (record) => record.id === `new-${definition.id}`,
+      ),
+    );
+
+  // Copy a switch with a timed route: its signal consumers remain intentional references.
+  const current = exportProject();
+  const scene = new ObjectLoader().parse(current.scene);
+  const root = scene.children.find(
+    (object) => object.userData.entity?.id === "new-control-shot",
+  );
+  root.userData.circuit = {
+    id: "new-control-shot",
+    duration: 2,
+    branches: [
+      {
+        key: "existing-gate",
+        points: [
+          [3, -8, 86],
+          [6, -8, 86],
+        ],
+      },
+    ],
+  };
+  const copy = cloneEntity(
+    scene,
+    root,
+    "copied-control",
+    root.position.clone(),
+  );
+  scene.add(...copy.objects);
+  current.scene = scene.toJSON();
+  importProject(current);
+  assert.deepEqual(
+    records("controls").find((c) => c.id === "copied-control").effects,
+    ["new-control-shot"],
+  );
+  assert.equal(
+    records("circuits").find((c) => c.id === "copied-control").branches[0].key,
+    "existing-gate",
+  );
+
+  const removal = exportProject();
+  const removeIds = new Set(["copied-control", "new-pickup-upgrade-scope"]);
+  const removed = removal.scene.object.children.filter((object) =>
+    removeIds.has(object.userData?.entity?.id),
+  );
+  removal.scene.object.userData.tankle.deleted = removed.map(
+    (object) => object.userData.entity,
+  );
+  removal.scene.object.children = removal.scene.object.children.filter(
+    (object) => !removed.includes(object),
+  );
+  importProject(removal);
+  assert.ok(!records("controls").some((c) => c.id === "copied-control"));
+  assert.ok(
+    !records("pickups").some((c) => c.id === "new-pickup-upgrade-scope"),
+  );
+  assert.ok(records("circuits").some((c) => c.id === "copied-control"));
+});

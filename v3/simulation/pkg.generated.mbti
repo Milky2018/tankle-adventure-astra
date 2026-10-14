@@ -655,7 +655,7 @@ pub(all) struct Player {
   mut ending_time : Double
 }
 pub fn Player::acquire(Self, Pickup, Progress) -> Bool
-pub fn Player::apply_upgrades(Self, Progress) -> Unit
+pub fn Player::apply_upgrades(Self, Progress, pickups? : Array[Pickup]) -> Unit
 pub fn Player::begin_hit(Self, Double, Vec2?) -> Unit
 pub fn Player::contact_damage(Self) -> Double
 pub fn Player::continuous_heat(Self, Double, Double) -> Unit

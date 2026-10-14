@@ -15,9 +15,20 @@ Run `npm run editor` in v3, then open <http://127.0.0.1:5176/>. Keep this server
 
 Floor clipping, the editor background and collision visibility are view preferences, not saved game content. A revision check rejects stale scene/skill saves from another tab or an external file edit. On conflict, keep the current tab open while reconciling changes; do not blindly reload unsaved work. Scene and skill saves are independent: if one fails, the status reports the error and the remaining unsaved edits stay in memory.
 
-The local interface covers edits to existing gameplay objects and character parts. It is not a general modeler or a visual prefab/spawn system. Use the official website workflow below for model import, detailed material/geometry editing and decorative additions. New gameplay identities, circuit definitions and bespoke puzzle behavior still require their source files. The player model's root position is an art preview; spawn position comes from checkpoint data. Runtime-controlled pivots may overwrite authored transforms, so adjust their mesh children.
+The local interface supports adding, copying and deleting enemies, controls and pickups, as well as editing existing gameplay objects and character parts. Use the official website workflow below for model import, detailed material/geometry editing and decorative additions. Other gameplay object types, circuit route definitions and bespoke puzzle behavior still require their source files. The player model's root position is an art preview; spawn position comes from checkpoint data. Runtime-controlled pivots may overwrite authored transforms, so adjust their mesh children.
 
 The local implementation is deliberately small: `editor/app.js` connects selection, view filtering and official commands; `editor/fields.js` builds property forms; `scripts/editor-server.mjs` serves pinned modules, validates content saves and runs the normal game build. Upstream editor source is cached unchanged rather than maintained as a fork. The editor renders on changes and does not expose path tracing. Large scene JSON operations run one at a time in `scripts/editor-scene-worker.mjs`; the process exits after each load/save so the service does not retain the unpacked scene heap.
+
+## Adding, copying and deleting gameplay objects
+
+- **添加** opens a template picker for enemies, controls and pickups. Choose an archetype and enter X, ground Y and Z. The editor creates a stable ID, model roles and detached attack effects together. Templates are independent of placed city instances, so deleting an instance does not remove its template.
+- **复制** copies the selected entity three units along X. Geometry and animated materials are independent. Copying preserves prerequisites, encounter associations and output signals; inspect these fields before saving. A copied control can therefore operate the same gate as its source. Copying a boss or puzzle object does not duplicate MoonBit behavior keyed to the original ID.
+- **删除** removes the selected entity and its detached effects. The confirmation lists references from content and MoonBit scripts. It does not automatically unlock gates or rewrite story conditions. Circuit definitions remain available so another control can emit the same signal. Adjust affected prerequisites or signals before saving an intentional progression change.
+- These operations each form one undo step, including after saving. **撤销** and **重做** restore the complete entity. Reloading starts a new undo history.
+
+For a new control, the **触发信号** (`effects`) field lists emitted signals, one per line. It starts with the new control ID. To operate an existing gate, use that gate's prerequisite signal. The **前置条件** (`requires`) field is optional; clear it to remove the prerequisite. These fields are regular forms, with no JSON editing required. Fresh pickup templates have no story prerequisite; upgrade effects and save restoration use their acquisition type rather than a fixed original ID.
+
+`editor/entity-model.js` owns complete entity copying, `entity-commands.js` provides undoable presence changes, and `entity-tools.js` owns the dialogs. `content/editor/templates.json` contains template labels and gameplay defaults; `templates.scene.json.gz` stores the independent model palette. Normal builds never regenerate this palette from the level. Maintainers can explicitly refresh it with `npm run editor:templates` after changing source art; every configured source must still exist when refreshing. This maintenance command is not needed to place or copy objects.
 
 ## Where to make a change
 
@@ -85,7 +96,7 @@ Art and collision are separate. Moving a decorative mesh does not move a wall or
 
 Existing enemies, hives, controls, pickups, mirrors, barriers and lifts carry gameplay metadata on their roots. Moving these roots updates their definition positions; enemy patrol/activation areas and lift stops translate with them. Player model placement is an art preview: the actual spawn comes from the first hive and saved checkpoint. Runtime animation controls role pivots, so author mesh offsets beneath those pivots.
 
-Keep gameplay roots axis-aligned with their exported scale, and keep exported roots at the scene's top level. Rotate/scale child art instead. Collision boxes support positive, axis-aligned scaling. New decorative meshes and model imports are supported, but adding/removing gameplay entities requires catalog and role-binding work in addition to art. The importer currently handles edits to existing gameplay identities, not a visual spawn/prefab system.
+Keep gameplay roots axis-aligned with their exported scale, and keep exported roots at the scene's top level. Rotate/scale child art instead. Collision boxes support positive, axis-aligned scaling. New decorative meshes and model imports are supported. Use the local editor controls below to add or remove enemies, controls and pickups: copying only their visible meshes on the official website does not create a complete gameplay entity.
 
 ## Stable identities and model roles
 

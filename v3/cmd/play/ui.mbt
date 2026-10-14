@@ -124,6 +124,9 @@ fn Hud::update(
       q.position
     } else if game.hives.iter().find_first(fn(h) { h.id == id }) is Some(h) {
       h.position
+    } else if game.commands.controls.iter().find_first(fn(c) { c.id == id })
+      is Some(c) {
+      c.position
     } else {
       p.position()
     }
