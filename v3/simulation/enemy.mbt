@@ -1,4 +1,5 @@
 ///|
+#derive(Eq)
 pub(all) enum EnemyKind {
   Hunter
   Dredger
@@ -14,13 +15,14 @@ pub(all) enum EnemyKind {
   Reflector
   Elite
   Boss
-} derive(Eq)
+}
 
 ///|
 #deprecated
 pub extend EnemyKind with Eq::{equal, not_equal}
 
 ///|
+#derive(Eq)
 pub(all) enum Variant {
   Ordinary
   Interceptor
@@ -28,13 +30,14 @@ pub(all) enum Variant {
   Siege
   Prism
   Flanker
-} derive(Eq)
+}
 
 ///|
 #deprecated
 pub extend Variant with Eq::{equal, not_equal}
 
 ///|
+#derive(Eq)
 pub(all) enum Phase {
   Idle
   Warn
@@ -48,13 +51,14 @@ pub(all) enum Phase {
   Bite
   Vent
   Stunned
-} derive(Eq)
+}
 
 ///|
 #deprecated
 pub extend Phase with Eq::{equal, not_equal}
 
 ///|
+#derive(Eq)
 pub(all) enum Attack {
   Torpedoes
   SuctionAttack
@@ -73,7 +77,7 @@ pub(all) enum Attack {
   Batteries
   Seekers
   Fan
-} derive(Eq)
+}
 
 ///|
 #deprecated

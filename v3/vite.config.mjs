@@ -1,6 +1,5 @@
 import { defineConfig, transformWithEsbuild } from 'vite';
 export default defineConfig({
-  resolve: { dedupe: ['three'] },
   plugins: [{
     name: 'moonbit-release-js',
     async transform(code, id) {

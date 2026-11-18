@@ -87,6 +87,7 @@ pub fn Ray::plane(self : Ray, point : Vec3, normal : Vec3) -> Double? {
 }
 
 ///|
+#derive(Eq)
 pub(all) enum HitTarget {
   Terrain
   SlideTarget(Int32)
@@ -100,7 +101,7 @@ pub(all) enum HitTarget {
   TorpedoTarget(Int32)
   Refuge
   PlayerTarget
-} derive(Eq)
+}
 
 ///|
 pub(all) struct Hit {

@@ -1,17 +1,19 @@
 ///|
+#derive(@json.ToJson, @json.FromJson)
 pub(all) struct SignalBranch {
   key : String
   target : String
   duration : Double
-} derive(@json.ToJson, @json.FromJson)
+}
 
 ///|
+#derive(@json.ToJson, @json.FromJson)
 pub(all) struct Signal {
   duration : Double
   mut remaining : Double
   changes : Map[String, Bool]
   branches : Array[SignalBranch]
-} derive(@json.ToJson, @json.FromJson)
+}
 
 ///|
 pub(all) struct Progress {

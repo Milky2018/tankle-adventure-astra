@@ -24,8 +24,8 @@ async page => {
     throw Error('Route timeout');
   }
   async function aim(x,y,z){
-    const q=await page.evaluate(({x,y,z})=>{const c=__typedView.camera;const v=new c.position.constructor(x,y,z).project(c);return{x:(v.x+1)*innerWidth/2,y:(1-v.y)*innerHeight/2}}, {x,y,z});
-    await page.mouse.move(q.x,q.y);
+    const [screenX,screenY]=await page.evaluate(([x,y,z])=>window.__typedProject(x,y,z), [x,y,z]);
+    await page.mouse.move(screenX,screenY);
   }
 
   async function use(){await page.keyboard.press('KeyE')}

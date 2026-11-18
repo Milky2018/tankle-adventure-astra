@@ -1,4 +1,5 @@
 ///|
+#derive(@json.ToJson, @json.FromJson)
 priv struct Save {
   version : Int32
   flags : Map[String, Bool]
@@ -11,7 +12,7 @@ priv struct Save {
   gutter : GutterPuzzle
   delivery : Delivery
   puzzle_signals : Map[String, Double]
-} derive(@json.ToJson, @json.FromJson)
+}
 
 ///|
 pub fn Game::save(self : Game) -> String {
@@ -86,6 +87,7 @@ pub fn Game::restore(self : Game, text : String) -> Bool {
 }
 
 ///|
+#derive(@json.ToJson)
 priv struct EnemySnapshot {
   id : String
   hp : Double
@@ -94,9 +96,10 @@ priv struct EnemySnapshot {
   z : Double
   vent : Bool
   parts : Array[(Double, Double, Double, Double)]
-} derive(@json.ToJson)
+}
 
 ///|
+#derive(@json.ToJson)
 priv struct Snapshot {
   aim : Vec3
   last_hit : String
@@ -112,7 +115,7 @@ priv struct Snapshot {
   pending : Array[String]
   enemies : Array[EnemySnapshot]
   interactable : String?
-} derive(@json.ToJson)
+}
 
 ///|
 pub fn Game::snapshot(self : Game) -> String {

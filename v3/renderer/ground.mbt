@@ -28,13 +28,18 @@ fn View::ground_pose(
       z: across * sx - along * cz,
     }.normalized()
   }
-  let target = @three.Quaternion::Quaternion().set_from_unit_vectors(
+  let target = @m3.Quaternion::new(0, 0, 0, 1).set_from_unit_vectors(
     vector({ x: 0, y: 1, z: 0, }),
     vector(normal),
   )
-  self.root
-  .quaternion()
-  .slerp(target, if dt <= 0 { 1 } else { 1 - @math.exp(-dt * 18) })
+  self.root.quaternion.slerp(
+    target,
+    if dt <= 0 {
+      1
+    } else {
+      1 - @math.exp(-dt * 18)
+    },
+  )
   |> ignore
   let mut clearance = 0.0
   for side in [-1.0, 1.0] {
@@ -43,10 +48,10 @@ fn View::ground_pose(
         x: side * 1.5 * cz + end * sx,
         y: 0.085,
         z: -side * 1.5 * sx + end * cz,
-      }).apply_quaternion(self.root.quaternion())
+      }).apply_quaternion(self.root.quaternion)
       clearance = Double::max(
         clearance,
-        @sim.ground_height(p.x + q.x(), p.z + q.z(), p.y, patches) - p.y - q.y(),
+        @sim.ground_height(p.x + q.x, p.z + q.z, p.y, patches) - p.y - q.y,
       )
     }
   }
@@ -55,19 +60,20 @@ fn View::ground_pose(
   } else {
     Double::max(clearance, damp(self.ground_clearance, clearance, 18, dt))
   }
-  self.root.set_position_xyz(
+  self.root.position.set(
     p.x,
     p.y + (if p.afloat { -0.12 } else { self.ground_clearance }),
     p.z,
   )
+  |> ignore
 }
 
 ///|
 pub fn View::weapon_origin(self : View) -> @sim.Vec3 {
   point(
     vector({ x: 0, y: 2, z: 0, })
-    .apply_quaternion(self.root.quaternion())
-    .add(self.root.position()),
+    .apply_quaternion(self.root.quaternion)
+    .add(self.root.position),
   )
 }
 
@@ -78,19 +84,19 @@ pub fn View::aim_player(
   weapon : @sim.Weapon,
 ) -> Unit {
   let direction = vector(target.sub(self.weapon_origin())).apply_quaternion(
-    self.root.quaternion().clone().invert(),
+    self.root.quaternion.clone().invert(),
   )
-  let yaw = @math.atan2(direction.x(), direction.z())
+  let yaw = @math.atan2(direction.x, direction.z)
   let pitch = @sim.clamp(
     @math.atan2(
-      direction.y(),
-      @sim.Vec2::{ x: direction.x(), z: direction.z(), }.length(),
+      direction.y,
+      @sim.Vec2::{ x: direction.x, z: direction.z, }.length(),
     ),
     -@math.PI * 40 / 180,
     @math.PI * 40 / 180,
   )
-  self.turret.set_rotation_xyz(0, yaw, 0)
-  self.barrel.set_rotation_xyz(
+  self.turret.rotation.set(0, yaw, 0) |> ignore
+  self.barrel.rotation.set(
     if weapon == @sim.Mortar {
       -0.4
     } else {
@@ -99,4 +105,5 @@ pub fn View::aim_player(
     0,
     0,
   )
+  |> ignore
 }

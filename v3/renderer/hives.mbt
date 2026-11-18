@@ -1,25 +1,25 @@
 ///|
 priv struct HiveVisual {
   body : @sim.Hive
-  root : @three.Object3D
-  halo : @three.Object3D?
-  scan : @three.Object3D?
-  arms : Array[@three.Object3D?]
-  lamps : Array[@three.Object3D?]
+  root : @core.Object3D
+  halo : @core.Object3D?
+  scan : @core.Object3D?
+  arms : Array[@core.Object3D?]
+  lamps : Array[@core.Object3D?]
   mut proximity : Double
   mut pulse : Double
 }
 
 ///|
 fn hives(
-  nodes : Map[String, @three.Object3D],
+  nodes : Map[String, @core.Object3D],
   game : @sim.Game,
 ) -> Array[HiveVisual] {
   game.hives.map(fn(body) {
-    fn get(suffix : String) -> @three.Object3D? {
+    fn get(suffix : String) -> @core.Object3D? {
       let node = nodes.get("world/hives/\{body.id}/" + suffix)
       if node is Some(node) {
-        node.set_matrix_auto_update(true)
+        node.matrix_auto_update = true
       }
       node
     }
@@ -39,10 +39,8 @@ fn hives(
 ///|
 pub fn View::update_hives(self : View, game : @sim.Game, dt : Double) -> Unit {
   for v in self.hives {
-    v.root.set_visible(
-      v.body.requires is None ||
-      (v.body.requires is Some(id) && game.progress.has(id)),
-    )
+    v.root.visible = v.body.requires is None ||
+      (v.body.requires is Some(id) && game.progress.has(id))
     let nearby = (game.player.y - v.body.position.y).abs() < 2 &&
       @sim.Vec2::{
         x: game.player.x - v.body.position.x,
@@ -64,25 +62,24 @@ pub fn View::update_hives(self : View, game : @sim.Game, dt : Double) -> Unit {
     }
     for i, arm in v.arms {
       if arm is Some(arm) {
-        arm.set_rotation_xyz(
+        arm.rotation.set(
           0,
           0,
           (if i == 0 { -1.0 } else { 1.0 }) *
           (0.55 - v.proximity * 0.4 - work * 0.55),
         )
+        |> ignore
       }
     }
     let lamp_color = if active || nearby { 0x9ad4ba } else { 0x829185 }
     if v.halo is Some(halo) {
       let scale = 1.0 + @math.sin(game.time * 2) * 0.025 + v.proximity * 0.08
-      halo.set_scale_xyz(scale, scale, scale)
+      halo.scale.set(scale, scale, scale) |> ignore
       color(halo, lamp_color)
     }
     if v.scan is Some(scan) {
-      scan.set_visible(nearby || v.pulse > 0)
-      scan
-      .position()
-      .set_y(
+      scan.visible = nearby || v.pulse > 0
+      scan.position.set_y(
         0.25 + (if v.pulse > 0 { (1.8 - v.pulse) * 1.8 % 1 * 2.4 } else { 0 }),
       )
       |> ignore
@@ -91,7 +88,7 @@ pub fn View::update_hives(self : View, game : @sim.Game, dt : Double) -> Unit {
       } else {
         0.95 + @math.sin(game.time * 2) * 0.04
       }
-      scan.set_scale_xyz(scale, scale, scale)
+      scan.scale.set(scale, scale, scale) |> ignore
     }
     for lamp in v.lamps {
       if lamp is Some(lamp) {

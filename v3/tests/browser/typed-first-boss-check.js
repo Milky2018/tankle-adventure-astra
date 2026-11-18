@@ -22,16 +22,23 @@ async page => {
     throw Error('Route timeout');
   }
   async function aim(x,y,z){
-    const q=await page.evaluate(({x,y,z})=>{const c=__typedView.camera;const v=new c.position.constructor(x,y,z).project(c);return{x:(v.x+1)*innerWidth/2,y:(1-v.y)*innerHeight/2}}, {x,y,z});
-    await page.mouse.move(q.x,q.y);
+    const [screenX,screenY]=await page.evaluate(([x,y,z])=>window.__typedProject(x,y,z), [x,y,z]);
+    await page.mouse.move(screenX,screenY);
   }
 
   async function clearReclaim(){
-    const orbit=[[-65,98],[-65,113],[-53,113],[-53,98]];let corner=0;
+    const orbit=[[-59,98],[-59,113],[-53,113],[-53,98]];let corner=0;
     for(let i=0;i<500;i++){
       const p=await page.evaluate(()=>__typedRead());
       const enemies=p.enemies.filter(e=>e.hp>0&&['reclaim-guard','reclaim-scout'].includes(e.id));
-      if(!enemies.length){await page.mouse.up();await move(-66,104);await move(-57,104);return}
+      if(!enemies.length){
+        await page.mouse.up();
+        // Reach the aisle before crossing behind the reclaim cover.
+        await move(p.x,104);
+        await move(-66,104);
+        await move(-57,104);
+        return;
+      }
       if(p.y!==-16||p.hp<=0)throw Error('Lost reclaim fight: '+JSON.stringify(p));
       const e=enemies.find(e=>e.id==='reclaim-scout')??enemies[0];
       if(Math.hypot(p.x-orbit[corner][0],p.z-orbit[corner][1])<.7)corner=(corner+1)%4;

@@ -1,6 +1,6 @@
 ///|
 priv struct Collider {
-  object : @three.Object3D
+  object : @core.Object3D
   target : @sim.HitTarget
   min : @sim.Vec3
   max : @sim.Vec3
@@ -15,26 +15,26 @@ priv struct GeometryQueries {
   state : @sim.Progress
   surfaces : Array[Collider]
   housings : Array[Collider]
-  walls : Array[(@sim.Solid, @three.Object3D)]
-  lifts : Array[(@sim.Lift, @three.Object3D)]
+  walls : Array[(@sim.Solid, @core.Object3D)]
+  lifts : Array[(@sim.Lift, @core.Object3D)]
   mirrors : Array[Collider]
-  raycaster : @three.Raycaster
+  raycaster : @core.Raycaster
 }
 
 ///|
-fn vector(p : @sim.Vec3) -> @three.Vector3 {
-  @three.Vector3::Vector3(p.x, p.y, p.z)
+fn vector(p : @sim.Vec3) -> @m3.Vector3 {
+  @m3.Vector3::new(p.x, p.y, p.z)
 }
 
 ///|
-fn point(p : @three.Vector3) -> @sim.Vec3 {
-  { x: p.x(), y: p.y(), z: p.z(), }
+fn point(p : @m3.Vector3) -> @sim.Vec3 {
+  { x: p.x, y: p.y, z: p.z, }
 }
 
 ///|
-fn collider(object : @three.Object3D, target : @sim.HitTarget) -> Collider {
-  let box = @three.Box3::Box3().set_from_object(object)
-  { object, target, min: point(box.min()), max: point(box.max()), }
+fn collider(object : @core.Object3D, target : @sim.HitTarget) -> Collider {
+  let box = @core.box3_set_from_object(@m3.Box3::new(), object)
+  { object, target, min: point(box.min), max: point(box.max), }
 }
 
 ///|
@@ -43,12 +43,12 @@ pub fn View::queries(
   game : @sim.Game,
   aiming~ : Bool = false,
 ) -> @sim.Queries {
-  let root = self.scene.as_object3d()
+  let root = self.scene
   let surfaces : Array[Collider] = []
   let housings : Array[Collider] = []
   let mirrors : Array[Collider] = []
   root.traverse(fn(object) {
-    let name = @host.scene_binding(object)
+    let name = scene_binding(object)
     if name.has_prefix("world/surfaces/") && name.has_suffix("/mesh") {
       surfaces.push(collider(object, @sim.Terrain))
     }
@@ -61,13 +61,13 @@ pub fn View::queries(
       }
     }
   })
-  let walls : Array[(@sim.Solid, @three.Object3D)] = []
+  let walls : Array[(@sim.Solid, @core.Object3D)] = []
   for wall in game.world.solids {
     if self.nodes.get("world/walls/\{wall.circuit_key}/mesh") is Some(object) {
       walls.push((wall, object))
     }
   }
-  let lifts : Array[(@sim.Lift, @three.Object3D)] = []
+  let lifts : Array[(@sim.Lift, @core.Object3D)] = []
   for lift in game.world.lifts {
     if self.nodes.get("world/views/lifts/\{lift.id}/mesh") is Some(object) {
       lifts.push((lift, object))
@@ -91,9 +91,9 @@ pub fn View::queries(
     walls,
     lifts,
     mirrors,
-    raycaster: @three.Raycaster::Raycaster(
-      vector({ x: 0, y: 0, z: 0, }),
-      vector({ x: 0, y: 0, z: 1, }),
+    raycaster: @core.Raycaster::new(
+      origin=vector({ x: 0, y: 0, z: 0, }),
+      direction=vector({ x: 0, y: 0, z: 1, }),
     ),
   }
   { geometry: fn(ray, range, ground) { queries.cast(ray, range, ground) }, }
@@ -107,36 +107,32 @@ fn GeometryQueries::cast(
   ground : Bool,
 ) -> @sim.Hit? {
   self.raycaster.set(vector(ray.origin), vector(ray.direction))
-  self.raycaster.set_far(range)
+  self.raycaster.far = range
   let mut result : @sim.Hit? = None
   let mut limit = range
-  fn mesh_hit(object : @three.Object3D, target : @sim.HitTarget) -> Unit {
-    let hits = self.raycaster.intersect_object(object, false)
+  fn mesh_hit(object : @core.Object3D, target : @sim.HitTarget) -> Unit {
+    let hits = self.raycaster.intersect_object(object, recursive=false)
     for hit in hits {
-      if hit.distance() > limit {
+      if hit.distance > limit {
         break
       }
       if self.aiming &&
-        !(self.visible)(point(hit.point()), target is @sim.Terrain, false) {
+        !(self.visible)(point(hit.point), target is @sim.Terrain, false) {
         continue
       }
-      let normal = hit
-        .face()
-        .map(fn(face) {
-          point(
-            face.normal().clone().transform_direction(object.matrix_world()),
-          )
-        })
+      let normal = hit.face.map(fn(face) {
+        point(face.normal.clone().transform_direction(object.matrix_world()))
+      })
       if ground && (normal is None || (normal is Some(n) && n.y <= 0.5)) {
         continue
       }
       result = Some({
-        distance: hit.distance(),
-        point: point(hit.point()),
+        distance: hit.distance,
+        point: point(hit.point),
         normal,
         target,
       })
-      limit = hit.distance()
+      limit = hit.distance
       break
     }
   }
@@ -166,8 +162,8 @@ fn GeometryQueries::cast(
       if !(self.housing_pick)() {
         continue
       }
-      let bounds = @three.Box3::Box3().set_from_object(housing.object)
-      if ray.box(point(bounds.min()), point(bounds.max())) is Some((d, _)) &&
+      let bounds = @core.box3_set_from_object(@m3.Box3::new(), housing.object)
+      if ray.box(point(bounds.min), point(bounds.max)) is Some((d, _)) &&
         d <= limit {
         mesh_hit(housing.object, housing.target)
       }

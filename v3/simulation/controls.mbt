@@ -1,4 +1,5 @@
 ///|
+#derive(Eq)
 pub(all) enum Action {
   CannonAction
   MortarAction
@@ -6,7 +7,7 @@ pub(all) enum Action {
   MagnetAction
   Use
   Dock
-} derive(Eq)
+}
 
 ///|
 #deprecated

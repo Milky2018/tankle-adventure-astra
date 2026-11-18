@@ -1,4 +1,5 @@
 ///|
+#derive(@json.ToJson, @json.FromJson)
 priv struct CameraSettings {
   pitch : Double
   distance : Double
@@ -10,7 +11,7 @@ priv struct CameraSettings {
   fog_start : Double
   fog_end : Double
   render_distance : Double
-} derive(@json.ToJson, @json.FromJson)
+}
 
 ///|
 fn CameraSettings::new() -> CameraSettings {

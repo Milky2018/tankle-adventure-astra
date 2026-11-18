@@ -1,16 +1,4 @@
 ///|
-#module("tankle-astra-platform/host")
-pub extern "js" fn load_scene(
-  url : String,
-  ready : (@three.Scene) -> Unit,
-  failed : (String) -> Unit,
-) -> Unit = "loadScene"
-
-///|
-#module("tankle-astra-platform/host")
-pub extern "js" fn create_renderer() -> @three.WebGLRenderer = "createRenderer"
-
-///|
 pub extern "js" fn width() -> Int32 =
   #| () => innerWidth
 
@@ -77,15 +65,10 @@ pub extern "js" fn diagnostics(read : () -> String) -> Unit =
   #| read => { if (new URLSearchParams(location.search).has('test')) window.__typedRead = () => JSON.parse(read()); }
 
 ///|
-pub extern "js" fn render_role(material : @three.Material) -> String =
-  #| material => material.userData.renderRole ?? ''
-
-///|
-#module("tankle-astra-platform/host")
-pub extern "js" fn inspect_scene(
-  scene : @three.Scene,
-  camera : @three.Camera,
-) -> Unit = "inspectScene"
+pub extern "js" fn inspect_projection(
+  project : (Double, Double, Double) -> FixedArray[Double],
+) -> Unit =
+  #| project => { if (new URLSearchParams(location.search).has('test')) window.__typedProject = project; }
 
 ///|
 pub extern "js" fn read_save() -> String =
@@ -259,8 +242,3 @@ pub extern "js" fn direct_entry() -> Bool =
 ///|
 pub extern "js" fn query(key : String) -> String =
   #| key => new URLSearchParams(location.search).get(key) ?? ''
-
-///|
-/// Stable authoring identity, independent of the editor's display name.
-pub extern "js" fn scene_binding(object : @three.Object3D) -> String =
-  #| object => object.userData.binding ?? ''

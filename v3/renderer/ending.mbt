@@ -13,7 +13,7 @@ pub fn View::update_ending(self : View, game : @sim.Game) -> Unit {
   } else {
     ({ x: 14, y: -3, z: 86, }, { x: 8, y: -7.5, z: 79, })
   }
-  self.ending.set_position(vector(eye))
+  self.ending.position.copy(vector(eye)) |> ignore
   self.ending.look_at(vector(at))
-  self.ending.update_matrix_world(true)
+  self.ending.update_matrix_world(force=true)
 }

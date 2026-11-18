@@ -152,7 +152,6 @@ fn Session::advance(self : Session, milliseconds : Double) -> Unit {
     self.rendered = true
     @host.ready()
   }
-  @host.inspect_scene(self.view.scene, self.view.camera())
   @host.frame(fn(time) { self.advance(time) })
 }
 
@@ -225,10 +224,14 @@ pub fn start() -> Unit {
         session.view.resize()
         session.redraw = true
       })
-      view.barrel.set_matrix_auto_update(true)
+      view.barrel.matrix_auto_update = true
       view.position_player(game.player, game.world, 0)
       session.mount_settings()
       @host.hidden("journey", !session.menu_open)
+      @host.inspect_projection(fn(x, y, z) {
+        let p = view.project({ x, y, z, })
+        [p.x, p.z]
+      })
       @host.diagnostics(fn() { game.snapshot() })
       @host.frame(fn(time) { session.advance(time) })
     },

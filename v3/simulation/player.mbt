@@ -1,9 +1,10 @@
 ///|
+#derive(Eq)
 pub(all) enum Weapon {
   Cannon
   Mortar
   Laser
-} derive(Eq)
+}
 
 ///|
 pub(all) struct Abilities {

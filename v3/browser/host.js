@@ -1,7 +1,5 @@
-import { ObjectLoader, WebGLRenderer } from 'three';
-
-// Browser and Three I/O only. Simulation, input policy, and frame scheduling live in MoonBit.
-export async function loadScene(url, ready, failed) {
+// Browser I/O for the MoonBit game.
+export async function loadScene(url, parse, ready, failed) {
   try {
     performance.mark("art-start");
     async function unpack(path) {
@@ -14,24 +12,40 @@ export async function loadScene(url, ready, failed) {
       unpack('/generated/art/folded-buffers.bin.gz').then(r=>r.arrayBuffer())
     ]);
     performance.mark("art-decoded");
-    function attribute(data) {
-      if(!data?.array || Array.isArray(data.array))return;
-      const {byteOffset,length,type}=data.array;
-      data.array=new globalThis[type](binary,byteOffset,length);
+    function packedView(attribute) {
+      if (!attribute?.array || Array.isArray(attribute.array)) return;
+      const { byteOffset, length, type } = attribute.array;
+      return new globalThis[type](binary, byteOffset, length);
     }
-    for(const geometry of json.geometries){
-      if(!geometry.data)continue;
-      attribute(geometry.data.index);
-      for(const value of Object.values(geometry.data.attributes??{}))attribute(value);
+    // ObjectLoader reads JSON metadata. Keep packed vertex buffers as typed views.
+    function takeBuffer(attribute) {
+      const view = packedView(attribute);
+      if (view) attribute.array = [];
+      return view;
     }
-    function instances(object){attribute(object.instanceMatrix);attribute(object.instanceColor);for(const child of object.children??[])instances(child);}
+    const buffers = Object.create(null);
+    for (const geometry of json.geometries) {
+      if (!geometry.data) continue;
+      const attributes = Object.create(null);
+      for (const [name, attribute] of Object.entries(geometry.data.attributes ?? {})) {
+        attributes[name] = takeBuffer(attribute);
+      }
+      buffers[geometry.uuid] = { index: takeBuffer(geometry.data.index), attributes };
+    }
+    function instances(object) {
+      for (const data of [object.instanceMatrix, object.instanceColor]) {
+        const view = packedView(data);
+        if (view) data.array = Array.from(view);
+      }
+      for (const child of object.children ?? []) instances(child);
+    }
     instances(json.object);
     performance.mark("art-parse-start");
-    new ObjectLoader().parse(json, scene => { performance.mark("art-parsed"); ready(scene); performance.mark("view-created"); });
+    const scene = parse(JSON.stringify(json), buffers);
+    performance.mark("art-parsed");
+    ready(scene);
+    performance.mark("view-created");
   } catch (error) { failed(String(error)); }
-}
-export function createRenderer() {
-  return new WebGLRenderer({canvas: document.getElementById('game'), antialias: true, powerPreference: 'high-performance'});
 }
 export function onKey(callback) {
   addEventListener('keydown', event => {
@@ -49,9 +63,6 @@ export function onButton(callback) {
   canvas.addEventListener('contextmenu', event => event.preventDefault());
   canvas.addEventListener('mousedown', event => callback(event.button, true));
   addEventListener('mouseup', event => callback(event.button, false));
-}
-export function inspectScene(scene, camera) {
-  if (new URLSearchParams(location.search).has('test')) window.__typedView = {scene, camera};
 }
 
 export function createAudio() {

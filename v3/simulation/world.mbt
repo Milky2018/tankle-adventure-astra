@@ -13,10 +13,11 @@ pub fn Deck::height(self : Deck, z : Double) -> Double {
 }
 
 ///|
+#derive(Eq)
 pub(all) enum Axis {
   X
   Z
-} derive(Eq)
+}
 
 ///|
 #deprecated

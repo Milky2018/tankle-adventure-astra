@@ -1,4 +1,5 @@
 ///|
+#derive(@json.ToJson, @json.FromJson)
 priv struct Settings {
   mut camera : CameraSettings
   bindings : Map[String, String]
@@ -7,7 +8,7 @@ priv struct Settings {
   mut sfx : Bool
   mut quality : String
   mut third_person : Bool
-} derive(@json.ToJson, @json.FromJson)
+}
 
 ///|
 fn Settings::new() -> Settings {
@@ -230,7 +231,7 @@ fn Session::mount_settings(self : Session) -> Unit {
       @host.pixel_ratio()
     },
   )
-  self.view.renderer.set_shadows_enabled(self.settings.quality != "low")
+  self.view.renderer.shadow_map.enabled = self.settings.quality != "low"
   self.view.resize()
   @host.set_value("volume", "\{self.settings.volume}")
   @host.set_value("quality", self.settings.quality)
@@ -259,7 +260,7 @@ fn Session::mount_settings(self : Session) -> Unit {
           @host.pixel_ratio()
         },
       )
-      self.view.renderer.set_shadows_enabled(self.settings.quality != "low")
+      self.view.renderer.shadow_map.enabled = self.settings.quality != "low"
       self.view.resize()
       self.redraw = true
       self.settings.save()

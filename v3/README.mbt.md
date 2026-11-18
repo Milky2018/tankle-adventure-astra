@@ -4,8 +4,9 @@ A hand-written MoonBit implementation of the connected city in `../Gamespec.md`.
 
 ## Run
 
+Run these commands from `v3/`. Moon fetches `moonbit-community/three@0.1.1` from Mooncakes during the build.
+
 ```sh
-moon update
 npm ci
 npm run dev
 ```
@@ -15,23 +16,23 @@ Open http://127.0.0.1:5175/. `npm run build` produces `dist/`; `npm run preview`
 ## Structure
 
 - `simulation/`: typed player, enemies, weapons, collision, machinery, progression and save state. No JavaScript values or dynamic property dispatch.
-- `renderer/`: Three.js scene views, camera, picking and effects, using `mizchi/three@0.1.3`.
+- `renderer/`: scene views, cameras, picking, shader effects and WebGL rendering with three.mbt.
 - `cmd/play/`: browser session and interface policy in MoonBit.
-- `host/` and `browser/host.js`: browser, asset loading and WebGL I/O.
+- `host/` and `browser/host.js`: browser I/O, packed buffer loading and three.mbt scene deserialization.
 - `content/levels/city/`: editable JSON definitions for floors, collision, enemies, controls, circuits, lifts, pickups and repair hives.
 - `content/abilities.json`: weapon damage, heat, range and movement parameters. `content/sounds.json` contains sound synthesis parameters.
 - `content/art/`: packed Three.js scene resources. Use the official editor workflow below to edit them.
 - `editor/` and `scripts/editor-server.mjs`: local authoring UI and loopback-only content/save/build service.
 - `scripts/build-content.mjs`: compiles content into typed MoonBit constants and copies scene assets to `public/generated/`. Generated `.mbt` files and asset copies are ignored build outputs.
 
-The published MoonBit binding module is named `mizchi/three`, not `mizchi/threejs`.
+The game bundle uses the MoonBit renderer. The official scene editor and Node content tools use the npm `three` development dependency.
 
 ## Checks
 
 ```sh
 npm run check
-moon info --target js
-moon fmt
+moon info . simulation host renderer cmd/play --target js
+moon fmt . simulation host renderer cmd/play
 ```
 
 `npm run check` validates content, checks MoonBit without warnings, runs content and simulation tests, and builds the production game. After editing JSON, run `npm run build:content` before invoking `moon` directly. The normal `npm run dev`, `build` and `test` commands do this automatically. All builds are independent of v2.

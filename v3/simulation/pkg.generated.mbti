@@ -13,7 +13,7 @@ pub fn apply_floor_heat(Player, Array[Belt], Double, Double, Progress) -> Unit
 
 pub fn approach(Double, Double, Double) -> Double
 
-pub fn architecture_grid(Array[Solid]) -> Map[(Int, Int), Array[Solid]]
+pub fn architecture_grid(Array[Solid]) -> Map[(Int32, Int32), Array[Solid]]
 
 pub fn authored_architecture() -> Array[Solid]
 
@@ -47,7 +47,7 @@ pub fn authored_world() -> World
 
 pub fn barrage_targets(Vec3, Vec3, boss? : Bool) -> Array[BarrageTarget]
 
-pub fn can_telegraph(Int, Array[Enemy]) -> Bool
+pub fn can_telegraph(Int32, Array[Enemy]) -> Bool
 
 pub fn clamp(Double, Double, Double) -> Double
 
@@ -71,7 +71,7 @@ pub fn supported_hull((Double, Double) -> Bool, Double, Double, radius? : Double
 
 pub fn wake_squad(Enemy, Array[Enemy]) -> Unit
 
-pub fn wounded_ally(Int, Array[Enemy]) -> Int?
+pub fn wounded_ally(Int32, Array[Enemy]) -> Int32?
 
 // Errors
 
@@ -103,6 +103,7 @@ pub(all) enum Acquisition {
   Scope
 }
 
+#derive(Eq)
 pub(all) enum Action {
   CannonAction
   MortarAction
@@ -110,7 +111,7 @@ pub(all) enum Action {
   MagnetAction
   Use
   Dock
-} derive(Eq)
+}
 #deprecated
 pub fn Action::equal(Self, Self) -> Bool
 #deprecated
@@ -142,6 +143,7 @@ pub(all) enum ArenaEvent {
   Reserve(String)
 }
 
+#derive(Eq)
 pub(all) enum Attack {
   Torpedoes
   SuctionAttack
@@ -160,16 +162,17 @@ pub(all) enum Attack {
   Batteries
   Seekers
   Fan
-} derive(Eq)
+}
 #deprecated
 pub fn Attack::equal(Self, Self) -> Bool
 #deprecated
 pub fn Attack::not_equal(Self, Self) -> Bool
 
+#derive(Eq)
 pub(all) enum Axis {
   X
   Z
-} derive(Eq)
+}
 #deprecated
 pub fn Axis::equal(Self, Self) -> Bool
 #deprecated
@@ -181,7 +184,7 @@ pub(all) struct BarrageTarget {
 }
 
 pub(all) struct Beam {
-  enemy : Int
+  enemy : Int32
   origin : Vec3
   direction : Vec3
   length : Double
@@ -195,7 +198,7 @@ pub(all) struct Belt {
   release : String?
   stop : String?
   owner : String?
-  part : Int?
+  part : Int32?
 }
 
 pub(all) struct BossPattern {
@@ -204,7 +207,7 @@ pub(all) struct BossPattern {
   recovery : Double
   speed : Double
   offsets : Array[Double]
-  waves : Int
+  waves : Int32
   spacing : Double
   overlay : Bool
 }
@@ -257,13 +260,14 @@ pub(all) struct Current {
   diverted : Vec2
 }
 
+#derive(Eq)
 pub(all) enum DamageKind {
   CannonHit
   MortarHit
   LaserHit
   Ram
   Red
-} derive(Eq)
+}
 #deprecated
 pub fn DamageKind::equal(Self, Self) -> Bool
 #deprecated
@@ -278,21 +282,22 @@ pub(all) struct Deck {
 }
 pub fn Deck::height(Self, Double) -> Double
 
+#derive(@json.FromJson, @json.ToJson)
 pub(all) struct Delivery {
   mut position : Vec3
-  mut leg : Int
+  mut leg : Int32
   mut heading : Double
-} derive(ToJson, @json.FromJson)
+}
 #deprecated
-pub fn Delivery::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Delivery::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 #deprecated
-pub fn Delivery::to_json(Self) -> Json
+pub fn Delivery::to_json(Self) -> @json.Json
 
 pub(all) enum Effect {
   Fired(Vec3, Weapon)
   Impact(Vec3, Bool)
   Armored(Vec3)
-  Killed(Int)
+  Killed(Int32)
   Hurt
   Acquired(String)
   Activated(String)
@@ -329,14 +334,14 @@ pub(all) struct Enemy {
   mut awake : Bool
   mut deploy : Double
   mut deploy_until : Double
-  mut attack_cycle : Int
+  mut attack_cycle : Int32
   mut attack : Attack?
   mut pattern : BossPattern?
-  mut source : Int?
-  mut volley_sources : Array[Int?]
+  mut source : Int32?
+  mut volley_sources : Array[Int32?]
   mut chain : Bool
   mut warning_age : Double
-  mut volley_cycle : Int
+  mut volley_cycle : Int32
   mut lock : Vec3
   mut second_lock : Vec3?
   mut sweep_sign : Double
@@ -347,22 +352,22 @@ pub(all) struct Enemy {
   mut stunned_until : Double
   mut resume_phase : Phase?
   mut resume_timer : Double
-  mut swim_waypoint : Int
+  mut swim_waypoint : Int32
   mut bite_at : Double
   mut travel_heading : Double?
   mut deployed : Bool
   mut afloat : Bool
   mut readable : Bool
-  mut patient : Int?
-  mut burst_left : Int
+  mut patient : Int32?
+  mut burst_left : Int32
   mut rail_end : Vec3
   mut flame_at : Double
   mut pump_sound_at : Double
 }
-pub fn Enemy::armor_absorbs(Self, Double, Vec3, DamageKind, part_index? : Int) -> Bool
+pub fn Enemy::armor_absorbs(Self, Double, Vec3, DamageKind, part_index? : Int32) -> Bool
 pub fn Enemy::boss_pattern(Self, Bool) -> BossPattern
 pub fn Enemy::contact_damage(Self) -> Double
-pub fn Enemy::damage_amount(Self, Double, Vec3, DamageKind, part_index? : Int) -> Double
+pub fn Enemy::damage_amount(Self, Double, Vec3, DamageKind, part_index? : Int32) -> Double
 pub fn Enemy::in_suction(Self, Vec3, reach? : Double) -> Bool
 pub fn Enemy::magnet_pullable(Self) -> Bool
 pub fn Enemy::new(EnemyDef, Progress) -> Self
@@ -384,7 +389,7 @@ pub(all) struct EnemyDef {
   coordinated : Bool
   encounter : String?
   battle : String?
-  wave : Int
+  wave : Int32
   startup : Double?
   spotter_height : Double?
   detection_range : Double?
@@ -398,6 +403,7 @@ pub(all) struct EnemyDef {
   reserve_at : Double
 }
 
+#derive(Eq)
 pub(all) enum EnemyKind {
   Hunter
   Dredger
@@ -413,7 +419,7 @@ pub(all) enum EnemyKind {
   Reflector
   Elite
   Boss
-} derive(Eq)
+}
 #deprecated
 pub fn EnemyKind::equal(Self, Self) -> Bool
 #deprecated
@@ -460,7 +466,7 @@ pub(all) struct Game {
   shots : Array[Shot]
   mines : Array[Mine]
   effects : Array[Effect]
-  mut next_projectile : Int
+  mut next_projectile : Int32
   laser_path : Array[LaserSegment]
   mut magnet_end : Vec3?
   mut magnet_lock : HitTarget?
@@ -470,12 +476,12 @@ pub(all) struct Game {
 }
 pub fn Game::advance_world(Self, Double) -> Unit
 pub fn Game::cast(Self, Queries, Ray, Double, targets? : Bool, refuge? : Bool, ground? : Bool, visible? : (Vec3) -> Bool) -> Hit?
-pub fn Game::detonate_mine(Self, Int) -> Unit
+pub fn Game::detonate_mine(Self, Int32) -> Unit
 pub fn Game::dock(Self, Bool, Bool, Double) -> Unit
 pub fn Game::drift(Self, Vec3, Bool) -> Vec2
 pub fn Game::fire(Self, Queries, Vec3, Vec3) -> Bool
 pub fn Game::ground_target(Self, Queries, Vec3) -> Vec3
-pub fn Game::hit_enemy(Self, Int, Double, Vec3, DamageKind, part? : Int) -> Double
+pub fn Game::hit_enemy(Self, Int32, Double, Vec3, DamageKind, part? : Int32) -> Double
 pub fn Game::hurt(Self, Double, Vec3) -> Bool
 pub fn Game::impact(Self, Queries, Hit, Shot) -> Unit
 pub fn Game::interact(Self) -> Bool
@@ -484,7 +490,7 @@ pub fn Game::laser(Self, Queries, Vec3, Vec3, Bool, Double) -> Unit
 pub fn Game::lay_mine(Self, String, Vec3) -> Unit
 pub fn Game::magnet(Self, Queries, Vec3, Vec3, Bool, Double) -> Unit
 pub fn Game::mortar_target(Self, Queries, Vec3, Vec3) -> Vec3
-pub fn Game::move_enemy(Self, Int, Double, Double, Double) -> Unit
+pub fn Game::move_enemy(Self, Int32, Double, Double, Double) -> Unit
 pub fn Game::move_player(Self, Vec2, Bool, Double) -> Unit
 pub fn Game::new() -> Self
 pub fn Game::predict_mortar(Self, Queries, Vec3, Vec3) -> (Array[Vec3], Hit?, Bool)
@@ -493,24 +499,25 @@ pub fn Game::reset_enemies(Self) -> Unit
 pub fn Game::respawn(Self) -> Unit
 pub fn Game::restore(Self, String) -> Bool
 pub fn Game::save(Self) -> String
-pub fn Game::shoot_enemy(Self, Queries, Int, offset? : Double, source? : Int, target? : Vec3, delay? : Double, lob? : Bool, speed? : Double, torpedo? : Bool, homing? : Bool, origin? : Vec3, duration? : Double, range? : Double) -> Unit
+pub fn Game::shoot_enemy(Self, Queries, Int32, offset? : Double, source? : Int32, target? : Vec3, delay? : Double, lob? : Bool, speed? : Double, torpedo? : Bool, homing? : Bool, origin? : Vec3, duration? : Double, range? : Double) -> Unit
 pub fn Game::snapshot(Self) -> String
 pub fn Game::update_enemies(Self, Queries, Double) -> Unit
 pub fn Game::update_mines(Self, Double) -> Unit
 pub fn Game::update_puzzles(Self, Double) -> Unit
 pub fn Game::update_shots(Self, Queries, Double) -> Unit
 
+#derive(@json.FromJson, @json.ToJson)
 pub(all) struct GutterPuzzle {
-  angles : Array[Int]
+  angles : Array[Int32]
   rotations : Array[Double]
   mut fill : Double
   mut unplugged : Bool
   mut grown : Bool
-} derive(ToJson, @json.FromJson)
+}
 #deprecated
-pub fn GutterPuzzle::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn GutterPuzzle::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 #deprecated
-pub fn GutterPuzzle::to_json(Self) -> Json
+pub fn GutterPuzzle::to_json(Self) -> @json.Json
 
 pub(all) struct Hit {
   distance : Double
@@ -519,20 +526,21 @@ pub(all) struct Hit {
   target : HitTarget
 }
 
+#derive(Eq)
 pub(all) enum HitTarget {
   Terrain
-  SlideTarget(Int)
+  SlideTarget(Int32)
   PuzzleTarget(String)
   CoverTarget
-  EnemyTarget(Int, Int?)
-  ControlTarget(Int)
-  BlockedControl(Int)
-  MirrorTarget(Int)
-  MineTarget(Int)
-  TorpedoTarget(Int)
+  EnemyTarget(Int32, Int32?)
+  ControlTarget(Int32)
+  BlockedControl(Int32)
+  MirrorTarget(Int32)
+  MineTarget(Int32)
+  TorpedoTarget(Int32)
   Refuge
   PlayerTarget
-} derive(Eq)
+}
 #deprecated
 pub fn HitTarget::equal(Self, Self) -> Bool
 #deprecated
@@ -577,7 +585,7 @@ pub(all) struct Lift {
 }
 
 pub(all) struct Mine {
-  id : Int
+  id : Int32
   owner : String
   mut position : Vec3
   mut age : Double
@@ -597,6 +605,7 @@ pub(all) struct Mirror {
 }
 pub fn Mirror::normal(Self) -> Vec3
 
+#derive(Eq)
 pub(all) enum Phase {
   Idle
   Warn
@@ -610,7 +619,7 @@ pub(all) enum Phase {
   Bite
   Vent
   Stunned
-} derive(Eq)
+}
 #deprecated
 pub fn Phase::equal(Self, Self) -> Bool
 #deprecated
@@ -679,7 +688,7 @@ pub(all) struct Progress {
   flags : Map[String, Bool]
   events : Array[String]
   pending : Map[String, Signal]
-  mirror_turns : Map[String, Int]
+  mirror_turns : Map[String, Int32]
   slide_positions : Map[String, Double]
   discovered : Array[String]
   mut anchor : String
@@ -691,7 +700,7 @@ pub fn Progress::complete(Self, String) -> Bool
 pub fn Progress::has(Self, String) -> Bool
 pub fn Progress::new() -> Self
 pub fn Progress::trigger(Self, String, Double, Map[String, Bool], Array[SignalBranch], external? : Bool) -> Bool
-pub fn Progress::turn_mirror(Self, String) -> Int
+pub fn Progress::turn_mirror(Self, String) -> Int32
 
 pub(all) struct Puzzles {
   mut rail : RailPuzzle
@@ -715,6 +724,7 @@ pub(all) struct Rail {
   latch : String?
 }
 
+#derive(@json.FromJson, @json.ToJson)
 pub(all) struct RailPuzzle {
   switches : Array[Bool]
   mut solved : Bool
@@ -723,12 +733,12 @@ pub(all) struct RailPuzzle {
   mut direction : Double
   route : Array[Vec2]
   mut heading : Double
-} derive(ToJson, @json.FromJson)
+}
 #deprecated
-pub fn RailPuzzle::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn RailPuzzle::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn RailPuzzle::position(Self, distance? : Double) -> Vec3
 #deprecated
-pub fn RailPuzzle::to_json(Self) -> Json
+pub fn RailPuzzle::to_json(Self) -> @json.Json
 
 pub(all) struct Ray {
   origin : Vec3
@@ -739,12 +749,13 @@ pub fn Ray::plane(Self, Vec3, Vec3) -> Double?
 pub fn Ray::point(Self, Double) -> Vec3
 pub fn Ray::sphere(Self, Vec3, Double) -> Double?
 
+#derive(Eq)
 pub(all) struct Rect {
   x : Double
   z : Double
   w : Double
   d : Double
-} derive(Eq)
+}
 pub fn Rect::contains(Self, Double, Double, margin? : Double) -> Bool
 #deprecated
 pub fn Rect::equal(Self, Self) -> Bool
@@ -752,7 +763,7 @@ pub fn Rect::equal(Self, Self) -> Bool
 pub fn Rect::not_equal(Self, Self) -> Bool
 
 pub(all) struct Shot {
-  id : Int
+  id : Int32
   owner : String?
   origin : Vec3
   mut position : Vec3
@@ -765,7 +776,7 @@ pub(all) struct Shot {
   duration : Double
   arc : Double
   mine_owner : String?
-  source : (Int, Int)?
+  source : (Int32, Int32)?
   torpedo : Bool
   mut homing : Bool
   mut captured : Bool
@@ -774,26 +785,28 @@ pub(all) struct Shot {
   mut distance : Double
 }
 
+#derive(@json.FromJson, @json.ToJson)
 pub(all) struct Signal {
   duration : Double
   mut remaining : Double
   changes : Map[String, Bool]
   branches : Array[SignalBranch]
-} derive(ToJson, @json.FromJson)
+}
 #deprecated
-pub fn Signal::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Signal::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 #deprecated
-pub fn Signal::to_json(Self) -> Json
+pub fn Signal::to_json(Self) -> @json.Json
 
+#derive(@json.FromJson, @json.ToJson)
 pub(all) struct SignalBranch {
   key : String
   target : String
   duration : Double
-} derive(ToJson, @json.FromJson)
+}
 #deprecated
-pub fn SignalBranch::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SignalBranch::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 #deprecated
-pub fn SignalBranch::to_json(Self) -> Json
+pub fn SignalBranch::to_json(Self) -> @json.Json
 
 pub(all) struct Solid {
   id : String
@@ -827,7 +840,7 @@ pub(all) struct Transport {
 }
 
 pub(all) struct Upgrades {
-  mut armor_packs : Int
+  mut armor_packs : Int32
   mut cooling : Bool
   mut cannon : Bool
   mut mortar : Bool
@@ -836,6 +849,7 @@ pub(all) struct Upgrades {
 }
 pub fn Upgrades::new() -> Self
 
+#derive(Eq)
 pub(all) enum Variant {
   Ordinary
   Interceptor
@@ -843,39 +857,41 @@ pub(all) enum Variant {
   Siege
   Prism
   Flanker
-} derive(Eq)
+}
 #deprecated
 pub fn Variant::equal(Self, Self) -> Bool
 #deprecated
 pub fn Variant::not_equal(Self, Self) -> Bool
 
+#derive(Eq, @json.FromJson, @json.ToJson)
 pub(all) struct Vec2 {
   x : Double
   z : Double
-} derive(Eq, ToJson, @json.FromJson)
+}
 pub fn Vec2::distance(Self, Self) -> Double
 #deprecated
 pub fn Vec2::equal(Self, Self) -> Bool
 #deprecated
-pub fn Vec2::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Vec2::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Vec2::length(Self) -> Double
 #deprecated
 pub fn Vec2::not_equal(Self, Self) -> Bool
 #deprecated
-pub fn Vec2::to_json(Self) -> Json
+pub fn Vec2::to_json(Self) -> @json.Json
 
+#derive(Eq, @json.FromJson, @json.ToJson)
 pub(all) struct Vec3 {
   x : Double
   y : Double
   z : Double
-} derive(Eq, ToJson, @json.FromJson)
+}
 pub fn Vec3::add(Self, Self) -> Self
 pub fn Vec3::distance(Self, Self) -> Double
 pub fn Vec3::dot(Self, Self) -> Double
 #deprecated
 pub fn Vec3::equal(Self, Self) -> Bool
 #deprecated
-pub fn Vec3::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Vec3::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Vec3::length(Self) -> Double
 pub fn Vec3::lerp(Self, Self, Double) -> Self
 pub fn Vec3::normalized(Self) -> Self
@@ -885,13 +901,14 @@ pub fn Vec3::rotate_y(Self, Double) -> Self
 pub fn Vec3::scale(Self, Double) -> Self
 pub fn Vec3::sub(Self, Self) -> Self
 #deprecated
-pub fn Vec3::to_json(Self) -> Json
+pub fn Vec3::to_json(Self) -> @json.Json
 
+#derive(Eq)
 pub(all) enum Weapon {
   Cannon
   Mortar
   Laser
-} derive(Eq)
+}
 #deprecated
 pub fn Weapon::equal(Self, Self) -> Bool
 #deprecated
@@ -902,7 +919,7 @@ pub(all) struct World {
   solids : Array[Solid]
   obstacles : Array[Solid]
   architecture : Array[Solid]
-  architecture_grid : Map[(Int, Int), Array[Solid]]
+  architecture_grid : Map[(Int32, Int32), Array[Solid]]
   lifts : Array[Lift]
 }
 pub fn World::blocked(Self, Double, Double, Double, Progress, radius? : Double) -> Collision?

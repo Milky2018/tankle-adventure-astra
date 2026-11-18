@@ -1,22 +1,14 @@
 ///|
 struct Cutaway {
-  player : @three.Vector3
-  pyramid : @three.Matrix4
-  distance : @three.Uniform
-  direction : @three.Vector3
-  enabled : @three.Uniform
-  mode : @three.Uniform
-  bounds : Array[@three.Vector4]
-  planes : Array[@three.Vector4]
+  player : @m3.Vector3
+  pyramid : @m3.Matrix4
+  distance : @core.Uniform
+  direction : @m3.Vector3
+  enabled : @core.Uniform
+  mode : @core.Uniform
+  bounds : Array[@m3.Vector4]
+  planes : Array[@m3.Vector4]
 }
-
-///|
-extern "js" fn share_uniform(
-  uniforms : @three.Uniforms,
-  name : String,
-  uniform : @three.Uniform,
-) -> Unit =
-  #| (uniforms, name, uniform) => { uniforms[name] = uniform; }
 
 ///|
 let world_vertex : String =
@@ -55,25 +47,25 @@ let support_shader : String =
   #| cut *= 1.0-supportKeep;
 
 ///|
-fn Cutaway::new(scene : @three.Scene) -> Cutaway {
+fn Cutaway::new(scene : @core.Object3D) -> Cutaway {
   let cutaway = {
-    player: @three.Vector3::Vector3(0, -8, 86),
-    pyramid: @three.Matrix4::Matrix4(),
-    distance: @three.Uniform::Uniform(230),
-    direction: @three.Vector3::Vector3(28, 39.6, 28).normalize(),
-    enabled: @three.Uniform::Uniform(1),
-    mode: @three.Uniform::Uniform(1),
-    bounds: Array::makei(4, fn(_) { @three.Vector4::Vector4(0, 0, 0, 0) }),
-    planes: Array::makei(4, fn(_) { @three.Vector4::Vector4(0, 0, 0, 0) }),
+    player: @m3.Vector3::new(0, -8, 86),
+    pyramid: @m3.Matrix4::new(),
+    distance: @core.Uniform::new(Number(230)),
+    direction: @m3.Vector3::new(28, 39.6, 28).normalize(),
+    enabled: @core.Uniform::new(Number(1)),
+    mode: @core.Uniform::new(Number(1)),
+    bounds: Array::makei(4, fn(_) { @m3.Vector4::new(0, 0, 0, 0) }),
+    planes: Array::makei(4, fn(_) { @m3.Vector4::new(0, 0, 0, 0) }),
   }
   let registered : Set[String] = Set([])
   scene.traverse(fn(object) {
-    if object.as_mesh() is Some(mesh) {
-      for material in mesh.materials() {
-        if registered.contains(material.uuid()) {
+    if object.kind is Mesh(mesh) {
+      for material in mesh_materials(mesh.material) {
+        if registered.contains(material.uuid) {
           continue
         }
-        registered.add(material.uuid()) |> ignore
+        registered.add(material.uuid) |> ignore
         cutaway.apply(material)
       }
     }
@@ -82,8 +74,8 @@ fn Cutaway::new(scene : @three.Scene) -> Cutaway {
 }
 
 ///|
-fn Cutaway::apply(self : Cutaway, material : @three.Material) -> Unit {
-  let role = @host.render_role(material)
+fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
+  let role = metadata_string(material.user_data, "renderRole")
   let radius = if role == "structure" || role == "backdrop" {
     36.0
   } else {
@@ -91,7 +83,7 @@ fn Cutaway::apply(self : Cutaway, material : @three.Material) -> Unit {
   }
   let camera_only = role == "fixture" || role == "belt"
   let terrain = role == "floor" || role == "belt"
-  let depth = !material.color_write()
+  let depth = !material.color_write
   let aperture =
     #| vec3 delta = apertureWorld-aperturePlayer-vec3(0.0,1.3,0.0);
     #| vec3 viewDirection = apertureDirection;
@@ -118,47 +110,41 @@ fn Cutaway::apply(self : Cutaway, material : @three.Material) -> Unit {
     }) +
     "#include <opaque_fragment>"
   }
-  material.set_on_before_compile(
-    fn(shader, _renderer) {
-      let uniforms = shader.uniforms()
-      uniforms.set_vector3("aperturePlayer", self.player)
-      uniforms.set_vector3("apertureDirection", self.direction)
-      share_uniform(uniforms, "renderDistance", self.distance)
-      uniforms.set_matrix4("aperturePyramid", self.pyramid)
-      share_uniform(uniforms, "apertureMode", self.mode)
-      share_uniform(uniforms, "apertureEnabled", self.enabled)
-      for i in 0..<4 {
-        uniforms.set_vector4("bounds\{i}", self.bounds[i])
-        uniforms.set_vector4("plane\{i}", self.planes[i])
-      }
-      shader.set_vertex_shader(
-        shader
-        .vertex_shader()
-        .replace(
-          old="#include <common>",
-          new="#include <common>\nvarying vec3 apertureWorld;",
-        )
-        .replace(old="#include <project_vertex>", new=world_vertex),
+  material.on_before_compile = Some(fn(shader, _renderer) {
+    let uniforms = shader.uniforms
+    uniforms["aperturePlayer"] = @core.Uniform::new(Vector3(self.player))
+    uniforms["apertureDirection"] = @core.Uniform::new(Vector3(self.direction))
+    uniforms["renderDistance"] = self.distance
+    uniforms["aperturePyramid"] = @core.Uniform::new(Matrix4(self.pyramid))
+    uniforms["apertureMode"] = self.mode
+    uniforms["apertureEnabled"] = self.enabled
+    for i in 0..<4 {
+      uniforms["bounds\{i}"] = @core.Uniform::new(Vector4(self.bounds[i]))
+      uniforms["plane\{i}"] = @core.Uniform::new(Vector4(self.planes[i]))
+    }
+    shader.vertex_shader = shader.vertex_shader
+      .replace(
+        old="#include <common>",
+        new="#include <common>\nvarying vec3 apertureWorld;",
       )
-      shader.set_fragment_shader(
-        shader
-        .fragment_shader()
-        .replace(old="#include <common>", new=world_declarations)
-        .replace(old="#include <opaque_fragment>", new=fragment)
-        .replace(
-          old="#include <fog_fragment>",
-          new=(
-            #| #ifdef USE_FOG
-            #| float playerDistance = distance(apertureWorld,aperturePlayer);
-            #| if(playerDistance > renderDistance) discard;
-            #| gl_FragColor.rgb = mix(gl_FragColor.rgb,fogColor,smoothstep(fogNear,fogFar,playerDistance));
-            #| #endif
-          ),
+      .replace(old="#include <project_vertex>", new=world_vertex)
+    shader.fragment_shader = shader.fragment_shader
+      .replace(old="#include <common>", new=world_declarations)
+      .replace(old="#include <opaque_fragment>", new=fragment)
+      .replace(
+        old="#include <fog_fragment>",
+        new=(
+          #| #ifdef USE_FOG
+          #| float playerDistance = distance(apertureWorld,aperturePlayer);
+          #| if(playerDistance > renderDistance) discard;
+          #| gl_FragColor.rgb = mix(gl_FragColor.rgb,fogColor,smoothstep(fogNear,fogFar,playerDistance));
+          #| #endif
         ),
       )
-    },
-    "typed-cutaway-\{role}-\{depth}",
-  )
+  })
+  material.custom_program_cache_key = Some(fn() {
+    "typed-cutaway-\{role}-\{depth}"
+  })
 }
 
 ///|
@@ -166,30 +152,30 @@ fn Cutaway::update(
   self : Cutaway,
   p : @sim.Player,
   world : @sim.World,
-  camera : @three.Camera,
+  camera : @core.Object3D,
   third : Bool,
 ) -> Unit {
   self.player.set(p.x, p.y, p.z) |> ignore
-  self.direction.copy(camera.position()).sub(self.player).normalize() |> ignore
-  self.mode.set_float(if third { 1 } else { 0 })
-  let apex = @three.Vector3::Vector3(p.x, p.y + 1.6, p.z)
-  let corner = @three.Vector3::Vector3(-1, -1, -1).unproject(camera)
-  let right = @three.Vector3::Vector3(1, -1, -1)
+  self.direction.copy(camera.position).sub(self.player).normalize() |> ignore
+  self.mode.value = Number(if third { 1 } else { 0 })
+  let apex = @m3.Vector3::new(p.x, p.y + 1.6, p.z)
+  let corner = @m3.Vector3::new(-1, -1, -1).unproject(camera)
+  let right = @m3.Vector3::new(1, -1, -1)
     .unproject(camera)
     .sub(corner)
     .multiply_scalar(0.5)
-  let up = @three.Vector3::Vector3(-1, 1, -1)
+  let up = @m3.Vector3::new(-1, 1, -1)
     .unproject(camera)
     .sub(corner)
     .multiply_scalar(0.5)
   let center = corner.clone().add(right).add(up).sub(apex)
   if third {
-    let scale = -apex.clone().apply_matrix4(camera.matrix_world_inverse()).z() /
+    let scale = -apex.clone().apply_matrix4(camera.matrix_world_inverse()).z /
       0.15
     right.multiply_scalar(scale) |> ignore
     up.multiply_scalar(scale) |> ignore
   }
-  self.pyramid.make_basis(right, up, center).set_position(apex).invert()
+  self.pyramid.make_basis(right, up, center).set_position_vector(apex).invert()
   |> ignore
   let mut slot = 0
   {
@@ -231,12 +217,12 @@ fn Cutaway::aim_visible(
   let mut cut = 0.0
   if third {
     let p = vector(pos).apply_matrix4(self.pyramid)
-    if p.z() > 0 && p.z() <= 1 {
+    if p.z > 0 && p.z <= 1 {
       cut = 1 -
         smooth(
           0.9,
           1,
-          Double::max(p.x().abs(), p.y().abs()) / Double::max(0.000001, p.z()),
+          Double::max(p.x.abs(), p.y.abs()) / Double::max(0.000001, p.z),
         )
     }
   } else {
@@ -253,12 +239,12 @@ fn Cutaway::aim_visible(
     for i in 0..<4 {
       let b = self.bounds[i]
       let p = self.planes[i]
-      if p.z() > 0 &&
-        pos.x >= b.x() - 0.02 &&
-        pos.x <= b.z() + 0.02 &&
-        pos.z >= b.y() - 0.02 &&
-        pos.z <= b.w() + 0.02 {
-        let height = p.x() + p.y() * @sim.clamp(pos.z - b.y(), 0, b.w() - b.y())
+      if p.z > 0 &&
+        pos.x >= b.x - 0.02 &&
+        pos.x <= b.z + 0.02 &&
+        pos.z >= b.y - 0.02 &&
+        pos.z <= b.w + 0.02 {
+        let height = p.x + p.y * @sim.clamp(pos.z - b.y, 0, b.w - b.y)
         cut *= smooth(0.12, 0.3, (pos.y - height).abs())
       }
     }

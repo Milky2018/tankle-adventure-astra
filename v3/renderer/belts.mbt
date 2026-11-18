@@ -1,9 +1,9 @@
 ///|
 priv struct BeltSegment {
-  mesh : @three.InstancedMesh
+  mesh : @core.Object3D
   travel : Double
-  rollers : Array[(@three.Object3D, @three.Quaternion)]
-  heaters : Array[@three.Object3D]
+  rollers : Array[(@core.Object3D, @m3.Quaternion)]
+  heaters : Array[@core.Object3D]
 }
 
 ///|
@@ -14,11 +14,8 @@ priv struct BeltVisual {
 }
 
 ///|
-fn instanced(node : @three.Object3D) -> @three.InstancedMesh = "%identity"
-
-///|
 fn belts(
-  nodes : Map[String, @three.Object3D],
+  nodes : Map[String, @core.Object3D],
   game : @sim.Game,
 ) -> Array[BeltVisual] {
   let sizes = belt_segments()
@@ -27,20 +24,20 @@ fn belts(
     for j, (travel, heat_count) in sizes.get(body.deck.id).unwrap() {
       let prefix = "world/belts/\{body.deck.id}/segments/\{j}"
       if nodes.get(prefix + "/mesh") is Some(node) {
-        let rollers : Array[(@three.Object3D, @three.Quaternion)] = []
+        let rollers : Array[(@core.Object3D, @m3.Quaternion)] = []
         for k in 0..<2 {
           if nodes.get(prefix + "/rollers/\{k}") is Some(node) {
-            node.set_matrix_auto_update(true)
-            rollers.push((node, node.quaternion().clone()))
+            node.matrix_auto_update = true
+            rollers.push((node, node.quaternion.clone()))
           }
         }
-        let heaters : Array[@three.Object3D] = []
+        let heaters : Array[@core.Object3D] = []
         for k in 0..<heat_count {
           if nodes.get(prefix + "/heaters/\{k}") is Some(node) {
             heaters.push(node)
           }
         }
-        segments.push({ mesh: instanced(node), travel, rollers, heaters, })
+        segments.push({ mesh: node, travel, rollers, heaters, })
       }
     }
     { body, segments, phase: 0, }
@@ -49,9 +46,9 @@ fn belts(
 
 ///|
 pub fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
-  let matrix = @three.Matrix4::Matrix4()
-  let rotation = @three.Quaternion::Quaternion()
-  let axis = @three.Vector3::Vector3(0, 1, 0)
+  let matrix = @m3.Matrix4::new()
+  let rotation = @m3.Quaternion::new(0, 0, 0, 1)
+  let axis = @m3.Vector3::new(0, 1, 0)
   for belt in self.belts {
     let b = belt.body
     let d = b.deck
@@ -84,7 +81,9 @@ pub fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
         (1.0 + d.rise / d.rect.d * (d.rise / d.rect.d)).sqrt()
     }
     for segment in belt.segments {
-      let count = segment.mesh.count()
+      guard segment.mesh.kind is Mesh({ count, kind: InstancedMesh(data), .. }) else {
+        continue
+      }
       for i in 0..<count {
         let travel = segment.travel
         let along = (
@@ -107,12 +106,12 @@ pub fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
           },
         )
         |> ignore
-        segment.mesh.set_matrix_at(i, matrix)
+        segment.mesh.set_matrix_at(i, matrix) |> ignore
       }
-      segment.mesh.mark_needs_update()
+      data.instance_matrix.set_needs_update(true)
       rotation.set_from_axis_angle(axis, -belt.phase / 0.22) |> ignore
       for (node, mount) in segment.rollers {
-        node.quaternion().copy(mount).multiply(rotation) |> ignore
+        node.quaternion.copy(mount).multiply(rotation) |> ignore
       }
       for lamp in segment.heaters {
         color(lamp, if released || stopped { 0x829185 } else { 0xffa05a })

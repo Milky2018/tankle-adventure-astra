@@ -1,5 +1,8 @@
 import {
-  "mizchi/three",
+  "moonbit-community/three/core",
+  "moonbit-community/three/math" @m3,
+  "moonbit-community/three/geometries",
+  "moonbit-community/three/renderers/webgl",
   "milky/tankle-astra/simulation" @sim,
   "milky/tankle-astra/host",
   "moonbitlang/core/math",

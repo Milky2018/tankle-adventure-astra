@@ -1,25 +1,29 @@
 ///|
 struct Projectiles {
-  meshes : Map[Int32, @three.Object3D]
-  geometry : @three.BufferGeometry
-  friendly : @three.Material
-  hostile : @three.Material
+  meshes : Map[Int32, @core.Object3D]
+  geometry : @core.BufferGeometry
+  friendly : @core.Material
+  hostile : @core.Material
 }
 
 ///|
 fn Projectiles::new() -> Projectiles {
   {
     meshes: {},
-    geometry: @three.SphereGeometry::SphereGeometry(0.19, 8, 6).as_buffer_geometry(),
-    friendly: @three.MeshBasicMaterial::MeshBasicMaterial(0xffedbe).as_material(),
-    hostile: @three.MeshBasicMaterial::MeshBasicMaterial(0xff7948).as_material(),
+    geometry: @geometries.SphereGeometry::new(
+      radius=0.19,
+      width_segments=8,
+      height_segments=6,
+    ),
+    friendly: basic_material(0xffedbe),
+    hostile: basic_material(0xff7948),
   }
 }
 
 ///|
 fn Projectiles::update(
   self : Projectiles,
-  scene : @three.Scene,
+  scene : @core.Object3D,
   shots : Array[@sim.Shot],
 ) -> Unit {
   let alive : Set[Int32] = Set([])
@@ -28,24 +32,27 @@ fn Projectiles::update(
     let mesh = match self.meshes.get(shot.id) {
       Some(mesh) => mesh
       None => {
-        let mesh = @three.Mesh::Mesh(
-          self.geometry,
-          if shot.owner is Some(_) {
-            self.hostile
-          } else {
-            self.friendly
-          },
-        ).as_object3d()
-        scene.as_object3d().add_child(mesh)
+        let mesh = @core.Mesh::new(
+          geometry=self.geometry,
+          material=Single(
+            if shot.owner is Some(_) {
+              self.hostile
+            } else {
+              self.friendly
+            },
+          ),
+        )
+        scene.add(mesh) |> ignore
         self.meshes[shot.id] = mesh
         mesh
       }
     }
-    mesh.set_visible(shot.delay <= 0)
-    mesh.set_position_xyz(shot.position.x, shot.position.y, shot.position.z)
-    mesh.set_scale_xyz(1, 1, if shot.mortar { 1 } else { 2.5 })
+    mesh.visible = shot.delay <= 0
+    mesh.position.set(shot.position.x, shot.position.y, shot.position.z)
+    |> ignore
+    mesh.scale.set(1, 1, if shot.mortar { 1 } else { 2.5 }) |> ignore
     mesh.look_at(vector(shot.position.add(shot.direction)))
-    mesh.update_matrix_world(true)
+    mesh.update_matrix_world(force=true)
   }
   let removed : Array[Int32] = []
   for id, mesh in self.meshes {
@@ -66,12 +73,12 @@ pub fn View::aim(
   queries : @sim.Queries,
   pointer : @sim.Vec2,
 ) -> @sim.Vec3 {
-  let picker = @three.Raycaster::Raycaster(
-    vector({ x: 0, y: 0, z: 0, }),
-    vector({ x: 0, y: 0, z: 1, }),
+  let picker = @core.Raycaster::new(
+    origin=vector({ x: 0, y: 0, z: 0, }),
+    direction=vector({ x: 0, y: 0, z: 1, }),
   )
   picker.set_from_camera(
-    @three.Vector2::Vector2(
+    @m3.Vector2::new(
       if self.third_person {
         0
       } else {
@@ -85,8 +92,8 @@ pub fn View::aim(
     ),
     self.camera(),
   )
-  let source = point(picker.ray().origin())
-  let direction = point(picker.ray().direction())
+  let source = point(picker.ray.origin)
+  let direction = point(picker.ray.direction)
   let turret = self.weapon_origin()
   let horizontal = @sim.Vec2::{ x: direction.x, z: direction.z, }.length()
   let ahead = (

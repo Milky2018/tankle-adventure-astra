@@ -120,7 +120,7 @@ glTF/GLB is a model interchange format. Native editor project JSON retains Three
 
 ## Runtime and build boundaries
 
-`scripts/build-content.mjs` validates and compiles JSON definitions into concrete MoonBit records, and copies packed assets to the public build directory. It does not translate game code or execute v2. `simulation/Game` owns authoritative state and rules. `renderer/View` binds that state to scene roles. `cmd/play` handles browser interaction and the frame loop. `host` and `browser/host.js` contain the narrow JavaScript boundary for DOM, asset loading and WebGL operations.
+`scripts/build-content.mjs` validates and compiles JSON definitions into concrete MoonBit records, and copies packed assets to the public build directory. It does not translate game code or execute v2. `simulation/Game` owns authoritative state and rules. `renderer/View` binds that state to scene roles. `cmd/play` handles browser interaction and the frame loop. `browser/host.js` fetches and decompresses the scene assets. The MoonBit `host` package passes the metadata to the three.mbt object loader and attaches the packed geometry buffers.
 
 The large scene is stored as compressed Three.js metadata and binary vertex buffers to keep loading and repository size manageable. The editor commands unpack and repack this representation; nobody should hand-edit it. Plain JSON gameplay catalogs remain diffable. Behavior remains readable MoonBit functions, with simulation tests independent of the browser.
 

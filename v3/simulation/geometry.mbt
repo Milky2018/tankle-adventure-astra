@@ -1,23 +1,26 @@
 ///|
+#derive(Eq, @json.ToJson, @json.FromJson)
 pub(all) struct Vec2 {
   x : Double
   z : Double
-} derive(Eq, @json.ToJson, @json.FromJson)
+}
 
 ///|
+#derive(Eq, @json.ToJson, @json.FromJson)
 pub(all) struct Vec3 {
   x : Double
   y : Double
   z : Double
-} derive(Eq, @json.ToJson, @json.FromJson)
+}
 
 ///|
+#derive(Eq)
 pub(all) struct Rect {
   x : Double
   z : Double
   w : Double
   d : Double
-} derive(Eq)
+}
 
 ///|
 pub fn clamp(value : Double, low : Double, high : Double) -> Double {

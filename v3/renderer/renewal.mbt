@@ -1,20 +1,20 @@
 ///|
 priv struct Renewal {
-  cart : @three.Object3D?
-  eye : @three.Object3D?
-  conduits : Array[@three.Object3D?]
-  scraps : Array[Array[@three.Object3D?]]
-  jaws : Array[@three.Object3D?]
-  wheels : Array[@three.Object3D?]
+  cart : @core.Object3D?
+  eye : @core.Object3D?
+  conduits : Array[@core.Object3D?]
+  scraps : Array[Array[@core.Object3D?]]
+  jaws : Array[@core.Object3D?]
+  wheels : Array[@core.Object3D?]
   phases : Array[Double]
 }
 
 ///|
-fn Renewal::new(nodes : Map[String, @three.Object3D]) -> Renewal {
-  fn get(path : String) -> @three.Object3D? {
+fn Renewal::new(nodes : Map[String, @core.Object3D]) -> Renewal {
+  fn get(path : String) -> @core.Object3D? {
     let node = nodes.get(path)
     if node is Some(node) {
-      node.set_matrix_auto_update(true)
+      node.matrix_auto_update = true
     }
     node
   }
@@ -45,16 +45,14 @@ pub fn View::update_renewal(self : View, game : @sim.Game, dt : Double) -> Unit 
   let wake = smooth(21, 23, seconds)
   let travel = smooth(23, 25, seconds)
   if v.cart is Some(cart) {
-    cart.position().set_z(79 + travel * 1.6) |> ignore
-    cart.update_matrix_world(true)
+    cart.position.set_z(79 + travel * 1.6) |> ignore
+    cart.update_matrix_world(force=true)
   }
-  if v.eye is Some(eye) && eye.as_mesh() is Some(mesh) {
-    for m in mesh.materials() {
-      material_color(m).set_rgb(
-        0.12 + wake * 0.68,
-        0.17 + wake * 0.58,
-        0.14 + wake * 0.3,
-      )
+  if v.eye is Some(eye) && eye.kind is Mesh(mesh) {
+    for m in mesh_materials(mesh.material) {
+      m.color
+      .unwrap()
+      .set_rgb(0.12 + wake * 0.68, 0.17 + wake * 0.58, 0.14 + wake * 0.3)
       |> ignore
     }
   }
@@ -84,7 +82,7 @@ pub fn View::update_renewal(self : View, game : @sim.Game, dt : Double) -> Unit 
       }
       for j, node in v.scraps[i] {
         if node is Some(node) {
-          node.set_position_xyz(
+          node.position.set(
             if i == 0 {
               -19
             } else {
@@ -93,15 +91,14 @@ pub fn View::update_renewal(self : View, game : @sim.Game, dt : Double) -> Unit 
             -56,
             49 - (j.to_double() * 8 + v.phases[i]) % 26,
           )
-          node.update_matrix_world(true)
+          |> ignore
+          node.update_matrix_world(force=true)
         }
       }
       if v.jaws[i] is Some(jaw) {
-        jaw
-        .position()
-        .set_y(
+        jaw.position.set_y(
           damp(
-            jaw.position().y(),
+            jaw.position.y,
             if live {
               -53.8 + @math.sin(v.phases[i] * 0.8) * 0.6
             } else {
@@ -112,11 +109,11 @@ pub fn View::update_renewal(self : View, game : @sim.Game, dt : Double) -> Unit 
           ),
         )
         |> ignore
-        jaw.update_matrix_world(true)
+        jaw.update_matrix_world(force=true)
       }
       if v.wheels[i] is Some(wheel) {
-        wheel.set_rotation_xyz(@math.PI / 2, 0, v.phases[i])
-        wheel.update_matrix_world(true)
+        wheel.rotation.set(@math.PI / 2, 0, v.phases[i]) |> ignore
+        wheel.update_matrix_world(force=true)
       }
     }
   }

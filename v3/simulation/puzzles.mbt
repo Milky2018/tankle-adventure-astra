@@ -1,4 +1,5 @@
 ///|
+#derive(@json.ToJson, @json.FromJson)
 pub(all) struct RailPuzzle {
   switches : Array[Bool]
   mut solved : Bool
@@ -7,7 +8,7 @@ pub(all) struct RailPuzzle {
   mut direction : Double
   route : Array[Vec2]
   mut heading : Double
-} derive(@json.ToJson, @json.FromJson)
+}
 
 ///|
 pub fn RailPuzzle::position(self : RailPuzzle, distance? : Double) -> Vec3 {
@@ -32,20 +33,22 @@ pub fn RailPuzzle::position(self : RailPuzzle, distance? : Double) -> Vec3 {
 }
 
 ///|
+#derive(@json.ToJson, @json.FromJson)
 pub(all) struct GutterPuzzle {
   angles : Array[Int32]
   rotations : Array[Double]
   mut fill : Double
   mut unplugged : Bool
   mut grown : Bool
-} derive(@json.ToJson, @json.FromJson)
+}
 
 ///|
+#derive(@json.ToJson, @json.FromJson)
 pub(all) struct Delivery {
   mut position : Vec3
   mut leg : Int32
   mut heading : Double
-} derive(@json.ToJson, @json.FromJson)
+}
 
 ///|
 pub(all) struct Puzzles {

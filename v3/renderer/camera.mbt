@@ -1,6 +1,6 @@
 ///|
 pub(all) struct View {
-  priv nodes : Map[String, @three.Object3D]
+  priv nodes : Map[String, @core.Object3D]
   priv belts : Array[BeltVisual]
   priv hives : Array[HiveVisual]
   priv player_visual : PlayerVisual
@@ -11,16 +11,16 @@ pub(all) struct View {
   priv enemies : Array[EnemyVisual]
   priv projectiles : Projectiles
   priv cutaway : Cutaway
-  scene : @three.Scene
-  renderer : @three.WebGLRenderer
-  ending : @three.PerspectiveCamera
+  scene : @core.Object3D
+  renderer : @webgl.WebGLRenderer
+  ending : @core.Object3D
   mut film : Bool
-  third : @three.PerspectiveCamera
-  overhead : @three.OrthographicCamera
-  root : @three.Object3D
-  body : @three.Object3D
-  turret : @three.Object3D
-  barrel : @three.Object3D
+  third : @core.Object3D
+  overhead : @core.Object3D
+  root : @core.Object3D
+  body : @core.Object3D
+  turret : @core.Object3D
+  barrel : @core.Object3D
   mut distance : Double
   mut camera_height : Double
   mut shoulder : Double
@@ -34,26 +34,26 @@ pub(all) struct View {
 }
 
 ///|
-pub fn View::new(scene : @three.Scene, game : @sim.Game) -> View {
-  scene.update_matrix_world(true)
-  let nodes : Map[String, @three.Object3D] = Map([])
+pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
+  scene.update_matrix_world(force=true)
+  let nodes : Map[String, @core.Object3D] = Map([])
   scene.traverse(fn(node) {
-    let binding = @host.scene_binding(node)
+    let binding = scene_binding(node)
     if binding != "" {
       nodes[binding] = node
     }
   })
   let renderer = @host.create_renderer()
   renderer.set_pixel_ratio(@host.pixel_ratio())
-  renderer.set_shadows_enabled(true)
-  renderer.set_shadow_map_type(@three.ShadowMapType::PCF)
-  renderer.set_tone_mapping(@three.NeutralToneMapping)
-  renderer.set_tone_mapping_exposure(1.1)
+  renderer.shadow_map.enabled = true
+  renderer.shadow_map.type_ = @core.PCFShadowMap
+  renderer.tone_mapping = @core.NeutralToneMapping
+  renderer.tone_mapping_exposure = 1.1
   let root = nodes.get("player/root").unwrap()
   let body = nodes.get("player/body").unwrap()
   let turret = nodes.get("player/turret").unwrap()
   for object in [root, body, turret] {
-    object.set_matrix_auto_update(true)
+    object.matrix_auto_update = true
   }
   let view = {
     scene,
@@ -80,11 +80,16 @@ pub fn View::new(scene : @three.Scene, game : @sim.Game) -> View {
     cutaway: Cutaway::new(scene),
     projectiles: Projectiles::new(),
     enemies: enemy_visuals(nodes, game),
-    ending: @three.PerspectiveCamera::PerspectiveCamera(55, 1, 0.15, 290),
+    ending: @core.PerspectiveCamera::new(fov=55, aspect=1, near=0.15, far=290),
     film: false,
-    third: @three.PerspectiveCamera::PerspectiveCamera(60, 1, 0.15, 290),
-    overhead: @three.OrthographicCamera::OrthographicCamera(
-      -30, 30, 17, -17, 0.1, 290,
+    third: @core.PerspectiveCamera::new(fov=60, aspect=1, near=0.15, far=290),
+    overhead: @core.OrthographicCamera::new(
+      left=-30,
+      right=30,
+      top=17,
+      bottom=-17,
+      near=0.1,
+      far=290,
     ),
     yaw: -@math.PI / 2,
     pitch: 15.3 * @math.PI / 180,
@@ -98,16 +103,16 @@ pub fn View::new(scene : @three.Scene, game : @sim.Game) -> View {
 pub fn View::resize(self : View) -> Unit {
   let w = @host.width()
   let h = @host.height()
-  self.renderer.set_size(w, h)
-  self.third.set_aspect(w.to_double() / h.to_double())
+  self.renderer.set_size(w.to_double(), h.to_double())
+  self.third.as_perspective_camera().aspect = w.to_double() / h.to_double()
   self.third.update_projection_matrix()
-  self.ending.set_aspect(w.to_double() / h.to_double())
+  self.ending.as_perspective_camera().aspect = w.to_double() / h.to_double()
   self.ending.update_projection_matrix()
   let half = self.area * w.to_double() / h.to_double()
-  self.overhead.set_top(self.area)
-  self.overhead.set_bottom(-self.area)
-  self.overhead.set_left(-half)
-  self.overhead.set_right(half)
+  self.overhead.as_orthographic_camera().top = self.area
+  self.overhead.as_orthographic_camera().bottom = -self.area
+  self.overhead.as_orthographic_camera().left = -half
+  self.overhead.as_orthographic_camera().right = half
   self.overhead.update_projection_matrix()
 }
 
@@ -122,13 +127,13 @@ pub fn View::turn(self : View, dx : Double, dy : Double) -> Unit {
 }
 
 ///|
-pub fn View::camera(self : View) -> @three.Camera {
+pub fn View::camera(self : View) -> @core.Object3D {
   if self.film {
-    self.ending.as_camera()
+    self.ending
   } else if self.third_person {
-    self.third.as_camera()
+    self.third
   } else {
-    self.overhead.as_camera()
+    self.overhead
   }
 }
 
@@ -140,42 +145,38 @@ pub fn View::position_player(
   dt : Double,
 ) -> Unit {
   self.ground_pose(player, world, dt)
-  self.body.set_rotation_xyz(0, player.heading, 0)
-  self.turret.set_rotation_xyz(0, player.aim, 0)
-  self.root.update_matrix_world(true)
+  self.body.rotation.set(0, player.heading, 0) |> ignore
+  self.turret.rotation.set(0, player.aim, 0) |> ignore
+  self.root.update_matrix_world(force=true)
   if self.third_person {
-    let forward = @three.Vector3::Vector3(
+    let forward = @m3.Vector3::new(
       @math.sin(self.yaw) * @math.cos(self.pitch),
       -@math.sin(self.pitch),
       @math.cos(self.yaw) * @math.cos(self.pitch),
     )
-    let right = @three.Vector3::Vector3(
-      -@math.cos(self.yaw),
-      0,
-      @math.sin(self.yaw),
-    )
-    let up = @three.Vector3::Vector3(0, 0, 0)
-      .cross_vectors(right, forward)
-      .normalize()
+    let right = @m3.Vector3::new(-@math.cos(self.yaw), 0, @math.sin(self.yaw))
+    let up = @m3.Vector3::new(0, 0, 0).cross_vectors(right, forward).normalize()
     let offset = forward
       .clone()
       .multiply_scalar(-self.distance)
       .add_scaled_vector(up, self.camera_height)
       .add_scaled_vector(right, self.shoulder)
-    offset.set_y(Double::max(2.5, offset.y())) |> ignore
-    self.third.set_position(
-      offset.add(@three.Vector3::Vector3(player.x, player.y + 1.8, player.z)),
+    offset.set_y(Double::max(2.5, offset.y)) |> ignore
+    self.third.position.copy(
+      offset.add(@m3.Vector3::new(player.x, player.y + 1.8, player.z)),
     )
-    self.third.look_at(self.third.position().clone().add(forward))
-    self.third.update_matrix_world(true)
+    |> ignore
+    self.third.look_at(self.third.position.clone().add(forward))
+    self.third.update_matrix_world(force=true)
   } else {
-    self.overhead.set_position_xyz(
+    self.overhead.position.set(
       player.x + 28,
       player.y + (28.0 * 28 * 2).sqrt() * @math.tan(self.overhead_angle),
       player.z + 28,
     )
-    self.overhead.look_at(@three.Vector3::Vector3(player.x, player.y, player.z))
-    self.overhead.update_matrix_world(true)
+    |> ignore
+    self.overhead.look_at(@m3.Vector3::new(player.x, player.y, player.z))
+    self.overhead.update_matrix_world(force=true)
   }
 }
 
@@ -185,7 +186,7 @@ pub fn View::draw(
   player : @sim.Player,
   world : @sim.World,
 ) -> Unit {
-  self.cutaway.enabled.set_float(if self.film { 0 } else { 1 })
+  self.cutaway.enabled.value = Number(if self.film { 0 } else { 1 })
   self.cutaway.update(player, world, self.camera(), self.third_person)
   self.renderer.render(self.scene, self.camera())
 }
@@ -194,8 +195,8 @@ pub fn View::draw(
 pub fn View::project(self : View, position : @sim.Vec3) -> @sim.Vec2 {
   let p = vector(position).project(self.camera())
   {
-    x: (p.x() + 1) * @host.width().to_double() / 2,
-    z: (1 - p.y()) * @host.height().to_double() / 2,
+    x: (p.x + 1) * @host.width().to_double() / 2,
+    z: (1 - p.y) * @host.height().to_double() / 2,
   }
 }
 
@@ -206,14 +207,14 @@ pub fn View::set_visibility(
   far : Double,
   range : Double,
 ) -> Unit {
-  if self.scene.fog() is Some(fog) {
-    fog.set_near(near)
-    fog.set_far(far)
+  if self.scene.as_scene().fog is Some(Fog(fog)) {
+    fog.near = near
+    fog.far = far
   }
-  self.cutaway.distance.set_float(range)
-  self.third.set_far(range + 70)
-  self.ending.set_far(range + 70)
-  self.overhead.set_far(range + 70)
+  self.cutaway.distance.value = Number(range)
+  self.third.as_perspective_camera().far = range + 70
+  self.ending.as_perspective_camera().far = range + 70
+  self.overhead.as_orthographic_camera().far = range + 70
   self.third.update_projection_matrix()
   self.ending.update_projection_matrix()
   self.overhead.update_projection_matrix()

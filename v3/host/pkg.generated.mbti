@@ -2,7 +2,8 @@
 package "milky/tankle-astra/host"
 
 import {
-  "mizchi/three",
+  "moonbit-community/three/core",
+  "moonbit-community/three/renderers/webgl",
 }
 
 // Values
@@ -18,7 +19,7 @@ pub fn audio_volume(Audio, Double) -> Unit
 
 pub fn canvas(String) -> Canvas
 
-pub fn canvas_begin(Canvas, Int, Int, Double) -> Unit
+pub fn canvas_begin(Canvas, Int32, Int32, Double) -> Unit
 
 pub fn capture_pointer() -> Unit
 
@@ -26,7 +27,7 @@ pub fn class_toggle(String, String, Bool) -> Unit
 
 pub fn create_audio() -> Audio
 
-pub fn create_renderer() -> @three.WebGLRenderer
+pub fn create_renderer() -> @webgl.WebGLRenderer
 
 pub fn diagnostics(() -> String) -> Unit
 
@@ -38,21 +39,21 @@ pub fn frame((Double) -> Unit) -> Unit
 
 pub fn fullscreen() -> Unit
 
-pub fn height() -> Int
+pub fn height() -> Int32
 
 pub fn hidden(String, Bool) -> Unit
 
 pub fn html(String, String) -> Unit
 
-pub fn inspect_scene(@three.Scene, @three.Camera) -> Unit
+pub fn inspect_projection((Double, Double, Double) -> FixedArray[Double]) -> Unit
 
-pub fn load_scene(String, (@three.Scene) -> Unit, (String) -> Unit) -> Unit
+pub fn load_scene(String, (@core.Object3D) -> Unit, (String) -> Unit) -> Unit
 
 pub fn music(Audio, String, Double, Bool) -> Unit
 
 pub fn on_blur(() -> Unit) -> Unit
 
-pub fn on_button((Int, Bool) -> Unit) -> Unit
+pub fn on_button((Int32, Bool) -> Unit) -> Unit
 
 pub fn on_change(String, () -> Unit) -> Unit
 
@@ -82,10 +83,6 @@ pub fn release_pointer() -> Unit
 
 pub fn remove_save() -> Unit
 
-pub fn render_role(@three.Material) -> String
-
-pub fn scene_binding(@three.Object3D) -> String
-
 pub fn set_checked(String, Bool) -> Unit
 
 pub fn set_value(String, String) -> Unit
@@ -100,7 +97,7 @@ pub fn style(String, String, String) -> Unit
 
 pub fn text(String, String) -> Unit
 
-pub fn width() -> Int
+pub fn width() -> Int32
 
 pub fn write_preferences(String) -> Unit
 

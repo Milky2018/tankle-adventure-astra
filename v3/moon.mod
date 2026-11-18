@@ -6,10 +6,12 @@ license = "Apache-2.0"
 
 preferred_target = "js"
 
+warnings = "@a"
+
 readme = "README.md"
 
 description = "MoonBit JavaScript edition of Tankle Adventure — Astra"
 
 import {
-  "mizchi/three@0.1.3",
+  "moonbit-community/three@0.1.1",
 }

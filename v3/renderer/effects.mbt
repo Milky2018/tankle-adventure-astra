@@ -1,6 +1,6 @@
 ///|
 priv struct Trail {
-  root : @three.Object3D
+  root : @core.Object3D
   mut life : Double
   duration : Double
   size : Double
@@ -8,13 +8,13 @@ priv struct Trail {
 
 ///|
 priv struct Effects {
-  beams : Array[@three.Object3D]
-  mines : Map[Int32, @three.Object3D]
+  beams : Array[@core.Object3D]
+  mines : Map[Int32, @core.Object3D]
   bursts : Array[Trail]
-  box : @three.BufferGeometry
-  sphere : @three.BufferGeometry
-  bright : @three.Material
-  red : @three.Material
+  box : @core.BufferGeometry
+  sphere : @core.BufferGeometry
+  bright : @core.Material
+  red : @core.Material
 }
 
 ///|
@@ -23,10 +23,14 @@ fn Effects::new() -> Effects {
     beams: [],
     mines: {},
     bursts: [],
-    box: @three.BoxGeometry::BoxGeometry(1, 1, 1).as_buffer_geometry(),
-    sphere: @three.SphereGeometry::SphereGeometry(1, 10, 8).as_buffer_geometry(),
-    bright: @three.MeshBasicMaterial::MeshBasicMaterial(0xffdc8b).as_material(),
-    red: @three.MeshBasicMaterial::MeshBasicMaterial(0xff6846).as_material(),
+    box: @geometries.BoxGeometry::new(),
+    sphere: @geometries.SphereGeometry::new(
+      radius=1,
+      width_segments=10,
+      height_segments=8,
+    ),
+    bright: basic_material(0xffdc8b),
+    red: basic_material(0xff6846),
   }
 }
 
@@ -47,21 +51,21 @@ pub fn View::update_effects(
     hue : Int32,
   ) -> Unit {
     if count == effects.beams.length() {
-      let mesh = @three.Mesh::Mesh(
-        effects.box,
-        @three.MeshBasicMaterial::MeshBasicMaterial(hue).as_material(),
-      ).as_object3d()
-      self.scene.as_object3d().add_child(mesh)
+      let mesh = @core.Mesh::new(
+        geometry=effects.box,
+        material=Single(basic_material(hue)),
+      )
+      self.scene.add(mesh) |> ignore
       effects.beams.push(mesh)
     }
     let mesh = effects.beams[count]
     count += 1
     color(mesh, hue)
-    mesh.set_visible(true)
-    mesh.set_position(vector(from.lerp(to, 0.5)))
-    mesh.set_scale_xyz(width, width, from.distance(to))
+    mesh.visible = true
+    mesh.position.copy(vector(from.lerp(to, 0.5))) |> ignore
+    mesh.scale.set(width, width, from.distance(to)) |> ignore
     mesh.look_at(vector(to))
-    mesh.update_matrix_world(true)
+    mesh.update_matrix_world(force=true)
   }
   for b in game.beams {
     beam(b.origin, b.origin.add(b.direction.scale(b.length)), b.width, 0xff6c42)
@@ -123,7 +127,7 @@ pub fn View::update_effects(
     }
   }
   for i in count..<effects.beams.length() {
-    effects.beams[i].set_visible(false)
+    effects.beams[i].visible = false
   }
   let active : Set[Int32] = Set([])
   for m in game.mines {
@@ -131,15 +135,18 @@ pub fn View::update_effects(
     let mesh = match effects.mines.get(m.id) {
       Some(mesh) => mesh
       None => {
-        let mesh = @three.Mesh::Mesh(effects.sphere, effects.red).as_object3d()
-        self.scene.as_object3d().add_child(mesh)
+        let mesh = @core.Mesh::new(
+          geometry=effects.sphere,
+          material=Single(effects.red),
+        )
+        self.scene.add(mesh) |> ignore
         effects.mines[m.id] = mesh
         mesh
       }
     }
-    mesh.set_position_xyz(m.position.x, m.position.y + 0.3, m.position.z)
-    mesh.set_scale_xyz(0.6, 0.25, 0.6)
-    mesh.update_matrix_world(true)
+    mesh.position.set(m.position.x, m.position.y + 0.3, m.position.z) |> ignore
+    mesh.scale.set(0.6, 0.25, 0.6) |> ignore
+    mesh.update_matrix_world(force=true)
   }
   let gone : Array[Int32] = []
   for id, mesh in effects.mines {
@@ -159,10 +166,13 @@ pub fn View::update_effects(
       _ => None
     }
     if position is Some(p) {
-      let mesh = @three.Mesh::Mesh(effects.sphere, effects.bright).as_object3d()
-      mesh.set_position(vector(p))
-      mesh.set_scale_xyz(0.1, 0.1, 0.1)
-      self.scene.as_object3d().add_child(mesh)
+      let mesh = @core.Mesh::new(
+        geometry=effects.sphere,
+        material=Single(effects.bright),
+      )
+      mesh.position.copy(vector(p)) |> ignore
+      mesh.scale.set(0.1, 0.1, 0.1) |> ignore
+      self.scene.add(mesh) |> ignore
       effects.bursts.push({
         root: mesh,
         life: 0.25,
@@ -177,7 +187,7 @@ pub fn View::update_effects(
   for b in effects.bursts {
     b.life -= dt
     let size = b.size * (b.life / b.duration)
-    b.root.set_scale_xyz(size, size, size)
+    b.root.scale.set(size, size, size) |> ignore
     if b.life <= 0 {
       b.root.remove_from_parent() |> ignore
     }

@@ -3,7 +3,8 @@ package "milky/tankle-astra/renderer"
 
 import {
   "milky/tankle-astra/simulation",
-  "mizchi/three",
+  "moonbit-community/three/core",
+  "moonbit-community/three/renderers/webgl",
 }
 
 // Values
@@ -16,16 +17,16 @@ type Cutaway
 type Projectiles
 
 pub(all) struct View {
-  scene : @three.Scene
-  renderer : @three.WebGLRenderer
-  ending : @three.PerspectiveCamera
+  scene : @core.Object3D
+  renderer : @webgl.WebGLRenderer
+  ending : @core.Object3D
   mut film : Bool
-  third : @three.PerspectiveCamera
-  overhead : @three.OrthographicCamera
-  root : @three.Object3D
-  body : @three.Object3D
-  turret : @three.Object3D
-  barrel : @three.Object3D
+  third : @core.Object3D
+  overhead : @core.Object3D
+  root : @core.Object3D
+  body : @core.Object3D
+  turret : @core.Object3D
+  barrel : @core.Object3D
   mut distance : Double
   mut camera_height : Double
   mut shoulder : Double
@@ -40,9 +41,9 @@ pub(all) struct View {
 }
 pub fn View::aim(Self, @simulation.Game, @simulation.Queries, @simulation.Vec2) -> @simulation.Vec3
 pub fn View::aim_player(Self, @simulation.Vec3, @simulation.Weapon) -> Unit
-pub fn View::camera(Self) -> @three.Camera
+pub fn View::camera(Self) -> @core.Object3D
 pub fn View::draw(Self, @simulation.Player, @simulation.World) -> Unit
-pub fn View::new(@three.Scene, @simulation.Game) -> Self
+pub fn View::new(@core.Object3D, @simulation.Game) -> Self
 pub fn View::position_player(Self, @simulation.Player, @simulation.World, Double) -> Unit
 pub fn View::project(Self, @simulation.Vec3) -> @simulation.Vec2
 pub fn View::queries(Self, @simulation.Game, aiming? : Bool) -> @simulation.Queries

@@ -1,11 +1,12 @@
 ///|
+#derive(Eq)
 pub(all) enum DamageKind {
   CannonHit
   MortarHit
   LaserHit
   Ram
   Red
-} derive(Eq)
+}
 
 ///|
 #deprecated
