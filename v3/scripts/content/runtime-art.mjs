@@ -8,7 +8,7 @@ import { gunzipSync, gzipSync } from "node:zlib";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 
-export function buildRuntimeArt(source, destination, barriers = []) {
+export function buildRuntimeArt(source, destination, barriers = [], controls = []) {
   const scene = JSON.parse(gunzipSync(readFileSync(join(source, "city.scene.json.gz"))));
   const original = gunzipSync(readFileSync(join(source, "city.buffers.bin.gz")));
   const views = { geometry: {}, images: {}, instances: {} };
@@ -46,7 +46,7 @@ export function buildRuntimeArt(source, destination, barriers = []) {
   prepare(scene.object);
 
   instanceRepeatedShapes(scene, sourceView);
-  batchFittings(scene, sourceView, barriers);
+  batchFittings(scene, sourceView, barriers, controls);
   bakeRoomPortals(scene, sourceView);
   function packInstances(node) {
     if (node.type === "InstancedMesh") {

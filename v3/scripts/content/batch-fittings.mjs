@@ -13,10 +13,11 @@ function cellKey(p, size) {
   return [p.x, p.y, p.z].map(v => Math.floor(v / size + 0.5)).join("/");
 }
 
-export function batchFittings(scene, sourceView, barriers = []) {
+export function batchFittings(scene, sourceView, barriers = [], controls = []) {
   if (scene.animations?.length) return;
   const walls = new Map(barriers.filter(b => b.permanent && !b.motion && !b.rail && !b.arena)
     .map(b => ["world/walls/" + b.circuitKey + "/mesh", b]));
+  const fixedControls = new Set(controls.filter(c => !c.mount).map(c => "world/controls/" + c.id + "/root"));
   const geometry = new Map(scene.geometries.map(g => [g.uuid, g]));
   const materials = new Map(scene.materials.map(m => [m.uuid, m]));
   const groups = new Map();
@@ -39,11 +40,12 @@ export function batchFittings(scene, sourceView, barriers = []) {
     return centers.get(g.uuid);
   }
 
-  function visit(node, anchor, parentMatrix, withinPlacement, picking) {
+  function visit(node, anchor, parentMatrix, picking) {
     const binding = node.userData?.binding ?? "";
     const transform = parentMatrix.clone().multiply(new Matrix4().fromArray(node.matrix));
     const fixedTrack = /^enemies\/[^/]+\/model\/tracks\/\d+$/.test(binding);
     const placement = fixedPlacement.test(binding);
+    const fixedControl = fixedControls.has(binding);
     const fitting = placement || /^world\/occluders\/\d+\/meshes\/\d+\/mesh$/.test(binding);
     // Window sills and glazing share a depth plane with the facade. Their
     // original draw order matters when the camera fades that facade.
@@ -72,19 +74,21 @@ export function batchFittings(scene, sourceView, barriers = []) {
       }
       const id = tinted.get(signature);
       const center = geometryCenter(g).clone().applyMatrix4(transform);
-      const size = anchor === scene.object ? 120 : 40;
+      const size = anchor === scene.object ? 240 : 40;
       const cell = cellKey(center, size);
       const key = JSON.stringify([anchor.uuid, id, cell, node.castShadow, node.receiveShadow, node.renderOrder, node.layers]);
       if (!groups.has(key)) groups.set(key, { anchor, id, list: [] });
       groups.get(key).list.push({ node, transform, g, center, tint: new Color(color), vertexColors, picking });
     }
-    const wrapper = withinPlacement && !binding && !node.name;
-    const flatten = canCross && (fixedWall || (fitting && node.type === "Mesh") || (node.type === "Group" && (placement || decoration || wrapper || collider)));
+    // Unbound folders inside a mechanism inherit its motion. Bound children
+    // (lamp, cover, arm, etc.) start a new frame of their own.
+    const wrapper = !binding && (!node.name || node.name.startsWith("local-circuit:"));
+    const flatten = canCross && (fixedWall || (fitting && node.type === "Mesh") || (node.type === "Group" && (placement || fixedControl || decoration || wrapper || collider)));
     for (const child of node.children ?? []) {
-      visit(child, flatten ? anchor : node, flatten ? transform : new Matrix4(), placement || (flatten && withinPlacement), collider || (flatten && picking));
+      visit(child, flatten ? anchor : node, flatten ? transform : new Matrix4(), collider || (flatten && picking));
     }
   }
-  visit(scene.object, scene.object, new Matrix4(), false, false);
+  visit(scene.object, scene.object, new Matrix4(), false);
   const sources = new Map();
   function bufferGeometry(g) {
     if (sources.has(g.uuid)) return sources.get(g.uuid);

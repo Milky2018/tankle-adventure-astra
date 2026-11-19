@@ -56,10 +56,14 @@ priv struct PortalRoom {
 }
 
 ///|
+const ShadowOnlyLayer = 29
+
+///|
 priv struct SceneryBin {
   bounds : @m3.Box3
-  nodes : Array[@core.Object3D]
+  members : Array[(@core.Object3D, @m3.Matrix4)]
   rooms : Array[Int32]
+  mut fog_limited : Bool
   mut outer_faces : Int32
 }
 
@@ -68,6 +72,7 @@ priv struct RoomVisibility {
   rooms : Array[PortalRoom]
   bins : Array[SceneryBin]
   hidden : Array[@core.Object3D]
+  shadow_layers : Array[@core.Layers]
   projection : @m3.Matrix4
 }
 
@@ -77,6 +82,7 @@ fn RoomVisibility::new(scene : @core.Object3D) -> RoomVisibility {
     rooms: [],
     bins: [],
     hidden: [],
+    shadow_layers: [],
     projection: @m3.Matrix4::new(),
   }
   if @host.query("portals") == "off" {
@@ -108,13 +114,48 @@ fn RoomVisibility::new(scene : @core.Object3D) -> RoomVisibility {
     result.rooms.push({ bounds, edges, window: None, })
   }
   let bins : Map[(Int32, Int32, Int32), SceneryBin] = Map([])
+  // Keep occluded casters available to the shadow pass on a dedicated layer.
+  let reserved_in_use = Ref(false)
   scene.traverse(fn(node) {
-    // Three's shadow pass tests the main camera's layers too. Leave all
-    // casters available even when their own surface is hidden from the eye.
-    if node.cast_shadow || node.user_data.get("portalStatic").is_undefined() {
+    if node.layers.is_enabled(ShadowOnlyLayer) {
+      reserved_in_use.val = true
+    }
+    if node.is_light() && node.as_light().shadow is Some(shadow) {
+      let layers = shadow.camera.layers
+      if layers.is_enabled(ShadowOnlyLayer) {
+        reserved_in_use.val = true
+      }
+      if layers.is_enabled(0) {
+        result.shadow_layers.push(layers)
+      }
+    }
+    guard node.layers.mask == 1 &&
+      node.kind is Mesh(mesh) &&
+      mesh.material is Single(material) &&
+      material.depth_test &&
+      material.displacement_map is None &&
+      !material.is_shader_material() &&
+      !material.is_node_material() &&
+      mesh.morph_target_influences is None else {
       return
     }
-    let bounds = @core.box3_set_from_object(@m3.Box3::new(), node)
+    let bounds = match mesh.kind {
+      PlainMesh => {
+        let g = mesh.geometry
+        if g.bounding_box is None {
+          g.compute_bounding_box()
+        }
+        guard g.bounding_box is Some(box) else { return }
+        box.clone().apply_matrix4(node.matrix_world)
+      }
+      InstancedMesh(_) | BatchedMesh(_) => {
+        if node.user_data.get("portalStatic").is_undefined() {
+          return
+        }
+        @core.box3_set_from_object(@m3.Box3::new(), node)
+      }
+      SkinnedMesh(_) => return
+    }
     if bounds.is_empty() {
       return
     }
@@ -129,11 +170,25 @@ fn RoomVisibility::new(scene : @core.Object3D) -> RoomVisibility {
       (center.z / 16).floor().to_int(),
     )
     let bin = bins.get_or_init(key, fn() {
-      { bounds: @m3.Box3::new(), nodes: [], rooms: [], outer_faces: 0, }
+      {
+        bounds: @m3.Box3::new(),
+        members: [],
+        rooms: [],
+        fog_limited: true,
+        outer_faces: 0,
+      }
     })
+    if material.fog != Some(true) {
+      bin.fog_limited = false
+    }
     bin.bounds.union(bounds) |> ignore
-    bin.nodes.push(node)
+    // A moving door or vehicle may leave this bin after loading. Its world
+    // matrix must still match this placement before it can be hidden.
+    bin.members.push((node, node.matrix_world.clone()))
   })
+  if reserved_in_use.val {
+    return result
+  }
   let domain = @m3.Box3::new()
   for room in result.rooms {
     domain.union(room.bounds) |> ignore
@@ -229,7 +284,7 @@ fn project_bounds(b : @m3.Box3, m : Array[Double]) -> ScreenRect? {
 }
 
 ///|
-fn RoomVisibility::apply(
+fn RoomVisibility::apply_portals(
   self : RoomVisibility,
   camera : @core.Object3D,
   cut : Cutaway,
@@ -378,17 +433,63 @@ fn RoomVisibility::apply(
       .any(fn(i) { self.rooms[i].window is Some(w) && rect.clip(w) is Some(_) }) {
       continue
     }
-    for node in bin.nodes {
-      node.layers.disable(0)
+    self.hide_bin(bin)
+  }
+}
+
+///|
+fn RoomVisibility::hide_bin(self : RoomVisibility, bin : SceneryBin) -> Unit {
+  for entry in bin.members {
+    let (node, original) = entry
+    if node.visible &&
+      node.layers.mask == 1 &&
+      node.matrix_world.equals(original) {
+      node.layers.set(ShadowOnlyLayer)
       self.hidden.push(node)
     }
   }
 }
 
 ///|
+fn RoomVisibility::apply(
+  self : RoomVisibility,
+  camera : @core.Object3D,
+  cut : Cutaway,
+  third : Bool,
+  fog : Bool,
+) -> Unit {
+  if self.bins.is_empty() || camera.layers.mask != 1 {
+    return
+  }
+  // The city's fog shader already discards every fragment beyond this radius.
+  if fog && cut.distance.value is Number(range) {
+    for bin in self.bins {
+      if bin.fog_limited &&
+        bin.bounds.distance_to_point(cut.player) > range + 0.02 {
+        self.hide_bin(bin)
+      }
+    }
+  }
+  if third {
+    self.apply_portals(camera, cut)
+  }
+  if !self.hidden.is_empty() {
+    for layers in self.shadow_layers {
+      layers.enable(ShadowOnlyLayer)
+    }
+  }
+}
+
+///|
 fn RoomVisibility::restore(self : RoomVisibility) -> Unit {
+  if self.hidden.is_empty() {
+    return
+  }
   for node in self.hidden {
-    node.layers.enable(0)
+    node.layers.set(0)
   }
   self.hidden.clear()
+  for layers in self.shadow_layers {
+    layers.disable(ShadowOnlyLayer)
+  }
 }

@@ -99,3 +99,30 @@ test("roller instances keep segment transforms and independent belt animations",
     }
   }
 });
+
+test("fixed switch housings batch across circuit folders while mounted controls and lamps remain independent", () => {
+  const s = scene();
+  const controls = [{ id: "left" }, { id: "right" }, { id: "carriage", mount: "lift" }];
+  const roots = controls.map(({ id }, i) => {
+    const binding = "world/controls/" + id;
+    return {
+      type: "Group", uuid: id, matrix: matrix(i * 20), userData: { binding: binding + "/root" },
+      children: [
+        { type: "Group", name: "local-circuit:" + id, matrix: matrix(1), children: [
+          { ...mesh("", 2), name: "Control bezel · outer" },
+          { ...mesh("", 4), name: "Control bezel · inner" },
+        ] },
+        mesh(binding + "/lamp", 5),
+      ],
+    };
+  });
+  s.object.children.push(...roots);
+  batchFittings(s, a => a, [], controls);
+  const combined = s.object.children.filter(n => n.name === "Workshop fittings");
+  assert.equal(combined.length, 1);
+  assert.deepEqual(combined[0].boundingBox, { min: [3, 0, 0], max: [26, 1, 0] });
+  assert.equal(roots[2].children.find(n => n.name === "Workshop fittings").type, "Mesh");
+  for (const root of roots) {
+    assert.equal(root.children.find(n => n.userData?.binding.endsWith("/lamp")).material, "iron");
+  }
+});

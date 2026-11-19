@@ -112,6 +112,21 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     pitch: 15.3 * @math.PI / 180,
     third_person: true,
   }
+  // World matrices are current at this point, including moving ancestors.
+  let before = scene.as_scene().on_before_render
+  scene.as_scene().on_before_render = fn(renderer, root, camera, target) {
+    before(renderer, root, camera, target)
+    if target is None &&
+      !view.film &&
+      (camera.id == view.third.id || camera.id == view.overhead.id) {
+      view.room_visibility.apply(
+        camera,
+        view.cutaway,
+        view.third_person,
+        root.as_scene().fog is Some(_),
+      )
+    }
+  }
   view.resize()
   view
 }
@@ -222,9 +237,6 @@ pub fn View::draw(
     self.scene,
   )
   self.cutaway.update(player, world, camera, self.third_person)
-  if self.third_person && !self.film {
-    self.room_visibility.apply(camera, self.cutaway)
-  }
   self.renderer.render(self.scene, camera)
   self.room_visibility.restore()
 }
