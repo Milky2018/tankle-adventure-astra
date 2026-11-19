@@ -29,7 +29,7 @@ fn feeds(scene : @core.Object3D) -> Array[Feed] {
 }
 
 ///|
-pub fn View::update_feeds(self : View, game : @sim.Game) -> Unit {
+fn View::update_feeds(self : View, game : @sim.Game) -> Unit {
   for feed in self.feeds {
     let active = game.commands.active(game.progress, feed.id)
     let elapsed = if game.progress.pending.get(feed.id) is Some(signal) {

@@ -92,7 +92,7 @@ pub(all) enum HitTarget {
   Terrain
   SlideTarget(Int32)
   PuzzleTarget(String)
-  CoverTarget
+  CoverTarget(Int32)
   EnemyTarget(Int32, Int32?)
   ControlTarget(Int32)
   BlockedControl(Int32)

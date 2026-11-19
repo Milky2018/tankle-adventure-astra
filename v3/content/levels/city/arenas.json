@@ -1,0 +1,56 @@
+[
+  {
+    "id": "prototype",
+    "boss": "prototype",
+    "x": -50,
+    "z": 116,
+    "w": 36,
+    "d": 24,
+    "y": -16,
+    "music": "mz-battle1",
+    "victoryEffects": [
+      "overdrive-return"
+    ]
+  },
+  {
+    "id": "foundry",
+    "boss": "foundry",
+    "x": 202,
+    "z": -164,
+    "w": 42,
+    "d": 40,
+    "y": 16,
+    "music": "mz-battle3"
+  },
+  {
+    "id": "guardian",
+    "boss": "guardian",
+    "x": 180,
+    "z": 44,
+    "w": 48,
+    "d": 46,
+    "y": 16,
+    "music": "mz-battle6"
+  },
+  {
+    "id": "sorter",
+    "boss": "sorter",
+    "x": 24,
+    "z": -164,
+    "w": 40,
+    "d": 36,
+    "y": -8,
+    "music": "mz-battle4",
+    "cover": "sorter-cover"
+  },
+  {
+    "id": "keeper",
+    "boss": "keeper",
+    "x": -28,
+    "z": 12,
+    "w": 56,
+    "d": 48,
+    "y": -56,
+    "music": "mz-battle8"
+  }
+]

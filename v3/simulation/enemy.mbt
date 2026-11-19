@@ -13,8 +13,16 @@ pub(all) enum EnemyKind {
   Welder
   Repairer
   Reflector
-  Elite
-  Boss
+  Interceptor
+  Bastion
+  Siege
+  Prism
+  Flanker
+  Prototype
+  Sorter
+  Overseer
+  Guardian
+  Keeper
 }
 
 ///|
@@ -22,40 +30,57 @@ pub(all) enum EnemyKind {
 pub extend EnemyKind with Eq::{equal, not_equal}
 
 ///|
-#derive(Eq)
-pub(all) enum Variant {
-  Ordinary
-  Interceptor
-  Bastion
-  Siege
-  Prism
-  Flanker
+pub fn EnemyKind::is_boss(self : EnemyKind) -> Bool {
+  self is (Prototype | Sorter | Overseer | Guardian | Keeper)
 }
 
 ///|
-#deprecated
-pub extend Variant with Eq::{equal, not_equal}
+fn EnemyKind::firing_height(self : EnemyKind) -> Double {
+  match self {
+    Sorter | Overseer | Keeper => 4
+    Guardian => 2.8
+    _ => 1.5
+  }
+}
 
 ///|
 #derive(Eq)
 pub(all) enum Phase {
   Idle
-  Warn
+  Warn(WarningPlan)
   Charge
-  Burst
-  RailShot
+  Burst(Int32)
+  RailShot(Vec3)
   Flame
-  Sweep
-  Repair
+  Sweep(Double)
+  Repair(Int32)
   Suction
   Bite
-  Vent
-  Stunned
+  Vent(Double)
+  Stunned((Phase, Double)?)
 }
 
 ///|
 #deprecated
 pub extend Phase with Eq::{equal, not_equal}
+
+///|
+#derive(Eq)
+pub(all) enum WarningPlan {
+  Fire(Attack)
+  Aid(Int32)
+  Volley(BossPattern, Array[Int32?])
+}
+
+///|
+pub fn Phase::is_warning(self : Phase) -> Bool {
+  self is Warn(_)
+}
+
+///|
+pub fn Phase::is_venting(self : Phase) -> Bool {
+  self is Vent(_)
+}
 
 ///|
 #derive(Eq)
@@ -70,13 +95,27 @@ pub(all) enum Attack {
   Lob
   Mine
   SweepAttack
-  RepairAttack
   Reflect
   CannonAttack
+}
+
+///|
+#derive(Eq)
+pub(all) enum BossAttack {
   Barrage
   Batteries
   Seekers
   Fan
+  ArmSweep
+}
+
+///|
+fn Enemy::enter(self : Enemy, phase : Phase, seconds : Double) -> Unit {
+  self.phase = phase
+  self.timer = seconds
+  if phase.is_warning() {
+    self.warning_age = 0
+  }
 }
 
 ///|
@@ -93,10 +132,8 @@ pub(all) struct Activation {
 pub(all) struct EnemyDef {
   id : String
   kind : EnemyKind
-  variant : Variant
   spawn : Vec3
   hp : Double
-  guardian : Bool
   persistent : Bool
   emplacement : Bool
   magnetic_shield : Bool
@@ -104,6 +141,7 @@ pub(all) struct EnemyDef {
   encounter : String?
   battle : String?
   wave : Int32
+  opening_crossing : Double
   startup : Double?
   spotter_height : Double?
   detection_range : Double?
@@ -128,6 +166,8 @@ pub(all) struct EnemyPart {
 ///|
 pub(all) struct Enemy {
   definition : EnemyDef
+  priv profile : EnemySpec
+  priv timing : EnemyTiming
   mut x : Double
   mut y : Double
   mut z : Double
@@ -147,10 +187,6 @@ pub(all) struct Enemy {
   mut deploy : Double
   mut deploy_until : Double
   mut attack_cycle : Int32
-  mut attack : Attack?
-  mut pattern : BossPattern?
-  mut source : Int32?
-  mut volley_sources : Array[Int32?]
   mut chain : Bool
   mut warning_age : Double
   mut volley_cycle : Int32
@@ -162,8 +198,6 @@ pub(all) struct Enemy {
   mut last_seen : Vec3?
   mut dead_at : Double?
   mut stunned_until : Double
-  mut resume_phase : Phase?
-  mut resume_timer : Double
   mut crossing_left : Double
   mut swim_waypoint : Int32
   mut bite_at : Double
@@ -171,9 +205,6 @@ pub(all) struct Enemy {
   mut deployed : Bool
   mut afloat : Bool
   mut readable : Bool
-  mut patient : Int32?
-  mut burst_left : Int32
-  mut rail_end : Vec3
   mut flame_at : Double
   mut pump_sound_at : Double
 }
@@ -196,6 +227,8 @@ pub fn Enemy::new(definition : EnemyDef, progress : Progress) -> Enemy {
   }
   {
     definition,
+    profile: definition.combat_spec(),
+    timing: definition.combat_timing(),
     x: p.x,
     y: p.y,
     z: p.z,
@@ -207,10 +240,10 @@ pub fn Enemy::new(definition : EnemyDef, progress : Progress) -> Enemy {
     },
     max_hp: definition.hp,
     radius: match definition.kind {
-      Boss => 3.2
-      _ if definition.guardian => 2.4
+      Sorter | Overseer | Keeper => 3.2
+      Guardian => 2.4
       Dredger => 2.0
-      Guard => 1.75
+      Guard | Bastion => 1.75
       _ => 1.35
     },
     parts,
@@ -226,10 +259,6 @@ pub fn Enemy::new(definition : EnemyDef, progress : Progress) -> Enemy {
     deploy: 0,
     deploy_until: 0,
     attack_cycle: 0,
-    attack: None,
-    pattern: None,
-    source: None,
-    volley_sources: [],
     chain: false,
     warning_age: 0,
     volley_cycle: 0,
@@ -241,22 +270,13 @@ pub fn Enemy::new(definition : EnemyDef, progress : Progress) -> Enemy {
     last_seen: None,
     dead_at: None,
     stunned_until: 0,
-    resume_phase: None,
-    resume_timer: 0,
-    crossing_left: if definition.id == "foundry-west-scout" {
-      2.2
-    } else {
-      0
-    },
+    crossing_left: definition.opening_crossing,
     swim_waypoint: 0,
     bite_at: -10,
     travel_heading: None,
     deployed: false,
     afloat: false,
     readable: false,
-    patient: None,
-    burst_left: 0,
-    rail_end: p,
     flame_at: 0,
     pump_sound_at: 0,
   }
@@ -275,7 +295,7 @@ pub fn Enemy::swims(self : Enemy) -> Bool {
 ///|
 pub fn Enemy::magnet_pullable(self : Enemy) -> Bool {
   match self.definition.kind {
-    Scout | Skirmisher | Miner | Repairer => true
+    Scout | Interceptor | Skirmisher | Flanker | Miner | Repairer => true
     _ => false
   }
 }

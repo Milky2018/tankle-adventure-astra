@@ -69,41 +69,15 @@ fn Session::advance(self : Session, milliseconds : Double) -> Unit {
     p.aim = @math.atan2(aim.x - p.x, aim.z - p.z)
     self.view.aim_player(aim, p.weapon)
     self.firing = self.held("fire")
-    if self.firing && self.game.ending_at is None {
-      self.game.fire(self.queries, self.view.weapon_origin(), aim) |> ignore
-    }
-    if self.game.ending_at is None && p.hp > 0 {
-      self.game.update_enemies(self.queries, dt)
-    }
-    if self.game.ending_at is None && p.hp > 0 {
-      self.game.update_shots(self.queries, dt)
-      self.game.update_mines(dt)
-    }
-    if self.game.ending_at is None {
-      self.game.laser(
-        self.queries,
-        self.view.weapon_origin(),
-        aim,
-        self.firing,
-        dt,
-      )
-      self.game.magnet(
-        self.queries,
-        self.view.weapon_origin(),
-        aim,
-        self.held("magnet"),
-        dt,
-      )
-    }
-    self.view.update_player(self.game, dt)
-    self.view.update_belts(self.game, dt)
-    self.view.update_hives(self.game, dt)
-    self.view.update_renewal(self.game, dt)
-    self.view.update_enemies(self.game, dt)
-    self.view.update_projectiles(self.game)
-    self.view.update_feeds(self.game)
-    self.view.update_effects(self.game, aim, self.queries, dt)
-    self.view.update_ending(self.game)
+    self.game.advance_combat(
+      self.queries,
+      self.view.weapon_origin(),
+      aim,
+      firing=self.firing,
+      magnet=self.held("magnet"),
+      dt~,
+    )
+    self.view.present(self.game, self.queries, aim, dt)
     if p.ending_time >= 26 {
       @host.hidden("ending", false)
       self.keys.clear()

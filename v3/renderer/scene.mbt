@@ -27,3 +27,22 @@ fn basic_material(color : Int32) -> @core.Material {
   material.color = Some(@m3.Color::from_hex(color))
   material
 }
+
+///|
+pub fn View::present(
+  self : View,
+  game : @sim.Game,
+  queries : @sim.Queries,
+  aim : @sim.Vec3,
+  dt : Double,
+) -> Unit {
+  self.update_player(game, dt)
+  self.update_belts(game, dt)
+  self.update_hives(game, dt)
+  self.update_renewal(game, dt)
+  self.update_enemies(game, dt)
+  self.update_projectiles(game)
+  self.update_feeds(game)
+  self.update_effects(game, aim, queries, dt)
+  self.update_ending(game)
+}

@@ -130,7 +130,7 @@ pub fn Game::fire(
 }
 
 ///|
-pub fn Game::shoot_enemy(
+fn Game::shoot_enemy(
   self : Game,
   queries : Queries,
   index : Int32,
@@ -154,24 +154,12 @@ pub fn Game::shoot_enemy(
     .unwrap_or(
       enemy
       .position()
-      .add({
-        x: 0,
-        y: if enemy.definition.kind == Boss {
-          4
-        } else if enemy.definition.guardian {
-          2.8
-        } else {
-          1.5
-        },
-        z: 0,
-      }),
+      .add({ x: 0, y: enemy.definition.kind.firing_height(), z: 0, }),
     ),
   )
   let aim = target.unwrap_or(enemy.lock)
-  let mortar = lob ||
-    enemy.definition.kind == Artillery ||
-    enemy.definition.kind == Miner
-  let speed = if enemy.definition.id == "keeper" {
+  let mortar = lob || enemy.definition.kind is (Artillery | Siege | Miner)
+  let speed = if enemy.definition.kind == Keeper {
     Double::max(15, origin.distance(aim) / 2.5)
   } else {
     speed.unwrap_or(
@@ -196,18 +184,10 @@ pub fn Game::shoot_enemy(
     } else {
       aim
     },
-    damage: enemy.shot_damage(
-      if lob {
-        Some(Barrage)
-      } else if homing {
-        Some(Seekers)
-      } else {
-        enemy.attack
-      },
-    ),
+    damage: enemy.shot_damage(lob || homing),
     speed,
     range: range.unwrap_or(
-      if enemy.definition.id == "keeper" {
+      if enemy.definition.kind == Keeper {
         94
       } else if enemy.definition.kind == Sniper {
         86
@@ -217,7 +197,7 @@ pub fn Game::shoot_enemy(
     ),
     mortar,
     duration: duration.unwrap_or(spec.lob_duration),
-    arc: if enemy.definition.kind == Boss {
+    arc: if enemy.definition.kind is (Overseer | Sorter | Keeper) {
       10
     } else {
       9

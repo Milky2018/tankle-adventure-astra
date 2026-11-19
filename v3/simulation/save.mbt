@@ -146,7 +146,7 @@ pub fn Game::snapshot(self : Game) -> String {
         x: e.x,
         y: e.y,
         z: e.z,
-        vent: e.phase == Vent,
+        vent: e.phase.is_venting(),
         parts: e.parts.map(fn(part) {
           (part.position.x, part.position.y, part.position.z, part.hp)
         }),

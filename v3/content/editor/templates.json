@@ -122,13 +122,119 @@
     }
   },
   {
-    "id": "enemy-elite",
-    "label": "精英",
+    "id": "enemy-interceptor",
+    "label": "截击车",
+    "collection": "enemies",
+    "source": "hearth-intake-scout-2",
+    "defaults": {
+      "type": "interceptor",
+      "hp": 12,
+      "startup": 0.7
+    }
+  },
+  {
+    "id": "enemy-bastion",
+    "label": "堡垒护卫",
+    "collection": "enemies",
+    "source": "coolant-separator-guard-5",
+    "defaults": {
+      "type": "bastion",
+      "hp": 24,
+      "startup": 0.7,
+      "magneticShield": true
+    }
+  },
+  {
+    "id": "enemy-siege",
+    "label": "攻城载具",
+    "collection": "enemies",
+    "source": "coolant-separator-artillery-1",
+    "defaults": {
+      "type": "siege",
+      "hp": 20,
+      "startup": 0.55
+    }
+  },
+  {
+    "id": "enemy-prism",
+    "label": "棱镜哨兵",
+    "collection": "enemies",
+    "source": "lens-gallery-reflector-3",
+    "defaults": {
+      "type": "prism",
+      "hp": 20,
+      "startup": 0.4
+    }
+  },
+  {
+    "id": "enemy-flanker",
+    "label": "侧袭车",
+    "collection": "enemies",
+    "source": "lens-gallery-skirmisher-2",
+    "defaults": {
+      "type": "flanker",
+      "hp": 15,
+      "startup": 0.7
+    }
+  },
+  {
+    "id": "enemy-prototype",
+    "label": "原型机",
     "collection": "enemies",
     "source": "prototype",
     "defaults": {
-      "type": "elite",
+      "type": "prototype",
       "hp": 9
+    }
+  },
+  {
+    "id": "enemy-sorter",
+    "label": "分拣机",
+    "collection": "enemies",
+    "source": "sorter",
+    "defaults": {
+      "type": "sorter",
+      "hp": 12
+    }
+  },
+  {
+    "id": "enemy-overseer",
+    "label": "铸造督工",
+    "collection": "enemies",
+    "source": "foundry",
+    "defaults": {
+      "hp": 14,
+      "type": "overseer",
+      "parts": [
+        4,
+        4
+      ],
+      "core": 6
+    }
+  },
+  {
+    "id": "enemy-guardian",
+    "label": "光学守卫",
+    "collection": "enemies",
+    "source": "guardian",
+    "defaults": {
+      "hp": 36,
+      "type": "guardian"
+    }
+  },
+  {
+    "id": "enemy-keeper",
+    "label": "最终守护者",
+    "collection": "enemies",
+    "source": "keeper",
+    "defaults": {
+      "hp": 63,
+      "type": "keeper",
+      "parts": [
+        6.75,
+        6.75
+      ],
+      "core": 49.5
     }
   },
   {

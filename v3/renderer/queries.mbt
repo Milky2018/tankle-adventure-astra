@@ -239,7 +239,7 @@ fn GeometryQueries::cast(
     for mirror in self.mirrors {
       mesh_hit(mirror.object, mirror.target, false)
     }
-    for solid in self.world.obstacles {
+    for i, solid in self.world.obstacles {
       if ray.box({ x: solid.rect.x, y: solid.y, z: solid.rect.z, }, {
           x: solid.rect.x + solid.rect.w,
           y: solid.y + solid.h,
@@ -253,8 +253,8 @@ fn GeometryQueries::cast(
           distance,
           normal: Some(normal),
           point: ray.point(distance),
-          target: if solid.id == "sorter-cover" {
-            @sim.CoverTarget
+          target: if solid.rail is Some(_) {
+            @sim.CoverTarget(i)
           } else {
             @sim.Terrain
           },

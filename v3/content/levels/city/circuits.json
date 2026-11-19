@@ -462,7 +462,8 @@
         "target": "cargo-battery",
         "duration": 12.466666666666672
       }
-    ]
+    ],
+    "clearedBattle": "cargo-battery"
   },
   {
     "id": "inner-thermal",

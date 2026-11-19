@@ -1,53 +1,62 @@
 ///|
-pub(all) enum Actor {
-  PlayerActor(Player)
-  EnemyActor(Enemy)
+priv trait MachineryBody {
+  fn position(Self) -> Vec3
+  fn set_y(Self, Double) -> Unit
 }
 
 ///|
-pub fn Actor::position(self : Actor) -> Vec3 {
-  match self {
-    PlayerActor(p) => p.position()
-    EnemyActor(e) => e.position()
-  }
+impl MachineryBody for Player with fn position(self) {
+  self.position()
 }
 
 ///|
-pub fn Actor::set_y(self : Actor, y : Double) -> Unit {
-  match self {
-    PlayerActor(p) => p.y = y
-    EnemyActor(e) => e.y = y
-  }
+impl MachineryBody for Enemy with fn position(self) {
+  self.position()
 }
 
 ///|
-pub fn Actor::alive(self : Actor) -> Bool {
-  match self {
-    PlayerActor(p) => p.hp != 0
-    EnemyActor(e) => e.hp != 0
-  }
+impl MachineryBody for Player with fn set_y(self, y) {
+  self.y = y
 }
 
 ///|
-pub fn World::step_lifts(
+impl MachineryBody for Enemy with fn set_y(self, y) {
+  self.y = y
+}
+
+///|
+pub fn World::step_machinery(
   self : World,
   state : Progress,
   player : Player,
   dt : Double,
   enemies : Array[Enemy],
 ) -> Unit {
-  let bodies : Array[Actor] = [PlayerActor(player)]
+  let bodies : Array[&MachineryBody] = []
+  if player.hp > 0 {
+    bodies.push(player)
+  }
   for enemy in enemies {
     if enemy.hp > 0 {
-      bodies.push(EnemyActor(enemy))
+      bodies.push(enemy)
     }
   }
+  step_transport(self.solids, dt, bodies)
+  self.step_lifts(state, dt, bodies)
+}
+
+///|
+fn World::step_lifts(
+  self : World,
+  state : Progress,
+  dt : Double,
+  bodies : Array[&MachineryBody],
+) -> Unit {
   for lift in self.lifts {
-    fn aboard(body : Actor) -> Bool {
+    fn aboard(body : &MachineryBody) -> Bool {
       let p = body.position()
       (p.y - lift.y).abs() < 0.2 && lift.rect.contains(p.x, p.z, margin=-0.85)
     }
-    let riders = bodies.filter(aboard)
     if !state.circuit_ready(lift.lock, lift.circuit_key, lift.id) ||
       !lift.locks.all(fn(id) {
         state.circuit_ready(id, lift.circuit_key, lift.id)
@@ -65,7 +74,10 @@ pub fn World::step_lifts(
         }) {
         continue
       }
-      for body in riders {
+      for body in bodies {
+        if !aboard(body) {
+          continue
+        }
         body.set_y(body.position().y + next - lift.y)
       }
       lift.y = next
@@ -97,7 +109,10 @@ pub fn World::step_lifts(
       }) {
       continue
     }
-    for body in riders {
+    for body in bodies {
+      if !aboard(body) {
+        continue
+      }
       body.set_y(body.position().y + next - lift.y)
     }
     let elapsed = (next - lift.y).abs() / 5
@@ -140,10 +155,10 @@ pub fn Solid::set_coordinate(self : Solid, axis : Axis, value : Double) -> Unit 
 }
 
 ///|
-pub fn step_transport(
+fn step_transport(
   solids : Array[Solid],
   dt : Double,
-  bodies : Array[Actor],
+  bodies : Array[&MachineryBody],
 ) -> Unit {
   for solid in solids {
     guard solid.motion is Some(motion) else { continue }
@@ -164,7 +179,6 @@ pub fn step_transport(
           let p = body.position()
           let along = if motion.axis == X { p.x } else { p.z }
           let across = if other == X { p.x } else { p.z }
-          body.alive() &&
           (p.y - solid.y).abs() < 3 &&
           along + 0.9 > Double::min(next, current) &&
           along - 0.9 < Double::max(next, current) + size &&
@@ -182,14 +196,19 @@ pub fn step_transport(
 }
 
 ///|
+pub(all) struct BeltDrive {
+  enemy : String
+  part : Int32
+}
+
+///|
 pub(all) struct Belt {
   deck : Deck
   velocity : Vec2
   heat : Double
   release : String?
   stop : String?
-  owner : String?
-  part : Int32?
+  drive : BeltDrive?
 }
 
 ///|
@@ -199,6 +218,47 @@ pub(all) struct Current {
   velocity : Vec2
   sluice : String?
   diverted : Vec2
+}
+
+///|
+pub(all) enum BeltMotion {
+  Powered(Vec2)
+  Reversed
+  Stopped
+}
+
+///|
+pub fn BeltMotion::velocity(self : BeltMotion) -> Vec2 {
+  match self {
+    Powered(v) => v
+    Reversed => { x: 0, z: -4, }
+    Stopped => { x: 0, z: 0, }
+  }
+}
+
+///|
+pub fn Belt::motion(
+  self : Belt,
+  enemies : Array[Enemy],
+  state : Progress,
+) -> BeltMotion {
+  if self.stop is Some(id) && state.has(id) {
+    return Stopped
+  }
+  if self.drive is Some(drive) &&
+    enemies.iter().find_first(fn(e) { e.definition.id == drive.enemy })
+    is Some(owner) &&
+    (
+      owner.hp <= 0 ||
+      (owner.parts.get(drive.part) is Some(part) && part.hp <= 0)
+    ) {
+    return Stopped
+  }
+  if self.release is Some(id) && state.has(id) {
+    Reversed
+  } else {
+    Powered(self.velocity)
+  }
 }
 
 ///|
@@ -213,29 +273,7 @@ pub fn conveyor_velocity(
       (belt.deck.height(position.z) - position.y).abs() >= 0.5 {
       continue
     }
-    if belt.stop is Some(id) && state.has(id) {
-      return { x: 0, z: 0, }
-    }
-    if belt.owner is Some(owner_id) {
-      for enemy in enemies {
-        if enemy.definition.id != owner_id {
-          continue
-        }
-        if enemy.hp == 0 ||
-          (
-            belt.part is Some(index) &&
-            enemy.parts.get(index) is Some(part) &&
-            part.hp == 0
-          ) {
-          return { x: 0, z: 0, }
-        }
-        break
-      }
-    }
-    if belt.release is Some(id) && state.has(id) {
-      return { x: 0, z: -4, }
-    }
-    return belt.velocity
+    return belt.motion(enemies, state).velocity()
   }
   { x: 0, z: 0, }
 }

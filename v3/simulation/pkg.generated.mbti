@@ -17,6 +17,8 @@ pub fn architecture_grid(Array[Solid]) -> Map[(Int32, Int32), Array[Solid]]
 
 pub fn authored_architecture() -> Array[Solid]
 
+pub fn authored_arenas() -> Array[Arena]
+
 pub fn authored_belts() -> Array[Belt]
 
 pub fn authored_circuits() -> Array[Circuit]
@@ -65,11 +67,7 @@ pub fn screen_movement(Double, Double) -> Vec2
 
 pub fn segment_circle(Vec2, Vec2, Vec2, Double) -> Bool
 
-pub fn step_transport(Array[Solid], Double, Array[Actor]) -> Unit
-
 pub fn supported_hull((Double, Double) -> Bool, Double, Double, radius? : Double) -> Bool
-
-pub fn wake_squad(Enemy, Array[Enemy]) -> Unit
 
 pub fn wounded_ally(Int32, Array[Enemy]) -> Int32?
 
@@ -122,16 +120,12 @@ pub(all) struct Activation {
   radius : Double
 }
 
-pub(all) enum Actor {
-  PlayerActor(Player)
-  EnemyActor(Enemy)
-}
-pub fn Actor::alive(Self) -> Bool
-pub fn Actor::position(Self) -> Vec3
-pub fn Actor::set_y(Self, Double) -> Unit
-
 pub(all) struct Arena {
   id : String
+  boss : String
+  cover : String?
+  music : String
+  victory_effects : Array[String]
   rect : Rect
   y : Double
 }
@@ -139,7 +133,7 @@ pub fn Arena::contains(Self, Vec3, margin? : Double) -> Bool
 
 pub(all) enum ArenaEvent {
   Sealed(String)
-  Released(String)
+  Released(String, String)
   Reserve(String)
 }
 
@@ -155,13 +149,8 @@ pub(all) enum Attack {
   Lob
   Mine
   SweepAttack
-  RepairAttack
   Reflect
   CannonAttack
-  Barrage
-  Batteries
-  Seekers
-  Fan
 }
 #deprecated
 pub fn Attack::equal(Self, Self) -> Bool
@@ -197,12 +186,34 @@ pub(all) struct Belt {
   heat : Double
   release : String?
   stop : String?
-  owner : String?
-  part : Int32?
+  drive : BeltDrive?
+}
+pub fn Belt::motion(Self, Array[Enemy], Progress) -> BeltMotion
+
+pub(all) struct BeltDrive {
+  enemy : String
+  part : Int32
 }
 
+pub(all) enum BeltMotion {
+  Powered(Vec2)
+  Reversed
+  Stopped
+}
+pub fn BeltMotion::velocity(Self) -> Vec2
+
+#derive(Eq)
+pub(all) enum BossAttack {
+  Barrage
+  Batteries
+  Seekers
+  Fan
+  ArmSweep
+}
+
+#derive(Eq)
 pub(all) struct BossPattern {
-  kind : Attack
+  kind : BossAttack
   warn : Double
   recovery : Double
   speed : Double
@@ -221,6 +232,12 @@ pub(all) struct Circuit {
 pub(all) enum Collision {
   Barrier(Solid)
   Ceiling
+}
+
+pub(all) enum CombatStyle {
+  Weapon(Attack)
+  RepairAllies
+  BossCycle
 }
 
 pub(all) struct Commands {
@@ -310,11 +327,11 @@ pub(all) struct Encounters {
   wave_timers : Map[String, Double]
   used_reserves : @set.Set[String]
   arenas : Array[Arena]
+  // private fields
 }
 pub fn Encounters::new() -> Self
 pub fn Encounters::reset(Self, Array[Enemy], Progress) -> Unit
 pub fn Encounters::update_arenas(Self, Array[Enemy], Progress, Player, Double) -> Array[ArenaEvent]
-pub fn Encounters::update_waves(Self, Array[Enemy], Player, Bool, Double, Double) -> Unit
 
 pub(all) struct Enemy {
   definition : EnemyDef
@@ -337,10 +354,6 @@ pub(all) struct Enemy {
   mut deploy : Double
   mut deploy_until : Double
   mut attack_cycle : Int32
-  mut attack : Attack?
-  mut pattern : BossPattern?
-  mut source : Int32?
-  mut volley_sources : Array[Int32?]
   mut chain : Bool
   mut warning_age : Double
   mut volley_cycle : Int32
@@ -352,8 +365,6 @@ pub(all) struct Enemy {
   mut last_seen : Vec3?
   mut dead_at : Double?
   mut stunned_until : Double
-  mut resume_phase : Phase?
-  mut resume_timer : Double
   mut crossing_left : Double
   mut swim_waypoint : Int32
   mut bite_at : Double
@@ -361,31 +372,26 @@ pub(all) struct Enemy {
   mut deployed : Bool
   mut afloat : Bool
   mut readable : Bool
-  mut patient : Int32?
-  mut burst_left : Int32
-  mut rail_end : Vec3
   mut flame_at : Double
   mut pump_sound_at : Double
+  // private fields
 }
 pub fn Enemy::armor_absorbs(Self, Double, Vec3, DamageKind, part_index? : Int32) -> Bool
-pub fn Enemy::boss_pattern(Self, Bool) -> BossPattern
+pub fn Enemy::boss_pattern(Self, Bool) -> BossPattern?
 pub fn Enemy::contact_damage(Self) -> Double
 pub fn Enemy::damage_amount(Self, Double, Vec3, DamageKind, part_index? : Int32) -> Double
 pub fn Enemy::in_suction(Self, Vec3, reach? : Double) -> Bool
 pub fn Enemy::magnet_pullable(Self) -> Bool
 pub fn Enemy::new(EnemyDef, Progress) -> Self
 pub fn Enemy::position(Self) -> Vec3
-pub fn Enemy::shot_damage(Self, Attack?) -> Double
 pub fn Enemy::spec(Self) -> EnemySpec
 pub fn Enemy::swims(Self) -> Bool
 
 pub(all) struct EnemyDef {
   id : String
   kind : EnemyKind
-  variant : Variant
   spawn : Vec3
   hp : Double
-  guardian : Bool
   persistent : Bool
   emplacement : Bool
   magnetic_shield : Bool
@@ -393,6 +399,7 @@ pub(all) struct EnemyDef {
   encounter : String?
   battle : String?
   wave : Int32
+  opening_crossing : Double
   startup : Double?
   spotter_height : Double?
   detection_range : Double?
@@ -420,11 +427,20 @@ pub(all) enum EnemyKind {
   Welder
   Repairer
   Reflector
-  Elite
-  Boss
+  Interceptor
+  Bastion
+  Siege
+  Prism
+  Flanker
+  Prototype
+  Sorter
+  Overseer
+  Guardian
+  Keeper
 }
 #deprecated
 pub fn EnemyKind::equal(Self, Self) -> Bool
+pub fn EnemyKind::is_boss(Self) -> Bool
 #deprecated
 pub fn EnemyKind::not_equal(Self, Self) -> Bool
 
@@ -440,7 +456,7 @@ pub(all) struct EnemySpec {
   reach : Double
   warn : Double
   recovery : Double
-  attack : Attack
+  style : CombatStyle
   charge_speed : Double?
   projectile_speed : Double?
   lob_duration : Double
@@ -464,7 +480,7 @@ pub(all) struct Game {
   currents : Array[Current]
   mut velocity : Vec2
   mut previous_player : Vec3
-  mut cover_held_until : Double
+  mut held_cover : (Int32, Double)?
   beams : Array[Beam]
   shots : Array[Shot]
   mines : Array[Mine]
@@ -478,6 +494,9 @@ pub(all) struct Game {
   mut time : Double
   // private fields
 }
+pub fn Game::active_arena(Self) -> Arena?
+pub fn Game::active_boss(Self) -> Enemy?
+pub fn Game::advance_combat(Self, Queries, Vec3, Vec3, firing~ : Bool, magnet~ : Bool, dt~ : Double) -> Unit
 pub fn Game::advance_world(Self, Double) -> Unit
 pub fn Game::cast(Self, Queries, Ray, Double, targets? : Bool, refuge? : Bool, ground? : Bool, visible? : (Vec3) -> Bool) -> Hit?
 pub fn Game::detonate_mine(Self, Int32) -> Unit
@@ -504,7 +523,6 @@ pub fn Game::reset_enemies(Self) -> Unit
 pub fn Game::respawn(Self) -> Unit
 pub fn Game::restore(Self, String) -> Bool
 pub fn Game::save(Self) -> String
-pub fn Game::shoot_enemy(Self, Queries, Int32, offset? : Double, source? : Int32, target? : Vec3, delay? : Double, lob? : Bool, speed? : Double, torpedo? : Bool, homing? : Bool, origin? : Vec3, duration? : Double, range? : Double) -> Unit
 pub fn Game::snapshot(Self) -> String
 pub fn Game::update_enemies(Self, Queries, Double) -> Unit
 pub fn Game::update_mines(Self, Double) -> Unit
@@ -536,7 +554,7 @@ pub(all) enum HitTarget {
   Terrain
   SlideTarget(Int32)
   PuzzleTarget(String)
-  CoverTarget
+  CoverTarget(Int32)
   EnemyTarget(Int32, Int32?)
   ControlTarget(Int32)
   BlockedControl(Int32)
@@ -613,20 +631,22 @@ pub fn Mirror::normal(Self) -> Vec3
 #derive(Eq)
 pub(all) enum Phase {
   Idle
-  Warn
+  Warn(WarningPlan)
   Charge
-  Burst
-  RailShot
+  Burst(Int32)
+  RailShot(Vec3)
   Flame
-  Sweep
-  Repair
+  Sweep(Double)
+  Repair(Int32)
   Suction
   Bite
-  Vent
-  Stunned
+  Vent(Double)
+  Stunned((Phase, Double)?)
 }
 #deprecated
 pub fn Phase::equal(Self, Self) -> Bool
+pub fn Phase::is_venting(Self) -> Bool
+pub fn Phase::is_warning(Self) -> Bool
 #deprecated
 pub fn Phase::not_equal(Self, Self) -> Bool
 
@@ -854,20 +874,6 @@ pub(all) struct Upgrades {
 }
 pub fn Upgrades::new() -> Self
 
-#derive(Eq)
-pub(all) enum Variant {
-  Ordinary
-  Interceptor
-  Bastion
-  Siege
-  Prism
-  Flanker
-}
-#deprecated
-pub fn Variant::equal(Self, Self) -> Bool
-#deprecated
-pub fn Variant::not_equal(Self, Self) -> Bool
-
 #derive(Eq, @json.FromJson, @json.ToJson)
 pub(all) struct Vec2 {
   x : Double
@@ -909,6 +915,13 @@ pub fn Vec3::sub(Self, Self) -> Self
 pub fn Vec3::to_json(Self) -> @json.Json
 
 #derive(Eq)
+pub(all) enum WarningPlan {
+  Fire(Attack)
+  Aid(Int32)
+  Volley(BossPattern, Array[Int32?])
+}
+
+#derive(Eq)
 pub(all) enum Weapon {
   Cannon
   Mortar
@@ -931,7 +944,7 @@ pub fn World::blocked(Self, Double, Double, Double, Progress, radius? : Double) 
 pub fn World::ground_patches(Self, Player) -> Array[Deck]
 pub fn World::move_hull(Self, Hull, Double, Double, Progress) -> Unit
 pub fn World::move_player(Self, Player, Double, Double, Progress) -> Unit
-pub fn World::step_lifts(Self, Progress, Player, Double, Array[Enemy]) -> Unit
+pub fn World::step_machinery(Self, Progress, Player, Double, Array[Enemy]) -> Unit
 pub fn World::support(Self, Double, Double, Double, Bool) -> Support?
 
 // Type aliases

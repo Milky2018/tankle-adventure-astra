@@ -352,6 +352,11 @@ test("standalone templates support additions after their city source was removed
   const definitions = JSON.parse(
     readFileSync(join(workspace, "content/editor/templates.json")),
   );
+  const machineTypes = definitions
+    .filter((d) => d.collection === "enemies")
+    .map((d) => d.defaults.type);
+  assert.equal(machineTypes.length, 22);
+  assert.deepEqual(new Set(machineTypes), new Set(records("enemies").map((e) => e.type)));
   const palette = new ObjectLoader().parse(
     JSON.parse(
       gunzipSync(
@@ -368,6 +373,8 @@ test("standalone templates support additions after their city source was removed
         o.userData.entity?.collection === collection &&
         o.userData.entity.id === definition.source,
     );
+    if (collection === "enemies")
+      assert.equal(source.userData.game.type, definition.defaults.type);
     const id = `new-${definition.id}`;
     const bundle = cloneEntity(
       palette,

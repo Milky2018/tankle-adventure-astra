@@ -32,7 +32,7 @@ fn Renewal::new(nodes : Map[String, @core.Object3D]) -> Renewal {
 }
 
 ///|
-pub fn View::update_renewal(self : View, game : @sim.Game, dt : Double) -> Unit {
+fn View::update_renewal(self : View, game : @sim.Game, dt : Double) -> Unit {
   let v = self.renewal
   let seconds = if game.player.ending_time > 0 {
     game.player.ending_time

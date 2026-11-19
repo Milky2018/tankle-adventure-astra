@@ -154,6 +154,6 @@ pub fn View::aim(
 }
 
 ///|
-pub fn View::update_projectiles(self : View, game : @sim.Game) -> Unit {
+fn View::update_projectiles(self : View, game : @sim.Game) -> Unit {
   self.projectiles.update(self.scene, game.shots)
 }

@@ -111,54 +111,99 @@ fn Game::approach_enemy(
 }
 
 ///|
-fn Game::predict(self : Game, seconds : Double, limit~ : Double = 24) -> Vec3 {
-  let x = self.velocity.x * seconds
-  let z = self.velocity.z * seconds
-  let factor = Double::min(
-    1,
-    limit / Double::max(0.001, Vec2::{ x, z, }.length()),
-  )
-  {
-    x: self.player.x + x * factor,
-    y: self.player.y,
-    z: self.player.z + z * factor,
+fn Game::drift_enemy(self : Game, e : Enemy, dt : Double) -> Unit {
+  let kind = e.definition.kind
+  e.deployed = e.swims()
+  if !e.definition.emplacement {
+    let drift = self.drift(e.position(), e.deployed)
+    let body = enemy_hull(e, e.deployed)
+    self.world.move_hull(body, drift.x * dt, drift.z * dt, self.progress)
+    |> ignore
+    let next = Vec3::{ x: body.x, y: body.y, z: body.z, }
+    if refuge_at(next, self.hives, self.progress, radius=18 + e.radius) is None &&
+      (kind != Dredger || body.afloat) {
+      e.x = body.x
+      e.y = body.y
+      e.z = body.z
+      e.afloat = body.afloat
+    }
   }
 }
 
 ///|
-fn Game::clear_sight(
+fn Game::reposition_enemy(
   self : Game,
   queries : Queries,
-  origin : Vec3,
-  target : Vec3,
-  clearance~ : Double = 1,
-) -> Bool {
-  let direction = target.sub(origin)
-  self.cast(
-    queries,
-    { origin, direction: direction.normalized(), },
-    Double::max(0, direction.length() - clearance),
-    targets=false,
-    refuge=false,
-  )
-  is None
-}
-
-///|
-fn Game::alert_squad(self : Game, index : Int32) -> Unit {
-  let enemy = self.enemies[index]
-  wake_squad(enemy, self.enemies)
-  for i, other in self.enemies {
-    if other.hp > 0 &&
-      (
-        i == index ||
-        (
-          enemy.definition.encounter is Some(id) &&
-          other.definition.encounter == Some(id)
-        )
-      ) {
-      other.alert_until = self.time + 8
-      other.last_seen = Some(self.player.position())
+  index : Int32,
+  distance : Double,
+  observation : Observation,
+  dt : Double,
+) -> Unit {
+  let e = self.enemies[index]
+  let kind = e.definition.kind
+  let spec = e.spec()
+  if spec.style is RepairAllies {
+    if e.phase.is_venting() && wounded_ally(index, self.enemies) is Some(i) {
+      self.approach_enemy(index, self.enemies[i].position(), dt)
     }
+    return
+  }
+  guard observation.position() is Some(target) else { return }
+  let parity = if e.definition.id.length() % 2 == 1 { 1.0 } else { -1.0 }
+  if kind is (Skirmisher | Flanker) &&
+    !(e.phase is Stunned(_)) &&
+    horizontal_distance(e.position(), e.definition.spawn) < 28 {
+    let origin = e.position().add({ x: 0, y: 1.5, z: 0, })
+    let incoming = self.shots
+      .iter()
+      .find_first(fn(s) {
+        s.mortar &&
+        s.owner is None &&
+        s.age > 0.2 &&
+        (s.target.y - e.y).abs() < 4 &&
+        horizontal_distance(s.target, e.position()) < 5 &&
+        self.clear_sight(queries, origin, s.position, clearance=0.3)
+      })
+    if incoming is Some(shot) {
+      self.move_enemy(
+        index,
+        @math.atan2(e.x - shot.target.x, e.z - shot.target.z),
+        spec.speed,
+        dt,
+      )
+    } else if (
+        e.phase == Idle ||
+        e.phase.is_warning() ||
+        e.phase is Burst(_) ||
+        e.phase.is_venting()
+      ) &&
+      (e.phase != Idle || distance < 20) {
+      self.move_enemy(
+        index,
+        @math.atan2(target.x - e.x, target.z - e.z) + parity * @math.PI / 2,
+        spec.speed,
+        dt,
+      )
+    }
+  }
+  if !e.phase.is_venting() || spec.speed <= 0 || kind == Guardian {
+    return
+  }
+  match spec.style {
+    Weapon(ChargeAttack | BurstAttack | Torpedoes | SuctionAttack)
+    | BossCycle
+    | RepairAllies => ()
+    Weapon(ShieldShot | SweepAttack) if distance > 5 =>
+      self.approach_enemy(index, target, dt)
+    _ =>
+      if horizontal_distance(e.position(), e.definition.spawn) < 28 {
+        self.move_enemy(
+          index,
+          @math.atan2(target.x - e.x, target.z - e.z) +
+          (if distance < 10 { @math.PI } else { parity * @math.PI / 2 }),
+          spec.speed,
+          dt,
+        )
+      }
   }
 }

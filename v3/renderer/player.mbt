@@ -68,7 +68,7 @@ fn PlayerVisual::new(nodes : Map[String, @core.Object3D]) -> PlayerVisual {
 }
 
 ///|
-pub fn View::update_player(self : View, game : @sim.Game, dt : Double) -> Unit {
+fn View::update_player(self : View, game : @sim.Game, dt : Double) -> Unit {
   let v = self.player_visual
   let p = game.player
   let travel = @sim.Vec2::{ x: p.x - v.position.x, z: p.z - v.position.z, }.length()

@@ -1,4 +1,6 @@
+const bossTypes = new Set(["prototype", "overseer", "sorter", "guardian", "keeper"]);
 const enemyKinds = new Set([
+  ...bossTypes,
   "hunter",
   "dredger",
   "scout",
@@ -11,10 +13,6 @@ const enemyKinds = new Set([
   "welder",
   "repairer",
   "reflector",
-  "elite",
-  "boss",
-]);
-const variants = new Set([
   "interceptor",
   "bastion",
   "siege",
@@ -54,6 +52,7 @@ export function validateCatalog(catalog) {
     "architecture",
     "lifts",
     "enemies",
+    "arenas",
     "controls",
     "hives",
     "pickups",
@@ -98,8 +97,12 @@ export function validateCatalog(catalog) {
         require(enemyKinds.has(
           record.type,
         ), `${path}.type is unknown: ${record.type}`);
-        require(record.variant == null ||
-          variants.has(record.variant), `${path}.variant is unknown`);
+        require(!("variant" in record || "guardian" in record),
+          `${path} must identify its machine with type alone`);
+        if (record.openingCrossing != null) {
+          finite(record.openingCrossing, `${path}.openingCrossing`);
+          require(record.openingCrossing >= 0, `${path}.openingCrossing cannot be negative`);
+        }
         finite(record.hp, `${path}.hp`);
         require(record.hp > 0, `${path}.hp must be positive`);
       }
@@ -134,6 +137,37 @@ export function validateCatalog(catalog) {
         require(record.duration >= 0, `${path}.duration cannot be negative`);
       }
     }
+  }
+  const clearSignals = new Set();
+  for (const circuit of catalog.circuits) {
+    if (circuit.clearedBattle == null) continue;
+    require(catalog.enemies.some((e) => e.battle === circuit.clearedBattle),
+      `Circuit ${circuit.id} refers to unknown battle ${circuit.clearedBattle}`);
+    require(!clearSignals.has(circuit.clearedBattle),
+      `Battle ${circuit.clearedBattle} has multiple clear signals`);
+    clearSignals.add(circuit.clearedBattle);
+  }
+  const assignedBosses = new Set();
+  for (const arena of catalog.arenas) {
+    require(typeof arena.id === "string" && arena.id.length > 0, "Arena needs an id");
+    const boss = catalog.enemies.find((e) => e.id === arena.boss);
+    require(bossTypes.has(boss?.type), `Arena ${arena.id} needs a placed boss: ${arena.boss}`);
+    require(!assignedBosses.has(arena.boss), `Boss ${arena.boss} has multiple arenas`);
+    assignedBosses.add(arena.boss);
+    require(typeof arena.music === "string" && arena.music.length > 0, `Arena ${arena.id} needs music`);
+    require(arena.w > 0 && arena.d > 0, `Arena ${arena.id} needs a footprint`);
+    if (arena.victoryEffects != null)
+      require(Array.isArray(arena.victoryEffects) && arena.victoryEffects.every((id) => typeof id === "string" && id.length > 0),
+        `Arena ${arena.id} needs valid victory signals`);
+    if (arena.cover != null)
+      require(catalog.obstacles.some((o) => o.id === arena.cover && o.rail),
+        `Arena ${arena.id} needs a rail-mounted cover: ${arena.cover}`);
+  }
+  for (const belt of catalog.belts) {
+    if (belt.drive == null) continue;
+    const owner = catalog.enemies.find((e) => e.id === belt.drive.enemy);
+    require(Number.isInteger(belt.drive.part) && belt.drive.part >= 0 &&
+      belt.drive.part < (owner?.parts?.length ?? 0), `Belt ${belt.id} needs an existing drive part`);
   }
   const lifts = new Set(catalog.lifts.map((record) => record.id));
   for (const pickup of catalog.pickups)

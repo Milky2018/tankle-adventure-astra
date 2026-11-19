@@ -1,6 +1,10 @@
 ///|
 pub(all) struct Arena {
   id : String
+  boss : String
+  cover : String?
+  music : String
+  victory_effects : Array[String]
   rect : Rect
   y : Double
 }
@@ -21,12 +25,16 @@ pub fn Arena::contains(
 ///|
 pub(all) enum ArenaEvent {
   Sealed(String)
-  Released(String)
+  Released(String, String)
   Reserve(String)
 }
 
 ///|
 pub(all) struct Encounters {
+  priv roster : Array[Enemy]
+  priv battles : Map[String, Array[Enemy]]
+  priv squads : Map[String, Array[Enemy]]
+  priv battle_signals : Map[String, String]
   wave_timers : Map[String, Double]
   used_reserves : Set[String]
   arenas : Array[Arena]
@@ -35,16 +43,43 @@ pub(all) struct Encounters {
 ///|
 pub fn Encounters::new() -> Encounters {
   {
+    roster: [],
+    battles: {},
+    squads: {},
+    battle_signals: authored_battle_signals(),
     wave_timers: {},
     used_reserves: Set([]),
-    arenas: [
-      { id: "prototype", rect: { x: -50, z: 116, w: 36, d: 24, }, y: -16, },
-      { id: "foundry", rect: { x: 202, z: -164, w: 42, d: 40, }, y: 16, },
-      { id: "guardian", rect: { x: 180, z: 44, w: 48, d: 46, }, y: 16, },
-      { id: "sorter", rect: { x: 24, z: -164, w: 40, d: 36, }, y: -8, },
-      { id: "keeper", rect: { x: -28, z: 12, w: 56, d: 48, }, y: -56, },
-    ],
+    arenas: authored_arenas(),
   }
+}
+
+///|
+fn Encounters::for_boss(self : Encounters, enemy : Enemy) -> Arena? {
+  if !enemy.definition.kind.is_boss() {
+    return None
+  }
+  self.arenas.iter().find_first(fn(a) { a.boss == enemy.definition.id })
+}
+
+///|
+fn Arena::boss_in(self : Arena, enemies : Array[Enemy]) -> Enemy? {
+  enemies
+  .iter()
+  .find_first(fn(e) {
+    e.definition.id == self.boss && e.definition.kind.is_boss()
+  })
+}
+
+///|
+pub fn Game::active_arena(self : Game) -> Arena? {
+  guard self.progress.combat_arena is Some(id) else { return None }
+  self.encounters.arenas.iter().find_first(fn(a) { a.id == id })
+}
+
+///|
+pub fn Game::active_boss(self : Game) -> Enemy? {
+  guard self.active_arena() is Some(arena) else { return None }
+  arena.boss_in(self.enemies)
 }
 
 ///|
@@ -69,11 +104,45 @@ pub fn Encounters::reset(
 }
 
 ///|
-pub fn wake_squad(enemy : Enemy, enemies : Array[Enemy]) -> Unit {
-  if enemy.definition.battle is Some(battle) {
-    for other in enemies {
-      if other.definition.battle == Some(battle) &&
-        other.definition.wave == enemy.definition.wave {
+fn Encounters::index_roster(self : Encounters, enemies : Array[Enemy]) -> Unit {
+  // Respawn replaces enemy objects, even when all placement IDs and counts match.
+  if self.roster.length() == enemies.length() {
+    let unchanged = for i, enemy in enemies {
+      if !physical_equal(self.roster[i], enemy) {
+        break false
+      }
+    } nobreak {
+      true
+    }
+    if unchanged {
+      return
+    }
+  }
+  self.roster.clear()
+  self.battles.clear()
+  self.squads.clear()
+  fn add(groups : Map[String, Array[Enemy]], id : String?, e : Enemy) {
+    if id is Some(id) {
+      match groups.get(id) {
+        Some(group) => group.push(e)
+        None => groups[id] = [e]
+      }
+    }
+  }
+  for e in enemies {
+    self.roster.push(e)
+    add(self.battles, e.definition.battle, e)
+    add(self.squads, e.definition.encounter, e)
+  }
+}
+
+///|
+fn Encounters::wake_squad(self : Encounters, enemy : Enemy) -> Unit {
+  enemy.awake = true
+  if enemy.definition.battle is Some(battle) &&
+    self.battles.get(battle) is Some(group) {
+    for other in group {
+      if other.definition.wave == enemy.definition.wave {
         other.awake = true
       }
     }
@@ -81,25 +150,18 @@ pub fn wake_squad(enemy : Enemy, enemies : Array[Enemy]) -> Unit {
 }
 
 ///|
-pub fn Encounters::update_waves(
+fn Encounters::update_waves(
   self : Encounters,
-  enemies : Array[Enemy],
   player : Player,
   resting : Bool,
   dt : Double,
-  time : Double,
 ) -> Unit {
-  let battles : Map[String, Array[Enemy]] = Map([])
-  for enemy in enemies {
-    if enemy.definition.battle is Some(id) {
-      match battles.get(id) {
-        Some(group) => group.push(enemy)
-        None => battles[id] = [enemy]
-      }
+  for id, group in self.battles {
+    guard group.iter().find_first(fn(enemy) { enemy.definition.wave == 0 })
+      is Some(first) else {
+      continue
     }
-  }
-  for id, group in battles {
-    if group[0].definition.activation is Some(activation) &&
+    if first.definition.activation is Some(activation) &&
       (player.y - activation.position.y).abs() < 2 &&
       Vec2::{
         x: player.x - activation.position.x,
@@ -112,14 +174,10 @@ pub fn Encounters::update_waves(
         }
       }
     }
-    let reserves = group.filter(fn(enemy) {
+    fn pending(enemy : Enemy) -> Bool {
       enemy.definition.wave != 0 && enemy.hp > 0 && !enemy.awake
-    })
-    if reserves.is_empty() {
-      continue
     }
-    guard group.iter().find_first(fn(enemy) { enemy.definition.wave == 0 })
-      is Some(first) else {
+    if !group.any(pending) {
       continue
     }
     let near = (player.y - first.y).abs() < 3 &&
@@ -130,7 +188,10 @@ pub fn Encounters::update_waves(
       55
     if resting || !near {
       self.wave_timers.remove(id)
-      for enemy in reserves {
+      for enemy in group {
+        if !pending(enemy) {
+          continue
+        }
         enemy.deploy = 0
       }
       continue
@@ -140,13 +201,14 @@ pub fn Encounters::update_waves(
     }
     let elapsed = self.wave_timers.get(id).unwrap_or(0) + dt
     self.wave_timers[id] = elapsed
-    for enemy in reserves {
+    for enemy in group {
+      if !pending(enemy) {
+        continue
+      }
       enemy.deploy = Double::min(1, elapsed / 4)
       if elapsed >= 4 {
         enemy.awake = true
         enemy.timer = 0.8
-        enemy.last_seen = Some(player.position())
-        enemy.alert_until = time + 12
       }
     }
   }
@@ -166,11 +228,10 @@ pub fn Encounters::update_arenas(
     return events
   }
   if state.combat_arena is Some(id) {
-    let boss = enemies
-      .iter()
-      .find_first(fn(enemy) { enemy.definition.id == id })
+    let arena = self.arenas.iter().find_first(fn(a) { a.id == id })
+    let boss = arena.bind(fn(a) { a.boss_in(enemies) })
     if boss is None || (boss is Some(enemy) && (enemy.hp <= 0 || state.has(id))) {
-      events.push(Released(id))
+      events.push(Released(id, arena.map(fn(a) { a.boss }).unwrap_or(id)))
       for enemy in enemies {
         if enemy.definition.reserve_for == Some(id) {
           enemy.hp = 0
@@ -187,12 +248,7 @@ pub fn Encounters::update_arenas(
       if state.has(arena.id) || !arena.contains(player.position(), margin=2.3) {
         continue
       }
-      if enemies
-        .iter()
-        .find_first(fn(enemy) {
-          enemy.definition.id == arena.id && enemy.hp > 0
-        })
-        is Some(boss) {
+      if arena.boss_in(enemies) is Some(boss) && boss.hp > 0 {
         state.combat_arena = Some(arena.id)
         boss.timer = Double::max(boss.timer, 1.2)
         events.push(Sealed(arena.id))
@@ -201,8 +257,8 @@ pub fn Encounters::update_arenas(
     }
   }
   if state.combat_arena is Some(id) &&
-    enemies.iter().find_first(fn(enemy) { enemy.definition.id == id })
-    is Some(boss) {
+    self.arenas.iter().find_first(fn(a) { a.id == id }) is Some(arena) &&
+    arena.boss_in(enemies) is Some(boss) {
     let mut active = enemies
       .filter(fn(enemy) {
         enemy.definition.reserve_for == Some(id) && enemy.hp > 0
@@ -224,18 +280,54 @@ pub fn Encounters::update_arenas(
         enemy.awake = false
         enemy.deploy_until = time + 2
         enemy.deploy = 0.001
-        enemy.phase = Idle
-        enemy.timer = 0.8
+        enemy.enter(Idle, 0.8)
         events.push(Reserve(enemy.definition.id))
       }
       if enemy.deploy_until != 0 && time >= enemy.deploy_until {
         enemy.awake = true
         enemy.deploy = 0
         enemy.deploy_until = 0
-        enemy.alert_until = time + 12
-        enemy.last_seen = Some(player.position())
       }
     }
   }
   events
+}
+
+///|
+fn Game::advance_encounters(self : Game, resting : Bool, dt : Double) -> Unit {
+  for
+    event in self.encounters.update_arenas(
+      self.enemies,
+      self.progress,
+      self.player,
+      self.time,
+    ) {
+    if event is Released(id, boss) {
+      fn owned(owner : String) -> Bool {
+        owner == boss ||
+        self.enemies.any(fn(e) {
+          e.definition.id == owner && e.definition.reserve_for == Some(id)
+        })
+      }
+      for shot in self.shots {
+        if shot.owner is Some(owner) && owned(owner) {
+          shot.captured = true
+        }
+      }
+      for mine in self.mines {
+        if owned(mine.owner) {
+          mine.disarmed = true
+        }
+      }
+    }
+  }
+  self.encounters.update_waves(self.player, resting, dt)
+  for battle, signal in self.encounters.battle_signals {
+    if !self.commands.active(self.progress, signal) &&
+      self.encounters.battles.get(battle) is Some(group) &&
+      group.all(fn(e) { e.hp <= 0 }) {
+      self.commands.complete(self.progress, signal, self.time, delayed=true)
+      |> ignore
+    }
+  }
 }

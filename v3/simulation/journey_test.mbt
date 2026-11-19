@@ -66,15 +66,20 @@ test "a released lift carries the player after its dwell and blocks before relea
   player.x = lift.rect.x + lift.rect.w / 2
   player.z = lift.rect.z + lift.rect.d / 2
   player.y = lift.y
-  world.step_lifts(state, player, 4, [])
+  let rider = @simulation.Enemy::new(
+    { ..@simulation.authored_enemies()[0], spawn: player.position(), },
+    state,
+  )
+  world.step_machinery(state, player, 4, [rider])
   assert_eq(player.y, lift.stops[0])
   state.complete(lift.lock) |> ignore
   for lock in lift.locks {
     state.complete(lock) |> ignore
   }
-  world.step_lifts(state, player, 3.5, [])
+  world.step_machinery(state, player, 3.5, [rider])
   assert_true(lift.y > lift.stops[0])
   assert_eq(player.y, lift.y)
+  assert_eq(rider.y, lift.y)
 }
 
 ///|

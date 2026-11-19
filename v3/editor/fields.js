@@ -8,7 +8,6 @@ export const labels = {
   heading: "朝向（弧度）",
   encounter: "战斗区域",
   magneticShield: "磁力护盾",
-  variant: "变体",
   ability: "能力",
   upgrade: "升级",
   damage: "伤害",

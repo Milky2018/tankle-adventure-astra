@@ -18,7 +18,7 @@ pub(all) struct Game {
   mut velocity : Vec2
   priv start : Vec3
   mut previous_player : Vec3
-  mut cover_held_until : Double
+  mut held_cover : (Int32, Double)?
   beams : Array[Beam]
   shots : Array[Shot]
   mines : Array[Mine]
@@ -63,7 +63,7 @@ pub fn Game::new(start? : Vec3) -> Game {
     currents: authored_currents(),
     velocity: { x: 0, z: 0, },
     previous_player: player.position(),
-    cover_held_until: 0,
+    held_cover: None,
     beams: [],
     shots: [],
     mines: [],
@@ -213,8 +213,8 @@ pub fn Game::hit_enemy(
     return 0
   }
   let id = enemy.definition.id
-  if self.encounters.arenas.any(fn(a) { a.id == id }) &&
-    self.progress.combat_arena != Some(id) {
+  let arena = self.encounters.for_boss(enemy)
+  if arena is Some(a) && self.progress.combat_arena != Some(a.id) {
     enemy.armor = 0.2
     return 0
   }
@@ -222,38 +222,31 @@ pub fn Game::hit_enemy(
     refuge_at(enemy.position(), self.hives, self.progress) is Some(_) {
     return 0
   }
-  wake_squad(enemy, self.enemies)
-  enemy.awake = true
-  enemy.alert_until = self.time + 8
-  enemy.last_seen = Some(self.player.position())
-  for other in self.enemies {
-    if enemy.definition.encounter is Some(encounter) &&
-      other.definition.encounter == Some(encounter) {
-      other.alert_until = self.time + 8
-      other.last_seen = Some(self.player.position())
-    }
-  }
+  self.encounters.index_roster(self.enemies)
+  self.alert_squad(index, origin)
   if enemy.armor_absorbs(amount, origin, kind, part_index?=part) {
     enemy.armor = 0.2
   }
   let dealt = enemy.damage_amount(amount, origin, kind, part_index?=part)
   enemy.hp = Double::max(0, enemy.hp - dealt)
   enemy.flash = 0.14
-  if dealt > 0 && kind == MortarHit && !enemy.definition.persistent {
-    enemy.stunned_until = self.time +
-      (if enemy.definition.variant == Ordinary { 0.6 } else { 0.2 })
+  if dealt > 0 && kind == MortarHit && !enemy.definition.kind.is_boss() {
+    enemy.stunned_until = self.time + enemy.timing.mortar_flinch
   }
   if enemy.hp == 0 {
     enemy.dead_at = Some(self.time)
     self.effects.push(Killed(index))
-    if enemy.definition.persistent {
+    if enemy.definition.persistent || arena is Some(_) {
       self.commands.complete(
         self.progress,
         id,
         self.time,
-        effects=if id == "prototype" { ["overdrive-return"] } else { [] },
+        effects=arena.map(fn(a) { a.victory_effects }).unwrap_or([]),
       )
       |> ignore
+      if arena is Some(a) && a.id != id {
+        self.progress.complete(a.id) |> ignore
+      }
     }
   }
   dealt

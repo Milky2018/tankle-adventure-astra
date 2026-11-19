@@ -37,7 +37,7 @@ fn hives(
 }
 
 ///|
-pub fn View::update_hives(self : View, game : @sim.Game, dt : Double) -> Unit {
+fn View::update_hives(self : View, game : @sim.Game, dt : Double) -> Unit {
   for v in self.hives {
     v.root.visible = v.body.requires is None ||
       (v.body.requires is Some(id) && game.progress.has(id))

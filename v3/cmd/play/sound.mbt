@@ -82,13 +82,9 @@ fn Sound::update(
   guard self.audio is Some(audio) else { return }
   @host.audio_volume(audio, settings.volume)
   let p = game.player
-  let track = match game.progress.combat_arena {
-    Some("prototype") => "mz-battle1"
-    Some("foundry") => "mz-battle3"
-    Some("sorter") => "mz-battle4"
-    Some("guardian") => "mz-battle6"
-    Some("keeper") => "mz-battle8"
-    _ =>
+  let track = match game.active_arena() {
+    Some(arena) => arena.music
+    None =>
       if p.abilities.circulation {
         "mz-dungeon1"
       } else if p.abilities.phoenix {
@@ -182,7 +178,7 @@ fn Sound::update(
     )
   }
   for e in game.enemies {
-    let warn = e.phase == @sim.Warn
+    let warn = e.phase.is_warning()
     if warn &&
       self.phases.get(e.definition.id) != Some(true) &&
       e.position().distance(p.position()) < 35 {

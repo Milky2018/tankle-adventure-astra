@@ -39,7 +39,7 @@ fn Effects::new() -> Effects {
 }
 
 ///|
-pub fn View::update_effects(
+fn View::update_effects(
   self : View,
   game : @sim.Game,
   aim : @sim.Vec3,

@@ -55,7 +55,7 @@ fn belts(
 }
 
 ///|
-pub fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
+fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
   let matrix = @m3.Matrix4::new()
   let rotation = @m3.Quaternion::new(0, 0, 0, 1)
   let axis = @m3.Vector3::new(0, 1, 0)
@@ -69,27 +69,13 @@ pub fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
       80 + Double::max(d.rect.w, d.rect.d) / 2 {
       continue
     }
-    let stopped = (b.stop is Some(id) && game.progress.has(id)) ||
-      (
-        b.owner is Some(id) &&
-        game.enemies.iter().find_first(fn(e) { e.definition.id == id })
-        is Some(e) &&
-        (e.hp <= 0 || (b.part is Some(i) && e.parts[i].hp <= 0))
-      )
-    let released = b.release is Some(id) && game.progress.has(id)
+    let motion = b.motion(game.enemies, game.progress)
+    let velocity = motion.velocity()
     let horizontal = b.velocity.x != 0
-    if !stopped {
-      let speed = if released {
-        -4.0
-      } else if horizontal {
-        b.velocity.x
-      } else {
-        b.velocity.z
-      }
-      belt.phase += dt *
-        speed *
-        (1.0 + d.rise / d.rect.d * (d.rise / d.rect.d)).sqrt()
-    }
+    let speed = if horizontal { velocity.x } else { velocity.z }
+    belt.phase += dt *
+      speed *
+      (1.0 + d.rise / d.rect.d * (d.rise / d.rect.d)).sqrt()
     for segment in belt.segments {
       guard segment.mesh.kind is Mesh({ count, kind: InstancedMesh(data), .. }) else {
         continue
@@ -134,7 +120,7 @@ pub fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
         }
       }
       for lamp in segment.heaters {
-        color(lamp, if released || stopped { 0x829185 } else { 0xffa05a })
+        color(lamp, if motion is @sim.Powered(_) { 0xffa05a } else { 0x829185 })
       }
     }
   }

@@ -393,7 +393,8 @@
     "y": -16,
     "z": 54,
     "hp": 1,
-    "type": "scout"
+    "type": "scout",
+    "openingCrossing": 2.2
   },
   {
     "id": "press-gunner",
@@ -449,7 +450,7 @@
     "y": -16,
     "z": 126,
     "hp": 9,
-    "type": "elite",
+    "type": "prototype",
     "persistent": true
   },
   {
@@ -458,7 +459,7 @@
     "y": 16,
     "z": -144,
     "hp": 14,
-    "type": "boss",
+    "type": "overseer",
     "parts": [
       4,
       4
@@ -621,8 +622,7 @@
     "y": 16,
     "z": 64,
     "hp": 36,
-    "type": "guard",
-    "guardian": true,
+    "type": "guardian",
     "persistent": true
   },
   {
@@ -732,7 +732,7 @@
     "y": -56,
     "z": 32,
     "hp": 63,
-    "type": "boss",
+    "type": "keeper",
     "parts": [
       6.75,
       6.75
@@ -1016,12 +1016,11 @@
   },
   {
     "id": "lens-gallery-skirmisher-2",
-    "type": "skirmisher",
+    "type": "flanker",
     "hp": 15,
     "x": 284,
     "y": 24,
     "z": -30,
-    "variant": "flanker",
     "battle": "lens-entry",
     "activation": {
       "x": 276,
@@ -1040,12 +1039,11 @@
   },
   {
     "id": "lens-gallery-reflector-3",
-    "type": "reflector",
+    "type": "prism",
     "hp": 20,
     "x": 318,
     "y": 24,
     "z": -89,
-    "variant": "prism",
     "coordinated": true,
     "battle": "lens-gallery",
     "activation": {
@@ -1106,12 +1104,11 @@
   },
   {
     "id": "coolant-separator-artillery-1",
-    "type": "artillery",
+    "type": "siege",
     "hp": 20,
     "x": 348,
     "y": -24,
     "z": 185,
-    "variant": "siege",
     "coordinated": true,
     "battle": "coolant-separator",
     "activation": {
@@ -1166,12 +1163,11 @@
   },
   {
     "id": "coolant-separator-guard-5",
-    "type": "guard",
+    "type": "bastion",
     "hp": 24,
     "x": 292,
     "y": -24,
     "z": 158,
-    "variant": "bastion",
     "patrol": {
       "x": 284,
       "z": 138,
@@ -1200,12 +1196,11 @@
   },
   {
     "id": "hearth-intake-guard-1",
-    "type": "guard",
+    "type": "bastion",
     "hp": 27,
     "x": 10,
     "y": -40,
     "z": 92,
-    "variant": "bastion",
     "battle": "hearth-feed",
     "activation": {
       "x": 20,
@@ -1225,12 +1220,11 @@
   },
   {
     "id": "hearth-intake-scout-2",
-    "type": "scout",
+    "type": "interceptor",
     "hp": 12,
     "x": 68,
     "y": -40,
     "z": 61,
-    "variant": "interceptor",
     "patrol": {
       "x": 54,
       "z": 52,
@@ -1265,12 +1259,11 @@
   },
   {
     "id": "hearth-intake-skirmisher-4",
-    "type": "skirmisher",
+    "type": "flanker",
     "hp": 18,
     "x": 54,
     "y": -40,
     "z": 96,
-    "variant": "flanker",
     "battle": "hearth-intake",
     "activation": {
       "x": 48,
@@ -1289,12 +1282,11 @@
   },
   {
     "id": "hearth-intake-scout-5",
-    "type": "scout",
+    "type": "interceptor",
     "hp": 12,
     "x": 46,
     "y": -40,
     "z": 89,
-    "variant": "interceptor",
     "battle": "hearth-intake",
     "activation": {
       "x": 48,
@@ -1393,7 +1385,7 @@
   },
   {
     "id": "sorter",
-    "type": "boss",
+    "type": "sorter",
     "x": 44,
     "y": -8,
     "z": -154,

@@ -127,7 +127,7 @@ pub fn Game::magnet(
     let offset = position.sub(origin)
     let distance = offset.length()
     let locked = self.magnet_lock == Some(target)
-    let body = target is SlideTarget(_) || target is CoverTarget
+    let body = target is SlideTarget(_) || target is CoverTarget(_)
     if distance >=
       (if locked && body {
         magnet_tuning.locked_range
@@ -214,10 +214,12 @@ pub fn Game::magnet(
       )
     }
   }
-  if self.world.obstacles.iter().find_first(fn(b) { b.id == "sorter-cover" })
-    is Some(body) {
+  for i, body in self.world.obstacles {
+    if body.rail is None {
+      continue
+    }
     consider(
-      CoverTarget,
+      CoverTarget(i),
       {
         x: clamp(p.x, body.rect.x - 0.15, body.rect.x + body.rect.w + 0.15),
         y: body.y + 1.4,
@@ -243,16 +245,10 @@ pub fn Game::magnet(
   if best is Some((target, _, _)) {
     let moved = match target {
       SlideTarget(i) => self.pull_slide(self.world.solids[i], p.position(), dt)
-      CoverTarget =>
-        if self.world.obstacles
-          .iter()
-          .find_first(fn(b) { b.id == "sorter-cover" })
-          is Some(body) {
-          self.cover_held_until = self.time + 0.2
-          self.pull_slide(body, p.position(), dt)
-        } else {
-          false
-        }
+      CoverTarget(i) => {
+        self.held_cover = Some((i, self.time + 0.2))
+        self.pull_slide(self.world.obstacles[i], p.position(), dt)
+      }
       _ => true
     }
     self.magnet_lock = Some(target)

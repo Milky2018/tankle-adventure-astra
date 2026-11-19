@@ -157,17 +157,19 @@ pub fn Game::interact(self : Game) -> Bool {
 pub fn Game::reset_enemies(self : Game) -> Unit {
   for i, enemy in self.enemies {
     self.enemies[i] = Enemy::new(enemy.definition, self.progress)
-    self.enemies[i].timer = if enemy.definition.variant == Ordinary {
-      1.5
-    } else {
-      enemy.definition.startup.unwrap_or(0.4)
+    self.enemies[i].timer = enemy.timing.reset_delay
+    if self.encounters.for_boss(enemy) is Some(arena) &&
+      self.progress.has(arena.id) {
+      self.enemies[i].hp = 0
     }
-    if enemy.definition.battle == Some("cargo-battery") &&
-      self.commands.active(self.progress, "cargo-battery") {
+    if enemy.definition.battle is Some(battle) &&
+      self.encounters.battle_signals.get(battle) is Some(signal) &&
+      self.commands.active(self.progress, signal) {
       self.enemies[i].hp = 0
     }
   }
   self.encounters.reset(self.enemies, self.progress)
+  self.held_cover = None
   self.shots.clear()
   self.mines.clear()
   self.beams.clear()
@@ -207,14 +209,7 @@ pub fn Game::advance_world(self : Game, dt : Double) -> Unit {
     Vec2::{ x: q.position.x - p.x, z: q.position.z - p.z, }.length() < 2.6 {
     self.interact() |> ignore
   }
-  let actors = [PlayerActor(self.player)]
-  for enemy in self.enemies {
-    if enemy.hp > 0 {
-      actors.push(EnemyActor(enemy))
-    }
-  }
-  step_transport(self.world.solids, dt, actors)
-  self.world.step_lifts(self.progress, self.player, dt, self.enemies)
+  self.world.step_machinery(self.progress, self.player, dt, self.enemies)
   for mirror in self.mirrors {
     let target = -self.progress.mirror_turns
       .get(mirror.id)
@@ -340,4 +335,31 @@ pub fn Game::dock(self : Game, held : Bool, moving : Bool, dt : Double) -> Unit 
     self.laser_path.clear()
     self.magnet_end = None
   }
+}
+
+///|
+pub fn Game::advance_combat(
+  self : Game,
+  queries : Queries,
+  origin : Vec3,
+  aim : Vec3,
+  firing~ : Bool,
+  magnet~ : Bool,
+  dt~ : Double,
+) -> Unit {
+  if self.ending_at is Some(_) {
+    return
+  }
+  if firing {
+    self.fire(queries, origin, aim) |> ignore
+  }
+  if self.player.hp > 0 {
+    self.update_enemies(queries, dt)
+  }
+  if self.player.hp > 0 {
+    self.update_shots(queries, dt)
+    self.update_mines(dt)
+  }
+  self.laser(queries, origin, aim, firing, dt)
+  self.magnet(queries, origin, aim, magnet, dt)
 }

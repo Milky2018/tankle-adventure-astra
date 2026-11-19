@@ -78,7 +78,7 @@ fn enemy_visuals(
 }
 
 ///|
-pub fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
+fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
   for i, v in self.enemies {
     let e = game.enemies[i]
     let alive = e.hp > 0
@@ -127,11 +127,11 @@ pub fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit 
         |> ignore
       }
     }
-    if e.definition.id == "prototype" && v.armor is Some(armor) {
+    if e.definition.kind == @sim.Prototype && v.armor is Some(armor) {
       armor.position.set_y(
         damp(
           armor.position.y,
-          if e.phase == @sim.Vent {
+          if e.phase.is_venting() {
             2.7
           } else {
             1.2
@@ -148,7 +148,7 @@ pub fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit 
           shutter.position.set_y(
             damp(
               shutter.position.y,
-              if e.phase == @sim.Vent {
+              if e.phase.is_venting() {
                 3.2
               } else {
                 1.7
@@ -166,7 +166,7 @@ pub fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit 
     }
     let core_open = e.hp > 0 &&
       e.parts.all(fn(p) { p.hp <= 0 }) &&
-      (e.definition.id != "foundry" || e.phase == @sim.Vent)
+      (e.definition.kind != @sim.Overseer || e.phase.is_venting())
     if v.core_lamp is Some(lamp) {
       color(lamp, if core_open { 0xf07941 } else { 0x243e39 })
     }
@@ -189,40 +189,40 @@ pub fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit 
     }
     if v.warning is Some(warning) {
       warning.visible = alive &&
-        (e.phase == @sim.Warn || e.phase == @sim.RailShot)
-      if e.phase == @sim.Warn {
+        (e.phase.is_warning() || e.phase is @sim.RailShot(_))
+      if e.phase.is_warning() {
         line_points(warning, [
           vector(e.position().add({ x: 0, y: 1.5, z: 0, })),
           vector(e.lock),
         ])
       }
-      if e.phase == @sim.RailShot {
+      if e.phase is @sim.RailShot(end) {
         line_points(warning, [
           vector(e.position().add({ x: 0, y: 1.5, z: 0, })),
-          vector(e.rail_end),
+          vector(end),
         ])
       }
     }
     if v.charge is Some(charge) {
       charge.visible = alive &&
-        e.phase == @sim.Warn &&
-        e.attack != Some(@sim.CannonAttack)
+        e.phase.is_warning() &&
+        !(e.phase is @sim.Warn(Fire(CannonAttack)))
       charge.position.set(e.x, e.y, e.z) |> ignore
       charge.rotation.set(0, e.aim, 0) |> ignore
       charge.update_matrix_world(force=true)
     }
     if v.zone is Some(zone) {
       zone.visible = alive &&
-        e.definition.kind == @sim.Artillery &&
-        e.phase == @sim.Warn
+        e.definition.kind is (@sim.Artillery | @sim.Siege) &&
+        e.phase.is_warning()
       zone.position.set(e.lock.x, e.lock.y + 0.1, e.lock.z) |> ignore
       zone.update_matrix_world(force=true)
     }
     if v.arm is Some(arm) {
-      if e.phase == @sim.Warn || e.phase == @sim.Sweep {
+      if e.phase.is_warning() || e.phase is @sim.Sweep(_) {
         arm.rotation.set(
           0,
-          if e.phase == @sim.Warn {
+          if e.phase.is_warning() {
             -0.9
           } else {
             -0.9 + 1.8 * (1 - e.timer / 1.8)
@@ -231,7 +231,7 @@ pub fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit 
         )
         |> ignore
       }
-      if e.phase == @sim.Vent {
+      if e.phase.is_venting() {
         arm.scale.set_z(
           arm.scale.z + (0.28 - arm.scale.z) * (1 - @math.exp(-6 * dt)),
         )
@@ -245,9 +245,9 @@ pub fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit 
         if material.material_type is MeshBasicMaterial &&
           material.color is Some(basic) {
           basic.set_hex(
-            if e.phase == @sim.Warn {
+            if e.phase.is_warning() {
               0xffda73
-            } else if e.phase == @sim.Vent {
+            } else if e.phase.is_venting() {
               0xf07941
             } else {
               0xff5837

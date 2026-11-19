@@ -43,6 +43,10 @@ To build the offline archive from this checkout, run `npm run build:offline` aft
 - `editor/` and `scripts/editor-server.mjs`: local authoring UI and loopback-only content/save/build service.
 - `scripts/build-content.mjs`: compiles content into typed MoonBit constants and copies scene assets to `public/generated/`. Generated `.mbt` files and asset copies are ignored build outputs.
 
+The browser session reads input and resolves the camera aim. `Game::advance_combat` advances weapons, enemies and projectiles in gameplay order. `View::present` consumes the resulting state for the frame. Enemy warnings carry the chosen attack, and interrupted actions retain their phase and remaining time. Target prediction operates on an observed position and velocity. When sight is lost, enemies can use a remembered position until it expires.
+
+`arenas.json` binds each encounter to a placed boss, its music, optional rail cover and victory signals. Conveyor drive links in `belts.json` identify the machine and part that power the belt. The simulation and renderer use the same running velocity for movement and animation.
+
 The game bundle uses the MoonBit renderer. The official scene editor and Node content tools use the npm `three` development dependency.
 
 ## Checks

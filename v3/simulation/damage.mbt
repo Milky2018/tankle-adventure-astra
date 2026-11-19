@@ -27,21 +27,19 @@ fn Enemy::resolve_damage(
   )
   let rear = bearing < -0.45
   let definition = self.definition
-  if definition.guardian && !rear && !red {
+  if definition.kind == Guardian && !rear && !red {
     return 0
   }
   let mut amount = initial_amount
-  if definition.id == "prototype" && self.phase != Vent && !rear && !red {
+  if definition.kind == Prototype && !self.phase.is_venting() && !rear && !red {
     amount *= 0.4
   }
-  if (definition.id == "foundry" || definition.id == "sorter") &&
-    self.phase != Vent &&
-    !red {
+  if definition.kind is (Overseer | Sorter) && !self.phase.is_venting() && !red {
     return 0
   }
-  if definition.variant == Bastion &&
+  if definition.kind == Bastion &&
     !self.shield_removed &&
-    self.phase != Vent &&
+    !self.phase.is_venting() &&
     kind == Ram &&
     bearing > 0.55 {
     amount *= 0.25
@@ -70,14 +68,13 @@ fn Enemy::resolve_damage(
     return 0
   }
   let projectile = !red && kind != Ram && kind != MortarHit
-  if projectile && definition.kind == Reflector && bearing > 0.55 {
+  if projectile && definition.kind is (Reflector | Prism) && bearing > 0.55 {
     return 0
   }
   if projectile &&
-    definition.kind == Guard &&
-    !definition.guardian &&
+    definition.kind is (Guard | Bastion) &&
     !self.shield_removed &&
-    self.phase != Vent &&
+    !self.phase.is_venting() &&
     bearing > 0.55 {
     amount *= 0.4
   }
@@ -116,21 +113,16 @@ pub fn Player::enemy_contact(self : Player, enemy : Enemy) -> Double {
     return self.contact_damage()
   }
   let definition = enemy.definition
-  if definition.kind == Boss ||
-    definition.guardian ||
-    (definition.kind == Elite && definition.persistent) {
+  if definition.kind.is_boss() {
     return 0
   }
   if self.phoenix_ready() {
     return self.contact_damage()
   }
-  if !self.abilities.overdrive ||
-    self.deployed ||
-    self.speed < 1.3 ||
-    definition.kind == Elite {
+  if !self.abilities.overdrive || self.deployed || self.speed < 1.3 {
     return 0
   }
-  if definition.kind == Guard &&
+  if definition.kind is (Guard | Bastion) &&
     !enemy.shield_removed &&
     @math.cos(
       angle_delta(@math.atan2(self.x - enemy.x, self.z - enemy.z), enemy.aim),
@@ -138,7 +130,7 @@ pub fn Player::enemy_contact(self : Player, enemy : Enemy) -> Double {
     0.55 {
     return 0
   }
-  if definition.kind == Scout {
+  if definition.kind is (Scout | Interceptor) {
     enemy.hp
   } else {
     1
@@ -146,24 +138,12 @@ pub fn Player::enemy_contact(self : Player, enemy : Enemy) -> Double {
 }
 
 ///|
-pub fn Enemy::shot_damage(self : Enemy, attack : Attack?) -> Double {
-  let boss = self.definition.kind == Boss ||
-    self.definition.guardian ||
-    self.definition.id == "sorter"
-  if boss {
-    match attack {
-      Some(Fan | Batteries) => return 5
-      Some(Seekers | Barrage | SweepAttack) => return 10
-      _ => ()
-    }
-  }
-  if self.definition.id == "keeper" ||
-    self.definition.guardian ||
-    self.definition.kind == Boss {
-    return 5
+fn Enemy::shot_damage(self : Enemy, heavy_projectile : Bool) -> Double {
+  if self.definition.kind.is_boss() && heavy_projectile {
+    return 10
   }
   match self.definition.kind {
-    Artillery | Sniper => 10
+    Artillery | Siege | Sniper => 10
     _ => 5
   }
 }
@@ -171,13 +151,62 @@ pub fn Enemy::shot_damage(self : Enemy, attack : Attack?) -> Double {
 ///|
 pub fn Enemy::contact_damage(self : Enemy) -> Double {
   if self.phase == Charge &&
-    (
-      self.definition.kind == Scout ||
-      self.definition.kind == Elite ||
-      self.definition.id == "prototype"
-    ) {
+    self.definition.kind is (Scout | Interceptor | Prototype) {
     5
   } else {
     0
+  }
+}
+
+///|
+fn Game::enemy_contact(self : Game, index : Int32) -> Unit {
+  let e = self.enemies[index]
+  let p = self.player
+  if e.hp <= 0 ||
+    (p.y - e.y).abs() >= 2 ||
+    horizontal_distance(p.position(), e.position()) >= e.radius + 0.8 {
+    return
+  }
+  if self.time - e.ram_at > 0.5 {
+    e.ram_at = self.time
+    let damage = if p.stunned(self.time) { 0.0 } else { p.enemy_contact(e) }
+    if damage > 0 {
+      self.hit_enemy(
+        index,
+        damage,
+        p.position(),
+        if p.red_contact() {
+          Red
+        } else {
+          Ram
+        },
+      )
+      |> ignore
+      if !p.red_contact() && p.speed < 3.19 {
+        p.speed = 1
+      }
+    } else if e.contact_damage() > 0 {
+      self.hurt(e.contact_damage(), e.position()) |> ignore
+      if e.definition.kind == Prototype && e.phase == Charge {
+        e.enter(Vent(e.timing.post_recovery), 1.6)
+      }
+    }
+  }
+  if e.hp > 0 {
+    let distance = horizontal_distance(p.position(), e.position())
+    let angle = if distance > 0.001 {
+      @math.atan2(p.x - e.x, p.z - e.z)
+    } else {
+      p.heading + @math.PI
+    }
+    let overlap = e.radius + 0.81 - distance
+    self.world.move_player(
+      p,
+      @math.sin(angle) * overlap,
+      @math.cos(angle) * overlap,
+      self.progress,
+    )
+    |> ignore
+    p.speed = 1
   }
 }

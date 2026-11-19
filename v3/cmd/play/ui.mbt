@@ -91,11 +91,7 @@ fn Hud::update(
     },
   )
   @host.class_toggle("flotation-tool", "active", p.deployed)
-  let boss = game.enemies
-    .iter()
-    .find_first(fn(e) {
-      Some(e.definition.id) == game.progress.combat_arena && e.hp > 0
-    })
+  let boss = game.active_boss().filter(fn(e) { e.hp > 0 })
   @host.style(
     "boss-health",
     "display",

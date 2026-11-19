@@ -10,7 +10,6 @@ test "cannon sweeps between frames and damages a target exactly once" {
     spawn: @simulation.Vec3::{ x: 500, y: 0, z: 510, },
     hp: 3,
     persistent: false,
-    guardian: false,
     part_hp: [],
     reserve_for: None,
     activation: None,
@@ -72,7 +71,7 @@ test "prototype front armor and vent opening preserve their different damage" {
   assert_eq(game.hit_enemy(index, 1, front, @simulation.CannonHit), 0)
   game.progress.combat_arena = Some("prototype")
   assert_eq(game.hit_enemy(index, 1, front, @simulation.CannonHit), 0.4)
-  enemy.phase = @simulation.Vent
+  enemy.phase = @simulation.Vent(0.25)
   assert_eq(game.hit_enemy(index, 1, front, @simulation.CannonHit), 1)
 }
 
@@ -132,14 +131,14 @@ test "boss firing patterns enter a real warning before emitting projectiles" {
   enemy.timer = 0
   game.time = 1
   game.update_enemies(queries, 1.0 / 60)
-  assert_true(enemy.phase == @simulation.Warn)
+  assert_true(enemy.phase.is_warning())
   assert_eq(game.shots.length(), 0)
   for _ in 0..<70 {
     game.time += 1.0 / 60
     game.update_enemies(queries, 1.0 / 60)
   }
   assert_true(game.shots.length() >= 3)
-  assert_true(enemy.phase == @simulation.Vent)
+  assert_true(enemy.phase.is_venting())
 }
 
 ///|
@@ -235,4 +234,97 @@ test "first scout crosses the ramp landing before charging and resets at repair"
   assert_true(scout.x > start.x + 5)
   game.reset_enemies()
   assert_eq(game.enemies[index].x, start.x)
+}
+
+///|
+test "boss armor and attack patterns follow machine type under a new instance id" {
+  let game = @simulation.Game::new()
+  for
+    (kind, attack) in [
+      (@simulation.Sorter, @simulation.ArmSweep),
+      (Overseer, Batteries),
+      (Guardian, Fan),
+      (Keeper, Batteries),
+    ] {
+    let source = game.enemies
+      .iter()
+      .find_first(fn(e) { e.definition.kind == kind })
+      .unwrap()
+    let copy = @simulation.Enemy::new(
+      { ..source.definition, id: "editor-copy", },
+      game.progress,
+    )
+    assert_true(copy.definition.kind.is_boss())
+    assert_true(copy.boss_pattern(true).unwrap().kind == attack)
+  }
+  let prototype = game.enemies
+    .iter()
+    .find_first(fn(e) { e.definition.kind == Prototype })
+    .unwrap()
+  let copy = @simulation.Enemy::new(
+    { ..prototype.definition, id: "editor-copy", },
+    game.progress,
+  )
+  assert_true(copy.definition.kind.is_boss())
+  copy.aim = 0
+  let front = copy.position().add({ x: 0, y: 0, z: 5, })
+  assert_eq(copy.damage_amount(1, front, CannonHit), 0.4)
+  copy.phase = Vent(0.25)
+  assert_eq(copy.damage_amount(1, front, CannonHit), 1)
+}
+
+///|
+test "coordinated squads stagger shared charge and mortar warnings across machine types" {
+  let game = @simulation.Game::new()
+  for
+    (first, second, allowed) in [
+      (@simulation.Scout, @simulation.Interceptor, false),
+      (Siege, Artillery, false),
+      (Interceptor, Artillery, true),
+      (Prototype, Interceptor, true),
+    ] {
+    let def = {
+      ..game.enemies[0].definition,
+      battle: Some("test"),
+      coordinated: true,
+    }
+    let ready = @simulation.Enemy::new({ ..def, kind: first, }, game.progress)
+    let busy = @simulation.Enemy::new({ ..def, kind: second, }, game.progress)
+    busy.phase = Warn(Fire(ChargeAttack))
+    busy.warning_age = 0.6
+    assert_eq(@simulation.can_telegraph(0, [ready, busy]), allowed)
+  }
+}
+
+///|
+test "mortar flinch follows the machine even outside its original encounter" {
+  let game = @simulation.Game::new()
+  let source = game.enemies[0].definition
+  game.time = 3
+  for
+    (kind, delay) in [
+      (@simulation.Scout, 0.6),
+      (Interceptor, 0.2),
+      (Prototype, 0.0),
+    ] {
+    let def = {
+      ..source,
+      id: "editor-copy",
+      kind,
+      spawn: { x: 500, y: 0, z: 500, },
+      persistent: false,
+    }
+    let enemy = @simulation.Enemy::new(def, game.progress)
+    game.enemies.clear()
+    game.enemies.push(enemy)
+    assert_true(game.hit_enemy(0, 1, enemy.position(), MortarHit) > 0)
+    assert_eq(
+      enemy.stunned_until,
+      if delay > 0 {
+        game.time + delay
+      } else {
+        0
+      },
+    )
+  }
 }

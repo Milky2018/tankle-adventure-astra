@@ -58,6 +58,9 @@ writeFileSync(
         (d) =>
           `{ id: ${str(d.id)}, rect: ${rect(d)}, y: ${d.y}, rise: ${d.rise ?? 0}, water: ${!!d.water} }`,
       ),
+      arrayFn("authored_arenas", "Arena", read("arenas"), (a) =>
+        `{id:${str(a.id)},boss:${str(a.boss)},rect:${rect(a)},y:${a.y},cover:${optional(a.cover)},music:${str(a.music)},victory_effects:[${(a.victoryEffects ?? []).map(str)}]}`,
+      ),
       arrayFn("authored_solids", "Solid", content.foldedSolids, solid),
       arrayFn("authored_obstacles", "Solid", sideObstacles, solid),
       arrayFn(
@@ -80,9 +83,9 @@ const name = (s) => s[0].toUpperCase() + s.slice(1);
 const vec3 = (p) => `{ x: ${p.x}, y: ${p.y}, z: ${p.z} }`;
 const numberOption = (n) => (n == null ? "None" : `Some(${n})`);
 const enemy = (e) => `{
-  id: ${str(e.id)}, kind: ${name(e.type)}, variant: ${e.variant ? name(e.variant) : "Ordinary"}, spawn: ${vec3(e)}, hp: ${e.hp},
-  guardian: ${!!e.guardian}, persistent: ${!!e.persistent}, emplacement: ${!!e.emplacement}, magnetic_shield: ${!!e.magneticShield}, coordinated: ${!!e.coordinated},
-  encounter: ${optional(e.encounter)}, battle: ${optional(e.battle)}, wave: ${e.wave ?? 0}, startup: ${numberOption(e.startup)},
+  id: ${str(e.id)}, kind: ${name(e.type)}, spawn: ${vec3(e)}, hp: ${e.hp},
+  persistent: ${!!e.persistent}, emplacement: ${!!e.emplacement}, magnetic_shield: ${!!e.magneticShield}, coordinated: ${!!e.coordinated},
+  encounter: ${optional(e.encounter)}, battle: ${optional(e.battle)}, wave: ${e.wave ?? 0}, startup: ${numberOption(e.startup)}, opening_crossing: ${e.openingCrossing ?? 0},
   spotter_height: ${numberOption(e.spotterHeight)}, detection_range: ${numberOption(e.detectionRange)}, patrol: ${e.patrol ? `Some(${rect(e.patrol)})` : "None"},
   activation: ${e.activation ? `Some({ position: ${vec3(e.activation)}, radius: ${e.activation.radius} })` : "None"},
   swim_patrol: [${(e.swimPatrol ?? []).map((p) => `{x:${p[0]},z:${p[1]}}`)}], part_hp: [${e.parts ?? []}], core: ${numberOption(e.core)}, mirror: ${!!e.mirror}, reserve_for: ${optional(e.reserveFor)}, reserve_at: ${e.reserveAt ?? 0}
@@ -156,32 +159,35 @@ writeFileSync(
     ),
   ].join("\n"),
 );
-const circuits = new Map(read("circuits").map((c) => [c.id, c]));
+const circuits = read("circuits");
 writeFileSync(
   "simulation/level-circuits.generated.mbt",
-  arrayFn(
+  [arrayFn(
     "authored_circuits",
     "Circuit",
-    [...circuits.values()],
+    circuits,
     (c) =>
       `{id:${str(c.id)},duration:${c.duration},branches:[${c.branches.map((b) => `{key:${str(b.key)},target:${str(b.target)},duration:${b.duration}}`)}]}`,
-  ),
+  ), `///|
+fn authored_battle_signals() -> Map[String, String] {
+{${circuits
+    .filter((c) => c.clearedBattle != null)
+    .map((c) => `${str(c.clearedBattle)}:${str(c.id)}`)
+    .join(",")}}
+}
+`].join("\n"),
 );
-const cityBelts = read("belts");
-const expansionBelts = [],
-  expansionHeat = read("heat"),
-  expansionCurrents = read("currents");
 const belt = (b) =>
-  `{deck:{id:${str(b.id)},rect:${rect(b)},y:${b.y},rise:${b.rise ?? 0},water:false},velocity:{x:${b.vx ?? 0},z:${b.vz ?? 0}},heat:${b.heat ?? 0},release:${optional(b.release)},stop:${optional(b.stop)},owner:${b.id.includes("feed-") ? `Some(${str(b.id.startsWith("foundry") ? "foundry" : "keeper")})` : "None"},part:${b.id.includes("feed-") ? `Some(${b.id.endsWith("left") ? 0 : 1})` : "None"}}`;
+  `{deck:{id:${str(b.id)},rect:${rect(b)},y:${b.y},rise:${b.rise ?? 0},water:false},velocity:{x:${b.vx ?? 0},z:${b.vz ?? 0}},heat:${b.heat ?? 0},release:${optional(b.release)},stop:${optional(b.stop)},drive:${b.drive ? `Some({enemy:${str(b.drive.enemy)},part:${b.drive.part}})` : "None"}}`;
 writeFileSync(
   "simulation/level-motion.generated.mbt",
   [
-    arrayFn("authored_belts", "Belt", [...cityBelts, ...expansionBelts], belt),
-    arrayFn("authored_heat", "Belt", expansionHeat, belt),
+    arrayFn("authored_belts", "Belt", read("belts"), belt),
+    arrayFn("authored_heat", "Belt", read("heat"), belt),
     arrayFn(
       "authored_currents",
       "Current",
-      expansionCurrents,
+      read("currents"),
       (c) =>
         `{rect:${rect(c)},y:${c.y},velocity:{x:${c.current.x},z:${c.current.z}},sluice:${optional(c.sluice)},diverted:{x:${c.diverted?.x ?? 0},z:${c.diverted?.z ?? 0}}}`,
     ),

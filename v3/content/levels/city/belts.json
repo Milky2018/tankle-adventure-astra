@@ -154,7 +154,11 @@
     "d": 28,
     "y": 16,
     "vx": -3.2,
-    "vz": 0
+    "vz": 0,
+    "drive": {
+      "enemy": "foundry",
+      "part": 0
+    }
   },
   {
     "id": "foundry-feed-right",
@@ -164,7 +168,11 @@
     "d": 28,
     "y": 16,
     "vx": 3.2,
-    "vz": 0
+    "vz": 0,
+    "drive": {
+      "enemy": "foundry",
+      "part": 1
+    }
   },
   {
     "id": "keeper-feed-left",
@@ -174,7 +182,11 @@
     "d": 26,
     "y": -56,
     "vx": 0,
-    "vz": -3.2
+    "vz": -3.2,
+    "drive": {
+      "enemy": "keeper",
+      "part": 0
+    }
   },
   {
     "id": "keeper-feed-right",
@@ -184,7 +196,11 @@
     "d": 26,
     "y": -56,
     "vx": 0,
-    "vz": -3.2
+    "vz": -3.2,
+    "drive": {
+      "enemy": "keeper",
+      "part": 1
+    }
   },
   {
     "id": "dispatch-line",
