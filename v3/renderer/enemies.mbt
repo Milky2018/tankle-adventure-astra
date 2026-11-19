@@ -113,6 +113,9 @@ pub fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit 
       0,
     )
     |> ignore
+    if e.flash > 0 && e.armor <= 0 {
+      v.body.rotate_x(-0.10 * @sim.clamp(e.flash / 0.14, 0, 1)) |> ignore
+    }
     v.turret.rotation.set(0, e.aim, 0) |> ignore
     if v.armor is Some(armor) {
       armor.visible = !e.shield_removed

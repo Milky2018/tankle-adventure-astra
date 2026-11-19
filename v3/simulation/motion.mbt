@@ -266,3 +266,9 @@ pub fn apply_floor_heat(
     return
   }
 }
+
+///|
+pub fn Game::press_cycle(self : Game) -> Double {
+  let turns = self.time / 2.8
+  turns - turns.floor()
+}

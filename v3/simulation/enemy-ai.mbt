@@ -651,6 +651,14 @@ pub fn Game::update_enemies(
       e.readable = false
       continue
     }
+    if e.crossing_left > 0 && e.stunned_until <= self.time {
+      if !resting && p.hp > 0 && (distance < 19 || e.awake) {
+        e.aim = @math.PI / 2
+        self.move_enemy(index, e.aim, 3.6, dt)
+        e.crossing_left -= dt
+      }
+      continue
+    }
     let observation = e.definition.spotter_height
       .map(fn(y) { e.position().add({ x: 0, y, z: 0, }) })
       .unwrap_or(origin)

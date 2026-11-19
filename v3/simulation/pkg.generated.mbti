@@ -296,6 +296,8 @@ pub fn Delivery::to_json(Self) -> @json.Json
 pub(all) enum Effect {
   Fired(Vec3, Weapon)
   Impact(Vec3, Bool)
+  Chips(Vec3, Vec3)
+  Ricochet(Vec3, Vec3)
   Armored(Vec3)
   Killed(Int32)
   Hurt
@@ -352,6 +354,7 @@ pub(all) struct Enemy {
   mut stunned_until : Double
   mut resume_phase : Phase?
   mut resume_timer : Double
+  mut crossing_left : Double
   mut swim_waypoint : Int32
   mut bite_at : Double
   mut travel_heading : Double?
@@ -494,6 +497,7 @@ pub fn Game::move_enemy(Self, Int32, Double, Double, Double) -> Unit
 pub fn Game::move_player(Self, Vec2, Bool, Double) -> Unit
 pub fn Game::new() -> Self
 pub fn Game::predict_mortar(Self, Queries, Vec3, Vec3) -> (Array[Vec3], Hit?, Bool)
+pub fn Game::press_cycle(Self) -> Double
 pub fn Game::pull_slide(Self, Solid, Vec3, Double) -> Bool
 pub fn Game::reset_enemies(Self) -> Unit
 pub fn Game::respawn(Self) -> Unit

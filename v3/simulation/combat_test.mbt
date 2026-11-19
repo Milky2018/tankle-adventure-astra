@@ -213,3 +213,26 @@ test "authored use controls respect proximity, prerequisites and emit their sign
   assert_eq(game.progress.anchor, anchor)
   assert_eq(game.player.hp, 7)
 }
+
+///|
+test "first scout crosses the ramp landing before charging and resets at repair" {
+  let game = @simulation.Game::new()
+  let queries = @simulation.Queries::{ geometry: fn(_, _, _) { None }, }
+  let index = game.enemies
+    .search_by(fn(e) { e.definition.id == "foundry-west-scout" })
+    .unwrap()
+  let scout = game.enemies[index]
+  let start = scout.position()
+  game.update_enemies(queries, 0.1)
+  assert_eq(scout.x, start.x)
+  game.player.x = -40
+  game.player.y = -12
+  game.player.z = 66
+  for _ in 0..<20 {
+    game.update_enemies(queries, 0.1)
+    assert_true(scout.phase == @simulation.Idle)
+  }
+  assert_true(scout.x > start.x + 5)
+  game.reset_enemies()
+  assert_eq(game.enemies[index].x, start.x)
+}

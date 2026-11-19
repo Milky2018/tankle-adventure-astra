@@ -2,6 +2,8 @@
 pub(all) enum Effect {
   Fired(Vec3, Weapon)
   Impact(Vec3, Bool)
+  Chips(Vec3, Vec3)
+  Ricochet(Vec3, Vec3)
   Armored(Vec3)
   Killed(Int32)
   Hurt
@@ -387,12 +389,25 @@ pub fn Game::impact(
     _ => "other"
   }
 
+  let normal = match hit.target {
+    EnemyTarget(index, part) => {
+      let enemy = self.enemies[index]
+      let center = part
+        .map(fn(i) { enemy.parts[i].position })
+        .unwrap_or(enemy.position().add({ x: 0, y: 1.5, z: 0, }))
+      hit.point.sub(center).normalized()
+    }
+    _ => hit.normal.unwrap_or(shot.direction.scale(-1))
+  }
+  let reflected = shot.direction.sub(
+    normal.scale(2 * shot.direction.dot(normal)),
+  )
   if hit.target is Refuge {
-    self.effects.push(Armored(hit.point))
+    self.effects.push(Ricochet(hit.point, reflected))
     return
   }
   if hit.target is BlockedControl(_) && !shot.mortar {
-    self.effects.push(Armored(hit.point))
+    self.effects.push(Ricochet(hit.point, reflected))
     return
   }
   let blast = hit.point.add(
@@ -400,8 +415,12 @@ pub fn Game::impact(
     .unwrap_or({ x: 0, y: 0, z: 0, })
     .scale(if shot.mortar { 0.05 } else { 0 }),
   )
-  self.effects.push(Impact(hit.point, shot.mortar))
   let hostile = shot.owner is Some(_)
+  if !shot.mortar && hit.target is Terrain {
+    self.effects.push(Chips(hit.point, normal))
+  } else if shot.mortar || hostile || !(hit.target is EnemyTarget(_, _)) {
+    self.effects.push(Impact(hit.point, shot.mortar))
+  }
   if hostile && shot.mine_owner is Some(owner) {
     if self.world.support(hit.point.x, hit.point.z, hit.point.y, false)
       is Some(support) {
@@ -504,9 +523,20 @@ pub fn Game::impact(
     }
   } else {
     match hit.target {
-      EnemyTarget(index, part) =>
-        self.hit_enemy(index, shot.damage, shot.origin, CannonHit, part?)
-        |> ignore
+      EnemyTarget(index, part) => {
+        let damage = self.hit_enemy(
+          index,
+          shot.damage,
+          shot.origin,
+          CannonHit,
+          part?,
+        )
+        if self.enemies[index].armor > 0 && damage < shot.damage {
+          self.effects.push(Ricochet(hit.point, reflected))
+        } else if damage > 0 {
+          self.effects.push(Impact(hit.point, false))
+        }
+      }
       ControlTarget(index) => {
         let c = self.commands.controls[index]
         c.flash = 0.2

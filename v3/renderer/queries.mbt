@@ -13,7 +13,9 @@ priv struct GeometryQueries {
   housing_pick : () -> Bool
   world : @sim.World
   state : @sim.Progress
+  fixtures : Array[Collider]
   surfaces : Array[Collider]
+  surface_grid : Map[(Int32, Int32), Array[Collider]]
   housings : Array[Collider]
   walls : Array[(@sim.Solid, @core.Object3D)]
   lifts : Array[(@sim.Lift, @core.Object3D)]
@@ -38,17 +40,36 @@ fn collider(object : @core.Object3D, target : @sim.HitTarget) -> Collider {
 }
 
 ///|
+fn Collider::in_range(self : Collider, ray : @sim.Ray, limit : Double) -> Bool {
+  let p = ray.origin
+  if p.x >= self.min.x &&
+    p.x <= self.max.x &&
+    p.y >= self.min.y &&
+    p.y <= self.max.y &&
+    p.z >= self.min.z &&
+    p.z <= self.max.z {
+    // A short ray can hit a child mesh before leaving the enclosing box.
+    return true
+  }
+  ray.box(self.min, self.max) is Some((distance, _)) && distance <= limit
+}
+
+///|
 pub fn View::queries(
   self : View,
   game : @sim.Game,
   aiming~ : Bool = false,
 ) -> @sim.Queries {
   let root = self.scene
+  let fixtures : Array[Collider] = []
   let surfaces : Array[Collider] = []
   let housings : Array[Collider] = []
   let mirrors : Array[Collider] = []
   root.traverse(fn(object) {
     let name = scene_binding(object)
+    if name.has_suffix("/fixture-collider") {
+      fixtures.push(collider(object, @sim.Terrain))
+    }
     if name.has_prefix("world/surfaces/") && name.has_suffix("/mesh") {
       surfaces.push(collider(object, @sim.Terrain))
     }
@@ -78,6 +99,24 @@ pub fn View::queries(
       mirrors.push(collider(object, @sim.MirrorTarget(i)))
     }
   }
+  let surface_grid : Map[(Int32, Int32), Array[Collider]] = Map([])
+  for surface in surfaces {
+    for
+      x in (surface.min.x / 16).floor().to_int()..<=(surface.max.x / 16)
+      .floor()
+      .to_int() {
+      for
+        z in (surface.min.z / 16).floor().to_int()..<=(surface.max.z / 16)
+        .floor()
+        .to_int() {
+        let cell = (x, z)
+        match surface_grid.get(cell) {
+          Some(members) => members.push(surface)
+          None => surface_grid[cell] = [surface]
+        }
+      }
+    }
+  }
   let queries = GeometryQueries::{
     aiming,
     visible: fn(p, terrain, structure) {
@@ -86,7 +125,9 @@ pub fn View::queries(
     housing_pick: fn() { !aiming || self.third_person },
     world: game.world,
     state: game.progress,
+    fixtures,
     surfaces,
+    surface_grid,
     housings,
     walls,
     lifts,
@@ -110,8 +151,12 @@ fn GeometryQueries::cast(
   self.raycaster.far = range
   let mut result : @sim.Hit? = None
   let mut limit = range
-  fn mesh_hit(object : @core.Object3D, target : @sim.HitTarget) -> Unit {
-    let hits = self.raycaster.intersect_object(object, recursive=false)
+  fn mesh_hit(
+    object : @core.Object3D,
+    target : @sim.HitTarget,
+    recursive : Bool,
+  ) -> Unit {
+    let hits = self.raycaster.intersect_object(object, recursive~)
     for hit in hits {
       if hit.distance > limit {
         break
@@ -121,7 +166,9 @@ fn GeometryQueries::cast(
         continue
       }
       let normal = hit.face.map(fn(face) {
-        point(face.normal.clone().transform_direction(object.matrix_world()))
+        point(
+          face.normal.clone().transform_direction(hit.object.matrix_world()),
+        )
       })
       if ground && (normal is None || (normal is Some(n) && n.y <= 0.5)) {
         continue
@@ -136,16 +183,29 @@ fn GeometryQueries::cast(
       break
     }
   }
-  for surface in self.surfaces {
-    if ray.box(surface.min, surface.max) is Some((distance, _)) &&
-      distance <= limit {
-      mesh_hit(surface.object, surface.target)
+  let candidates = if ray.direction.x == 0 && ray.direction.z == 0 {
+    let cell = (
+      (ray.origin.x / 16).floor().to_int(),
+      (ray.origin.z / 16).floor().to_int(),
+    )
+    self.surface_grid.get(cell).unwrap_or([])
+  } else {
+    self.surfaces
+  }
+  for surface in candidates {
+    if surface.in_range(ray, limit) {
+      mesh_hit(surface.object, surface.target, false)
     }
   }
   for (_, object) in self.lifts {
-    mesh_hit(object, @sim.Terrain)
+    mesh_hit(object, @sim.Terrain, false)
   }
   if !ground {
+    for fixture in self.fixtures {
+      if fixture.in_range(ray, limit) {
+        mesh_hit(fixture.object, fixture.target, true)
+      }
+    }
     for (wall, object) in self.walls {
       if wall.active(self.state) &&
         ray.box({ x: wall.rect.x, y: wall.y, z: wall.rect.z, }, {
@@ -155,7 +215,7 @@ fn GeometryQueries::cast(
         })
         is Some((distance, _)) &&
         distance <= limit {
-        mesh_hit(object, @sim.Terrain)
+        mesh_hit(object, @sim.Terrain, false)
       }
     }
     for housing in self.housings {
@@ -165,11 +225,11 @@ fn GeometryQueries::cast(
       let bounds = @core.box3_set_from_object(@m3.Box3::new(), housing.object)
       if ray.box(point(bounds.min), point(bounds.max)) is Some((d, _)) &&
         d <= limit {
-        mesh_hit(housing.object, housing.target)
+        mesh_hit(housing.object, housing.target, false)
       }
     }
     for mirror in self.mirrors {
-      mesh_hit(mirror.object, mirror.target)
+      mesh_hit(mirror.object, mirror.target, false)
     }
     for solid in self.world.obstacles {
       if ray.box({ x: solid.rect.x, y: solid.y, z: solid.rect.z, }, {

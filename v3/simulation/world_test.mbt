@@ -34,3 +34,22 @@ test "pending circuit branches unlock independently and survive observation" {
   assert_true(progress.has("door"))
   assert_true(progress.has("lift"))
 }
+
+///|
+test "each lift carries its centre and leaves an open shaft at both landings" {
+  let world = @simulation.authored_world()
+  for lift in world.lifts {
+    let x = lift.rect.x + lift.rect.w / 2
+    let z = lift.rect.z + lift.rect.d / 2
+    let bottom = lift.stops[0]
+    let top = lift.stops[lift.stops.length() - 1]
+    for (landing, away) in [(bottom, top), (top, bottom)] {
+      lift.y = landing
+      assert_true(
+        world.support(x, z, landing, false) is Some(s) && s.deck.id == lift.id,
+      )
+      lift.y = away
+      assert_true(world.support(x, z, landing, false) is None)
+    }
+  }
+}

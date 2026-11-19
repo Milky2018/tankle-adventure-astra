@@ -3,6 +3,8 @@ struct Cutaway {
   player : @m3.Vector3
   pyramid : @m3.Matrix4
   distance : @core.Uniform
+  water_time : @core.Uniform
+  heading : @core.Uniform
   direction : @m3.Vector3
   enabled : @core.Uniform
   mode : @core.Uniform
@@ -27,6 +29,7 @@ let world_declarations : String =
   #| #include <common>
   #| varying vec3 apertureWorld;
   #| uniform vec3 aperturePlayer;
+  #| uniform float hullHeading, waterTime;
   #| uniform mat4 aperturePyramid;
   #| uniform float apertureMode, apertureEnabled, renderDistance;
   #| uniform vec3 apertureDirection;
@@ -49,6 +52,8 @@ let support_shader : String =
 ///|
 fn Cutaway::new(scene : @core.Object3D) -> Cutaway {
   let cutaway = {
+    water_time: @core.Uniform::new(Number(0)),
+    heading: @core.Uniform::new(Number(0)),
     player: @m3.Vector3::new(0, -8, 86),
     pyramid: @m3.Matrix4::new(),
     distance: @core.Uniform::new(Number(230)),
@@ -76,10 +81,82 @@ fn Cutaway::new(scene : @core.Object3D) -> Cutaway {
 ///|
 fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
   let role = metadata_string(material.user_data, "renderRole")
+  let finish = metadata_string(material.user_data, "surfaceFinish")
+  let finish_uv = match finish {
+    "paving" =>
+      (
+        #| vMapUv = (mapTransform * vec3(apertureWorld.xz, 1.0)).xy;
+        #| vAoMapUv = (aoMapTransform * vec3(apertureWorld.xz,1.0)).xy;
+      )
+    "masonry" | "ironwork" =>
+      (
+        #| vec3 face = normal;
+        #| #ifdef USE_BATCHING
+        #| face = mat3(batchingMatrix) * face;
+        #| #endif
+        #| face = abs(normalize(face));
+        #| vec2 faceUv = face.y > 0.6 ? apertureWorld.xz : vec2(face.x > face.z ? apertureWorld.z : apertureWorld.x, apertureWorld.y);
+        #| vMapUv = (mapTransform * vec3(faceUv,1.0)).xy;
+      )
+    _ => ""
+  }
+  let relief_uv = if finish == "paving" ||
+    finish == "masonry" ||
+    finish == "ironwork" {
+    "\n#ifdef USE_NORMALMAP\n vNormalMapUv = vMapUv;\n#endif\n"
+  } else {
+    ""
+  }
+  let map_fragment = if finish == "canal" {
+    (
+      #| vec3 eye = normalize(apertureWorld-cameraPosition);
+      #| vec3 reflected = reflect(eye,vec3(0.0,1.0,0.0));
+      #| vec2 ripple = vec2(sin(apertureWorld.x*3.3+apertureWorld.z*5.1+waterTime*1.2),sin(apertureWorld.z*6.9+apertureWorld.x-waterTime*1.8))*0.008;
+      #| vec2 shoreUv = vec2(atan(reflected.z,reflected.x)*0.31831,clamp(0.12+reflected.y*0.82,0.01,0.99))+ripple;
+      #| vec3 reflection = texture2D(map,shoreUv).rgb;
+      #| diffuseColor.rgb = mix(vec3(0.025,0.115,0.135), reflection*vec3(0.78,1.04,1.12),0.12+0.64*pow(1.0-abs(eye.y),2.0));
+    )
+  } else {
+    "#include <map_fragment>"
+  }
   let radius = if role == "structure" || role == "backdrop" {
     36.0
   } else {
     13.0
+  }
+  // The atlas packs one plan of window light per eight-metre storey. Ramps
+  // blend adjacent plans while the material continues to receive live shadows.
+  let lighting = if finish == "paving" {
+    (
+      #| float level = clamp((apertureWorld.y+56.0)/8.0,0.0,12.0);
+      #| float lower = floor(level), upper = min(lower+1.0,12.0);
+      #| vec2 chart = clamp(vAoMapUv,0.001,0.999);
+      #| vec2 lo = (chart+vec2(mod(lower,4.0),floor(lower/4.0)))*0.25;
+      #| vec2 hi = (chart+vec2(mod(upper,4.0),floor(upper/4.0)))*0.25;
+      #| vec3 daylight = mix(texture2D(aoMap,lo).rgb,texture2D(aoMap,hi).rgb,fract(level));
+      #| reflectedLight.directDiffuse *= smoothstep(vec3(0.14),vec3(0.87),daylight)*1.7+0.16;
+      #| reflectedLight.indirectDiffuse *= 0.46+daylight*0.86;
+      #| vec3 eyeRay = normalize(apertureWorld-cameraPosition);
+      #| vec2 reflectedChart = clamp(chart + eyeRay.xz*vec2(0.009,0.014)/max(0.28,abs(eyeRay.y)),0.001,0.999);
+      #| vec3 loGlaze = texture2D(aoMap,(reflectedChart+vec2(mod(lower,4.0),floor(lower/4.0)))*0.25).rgb;
+      #| vec3 hiGlaze = texture2D(aoMap,(reflectedChart+vec2(mod(upper,4.0),floor(upper/4.0)))*0.25).rgb;
+      #| vec3 glazed = mix(loGlaze,hiGlaze,fract(level));
+      #| float sheen = pow(1.0-abs(eyeRay.y),2.0)*(0.30+0.7*smoothstep(0.04,0.36,diffuseColor.r));
+      #| reflectedLight.indirectSpecular += smoothstep(vec3(0.36),vec3(0.97),glazed)*sheen*0.32;
+    )
+  } else {
+    "#include <aomap_fragment>"
+  }
+  let contact = if role == "floor" || role == "belt" {
+    (
+      #| vec2 groundDelta = apertureWorld.xz - aperturePlayer.xz;
+      #| vec2 localHull = vec2(dot(groundDelta,vec2(cos(hullHeading),-sin(hullHeading))),dot(groundDelta,vec2(sin(hullHeading),cos(hullHeading))));
+      #| vec2 outsideHull = max(abs(localHull)-vec2(0.94,1.34),vec2(0.0));
+      #| float contactShade = exp(-dot(outsideHull,outsideHull)*1.8)*(1.0-smoothstep(0.12,1.25,abs(apertureWorld.y-aperturePlayer.y)));
+      #| outgoingLight *= 1.0-0.62*contactShade;
+    )
+  } else {
+    ""
   }
   let camera_only = role == "fixture" || role == "belt"
   let terrain = role == "floor" || role == "belt"
@@ -108,10 +185,13 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
     } else {
       "outgoingLight *= mix(1.0,0.42,smoothstep(3.0,12.0,abs(apertureWorld.y-aperturePlayer.y))*(1.0-apertureMode)*apertureEnabled);\n"
     }) +
-    "#include <opaque_fragment>"
+    contact +
+    "\n#include <opaque_fragment>"
   }
   material.on_before_compile = Some(fn(shader, _renderer) {
     let uniforms = shader.uniforms
+    uniforms["waterTime"] = self.water_time
+    uniforms["hullHeading"] = self.heading
     uniforms["aperturePlayer"] = @core.Uniform::new(Vector3(self.player))
     uniforms["apertureDirection"] = @core.Uniform::new(Vector3(self.direction))
     uniforms["renderDistance"] = self.distance
@@ -127,10 +207,15 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
         old="#include <common>",
         new="#include <common>\nvarying vec3 apertureWorld;",
       )
-      .replace(old="#include <project_vertex>", new=world_vertex)
+      .replace(
+        old="#include <project_vertex>",
+        new=world_vertex + "\n" + finish_uv + relief_uv,
+      )
     shader.fragment_shader = shader.fragment_shader
       .replace(old="#include <common>", new=world_declarations)
       .replace(old="#include <opaque_fragment>", new=fragment)
+      .replace(old="#include <aomap_fragment>", new=lighting)
+      .replace(old="#include <map_fragment>", new=map_fragment)
       .replace(
         old="#include <fog_fragment>",
         new=(
@@ -143,7 +228,7 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
       )
   })
   material.custom_program_cache_key = Some(fn() {
-    "typed-cutaway-\{role}-\{depth}"
+    "typed-cutaway-\{role}-\{depth}-\{finish}"
   })
 }
 
@@ -155,6 +240,7 @@ fn Cutaway::update(
   camera : @core.Object3D,
   third : Bool,
 ) -> Unit {
+  self.heading.value = Number(p.heading)
   self.player.set(p.x, p.y, p.z) |> ignore
   self.direction.copy(camera.position).sub(self.player).normalize() |> ignore
   self.mode.value = Number(if third { 1 } else { 0 })

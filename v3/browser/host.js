@@ -7,42 +7,25 @@ export async function loadScene(url, parse, ready, failed) {
       if(!response.ok)throw new Error(`Art asset: ${response.status}`);
       return response.headers.get('Content-Encoding')==='gzip'?response:new Response(response.body.pipeThrough(new DecompressionStream('gzip')));
     }
-    const [json,binary]=await Promise.all([
-      unpack(url).then(r=>r.json()),
-      unpack('/generated/art/folded-buffers.bin.gz').then(r=>r.arrayBuffer())
+    const [sceneText, binary, views] = await Promise.all([
+      unpack(url).then(response => response.text()),
+      unpack('/generated/art/folded-buffers.bin.gz').then(response => response.arrayBuffer()),
+      unpack('/generated/art/folded-views.json.gz').then(response => response.json()),
     ]);
     performance.mark("art-decoded");
-    function packedView(attribute) {
-      if (!attribute?.array || Array.isArray(attribute.array)) return;
-      const { byteOffset, length, type } = attribute.array;
-      return new globalThis[type](binary, byteOffset, length);
+    function typedView({ type, byteOffset, length, copy }) {
+      const view = new globalThis[type](binary, byteOffset, length);
+      return copy ? view.slice() : view;
     }
-    // ObjectLoader reads JSON metadata. Keep packed vertex buffers as typed views.
-    function takeBuffer(attribute) {
-      const view = packedView(attribute);
-      if (view) attribute.array = [];
-      return view;
+    for (const attrs of Object.values(views.geometry)) {
+      for (const [name, view] of Object.entries(attrs)) attrs[name] = typedView(view);
     }
-    const buffers = Object.create(null);
-    for (const geometry of json.geometries) {
-      if (!geometry.data) continue;
-      const attributes = Object.create(null);
-      for (const [name, attribute] of Object.entries(geometry.data.attributes ?? {})) {
-        attributes[name] = takeBuffer(attribute);
-      }
-      buffers[geometry.uuid] = { index: takeBuffer(geometry.data.index), attributes };
-    }
-    function instances(object) {
-      for (const data of [object.instanceMatrix, object.instanceColor]) {
-        const view = packedView(data);
-        if (view) data.array = Array.from(view);
-      }
-      for (const child of object.children ?? []) instances(child);
-    }
-    instances(json.object);
+    for (const [id, view] of Object.entries(views.images)) views.images[id] = typedView(view);
     performance.mark("art-parse-start");
-    const scene = parse(JSON.stringify(json), buffers);
+    let scene;
+    const texturesReady = new Promise(resolve => { scene = parse(sceneText, views, resolve); });
     performance.mark("art-parsed");
+    await texturesReady;
     ready(scene);
     performance.mark("view-created");
   } catch (error) { failed(String(error)); }

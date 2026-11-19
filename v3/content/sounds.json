@@ -1,4 +1,24 @@
 {
+  "hoist-drive": [
+    { "frequency": 68, "end": 126, "duration": 0.46, "gain": 0.089, "type": "triangle", "attack": 0.06 },
+    { "noise": true, "cutoff": 620, "duration": 0.20, "gain": 0.045 }
+  ],
+  "hoist-brake": [
+    { "frequency": 108, "end": 48, "duration": 0.20, "gain": 0.11, "type": "triangle" },
+    { "noise": true, "cutoff": 910, "duration": 0.075, "gain": 0.085, "delay": 0.05 }
+  ],
+  "tread": [
+    { "noise": true, "cutoff": 580, "duration": 0.06, "gain": 0.043, "attack": 0.005 }
+  ],
+  "die-strike": [
+    { "frequency": 96, "end": 36, "duration": 0.32, "gain": 0.17, "type": "triangle", "attack": 0.005 },
+    { "noise": true, "cutoff": 1300, "duration": 0.09, "gain": 0.10 },
+    { "frequency": 516, "end": 398, "duration": 0.22, "gain": 0.032, "delay": 0.035 }
+  ],
+  "chip": [
+    { "noise": true, "cutoff": 2100, "duration": 0.075, "gain": 0.14 },
+    { "noise": true, "cutoff": 860, "duration": 0.14, "gain": 0.065, "delay": 0.035 }
+  ],
   "sonar-lock": [
     {
       "frequency": 880,

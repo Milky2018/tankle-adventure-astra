@@ -17,6 +17,8 @@ priv struct PlayerVisual {
   radiator : @core.Object3D?
   exhaust : @core.Object3D?
   materials : Array[HullColor]
+  mut speed : Double
+  mut pitch : Double
   mut position : @sim.Vec3
 }
 
@@ -59,6 +61,8 @@ fn PlayerVisual::new(nodes : Map[String, @core.Object3D]) -> PlayerVisual {
     radiator: nodes.get("player/radiator"),
     exhaust: nodes.get("phoenix-exhaust"),
     materials,
+    speed: 0,
+    pitch: 0,
     position: { x: 0, y: -8, z: 86, },
   }
 }
@@ -72,6 +76,22 @@ pub fn View::update_player(self : View, game : @sim.Game, dt : Double) -> Unit {
     if travel < 5 {
       wheel.rotate_y(-travel * 2.4) |> ignore
     }
+  }
+  if dt > 0 && travel < 5 {
+    let forward = (p.x - v.position.x) * @math.sin(p.heading) +
+      (p.z - v.position.z) * @math.cos(p.heading)
+    let speed = damp(v.speed, forward / dt, 12, dt)
+    let acceleration = (speed - v.speed) / dt
+    v.pitch = damp(
+      v.pitch,
+      @sim.clamp(-acceleration * 0.0028, -0.095, 0.095),
+      13,
+      dt,
+    )
+    v.speed = speed
+  } else {
+    v.speed = 0
+    v.pitch = 0
   }
   v.position = p.position()
   if v.floats is Some(floats) {
@@ -147,6 +167,14 @@ pub fn View::update_player(self : View, game : @sim.Game, dt : Double) -> Unit {
   let age = game.death_at.map(fn(at) { game.time - at }).unwrap_or(0)
   let settle = smooth(0, 0.65, age)
   self.body.rotation.set(0, p.heading, settle * 0.09) |> ignore
+  self.body.rotate_x(v.pitch) |> ignore
+  let shot_age = game.time - p.last_shot
+  let recoil = if shot_age >= 0 && shot_age < 0.22 {
+    0.36 * (1 - smooth(0, 0.22, shot_age))
+  } else {
+    0
+  }
+  self.barrel.position.set_z(-recoil) |> ignore
   self.turret.position.set_y(v.turret_y - settle * 0.4) |> ignore
   self.turret.rotation.set(
     self.turret.rotation.x,

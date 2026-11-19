@@ -22,12 +22,15 @@ priv struct ControlVisual {
 
 ///|
 priv struct Machinery {
+  ram : @core.Object3D?
+  flywheel : @core.Object3D?
+  door_status : @core.Object3D?
   obstacles : Array[(@sim.Solid, @core.Object3D, @sim.Vec3)]
   side_roots : Array[@core.Object3D?]
   side_handles : Array[(@core.Object3D?, @core.Object3D?)]
   walls : Array[WallVisual]
   controls : Array[ControlVisual]
-  lifts : Array[(@sim.Lift, @core.Object3D)]
+  lifts : Array[(@sim.Lift, @core.Object3D, @core.Object3D?)]
   mirrors : Array[(@sim.Mirror, @core.Object3D)]
   pickups : Array[
     (@sim.Pickup, @core.Object3D, @core.Object3D?, @core.Object3D?),
@@ -92,10 +95,10 @@ fn Machinery::new(
       })
     }
   }
-  let lifts : Array[(@sim.Lift, @core.Object3D)] = []
+  let lifts : Array[(@sim.Lift, @core.Object3D, @core.Object3D?)] = []
   for body in game.world.lifts {
     if get("world/views/lifts/\{body.id}/root") is Some(node) {
-      lifts.push((body, node))
+      lifts.push((body, node, get("world/views/lifts/\{body.id}/rods")))
     }
   }
   let mirrors : Array[(@sim.Mirror, @core.Object3D)] = []
@@ -145,6 +148,9 @@ fn Machinery::new(
     )
   })
   {
+    ram: get("opening/ram"),
+    flywheel: get("opening/flywheel"),
+    door_status: get("opening/door-status"),
     walls,
     controls,
     lifts,
@@ -163,6 +169,26 @@ fn damp(value : Double, target : Double, speed : Double, dt : Double) -> Double 
 
 ///|
 fn Machinery::update(self : Machinery, game : @sim.Game, dt : Double) -> Unit {
+  let cycle = game.press_cycle()
+  if self.ram is Some(ram) {
+    let stroke = smooth(0.32, 0.50, cycle) - smooth(0.57, 0.94, cycle)
+    ram.position.set_y(-1.04 * stroke) |> ignore
+    ram.update_matrix_world(force=true)
+  }
+  if self.flywheel is Some(wheel) {
+    wheel.rotation.set(cycle * 2 * @math.PI, 0, 0) |> ignore
+    wheel.update_matrix_world(force=true)
+  }
+  if self.door_status is Some(lamp) {
+    color(
+      lamp,
+      if game.commands.active(game.progress, "relay-west") {
+        0x84edcb
+      } else {
+        0xffbb49
+      },
+    )
+  }
   for (body, node, offset) in self.obstacles {
     node.position.copy(
       vector(
@@ -229,14 +255,16 @@ fn Machinery::update(self : Machinery, game : @sim.Game, dt : Double) -> Unit {
       9,
       dt,
     )
-    wall.mesh.position.set(
-      b.rect.x + b.rect.w / 2,
-      b.y + b.h / 2 - wall.open * (b.h + 0.5),
-      b.rect.z + b.rect.d / 2,
-    )
-    |> ignore
+    let x = b.rect.x + b.rect.w / 2
+    let y = b.y + b.h / 2 - wall.open * (b.h + 0.5)
+    let z = b.rect.z + b.rect.d / 2
+    if wall.mesh.position.x != x ||
+      wall.mesh.position.y != y ||
+      wall.mesh.position.z != z {
+      wall.mesh.position.set(x, y, z) |> ignore
+      wall.mesh.update_matrix_world(force=true)
+    }
     wall.mesh.visible = wall.open < 0.999
-    wall.mesh.update_matrix_world(force=true)
   }
   for c in self.controls {
     let b = c.body
@@ -333,7 +361,11 @@ fn Machinery::update(self : Machinery, game : @sim.Game, dt : Double) -> Unit {
     }
     c.root.update_matrix_world(force=true)
   }
-  for (body, node) in self.lifts {
+  for (body, node, rods) in self.lifts {
+    if rods is Some(rods) {
+      rods.scale.set_y(body.y - 0.55 - rods.position.y) |> ignore
+      rods.update_matrix_world(force=true)
+    }
     node.position.set_y(body.y) |> ignore
     node.update_matrix_world(force=true)
   }

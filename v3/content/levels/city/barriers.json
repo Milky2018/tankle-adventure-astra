@@ -2899,6 +2899,18 @@
     "circuitKey": "intro-cargo:-16.0000:0.0000:-4.0000"
   },
   {
+    "id": "press-plinth",
+    "x": -46,
+    "y": -8,
+    "z": 80.55,
+    "w": 2.5,
+    "d": 10.9,
+    "h": 1,
+    "permanent": true,
+    "theme": "foundry",
+    "circuitKey": "press-plinth:-46.0000:-8.0000:80.5500"
+  },
+  {
     "id": "press-carrier",
     "x": -30,
     "y": -16,

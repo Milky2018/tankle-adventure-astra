@@ -10,6 +10,7 @@ pub(all) struct View {
   priv machinery : Machinery
   priv enemies : Array[EnemyVisual]
   priv projectiles : Projectiles
+  priv lighting : CityLights
   priv cutaway : Cutaway
   scene : @core.Object3D
   renderer : @webgl.WebGLRenderer
@@ -39,6 +40,18 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
   let nodes : Map[String, @core.Object3D] = Map([])
   scene.traverse(fn(node) {
     let binding = scene_binding(node)
+    // Static fittings inherit motion from their parent. Their local matrices
+    // already contain the imported transform.
+    if node.kind is Mesh(_) &&
+      (
+        binding.has_prefix("world/occluders/") ||
+        (
+          binding == "" &&
+          (node.name.contains(" / ") || node.name == "Workshop fittings")
+        )
+      ) {
+      node.matrix_auto_update = false
+    }
     if binding != "" {
       nodes[binding] = node
     }
@@ -52,13 +65,15 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
   let root = nodes.get("player/root").unwrap()
   let body = nodes.get("player/body").unwrap()
   let turret = nodes.get("player/turret").unwrap()
-  for object in [root, body, turret] {
+  let barrel = nodes.get("player/barrel").unwrap()
+  for object in [root, body, turret, barrel] {
     object.matrix_auto_update = true
   }
   let view = {
     scene,
     nodes,
     renderer,
+    lighting: CityLights::new(nodes),
     machinery: Machinery::new(nodes, game),
     feeds: feeds(scene),
     effects: Effects::new(),
@@ -69,7 +84,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     root,
     body,
     turret,
-    barrel: nodes.get("player/barrel").unwrap(),
+    barrel,
     distance: 15,
     camera_height: 2.5,
     shoulder: 0,
@@ -144,6 +159,9 @@ pub fn View::position_player(
   world : @sim.World,
   dt : Double,
 ) -> Unit {
+  if self.cutaway.water_time.value is Number(elapsed) {
+    self.cutaway.water_time.value = Number(elapsed + dt)
+  }
   self.ground_pose(player, world, dt)
   self.body.rotation.set(0, player.heading, 0) |> ignore
   self.turret.rotation.set(0, player.aim, 0) |> ignore
@@ -187,8 +205,22 @@ pub fn View::draw(
   world : @sim.World,
 ) -> Unit {
   self.cutaway.enabled.value = Number(if self.film { 0 } else { 1 })
-  self.cutaway.update(player, world, self.camera(), self.third_person)
-  self.renderer.render(self.scene, self.camera())
+  let camera = self.camera()
+  if self.nodes.get("city/sky") is Some(sky) {
+    sky.matrix_auto_update = true
+    sky.position.copy(camera.position) |> ignore
+    sky.update_matrix_world(force=true)
+  }
+  self.lighting.update(
+    if self.film {
+      point(camera.position)
+    } else {
+      player.position()
+    },
+    self.scene,
+  )
+  self.cutaway.update(player, world, camera, self.third_person)
+  self.renderer.render(self.scene, camera)
 }
 
 ///|

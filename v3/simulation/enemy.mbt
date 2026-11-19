@@ -164,6 +164,7 @@ pub(all) struct Enemy {
   mut stunned_until : Double
   mut resume_phase : Phase?
   mut resume_timer : Double
+  mut crossing_left : Double
   mut swim_waypoint : Int32
   mut bite_at : Double
   mut travel_heading : Double?
@@ -242,6 +243,11 @@ pub fn Enemy::new(definition : EnemyDef, progress : Progress) -> Enemy {
     stunned_until: 0,
     resume_phase: None,
     resume_timer: 0,
+    crossing_left: if definition.id == "foundry-west-scout" {
+      2.2
+    } else {
+      0
+    },
     swim_waypoint: 0,
     bite_at: -10,
     travel_heading: None,

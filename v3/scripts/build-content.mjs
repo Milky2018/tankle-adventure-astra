@@ -1,6 +1,7 @@
 // Compile editable content into typed constants. Generated files are build outputs;
 // gameplay behavior remains hand-written MoonBit.
-import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+import { buildRuntimeArt } from "./content/runtime-art.mjs";
 import { circuitKey } from "./content/catalog.mjs";
 const read = (name) =>
   JSON.parse(readFileSync(`content/levels/city/${name}.json`, "utf8"));
@@ -201,15 +202,7 @@ fn belt_segments() -> Map[String, Array[(Double, Int32)]] {
 }
 `,
 );
-mkdirSync("public/generated/art", { recursive: true });
-copyFileSync(
-  "content/art/city.scene.json.gz",
-  "public/generated/art/folded-scene.json.gz",
-);
-copyFileSync(
-  "content/art/city.buffers.bin.gz",
-  "public/generated/art/folded-buffers.bin.gz",
-);
+buildRuntimeArt("content/art", "public/generated/art");
 await import("./sound-data.mjs");
 const tuning = JSON.parse(readFileSync("content/abilities.json", "utf8"));
 const record = (fields) =>

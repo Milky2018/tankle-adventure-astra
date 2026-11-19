@@ -43,8 +43,11 @@ async page => {
     await page.mouse.up();await page.waitForTimeout(1500);
     const state=await page.evaluate(()=>__typedRead());
     await page.screenshot({path:'output/playwright/typed-opening-relay.png'});
-    await page.evaluate(data=>window.__openingEvidence=data,{legs,state,errors});
     if(!state.flags['relay-west'])throw Error('Real cannon did not activate west relay');
+    await move(-51,50);
+    const passage=await page.evaluate(()=>__typedRead());
+    if(passage.x >= -48 || passage.hp <= 0)throw Error('Tank did not clear the west door');
+    await page.evaluate(data=>window.__openingEvidence=data,{legs,state,passage,errors});
     if(errors.length)throw Error(errors.join('\n'));
   } finally {await page.keyboard.press('Escape')}
 }

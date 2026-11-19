@@ -4,6 +4,8 @@ priv struct Trail {
   mut life : Double
   duration : Double
   size : Double
+  mut velocity : @sim.Vec3
+  stretch : Double
 }
 
 ///|
@@ -13,6 +15,7 @@ priv struct Effects {
   bursts : Array[Trail]
   box : @core.BufferGeometry
   sphere : @core.BufferGeometry
+  grit : @core.Material
   bright : @core.Material
   red : @core.Material
 }
@@ -29,6 +32,7 @@ fn Effects::new() -> Effects {
       width_segments=10,
       height_segments=8,
     ),
+    grit: basic_material(0xb99c76),
     bright: basic_material(0xffdc8b),
     red: basic_material(0xff6846),
   }
@@ -158,7 +162,53 @@ pub fn View::update_effects(
   for id in gone {
     effects.mines.remove(id)
   }
+  fn fragments(
+    origin : @sim.Vec3,
+    direction : @sim.Vec3,
+    sparks : Bool,
+  ) -> Unit {
+    for i in 0..<6 {
+      let angle = i.to_double() * 2.4 + game.time * 3
+      let spray = @sim.Vec3::{
+        x: @math.cos(angle),
+        y: 0.4 + @math.sin(angle * 1.7).abs(),
+        z: @math.sin(angle),
+      }
+      let velocity = direction
+        .scale(if sparks { 8 } else { 3 })
+        .add(spray.scale(if sparks { 2.6 } else { 3.4 }))
+      let mesh = @core.Mesh::new(
+        geometry=effects.box,
+        material=Single(if sparks { effects.bright } else { effects.grit }),
+      )
+      mesh.position.copy(vector(origin.add(direction.scale(0.07)))) |> ignore
+      mesh.look_at(vector(origin.add(velocity)))
+      let duration = 0.18 + 0.035 * i.to_double()
+      self.scene.add(mesh) |> ignore
+      effects.bursts.push({
+        root: mesh,
+        life: duration,
+        duration,
+        size: if sparks {
+          0.10
+        } else {
+          0.21
+        },
+        velocity,
+        stretch: if sparks {
+          8
+        } else {
+          1.6
+        },
+      })
+    }
+  }
   for event in game.effects {
+    match event {
+      @sim.Chips(p, n) => fragments(p, n, false)
+      @sim.Ricochet(p, direction) => fragments(p, direction, true)
+      _ => ()
+    }
     let position = match event {
       @sim.Impact(p, _) | @sim.Armored(p) => Some(p)
       @sim.Killed(i) =>
@@ -175,6 +225,8 @@ pub fn View::update_effects(
       self.scene.add(mesh) |> ignore
       effects.bursts.push({
         root: mesh,
+        velocity: { x: 0, y: 0, z: 0, },
+        stretch: 1,
         life: 0.25,
         duration: 0.25,
         size: match event {
@@ -187,7 +239,16 @@ pub fn View::update_effects(
   for b in effects.bursts {
     b.life -= dt
     let size = b.size * (b.life / b.duration)
-    b.root.scale.set(size, size, size) |> ignore
+    b.root.scale.set(size, size, size * b.stretch) |> ignore
+    if b.stretch > 1 {
+      b.root.position.set(
+        b.root.position.x + b.velocity.x * dt,
+        b.root.position.y + b.velocity.y * dt,
+        b.root.position.z + b.velocity.z * dt,
+      )
+      |> ignore
+      b.velocity = { ..b.velocity, y: b.velocity.y - 14 * dt, }
+    }
     if b.life <= 0 {
       b.root.remove_from_parent() |> ignore
     }
