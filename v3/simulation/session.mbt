@@ -265,9 +265,14 @@ pub fn Game::respawn(self : Game) -> Unit {
     .find_first(fn(h) { h.id == self.progress.anchor })
     .unwrap_or(self.hives[0])
   let p = self.player
-  p.x = hive.position.x
-  p.y = hive.position.y
-  p.z = hive.position.z
+  let point = if hive.id == self.hives[0].id {
+    self.start
+  } else {
+    hive.position
+  }
+  p.x = point.x
+  p.y = point.y
+  p.z = point.z
   p.heading = hive.heading
   p.aim = hive.heading
   p.hp = p.max_hp()

@@ -16,6 +16,7 @@ pub(all) struct Game {
   floor_heat : Array[Belt]
   currents : Array[Current]
   mut velocity : Vec2
+  priv start : Vec3
   mut previous_player : Vec3
   mut cover_held_until : Double
   beams : Array[Beam]
@@ -32,14 +33,15 @@ pub(all) struct Game {
 }
 
 ///|
-pub fn Game::new() -> Game {
+pub fn Game::new(start? : Vec3) -> Game {
   let progress = Progress::new()
   let player = Player::new()
   let hives = authored_hives()
   let hive = hives[0]
-  player.x = hive.position.x
-  player.y = hive.position.y
-  player.z = hive.position.z
+  let start = start.unwrap_or(hive.position)
+  player.x = start.x
+  player.y = start.y
+  player.z = start.z
   player.heading = hive.heading
   player.aim = hive.heading
   {
@@ -47,6 +49,7 @@ pub fn Game::new() -> Game {
     last_hit: "",
     puzzles: Puzzles::new(),
     player,
+    start,
     progress,
     world: authored_world(),
     commands: Commands::new(authored_controls(), authored_circuits()),

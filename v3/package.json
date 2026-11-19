@@ -7,6 +7,7 @@
     "build:moon": "npm run build:content && moon build cmd/play --target js --release",
     "dev": "npm run build:moon && vite --host 127.0.0.1",
     "build": "npm run build:moon && vite build",
+    "build:offline": "npm run build && mkdir -p output/builds && zip -q -FS -r output/builds/Tankle-v3-dist.zip README.md Play.command dist -x '*/.DS_Store'",
     "preview": "vite preview --host 127.0.0.1",
     "test": "npm run build:content && moon test simulation --target js",
     "check": "npm run build:content && moon check . simulation host renderer cmd/play --target js && npm run test:content && moon test simulation --target js && npm run build",

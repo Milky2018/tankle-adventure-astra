@@ -75,12 +75,27 @@ pub extern "js" fn read_save() -> String =
   #| () => localStorage.getItem('tankle-moonbit-v1') ?? ''
 
 ///|
-pub extern "js" fn write_save(text : String) -> Unit =
+let playtest : Bool = query("chapter") == "circulation"
+
+///|
+pub fn write_save(text : String) -> Unit {
+  if !playtest {
+    store_progress(text)
+  }
+}
+
+///|
+extern "js" fn store_progress(text : String) -> Unit =
   #| text => { localStorage.setItem('tankle-moonbit-v1',text); }
 
 ///|
-pub extern "js" fn remove_save() -> Unit =
-  #| () => { localStorage.removeItem('tankle-moonbit-v1'); location.reload(); }
+pub fn remove_save() -> Unit {
+  restart(clear_save=!playtest)
+}
+
+///|
+extern "js" fn restart(clear_save~ : Bool) -> Unit =
+  #| clear => { if (clear) localStorage.removeItem('tankle-moonbit-v1'); location.reload(); }
 
 ///|
 pub extern "js" fn pointer_locked() -> Bool =

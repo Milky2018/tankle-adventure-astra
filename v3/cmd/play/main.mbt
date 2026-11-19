@@ -160,8 +160,13 @@ pub fn start() -> Unit {
   @host.load_scene(
     "/generated/art/folded-scene.json.gz",
     fn(scene) {
-      let game = @sim.Game::new()
-      game.restore(@host.read_save()) |> ignore
+      let game = if @host.query("chapter") == "circulation" {
+        @sim.Game::new(start={ x: 290, y: -24, z: 120, })
+      } else {
+        let game = @sim.Game::new()
+        game.restore(@host.read_save()) |> ignore
+        game
+      }
       let settings = Settings::load()
       let view = @view.View::new(scene, game)
       view.third_person = match @host.query("view") {

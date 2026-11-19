@@ -476,6 +476,7 @@ pub(all) struct Game {
   mut death_at : Double?
   mut ending_at : Double?
   mut time : Double
+  // private fields
 }
 pub fn Game::advance_world(Self, Double) -> Unit
 pub fn Game::cast(Self, Queries, Ray, Double, targets? : Bool, refuge? : Bool, ground? : Bool, visible? : (Vec3) -> Bool) -> Hit?
@@ -495,7 +496,7 @@ pub fn Game::magnet(Self, Queries, Vec3, Vec3, Bool, Double) -> Unit
 pub fn Game::mortar_target(Self, Queries, Vec3, Vec3) -> Vec3
 pub fn Game::move_enemy(Self, Int32, Double, Double, Double) -> Unit
 pub fn Game::move_player(Self, Vec2, Bool, Double) -> Unit
-pub fn Game::new() -> Self
+pub fn Game::new(start? : Vec3) -> Self
 pub fn Game::predict_mortar(Self, Queries, Vec3, Vec3) -> (Array[Vec3], Hit?, Bool)
 pub fn Game::press_cycle(Self) -> Double
 pub fn Game::pull_slide(Self, Solid, Vec3, Double) -> Bool

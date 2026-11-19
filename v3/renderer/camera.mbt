@@ -11,6 +11,7 @@ pub(all) struct View {
   priv enemies : Array[EnemyVisual]
   priv projectiles : Projectiles
   priv lighting : CityLights
+  priv room_visibility : RoomVisibility
   priv cutaway : Cutaway
   scene : @core.Object3D
   renderer : @webgl.WebGLRenderer
@@ -93,6 +94,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     area: 17,
     ground_clearance: 0,
     cutaway: Cutaway::new(scene),
+    room_visibility: RoomVisibility::new(scene),
     projectiles: Projectiles::new(),
     enemies: enemy_visuals(nodes, game),
     ending: @core.PerspectiveCamera::new(fov=55, aspect=1, near=0.15, far=290),
@@ -220,7 +222,11 @@ pub fn View::draw(
     self.scene,
   )
   self.cutaway.update(player, world, camera, self.third_person)
+  if self.third_person && !self.film {
+    self.room_visibility.apply(camera, self.cutaway)
+  }
   self.renderer.render(self.scene, camera)
+  self.room_visibility.restore()
 }
 
 ///|

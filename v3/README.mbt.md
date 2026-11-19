@@ -2,6 +2,22 @@
 
 A hand-written MoonBit implementation of the connected city in `../Gamespec.md`.
 
+## Play the offline build
+
+Extract `Tankle-v3-dist.zip`. On the computer you will play on, install the MoonBit toolchain with `moonx` and run this once while online to cache the static file server:
+
+```sh
+moonx cli/serve@0.1.5 --help
+```
+
+From the extracted directory containing `dist/`, start the game server:
+
+```sh
+moonx cli/serve@0.1.5 --port 8000 dist
+```
+
+On macOS, double-clicking `Play.command` runs the same command. Keep the terminal open while playing. Open the [campaign](http://127.0.0.1:8000/) or [start at the circulation works](http://127.0.0.1:8000/?chapter=circulation&view=third). The circulation playtest starts fresh each time and keeps campaign saves separate. Press Ctrl+C in the terminal to stop the server.
+
 ## Run
 
 Run these commands from `v3/`. Moon fetches `moonbit-community/three@0.1.1` from Mooncakes during the build.
@@ -12,6 +28,8 @@ npm run dev
 ```
 
 Open http://127.0.0.1:5175/. `npm run build` produces `dist/`; `npm run preview` serves that build. Rebuild MoonBit and reload the page after changing `.mbt` files.
+
+To build the offline archive from this checkout, run `npm run build:offline` after `npm ci`. It uses the `zip` command and writes `output/builds/Tankle-v3-dist.zip` with the production game, launcher, and this README.
 
 ## Structure
 

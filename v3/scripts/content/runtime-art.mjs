@@ -1,6 +1,7 @@
 // Compile the editable ObjectLoader archive for the game. Keep the editor's
 // individual trim instances in the source; the visible batches already draw them.
 import { instanceRepeatedShapes } from "./instance-repeats.mjs";
+import { bakeRoomPortals } from "./room-portals.mjs";
 import { batchFittings } from "./batch-fittings.mjs";
 import { mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { gunzipSync, gzipSync } from "node:zlib";
@@ -46,6 +47,7 @@ export function buildRuntimeArt(source, destination, barriers = []) {
 
   instanceRepeatedShapes(scene, sourceView);
   batchFittings(scene, sourceView, barriers);
+  bakeRoomPortals(scene, sourceView);
   function packInstances(node) {
     if (node.type === "InstancedMesh") {
       const attrs = {};

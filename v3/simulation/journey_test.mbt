@@ -201,3 +201,16 @@ test "mortar preserves an elevated tray and forecasts an intercepting ceiling" {
   }
   assert_eq(game.shots.length(), 0)
 }
+
+///|
+test "a playtest start lasts until another repair room becomes the anchor" {
+  let start : @simulation.Vec3 = { x: 290, y: -24, z: 120, }
+  let game = @simulation.Game::new(start~)
+  assert_true(game.player.position() == start)
+  game.player.x += 12
+  game.respawn()
+  assert_true(game.player.position() == start)
+  game.progress.anchor = game.hives[1].id
+  game.respawn()
+  assert_true(game.player.position() == game.hives[1].position)
+}
