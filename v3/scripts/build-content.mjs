@@ -202,7 +202,7 @@ fn belt_segments() -> Map[String, Array[(Double, Int32)]] {
 }
 `,
 );
-buildRuntimeArt("content/art", "public/generated/art");
+buildRuntimeArt("content/art", "public/generated/art", content.foldedSolids);
 await import("./sound-data.mjs");
 const tuning = JSON.parse(readFileSync("content/abilities.json", "utf8"));
 const record = (fields) =>

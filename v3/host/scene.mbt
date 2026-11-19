@@ -37,6 +37,7 @@ fn parse_scene(
     textures_ready()
   })
   let geometries = buffers.get("geometry")
+  let instances = buffers.get("instances")
   fn restore(attribute : @core.BufferAttribute, view : @core.JsValue) {
     if !view.is_undefined() {
       attribute.array = view.cast()
@@ -44,6 +45,15 @@ fn parse_scene(
     }
   }
   scene.traverse(fn(object) {
+    if object.kind is Mesh({ kind: InstancedMesh(data), .. }) {
+      let attrs = instances.get(object.uuid)
+      if !attrs.is_undefined() {
+        restore(data.instance_matrix, attrs.get("instanceMatrix"))
+        if data.instance_color is Some(color) {
+          restore(color, attrs.get("instanceColor"))
+        }
+      }
+    }
     guard object.get_geometry() is Some(geometry) else { return }
     let packed = geometries.get(geometry.uuid)
     if packed.is_undefined() {

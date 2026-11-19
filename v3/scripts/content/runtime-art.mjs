@@ -1,15 +1,16 @@
 // Compile the editable ObjectLoader archive for the game. Keep the editor's
 // individual trim instances in the source; the visible batches already draw them.
+import { instanceRepeatedShapes } from "./instance-repeats.mjs";
 import { batchFittings } from "./batch-fittings.mjs";
 import { mkdirSync, readdirSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { gunzipSync, gzipSync } from "node:zlib";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 
-export function buildRuntimeArt(source, destination) {
+export function buildRuntimeArt(source, destination, barriers = []) {
   const scene = JSON.parse(gunzipSync(readFileSync(join(source, "city.scene.json.gz"))));
   const original = gunzipSync(readFileSync(join(source, "city.buffers.bin.gz")));
-  const views = { geometry: {}, images: {} };
+  const views = { geometry: {}, images: {}, instances: {} };
   const chunks = [];
   let length = 0;
   const stored = new Map();
@@ -38,14 +39,28 @@ export function buildRuntimeArt(source, destination) {
         if (node[key]) node[key] = { uuid: node[key].uuid };
       }
     }
-    for (const attr of [node.instanceMatrix, node.instanceColor]) {
-      if (attr?.array?.byteOffset !== undefined) attr.array = Array.from(sourceView(attr.array));
-    }
+
     for (const child of node.children ?? []) prepare(child);
   }
   prepare(scene.object);
 
-  batchFittings(scene, sourceView);
+  instanceRepeatedShapes(scene, sourceView);
+  batchFittings(scene, sourceView, barriers);
+  function packInstances(node) {
+    if (node.type === "InstancedMesh") {
+      const attrs = {};
+      for (const key of ["instanceMatrix", "instanceColor"]) {
+        const a = node[key];
+        if (!a) continue;
+        const view = Array.isArray(a.array) ? new globalThis[a.type](a.array) : sourceView(a.array);
+        attrs[key] = append(Buffer.from(view.buffer, view.byteOffset, view.byteLength), a.type, view.length);
+        a.array = [];
+      }
+      views.instances[node.uuid] = attrs;
+    }
+    for (const child of node.children ?? []) packInstances(child);
+  }
+  packInstances(scene.object);
   const libraries = ["geometries", "materials", "textures", "images", "shapes", "animations", "skeletons"];
   const resources = new Map(libraries.flatMap(k => (scene[k] ?? []).map(entry => [entry.uuid, entry])));
   const used = new Set();

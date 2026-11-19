@@ -67,7 +67,8 @@ pub fn View::queries(
   let mirrors : Array[Collider] = []
   root.traverse(fn(object) {
     let name = scene_binding(object)
-    if name.has_suffix("/fixture-collider") {
+    if name.has_suffix("/fixture-collider") ||
+      metadata_string(object.user_data, "renderRole") == "enclosure" {
       fixtures.push(collider(object, @sim.Terrain))
     }
     if name.has_prefix("world/surfaces/") && name.has_suffix("/mesh") {
@@ -161,9 +162,16 @@ fn GeometryQueries::cast(
       if hit.distance > limit {
         break
       }
-      if self.aiming &&
-        !(self.visible)(point(hit.point), target is @sim.Terrain, false) {
-        continue
+      if self.aiming {
+        let shell = metadata_string(object.user_data, "renderRole") ==
+          "enclosure"
+        if !(self.visible)(
+            point(hit.point),
+            target is @sim.Terrain && !shell,
+            shell,
+          ) {
+          continue
+        }
       }
       let normal = hit.face.map(fn(face) {
         point(

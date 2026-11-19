@@ -1,8 +1,15 @@
 ///|
+priv struct Roller {
+  node : @core.Object3D
+  mount : @m3.Quaternion
+  instance : (@core.Object3D, Int32)?
+}
+
+///|
 priv struct BeltSegment {
   mesh : @core.Object3D
   travel : Double
-  rollers : Array[(@core.Object3D, @m3.Quaternion)]
+  rollers : Array[Roller]
   heaters : Array[@core.Object3D]
 }
 
@@ -24,11 +31,14 @@ fn belts(
     for j, (travel, heat_count) in sizes.get(body.deck.id).unwrap() {
       let prefix = "world/belts/\{body.deck.id}/segments/\{j}"
       if nodes.get(prefix + "/mesh") is Some(node) {
-        let rollers : Array[(@core.Object3D, @m3.Quaternion)] = []
+        let rollers : Array[Roller] = []
         for k in 0..<2 {
           if nodes.get(prefix + "/rollers/\{k}") is Some(node) {
             node.matrix_auto_update = true
-            rollers.push((node, node.quaternion.clone()))
+            let instance = nodes
+              .get(metadata_string(node.user_data, "rollerBatch"))
+              .map(fn(batch) { (batch, node.user_data.get("instance").cast()) })
+            rollers.push({ node, mount: node.quaternion.clone(), instance, })
           }
         }
         let heaters : Array[@core.Object3D] = []
@@ -110,8 +120,18 @@ pub fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
       }
       data.instance_matrix.set_needs_update(true)
       rotation.set_from_axis_angle(axis, -belt.phase / 0.22) |> ignore
-      for (node, mount) in segment.rollers {
-        node.quaternion.copy(mount).multiply(rotation) |> ignore
+      for roller in segment.rollers {
+        roller.node.quaternion.copy(roller.mount).multiply(rotation) |> ignore
+        if roller.instance is Some((batch, index)) &&
+          roller.node.parent is Some(segment_root) {
+          roller.node.update_matrix()
+          matrix.multiply_matrices(segment_root.matrix, roller.node.matrix)
+          |> ignore
+          batch.set_matrix_at(index, matrix) |> ignore
+          if batch.kind is Mesh({ kind: InstancedMesh(instances), .. }) {
+            instances.instance_matrix.set_needs_update(true)
+          }
+        }
       }
       for lamp in segment.heaters {
         color(lamp, if released || stopped { 0x829185 } else { 0xffa05a })

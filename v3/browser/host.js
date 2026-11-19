@@ -17,8 +17,11 @@ export async function loadScene(url, parse, ready, failed) {
       const view = new globalThis[type](binary, byteOffset, length);
       return copy ? view.slice() : view;
     }
-    for (const attrs of Object.values(views.geometry)) {
-      for (const [name, view] of Object.entries(attrs)) attrs[name] = typedView(view);
+    views.instances ??= {};
+    for (const table of [views.geometry, views.instances]) {
+      for (const attrs of Object.values(table)) {
+        for (const [name, view] of Object.entries(attrs)) attrs[name] = typedView(view);
+      }
     }
     for (const [id, view] of Object.entries(views.images)) views.images[id] = typedView(view);
     performance.mark("art-parse-start");

@@ -119,7 +119,9 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
   } else {
     "#include <map_fragment>"
   }
-  let radius = if role == "structure" || role == "backdrop" {
+  let radius = if role == "structure" ||
+    role == "backdrop" ||
+    role == "enclosure" {
     36.0
   } else {
     13.0
@@ -160,14 +162,13 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
   }
   let camera_only = role == "fixture" || role == "belt"
   let terrain = role == "floor" || role == "belt"
-  let depth = !material.color_write
   let aperture =
     #| vec3 delta = apertureWorld-aperturePlayer-vec3(0.0,1.3,0.0);
     #| vec3 viewDirection = apertureDirection;
     #| float along = dot(delta,viewDirection);
     #| float radius = length(delta-viewDirection*along);
     #| vec3 viewport = (aperturePyramid*vec4(apertureWorld,1.0)).xyz;
-    #| float eyeCut = viewport.z>0.0 && viewport.z<=1.0 ? 1.0-smoothstep(0.9,1.0,max(abs(viewport.x),abs(viewport.y))/max(0.000001,viewport.z)) : 0.0;
+    #| float eyeCut = viewport.z>0.0 && viewport.z<=1.0 ? 1.0-smoothstep(0.68,0.76,max(abs(viewport.x),abs(viewport.y))/max(0.000001,viewport.z)) : 0.0;
   let overhead = if camera_only {
     "0.0"
   } else {
@@ -179,12 +180,19 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
     aperture +
     "\nfloat cut = mix(\{overhead},eyeCut,apertureMode)*apertureEnabled;\n" +
     (if terrain { support_shader } else { "" }) +
-    "\ndiffuseColor.a *= 1.0-0.84*cut;\n" +
-    (if depth {
-      "if(diffuseColor.a<0.999) discard;\n"
-    } else {
-      "outgoingLight *= mix(1.0,0.42,smoothstep(3.0,12.0,abs(apertureWorld.y-aperturePlayer.y))*(1.0-apertureMode)*apertureEnabled);\n"
-    }) +
+    // Write solid color and depth together. Only the narrow edge of the
+    // camera cut uses ordered coverage, so aiming through its center is clear.
+    (
+      #|
+      #| if (cut > 0.0) {
+      #|   vec2 pixel = mod(floor(gl_FragCoord.xy), 4.0);
+      #|   vec2 low = mod(pixel, 2.0), high = floor(pixel * 0.5);
+      #|   float lo = 2.0*mod(low.x+low.y,2.0)+low.y;
+      #|   float hi = 2.0*mod(high.x+high.y,2.0)+high.y;
+      #|   if (smoothstep(0.56,0.75,cut) > (4.0*lo+hi+0.5)/16.0) discard;
+      #| }
+    ) +
+    "\noutgoingLight *= mix(1.0,0.65,smoothstep(3.0,12.0,abs(apertureWorld.y-aperturePlayer.y))*(1.0-apertureMode)*apertureEnabled);\n" +
     contact +
     "\n#include <opaque_fragment>"
   }
@@ -228,7 +236,7 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
       )
   })
   material.custom_program_cache_key = Some(fn() {
-    "typed-cutaway-\{role}-\{depth}-\{finish}"
+    "typed-cutaway-\{role}-\{finish}"
   })
 }
 
@@ -306,8 +314,8 @@ fn Cutaway::aim_visible(
     if p.z > 0 && p.z <= 1 {
       cut = 1 -
         smooth(
-          0.9,
-          1,
+          0.68,
+          0.76,
           Double::max(p.x.abs(), p.y.abs()) / Double::max(0.000001, p.z),
         )
     }
@@ -335,5 +343,5 @@ fn Cutaway::aim_visible(
       }
     }
   }
-  1.0 - 0.84 * cut > 0.45
+  cut < 0.655
 }
