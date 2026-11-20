@@ -14,6 +14,10 @@ pub(all) struct View {
   priv lighting : CityLights
   priv clerestories : Array[@core.Object3D]
   priv room_visibility : RoomVisibility
+  priv mut boom_pitch : Double
+  priv mut boom_length : Double
+  priv camera_space : CameraSpace
+  priv progress : @sim.Progress
   priv cutaway : Cutaway
   scene : @core.Object3D
   renderer : @webgl.WebGLRenderer
@@ -106,6 +110,10 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     overhead_angle: @math.atan2(39.6, (28.0 * 28 * 2).sqrt()),
     area: 17,
     ground_clearance: 0,
+    boom_length: 15,
+    boom_pitch: 0,
+    progress: game.progress,
+    camera_space: CameraSpace::new(scene, game.world),
     cutaway: Cutaway::new(scene),
     clerestories,
     room_visibility: RoomVisibility::new(scene),
@@ -211,11 +219,64 @@ pub fn View::position_player(
       .add_scaled_vector(up, self.camera_height)
       .add_scaled_vector(right, self.shoulder)
     offset.set_y(Double::max(2.5, offset.y)) |> ignore
+    let anchor = @sim.Vec3::{
+      x: player.x,
+      y: self.root.position.y + 1.8,
+      z: player.z,
+    }
+    let desired = offset.length()
+    let straight = self.camera_space.boom_limit(
+      anchor,
+      point(offset),
+      world,
+      self.progress,
+    )
+    let tight = 1.0 - smooth(3.0, 10.5, straight)
+    // Raise the boom in a tight corner while preserving the driver's horizontal bearing.
+    let elevation = tight *
+      Double::max(0, 0.94 - @math.asin(offset.y / desired))
+    self.boom_pitch = if dt <= 0 {
+      elevation
+    } else {
+      damp(self.boom_pitch, elevation, 10, dt)
+    }
+    let free = if self.boom_pitch > 0.003 {
+      let axis = @m3.Vector3::new(offset.z, 0, -offset.x).normalize()
+      offset.apply_axis_angle(axis, -self.boom_pitch) |> ignore
+      self.camera_space.boom_limit(anchor, point(offset), world, self.progress)
+    } else {
+      straight
+    }
+    // Compress immediately on contact, ease back after rounding the corner.
+    let target = Double::min(desired, Double::max(3.8, free))
+    self.boom_length = if target <= self.boom_length || dt <= 0 {
+      target
+    } else {
+      damp(self.boom_length, target, 4, dt)
+    }
     self.third.position.copy(
-      offset.add(@m3.Vector3::new(player.x, player.y + 1.8, player.z)),
+      offset.multiply_scalar(self.boom_length / desired).add(vector(anchor)),
     )
     |> ignore
-    self.third.look_at(self.third.position.clone().add(forward))
+    let close = 1.0 - smooth(4, 9, self.boom_length)
+    let cam = self.third.as_perspective_camera()
+    let fov = 60.0 + 18.0 * close
+    if (cam.fov - fov).abs() > 0.01 {
+      cam.fov = fov
+      self.third.update_projection_matrix()
+    }
+    let look = vector(anchor)
+      .add_scaled_vector(
+        up,
+        self.camera_height * self.boom_length / desired * (1 - close),
+      )
+      .add_scaled_vector(right, self.shoulder * self.boom_length / desired)
+      .add_scaled_vector(forward, 1.25 * close)
+    let blend = Double::max(close, smooth(0.0, 0.11, self.boom_pitch))
+    let requested = self.third.position
+      .clone()
+      .add_scaled_vector(forward, self.boom_length)
+    self.third.look_at(requested.lerp(look, blend))
     self.third.update_matrix_world(force=true)
   } else {
     self.overhead.position.set(
@@ -227,6 +288,7 @@ pub fn View::position_player(
     self.overhead.look_at(@m3.Vector3::new(player.x, player.y, player.z))
     self.overhead.update_matrix_world(force=true)
   }
+  self.cutaway.update(player, world, self.camera(), self.third_person)
 }
 
 ///|
@@ -253,7 +315,10 @@ pub fn View::draw(
     },
     self.scene,
   )
-  self.cutaway.update(player, world, camera, self.third_person)
+  if self.film ||
+    (self.cutaway.mode.value is Number(mode) && (mode > 0) != self.third_person) {
+    self.cutaway.update(player, world, camera, self.third_person)
+  }
   self.renderer.render(self.scene, camera)
   self.room_visibility.restore()
 }

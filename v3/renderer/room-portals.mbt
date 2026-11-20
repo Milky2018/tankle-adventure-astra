@@ -298,49 +298,13 @@ fn RoomVisibility::apply_portals(
       camera.projection_matrix(),
       camera.matrix_world_inverse(),
     ).elements
-  // The shader's temporary cut is a pyramid in world space. Where it crosses
-  // a sealed face, admit the whole intersection with its conservative AABB.
-  let inv = cut.pyramid.clone().invert()
+  // Include every face touched by the sight corridor used in the fragment shader.
   let opening = @m3.Box3::new()
-  let point = @m3.Vector3::new(0, 0, 0)
-  opening.expand_by_point(point.apply_matrix4(inv)) |> ignore
-  for i in 0..<4 {
-    point
-    .set(
-      if (i & 1) == 0 {
-        -1
-      } else {
-        1
-      },
-      if (i & 2) == 0 {
-        -1
-      } else {
-        1
-      },
-      1,
-    )
-    .apply_matrix4(inv)
-    |> ignore
-    opening.expand_by_point(point) |> ignore
-    point
-    .set(
-      if (i & 1) == 0 {
-        -1
-      } else {
-        1
-      },
-      if (i & 2) == 0 {
-        -1
-      } else {
-        1
-      },
-      -1,
-    )
-    .unproject(camera)
-    |> ignore
-    opening.expand_by_point(point) |> ignore
-  }
-  opening.expand_by_scalar(0.02) |> ignore
+  opening
+  .expand_by_point(cut.player.clone().add(@m3.Vector3::new(0, 1.3, 0)))
+  .expand_by_point(eye)
+  .expand_by_scalar(2.45)
+  |> ignore
   let clipped = @m3.Box3::new()
   let range = match cut.distance.value {
     Number(v) => v

@@ -94,6 +94,8 @@ The full city has roughly 13,500 scene nodes. Prefer an entity export for charac
 
 Art and collision are separate. Moving a decorative mesh does not move a wall or floor collider. Edit both when changing a passage. Sloped deck `rise`, conveyor segment layout, circuit routes and bespoke puzzle coordinates also require their corresponding definition or MoonBit changes. Circuit geometry is not automatically rerouted when a switch moves.
 
+The third-person camera uses the wall, barrier, lift and deck definitions when it moves behind the tank. For static scenery that can obstruct the camera, use the existing `enclosure` render role or a group with a binding ending in `/fixture-collider`. The content build extracts broad, axis-aligned rectangular faces from those meshes. Keep doorways open in the source geometry so the camera can extend through them. Moving gates and lifts use their simulation state.
+
 Existing enemies, hives, controls, pickups, mirrors, barriers and lifts carry gameplay metadata on their roots. Moving these roots updates their definition positions; enemy patrol/activation areas and lift stops translate with them. Player model placement is an art preview: the actual spawn comes from the first hive and saved checkpoint. Runtime animation controls role pivots, so author mesh offsets beneath those pivots.
 
 Keep gameplay roots axis-aligned with their exported scale, and keep exported roots at the scene's top level. Rotate/scale child art instead. Collision boxes support positive, axis-aligned scaling. New decorative meshes and model imports are supported. Use the local editor controls below to add or remove enemies, controls and pickups: copying only their visible meshes on the official website does not create a complete gameplay entity.

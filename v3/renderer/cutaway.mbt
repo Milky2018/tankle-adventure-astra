@@ -1,7 +1,7 @@
 ///|
 struct Cutaway {
   player : @m3.Vector3
-  pyramid : @m3.Matrix4
+  sight_length : @core.Uniform
   distance : @core.Uniform
   water_time : @core.Uniform
   heading : @core.Uniform
@@ -30,7 +30,7 @@ let world_declarations : String =
   #| varying vec3 apertureWorld;
   #| uniform vec3 aperturePlayer;
   #| uniform float hullHeading, waterTime;
-  #| uniform mat4 aperturePyramid;
+  #| uniform float sightLength;
   #| uniform float apertureMode, apertureEnabled, renderDistance;
   #| uniform vec3 apertureDirection;
   #| uniform vec4 bounds0, bounds1, bounds2, bounds3;
@@ -55,7 +55,7 @@ fn Cutaway::new(scene : @core.Object3D) -> Cutaway {
     water_time: @core.Uniform::new(Number(0)),
     heading: @core.Uniform::new(Number(0)),
     player: @m3.Vector3::new(0, -8, 86),
-    pyramid: @m3.Matrix4::new(),
+    sight_length: @core.Uniform::new(Number(0)),
     distance: @core.Uniform::new(Number(230)),
     direction: @m3.Vector3::new(28, 39.6, 28).normalize(),
     enabled: @core.Uniform::new(Number(1)),
@@ -173,8 +173,8 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
     #| vec3 viewDirection = apertureDirection;
     #| float along = dot(delta,viewDirection);
     #| float radius = length(delta-viewDirection*along);
-    #| vec3 viewport = (aperturePyramid*vec4(apertureWorld,1.0)).xyz;
-    #| float eyeCut = viewport.z>0.0 && viewport.z<=1.0 ? 1.0-smoothstep(0.68,0.76,max(abs(viewport.x),abs(viewport.y))/max(0.000001,viewport.z)) : 0.0;
+    #| float nearest = clamp(along, 0.0, sightLength);
+    #| float eyeCut = smoothstep(-0.8,0.0,along)*(1.0-smoothstep(2.05,2.42,length(delta-viewDirection*nearest)));
   let overhead = if camera_only {
     "0.0"
   } else {
@@ -228,7 +228,7 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
     uniforms["aperturePlayer"] = @core.Uniform::new(Vector3(self.player))
     uniforms["apertureDirection"] = @core.Uniform::new(Vector3(self.direction))
     uniforms["renderDistance"] = self.distance
-    uniforms["aperturePyramid"] = @core.Uniform::new(Matrix4(self.pyramid))
+    uniforms["sightLength"] = self.sight_length
     uniforms["apertureMode"] = self.mode
     uniforms["apertureEnabled"] = self.enabled
     for i in 0..<4 {
@@ -304,27 +304,13 @@ fn Cutaway::update(
 ) -> Unit {
   self.heading.value = Number(p.heading)
   self.player.set(p.x, p.y, p.z) |> ignore
-  self.direction.copy(camera.position).sub(self.player).normalize() |> ignore
-  self.mode.value = Number(if third { 1 } else { 0 })
-  let apex = @m3.Vector3::new(p.x, p.y + 1.6, p.z)
-  let corner = @m3.Vector3::new(-1, -1, -1).unproject(camera)
-  let right = @m3.Vector3::new(1, -1, -1)
-    .unproject(camera)
-    .sub(corner)
-    .multiply_scalar(0.5)
-  let up = @m3.Vector3::new(-1, 1, -1)
-    .unproject(camera)
-    .sub(corner)
-    .multiply_scalar(0.5)
-  let center = corner.clone().add(right).add(up).sub(apex)
+  self.direction.copy(camera.position).sub(self.player) |> ignore
   if third {
-    let scale = -apex.clone().apply_matrix4(camera.matrix_world_inverse()).z /
-      0.15
-    right.multiply_scalar(scale) |> ignore
-    up.multiply_scalar(scale) |> ignore
+    self.direction.set_y(self.direction.y - 1.3) |> ignore
   }
-  self.pyramid.make_basis(right, up, center).set_position_vector(apex).invert()
-  |> ignore
+  self.sight_length.value = Number(self.direction.length())
+  self.direction.normalize() |> ignore
+  self.mode.value = Number(if third { 1 } else { 0 })
   let mut slot = 0
   {
     let decks = world.ground_patches(p)
@@ -364,14 +350,14 @@ fn Cutaway::aim_visible(
 ) -> Bool {
   let mut cut = 0.0
   if third {
-    let p = vector(pos).apply_matrix4(self.pyramid)
-    if p.z > 0 && p.z <= 1 {
-      cut = 1 -
-        smooth(
-          0.68,
-          0.76,
-          Double::max(p.x.abs(), p.y.abs()) / Double::max(0.000001, p.z),
-        )
+    let origin = point(self.player).add({ x: 0, y: 1.3, z: 0, })
+    let delta = pos.sub(origin)
+    let dir = point(self.direction)
+    let along = delta.dot(dir)
+    if self.sight_length.value is Number(length) {
+      let nearest = @sim.clamp(along, 0, length)
+      cut = smooth(-0.8, 0, along) *
+        (1 - smooth(2.05, 2.42, delta.sub(dir.scale(nearest)).length()))
     }
   } else {
     let delta = pos.sub(point(self.player)).sub({ x: 0, y: 1.3, z: 0, })

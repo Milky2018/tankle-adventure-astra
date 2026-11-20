@@ -1,0 +1,167 @@
+///|
+priv struct CameraSpace {
+  gates : Map[(Int32, Int32), Array[@sim.Solid]]
+  mobile : Array[@sim.Solid]
+  decks : Map[(Int32, Int32), Array[@sim.Deck]]
+  faces : Map[(Int32, Int32), Array[(@sim.Vec3, @sim.Vec3)]]
+}
+
+///|
+fn camera_cell(x : Double) -> Int32 {
+  (x / 16).floor().to_int()
+}
+
+///|
+fn CameraSpace::new(scene : @core.Object3D, world : @sim.World) -> CameraSpace {
+  let mobile = world.obstacles.copy()
+  let gates = []
+  for solid in world.solids {
+    if solid.motion is Some(_) || solid.rail is Some(_) {
+      mobile.push(solid)
+    } else {
+      gates.push(solid)
+    }
+  }
+  let space : CameraSpace = {
+    decks: Map([]),
+    faces: Map([]),
+    gates: @sim.architecture_grid(gates),
+    mobile,
+  }
+
+  for deck in world.decks {
+    if deck.water {
+      continue
+    }
+    let r = deck.rect
+    for x in camera_cell(r.x)..<=camera_cell(r.x + r.w) {
+      for z in camera_cell(r.z)..<=camera_cell(r.z + r.d) {
+        space.decks.get_or_init((x, z), fn() { [] }).push(deck)
+      }
+    }
+  }
+  let data = scene.user_data.get("cameraFaces")
+  if !data.is_undefined() {
+    let rows : FixedArray[FixedArray[Double]] = data.cast()
+    for row in rows {
+      let min : @sim.Vec3 = { x: row[0], y: row[1], z: row[2], }
+      let max : @sim.Vec3 = { x: row[3], y: row[4], z: row[5], }
+      for x in camera_cell(min.x)..<=camera_cell(max.x) {
+        for z in camera_cell(min.z)..<=camera_cell(max.z) {
+          space.faces.get_or_init((x, z), fn() { [] }).push((min, max))
+        }
+      }
+    }
+  }
+  space
+}
+
+///|
+/// Sweep the camera from the turret to its requested eye. Walls use the same
+/// bounds as movement. Expanding them keeps the camera's near plane inside.
+fn CameraSpace::boom_limit(
+  self : CameraSpace,
+  origin : @sim.Vec3,
+  offset : @sim.Vec3,
+  world : @sim.World,
+  state : @sim.Progress,
+) -> Double {
+  let end = origin.add(offset)
+  let ray : @sim.Ray = { origin, direction: offset.normalized(), }
+  let mut limit = offset.length()
+  let pad = 0.45
+  let left = Double::min(origin.x, end.x) - pad
+  let right = Double::max(origin.x, end.x) + pad
+  let back = Double::min(origin.z, end.z) - pad
+  let front = Double::max(origin.z, end.z) + pad
+  fn box(lo : @sim.Vec3, hi : @sim.Vec3) {
+    if lo.x > right ||
+      hi.x < left ||
+      lo.z > front ||
+      hi.z < back ||
+      lo.y > end.y + pad ||
+      hi.y < origin.y - pad {
+      return
+    }
+    let padding : @sim.Vec3 = { x: pad, y: pad, z: pad, }
+    let low = lo.sub(padding)
+    let high = hi.add(padding)
+    if origin.x >= low.x &&
+      origin.x <= high.x &&
+      origin.z >= low.z &&
+      origin.z <= high.z &&
+      origin.y >= low.y &&
+      origin.y <= high.y {
+      limit = 0
+    } else if ray.box(low, high) is Some((entry, _)) {
+      limit = Double::min(limit, entry)
+    }
+  }
+  fn visit(s : @sim.Solid) {
+    let r = s.rect
+    box({ x: r.x, y: s.y, z: r.z, }, {
+      x: r.x + r.w,
+      y: s.y + s.h,
+      z: r.z + r.d,
+    })
+  }
+  // Intersect the underside of each overhead deck in its inclined plane.
+  fn ceiling(deck : @sim.Deck) {
+    let r = deck.rect
+    let slope = deck.rise / r.d
+    let gap = deck.y + slope * (origin.z - r.z) - pad - origin.y
+    let speed = ray.direction.y - slope * ray.direction.z
+    if gap >= 0 && speed > 0.00001 {
+      let t = gap / speed
+      if t < limit &&
+        r.contains(
+          origin.x + t * ray.direction.x,
+          origin.z + t * ray.direction.z,
+          margin=pad,
+        ) {
+        limit = t
+      }
+    }
+  }
+  for x in camera_cell(left)..<=camera_cell(right) {
+    for z in camera_cell(back)..<=camera_cell(front) {
+      let cell = (x, z)
+      if world.architecture_grid.get(cell) is Some(items) {
+        for s in items {
+          visit(s)
+        }
+      }
+      if self.gates.get(cell) is Some(gates) {
+        for gate in gates {
+          if gate.active(state) {
+            visit(gate)
+          }
+        }
+      }
+      if self.faces.get(cell) is Some(faces) {
+        for face in faces {
+          box(face.0, face.1)
+        }
+      }
+      if self.decks.get(cell) is Some(decks) {
+        for deck in decks {
+          ceiling(deck)
+        }
+      }
+    }
+  }
+  for solid in self.mobile {
+    if solid.active(state) {
+      visit(solid)
+    }
+  }
+  for lift in world.lifts {
+    let r = lift.rect
+    box({ x: r.x, y: lift.y - 0.35, z: r.z, }, {
+      x: r.x + r.w,
+      y: lift.y,
+      z: r.z + r.d,
+    })
+  }
+  limit
+}
