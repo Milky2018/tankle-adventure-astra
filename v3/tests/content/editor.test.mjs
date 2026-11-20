@@ -18,6 +18,7 @@ import {
   MeshBasicMaterial,
   BatchedMesh,
   ObjectLoader,
+  ImageLoader,
 } from "three";
 import { exportProject, importProject } from "../../scripts/scene-editor.mjs";
 import { readScene, writeScene } from "../../scripts/content/scene.mjs";
@@ -344,7 +345,26 @@ test("duplicate identities, missing roles and incomplete entity deletion fail be
   );
 });
 
-test("standalone templates support additions after their city source was removed", async () => {
+test("standalone templates support additions after their city source was removed", async (t) => {
+  // ObjectLoader normally asks the browser to decode embedded previews. Keep
+  // their exact sources through the Node-side clone, export and import cycle.
+  class EmbeddedImage {
+    constructor(src) { this.src = src; }
+  }
+  const previousImage = globalThis.HTMLImageElement;
+  globalThis.HTMLImageElement = EmbeddedImage;
+  t.after(() => {
+    if (previousImage === undefined) delete globalThis.HTMLImageElement;
+    else globalThis.HTMLImageElement = previousImage;
+  });
+  const embedded = new Set();
+  t.mock.method(ImageLoader.prototype, "load", (url, onLoad) => {
+    assert.match(url, /^data:image\/(jpeg|png);base64,/);
+    embedded.add(url);
+    const image = new EmbeddedImage(url);
+    queueMicrotask(() => onLoad?.(image));
+    return image;
+  });
   const { gunzipSync } = await import("node:zlib");
   const { cloneEntity, creationPosition } = await import(
     "../../editor/entity-model.js"
@@ -406,6 +426,8 @@ test("standalone templates support additions after their city source was removed
 
   // Copy a switch with a timed route: its signal consumers remain intentional references.
   const current = exportProject();
+  const savedImages = new Set(current.scene.images?.map(({ url }) => url));
+  for (const url of embedded) assert.ok(savedImages.has(url));
   const scene = new ObjectLoader().parse(current.scene);
   const root = scene.children.find(
     (object) => object.userData.entity?.id === "new-control-shot",

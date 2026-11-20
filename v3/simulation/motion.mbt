@@ -279,6 +279,13 @@ pub fn conveyor_velocity(
 }
 
 ///|
+pub fn Belt::heating(self : Belt, state : Progress) -> Bool {
+  self.heat > 0 &&
+  !(self.release is Some(id) && state.has(id)) &&
+  !(self.stop is Some(id) && state.has(id))
+}
+
+///|
 pub fn apply_floor_heat(
   player : Player,
   floors : Array[Belt],
@@ -287,11 +294,9 @@ pub fn apply_floor_heat(
   state : Progress,
 ) -> Unit {
   for floor in floors {
-    if floor.heat == 0 ||
+    if !floor.heating(state) ||
       !floor.deck.rect.contains(player.x, player.z) ||
-      (floor.deck.height(player.z) - player.y).abs() >= 0.5 ||
-      (floor.release is Some(id) && state.has(id)) ||
-      (floor.stop is Some(id) && state.has(id)) {
+      (floor.deck.height(player.z) - player.y).abs() >= 0.5 {
       continue
     }
     player.heat = Double::min(100, player.heat + floor.heat * dt)

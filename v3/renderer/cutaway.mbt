@@ -88,6 +88,10 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
         #| vMapUv = (mapTransform * vec3(apertureWorld.xz, 1.0)).xy;
         #| vAoMapUv = (aoMapTransform * vec3(apertureWorld.xz,1.0)).xy;
       )
+    "apron" =>
+      (
+        #| vMapUv = (mapTransform * vec3(apertureWorld.xz*.30,1.0)).xy;
+      )
     "masonry" | "ironwork" =>
       (
         #| vec3 face = normal;
@@ -107,17 +111,19 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
   } else {
     ""
   }
-  let map_fragment = if finish == "canal" {
-    (
-      #| vec3 eye = normalize(apertureWorld-cameraPosition);
-      #| vec3 reflected = reflect(eye,vec3(0.0,1.0,0.0));
-      #| vec2 ripple = vec2(sin(apertureWorld.x*3.3+apertureWorld.z*5.1+waterTime*1.2),sin(apertureWorld.z*6.9+apertureWorld.x-waterTime*1.8))*0.008;
-      #| vec2 shoreUv = vec2(atan(reflected.z,reflected.x)*0.31831,clamp(0.12+reflected.y*0.82,0.01,0.99))+ripple;
-      #| vec3 reflection = texture2D(map,shoreUv).rgb;
-      #| diffuseColor.rgb = mix(vec3(0.025,0.115,0.135), reflection*vec3(0.78,1.04,1.12),0.12+0.64*pow(1.0-abs(eye.y),2.0));
-    )
+  let probe = !material.user_data.get("probeCenter").is_undefined() &&
+    material.emissive_map is Some(_)
+  let map_fragment = match finish {
+    "skylight" => roof_light
+    "vapor" => steam_alpha
+    _ => "#include <map_fragment>"
+  }
+  let reflected = if !probe {
+    ""
+  } else if finish == "canal" {
+    canal_reflection
   } else {
-    "#include <map_fragment>"
+    wet_floor
   }
   let radius = if role == "structure" ||
     role == "backdrop" ||
@@ -136,8 +142,8 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
       #| vec2 lo = (chart+vec2(mod(lower,4.0),floor(lower/4.0)))*0.25;
       #| vec2 hi = (chart+vec2(mod(upper,4.0),floor(upper/4.0)))*0.25;
       #| vec3 daylight = mix(texture2D(aoMap,lo).rgb,texture2D(aoMap,hi).rgb,fract(level));
-      #| reflectedLight.directDiffuse *= smoothstep(vec3(0.14),vec3(0.87),daylight)*1.7+0.16;
-      #| reflectedLight.indirectDiffuse *= 0.46+daylight*0.86;
+      #| reflectedLight.directDiffuse *= smoothstep(vec3(0.14),vec3(0.87),daylight)*1.34+0.32;
+      #| reflectedLight.indirectDiffuse *= 0.77+daylight*0.75;
       #| vec3 eyeRay = normalize(apertureWorld-cameraPosition);
       #| vec2 reflectedChart = clamp(chart + eyeRay.xz*vec2(0.009,0.014)/max(0.28,abs(eyeRay.y)),0.001,0.999);
       #| vec3 loGlaze = texture2D(aoMap,(reflectedChart+vec2(mod(lower,4.0),floor(lower/4.0)))*0.25).rgb;
@@ -193,11 +199,30 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
       #| }
     ) +
     "\noutgoingLight *= mix(1.0,0.65,smoothstep(3.0,12.0,abs(apertureWorld.y-aperturePlayer.y))*(1.0-apertureMode)*apertureEnabled);\n" +
+    reflected +
+    "\n" +
     contact +
     "\n#include <opaque_fragment>"
   }
   material.on_before_compile = Some(fn(shader, _renderer) {
     let uniforms = shader.uniforms
+    if probe {
+      for key in ["probeCenter", "probeMin", "probeMax"] {
+        let p = material.user_data.get(key)
+        uniforms[key] = @core.Uniform::new(
+          Vector3(
+            @m3.Vector3::new(
+              p.get("0").cast(),
+              p.get("1").cast(),
+              p.get("2").cast(),
+            ),
+          ),
+        )
+      }
+      uniforms["wetness"] = @core.Uniform::new(
+        Number(material.user_data.get("wetness").cast()),
+      )
+    }
     uniforms["waterTime"] = self.water_time
     uniforms["hullHeading"] = self.heading
     uniforms["aperturePlayer"] = @core.Uniform::new(Vector3(self.player))
@@ -210,17 +235,42 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
       uniforms["bounds\{i}"] = @core.Uniform::new(Vector4(self.bounds[i]))
       uniforms["plane\{i}"] = @core.Uniform::new(Vector4(self.planes[i]))
     }
+    let extra_varying = if finish == "vapor" {
+      "\nvarying vec2 plumeUv;"
+    } else {
+      ""
+    }
+    let extra_fragment = if finish == "vapor" { steam_fragment } else { "" }
     shader.vertex_shader = shader.vertex_shader
       .replace(
         old="#include <common>",
-        new="#include <common>\nvarying vec3 apertureWorld;",
+        new="#include <common>\nvarying vec3 apertureWorld;" + extra_varying,
       )
       .replace(
         old="#include <project_vertex>",
-        new=world_vertex + "\n" + finish_uv + relief_uv,
+        new=world_vertex +
+          "\n" +
+          finish_uv +
+          relief_uv +
+          (if finish == "vapor" { "\nplumeUv = uv;" } else { "" }),
       )
     shader.fragment_shader = shader.fragment_shader
-      .replace(old="#include <common>", new=world_declarations)
+      .replace(
+        old="#include <common>",
+        new=world_declarations + extra_varying + "\n" + extra_fragment,
+      )
+      .replace(
+        old="#include <emissivemap_pars_fragment>",
+        new=if probe {
+          "#include <emissivemap_pars_fragment>\n" + room_reflection
+        } else {
+          "#include <emissivemap_pars_fragment>"
+        },
+      )
+      .replace(
+        old="#include <emissivemap_fragment>",
+        new=if probe { "" } else { "#include <emissivemap_fragment>" },
+      )
       .replace(old="#include <opaque_fragment>", new=fragment)
       .replace(old="#include <aomap_fragment>", new=lighting)
       .replace(old="#include <map_fragment>", new=map_fragment)
@@ -230,13 +280,17 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
           #| #ifdef USE_FOG
           #| float playerDistance = distance(apertureWorld,aperturePlayer);
           #| if(playerDistance > renderDistance) discard;
+          #| float underground = smoothstep(12.0,39.0,-aperturePlayer.y);
+          #| vec3 air = mix(vec3(.62,.68,.69),vec3(.49,.39,.32),underground);
+          #| float recess = 1.0-exp(-max(0.0,playerDistance-7.0)*mix(.011,.024,underground));
+          #| gl_FragColor.rgb = mix(gl_FragColor.rgb,air,recess*.54);
           #| gl_FragColor.rgb = mix(gl_FragColor.rgb,fogColor,smoothstep(fogNear,fogFar,playerDistance));
           #| #endif
         ),
       )
   })
   material.custom_program_cache_key = Some(fn() {
-    "typed-cutaway-\{role}-\{finish}"
+    "typed-cutaway-\{role}-\{finish}-\{probe}"
   })
 }
 

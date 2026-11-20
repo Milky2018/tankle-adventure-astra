@@ -219,3 +219,18 @@ test "a playtest start lasts until another repair room becomes the anchor" {
   game.respawn()
   assert_true(game.player.position() == game.hives[1].position)
 }
+
+///|
+test "thermal grates go cold when their shutdown or release circuit is completed" {
+  let game = @simulation.Game::new()
+  for grate in game.floor_heat {
+    assert_true(grate.heating(game.progress))
+    match (grate.stop, grate.release) {
+      (Some(id), _) | (_, Some(id)) => {
+        game.progress.complete(id) |> ignore
+        assert_false(grate.heating(game.progress))
+      }
+      _ => ()
+    }
+  }
+}

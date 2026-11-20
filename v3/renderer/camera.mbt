@@ -2,6 +2,7 @@
 pub(all) struct View {
   priv nodes : Map[String, @core.Object3D]
   priv belts : Array[BeltVisual]
+  priv grates : Array[(@sim.Belt, @core.Object3D)]
   priv hives : Array[HiveVisual]
   priv player_visual : PlayerVisual
   priv renewal : Renewal
@@ -11,6 +12,7 @@ pub(all) struct View {
   priv enemies : Array[EnemyVisual]
   priv projectiles : Projectiles
   priv lighting : CityLights
+  priv clerestories : Array[@core.Object3D]
   priv room_visibility : RoomVisibility
   priv cutaway : Cutaway
   scene : @core.Object3D
@@ -57,6 +59,12 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
       nodes[binding] = node
     }
   })
+  let clerestories = []
+  for binding, node in nodes {
+    if binding.has_prefix("presentation/clerestory/") {
+      clerestories.push(node)
+    }
+  }
   let renderer = @host.create_renderer()
   renderer.set_pixel_ratio(@host.pixel_ratio())
   renderer.shadow_map.enabled = true
@@ -79,6 +87,11 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     feeds: feeds(scene),
     effects: Effects::new(),
     belts: belts(nodes, game),
+    grates: game.floor_heat.filter_map(fn(grate) {
+      nodes
+      .get("process/heat/\{grate.deck.id}/elements")
+      .map(fn(node) { (grate, node) })
+    }),
     hives: hives(nodes, game),
     player_visual: PlayerVisual::new(nodes),
     renewal: Renewal::new(nodes),
@@ -94,6 +107,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     area: 17,
     ground_clearance: 0,
     cutaway: Cutaway::new(scene),
+    clerestories,
     room_visibility: RoomVisibility::new(scene),
     projectiles: Projectiles::new(),
     enemies: enemy_visuals(nodes, game),
@@ -223,6 +237,9 @@ pub fn View::draw(
 ) -> Unit {
   self.cutaway.enabled.value = Number(if self.film { 0 } else { 1 })
   let camera = self.camera()
+  for roof in self.clerestories {
+    roof.visible = self.third_person || self.film
+  }
   if self.nodes.get("city/sky") is Some(sky) {
     sky.matrix_auto_update = true
     sky.position.copy(camera.position) |> ignore

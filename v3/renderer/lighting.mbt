@@ -2,6 +2,7 @@
 priv struct WorkLamp {
   position : @m3.Vector3
   tint : Int32
+  bounce : @m3.Color
 }
 
 ///|
@@ -24,13 +25,28 @@ fn CityLights::new(nodes : Map[String, @core.Object3D]) -> CityLights {
   for binding, node in nodes {
     if binding.has_prefix("lighting/lamp/") {
       let tint = if binding.has_prefix("lighting/lamp/furnace/") {
-        0xff8a42
+        0xff9c55
       } else if binding.has_prefix("lighting/lamp/optics/") {
-        0xc7e3eb
+        0xb7ddff
       } else {
-        0xffda9b
+        0xffddb0
       }
-      anchors.push({ position: node.position, tint, })
+      let bounce = if binding.has_prefix("lighting/lamp/furnace/") {
+        0xffbd94
+      } else if binding.has_prefix("lighting/lamp/circulation/") {
+        0xa9cecb
+      } else if binding.has_prefix("lighting/lamp/optics/") {
+        0xbdcfec
+      } else if binding.has_prefix("lighting/lamp/garden/") {
+        0xd7e6cc
+      } else {
+        0xf0debd
+      }
+      anchors.push({
+        position: node.position,
+        tint,
+        bounce: @m3.Color::from_hex(bounce),
+      })
     }
   }
   let lights = []
@@ -64,13 +80,13 @@ fn CityLights::update(
   if self.depth != depth {
     self.depth = depth
     if self.ambient is Some(n) {
-      n.as_light().intensity = 0.65 - 0.23 * depth
+      n.as_light().intensity = 0.62 - 0.12 * depth
     }
     if self.hemisphere is Some(n) {
-      n.as_light().intensity = 1.25 - 0.73 * depth
+      n.as_light().intensity = 1.48 - 0.64 * depth
     }
     if self.key is Some(n) {
-      n.as_light().intensity = 2.6 - 1.23 * depth
+      n.as_light().intensity = 2.48 - 1.32 * depth
     }
     let exterior : Double = 1 -
       (1 - depth) * (1 - depth) * (1 - depth) * (1 - depth)
@@ -101,7 +117,7 @@ fn CityLights::update(
   }
   self.previous.set(p.x, p.y, p.z) |> ignore
   if self.key is Some(n) && self.target is Some(t) {
-    n.position.set(p.x - 18, p.y + 55, p.z + 16) |> ignore
+    n.position.set(p.x - 31, p.y + 42, p.z + 23) |> ignore
     t.position.copy(self.previous) |> ignore
     n.update_matrix()
     t.update_matrix()
@@ -125,13 +141,22 @@ fn CityLights::update(
       }
     }
   }
+  if self.ambient is Some(fill) {
+    let bounce = fill.as_light().color
+    bounce.set_hex(0xe2e8ec) |> ignore
+    for i = nearest.length() - 1; i >= 0; i = i - 1 {
+      let lamp = nearest[i]
+      let weight = 0.52 * (1 - lamp.position.distance_to(self.previous) / 32)
+      bounce.lerp(lamp.bounce, weight) |> ignore
+    }
+  }
   for i, n in self.lights {
     if i < nearest.length() {
       let lamp = nearest[i]
       n.position.copy(lamp.position) |> ignore
       n.update_matrix()
       n.as_light().color.set_hex(lamp.tint) |> ignore
-      n.as_light().intensity = 84 *
+      n.as_light().intensity = 135 *
         @sim.clamp((32 - lamp.position.distance_to(self.previous)) / 10, 0, 1)
     } else {
       n.as_light().intensity = 0

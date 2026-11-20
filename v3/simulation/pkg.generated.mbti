@@ -188,6 +188,7 @@ pub(all) struct Belt {
   stop : String?
   drive : BeltDrive?
 }
+pub fn Belt::heating(Self, Progress) -> Bool
 pub fn Belt::motion(Self, Array[Enemy], Progress) -> BeltMotion
 
 pub(all) struct BeltDrive {

@@ -129,3 +129,9 @@ Use `npm run build:content` after editing JSON if working directly with `moon ch
 The standalone import/export workflow was exercised against the live official r186 editor; the local entry pins upstream r185 and Three.js 0.185.1. Re-run the round-trip and browser checks when upgrading either side. Browser checks under `tests/browser/` use real input and read-only diagnostics; they do not teleport the player or grant abilities.
 
 Temporary editor projects, test screenshots and logs belong under ignored `output/`. Remove stale exports after importing, close test browsers, and keep only the preview server currently in use.
+
+## Surface finishes
+
+District materials and their images live in the editable city archive. A paving material can carry a local reflection panorama in its emissive map. Its `probeCenter`, `probeMin` and `probeMax` metadata are world-space XYZ triples identifying the capture point and room bounds. The renderer projects the reflection into those bounds and fades it at their edges. `wetness` controls the strength of the film. Canal materials use the same projection with moving ripples and a separate distant bank map. These probes contain the stationary environment. Capture them again after moving a prominent window, furnace or shoreline.
+
+Conveyor tread shoes are instanced in the existing segment frame. Their travel, spacing and roller rotation come from the belt simulation. A thermal grate's incandescent element binds to `process/heat/<id>/elements` and follows that floor's shutdown and release signals. Its fixed housing and grill stay on the floor.

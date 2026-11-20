@@ -56,6 +56,16 @@ fn belts(
 
 ///|
 fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
+  for (grate, elements) in self.grates {
+    color(
+      elements,
+      if grate.heating(game.progress) {
+        0xff953a
+      } else {
+        0x514b40
+      },
+    )
+  }
   let matrix = @m3.Matrix4::new()
   let rotation = @m3.Quaternion::new(0, 0, 0, 1)
   let axis = @m3.Vector3::new(0, 1, 0)
