@@ -14,6 +14,8 @@ priv struct EnemyVisual {
   part_lamps : Array[@core.Object3D?]
   core_lamp : @core.Object3D?
   core_shutters : Array[@core.Object3D?]
+  hull_finish : @core.Material?
+  shield_finish : @core.Material?
   scale : @m3.Vector3
 }
 
@@ -41,6 +43,39 @@ fn enemy_visuals(
       }
       node
     }
+    // Casings share geometry and textures, but each combatant owns its signal.
+    let mut hull_finish : @core.Material? = None
+    let mut shield_finish : @core.Material? = None
+    fn prepare(part : @core.Object3D) {
+      part.traverse(fn(node) {
+        if node.kind is Mesh(mesh) &&
+          mesh.material is Single(source) &&
+          metadata_string(source.user_data, "surfaceFinish") == "enemyEnamel" {
+          if enemy.definition.magnetic_shield &&
+            scene_binding(node) == prefix + "/model/frontArmor" {
+            let finish = source.clone()
+            mesh.material = Single(finish)
+            shield_finish = Some(finish)
+          } else {
+            let finish = match hull_finish {
+              Some(m) => m
+              None => {
+                let m = source.clone()
+                hull_finish = Some(m)
+                m
+              }
+            }
+            mesh.material = Single(finish)
+          }
+        }
+      })
+    }
+    prepare(root)
+    for j in 0..<enemy.parts.length() {
+      if nodes.get(prefix + "/parts/\{j}/root") is Some(part) {
+        prepare(part)
+      }
+    }
     let visual = {
       root,
       body: get("/model/body").unwrap(),
@@ -56,6 +91,8 @@ fn enemy_visuals(
       part_lamps: Array::makei(2, fn(j) { get("/parts/\{j}/lamp") }),
       core_lamp: get("/coreModel/lamp"),
       core_shutters: Array::makei(2, fn(j) { get("/coreModel/shutters/\{j}") }),
+      hull_finish,
+      shield_finish,
       scale: root.scale.clone(),
     }
     for
@@ -82,6 +119,33 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
   for i, v in self.enemies {
     let e = game.enemies[i]
     let alive = e.hp > 0
+    let pulling = game.magnet_lock is Some(@sim.EnemyTarget(target, _)) &&
+      target == i &&
+      alive
+    let impact = @sim.clamp(e.flash / 0.14, 0, 1)
+    if v.hull_finish is Some(m) && m.emissive is Some(tint) {
+      if impact > 0 {
+        tint.set_hex(if e.armor > 0 { 0xff7b24 } else { 0xff5010 }) |> ignore
+        m.emissive_intensity = Some(impact * 1.10)
+      } else if pulling && e.magnet_pullable() {
+        tint.set_hex(0x168cff) |> ignore
+        m.emissive_intensity = Some(0.55 + 0.23 * @math.sin(game.time * 16))
+      } else {
+        m.emissive_intensity = Some(0)
+      }
+    }
+    if v.shield_finish is Some(m) && m.emissive is Some(tint) {
+      tint.set_hex(if impact > 0 { 0xff7421 } else { 0x1385ff }) |> ignore
+      m.emissive_intensity = Some(
+        if impact > 0 {
+          impact * 0.90
+        } else if pulling {
+          0.64 + 0.24 * @math.sin(game.time * 16)
+        } else {
+          0.075
+        },
+      )
+    }
     v.root.visible = alive ||
       (e.dead_at is Some(_) && e.definition.reserve_for is None)
     let collapse = e.dead_at

@@ -45,12 +45,6 @@ let canal_reflection : String =
   #| outgoingLight = mix(water,sceneLight*1.18,fresnel);
 
 ///|
-let roof_light : String =
-  #| vec3 ray = normalize(apertureWorld-cameraPosition);
-  #| vec2 pano = vec2(atan(ray.z,ray.x)*.15915494+.5,.55+.42*max(0.0,ray.y));
-  #| diffuseColor.rgb *= mix(texture2D(map,pano).rgb,vec3(.78,.85,.83),.40)*1.45;
-
-///|
 let steam_fragment : String =
   #| float plumeNoise(vec2 p) {
   #|   vec2 cell=floor(p),f=fract(p); f=f*f*(3.0-2.0*f);

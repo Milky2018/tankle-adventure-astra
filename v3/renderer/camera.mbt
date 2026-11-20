@@ -81,6 +81,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
   for object in [root, body, turret, barrel] {
     object.matrix_auto_update = true
   }
+  let enemies = enemy_visuals(nodes, game)
   let view = {
     scene,
     nodes,
@@ -116,7 +117,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     clerestories,
     room_visibility: RoomVisibility::new(scene),
     projectiles: Projectiles::new(),
-    enemies: enemy_visuals(nodes, game),
+    enemies,
     ending: @core.PerspectiveCamera::new(fov=55, aspect=1, near=0.15, far=290),
     film: false,
     third: @core.PerspectiveCamera::new(fov=60, aspect=1, near=0.15, far=290),

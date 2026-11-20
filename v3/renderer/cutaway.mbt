@@ -114,7 +114,6 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
   let probe = !material.user_data.get("probeCenter").is_undefined() &&
     material.emissive_map is Some(_)
   let map_fragment = match finish {
-    "skylight" => roof_light
     "vapor" => steam_alpha
     _ => "#include <map_fragment>"
   }
@@ -180,7 +179,23 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
   } else {
     "(1.0-smoothstep(float(\{radius*5/13}),float(\{radius}),radius))*smoothstep(1.5,3.5,delta.y)*(1.0-smoothstep(55.0,62.0,along))"
   }
-  let fragment = if role == "" {
+  let fragment = if finish == "enemyEnamel" {
+    // Preserve the moulded relief in shadow. Blue induction strips keep their
+    // local colour even when the hull is lit only by the workshop skylights.
+    (
+      #| float induction = smoothstep(.20,.46,vColor.b-vColor.r) * smoothstep(.08,.26,vColor.b-vColor.g);
+      #| float pigment = max(vColor.r,max(vColor.g,vColor.b));
+      #| outgoingLight -= totalEmissiveRadiance * (.58*(1.0-pigment));
+      #| outgoingLight += diffuseColor.rgb*.42 + vColor.rgb*(.12+induction*.64);
+      #| #include <opaque_fragment>
+    )
+  } else if finish == "glass" {
+    (
+      #| float edge = 1.0-abs(dot(normal,normalize(vViewPosition)));
+      #| diffuseColor.a = min(.67, diffuseColor.a + .42*edge*edge);
+      #| #include <opaque_fragment>
+    )
+  } else if role == "" {
     "#include <opaque_fragment>"
   } else {
     aperture +

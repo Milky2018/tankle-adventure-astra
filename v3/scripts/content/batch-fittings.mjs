@@ -64,6 +64,7 @@ export function batchFittings(scene, sourceView, barriers = [], controls = []) {
     const leaf = !node.children?.length;
     if ((fitting || (leaf && (fixedTrack || decoration))) && node.type === "Mesh" &&
         node.visible !== false && m?.color !== undefined && m.visible !== false && supported &&
+        m.userData?.surfaceFinish !== "glass" &&
         (!m.vertexColors || attrs.color?.itemSize === 3) && transform.determinant() > 0) {
       const { uuid, name, color, vertexColors, ...properties } = m;
       const signature = JSON.stringify(properties);
