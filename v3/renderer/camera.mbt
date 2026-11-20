@@ -14,7 +14,6 @@ pub(all) struct View {
   priv lighting : CityLights
   priv clerestories : Array[@core.Object3D]
   priv room_visibility : RoomVisibility
-  priv mut boom_pitch : Double
   priv mut boom_length : Double
   priv camera_space : CameraSpace
   priv progress : @sim.Progress
@@ -111,7 +110,6 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     area: 17,
     ground_clearance: 0,
     boom_length: 15,
-    boom_pitch: 0,
     progress: game.progress,
     camera_space: CameraSpace::new(scene, game.world),
     cutaway: Cutaway::new(scene),
@@ -225,30 +223,14 @@ pub fn View::position_player(
       z: player.z,
     }
     let desired = offset.length()
-    let straight = self.camera_space.boom_limit(
+    let free = self.camera_space.boom_limit(
       anchor,
       point(offset),
       world,
       self.progress,
     )
-    let tight = 1.0 - smooth(3.0, 10.5, straight)
-    // Raise the boom in a tight corner while preserving the driver's horizontal bearing.
-    let elevation = tight *
-      Double::max(0, 0.94 - @math.asin(offset.y / desired))
-    self.boom_pitch = if dt <= 0 {
-      elevation
-    } else {
-      damp(self.boom_pitch, elevation, 10, dt)
-    }
-    let free = if self.boom_pitch > 0.003 {
-      let axis = @m3.Vector3::new(offset.z, 0, -offset.x).normalize()
-      offset.apply_axis_angle(axis, -self.boom_pitch) |> ignore
-      self.camera_space.boom_limit(anchor, point(offset), world, self.progress)
-    } else {
-      straight
-    }
     // Compress immediately on contact, ease back after rounding the corner.
-    let target = Double::min(desired, Double::max(3.8, free))
+    let target = Double::min(desired, Double::max(5.5, free))
     self.boom_length = if target <= self.boom_length || dt <= 0 {
       target
     } else {
@@ -265,18 +247,9 @@ pub fn View::position_player(
       cam.fov = fov
       self.third.update_projection_matrix()
     }
-    let look = vector(anchor)
-      .add_scaled_vector(
-        up,
-        self.camera_height * self.boom_length / desired * (1 - close),
-      )
-      .add_scaled_vector(right, self.shoulder * self.boom_length / desired)
-      .add_scaled_vector(forward, 1.25 * close)
-    let blend = Double::max(close, smooth(0.0, 0.11, self.boom_pitch))
-    let requested = self.third.position
-      .clone()
-      .add_scaled_vector(forward, self.boom_length)
-    self.third.look_at(requested.lerp(look, blend))
+    // Ground clearance and wall contact constrain the eye. Mouse pitch still
+    // controls the sightline when the boom has no more room to orbit.
+    self.third.look_at(self.third.position.clone().add(forward))
     self.third.update_matrix_world(force=true)
   } else {
     self.overhead.position.set(
