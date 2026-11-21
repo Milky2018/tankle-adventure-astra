@@ -110,7 +110,7 @@ An unlabelled clockwise ring around the sole reticle changes pale yellow → ora
 
 ### Repair, death and persistence
 
-Only the four refuges in [world and progression](#4-world-and-progression) restore HP repeatedly and establish respawn anchors. Approaching opens the Hive; activation unfolds tools, sweeps maintenance light across the hull, restores HP and Heat, saves progress and pulses the world to communicate ordinary-enemy reset. Repeat repair may shorten animation; reconstruction uses the full cycle.
+On death, the Tank reconstructs at the last Hive the player activated. The Old Repair Room is the starting anchor. The four refuges in [world and progression](#4-world-and-progression) offer repeatable repairs. Approaching opens the Hive; activation unfolds tools, sweeps maintenance light across the hull, restores HP and Heat, saves progress and pulses the world to communicate ordinary-enemy reset. Repeat repair may shorten animation; reconstruction uses the full cycle.
 
 On its own floor, an active Hive reserves **18 units free of enemies, measured to body edges**. Spawns, reinforcements, patrols, pursuit, charges, pulls and drifting mines respect it. Entering the inner **5-unit** maintenance area ends pursuit; mobile enemies return home. A thin mint ring marks protection: incoming/outgoing attacks dissipate with sparks and a blocked sound; blast and contact cannot hurt the protected Tank. Magnet can operate machinery but cannot attack outside. Mortar preview shows boundary interception. Holding fire does not remove protection; leaving restores normal reach and vulnerability. Protection does not extend across floors.
 
@@ -124,7 +124,7 @@ At zero HP, tracks stop, turret drops, lights extinguish and smoke rises. Music 
 | Defeated persistent Bosses, completed finite courts including reserves | Unfinished Boss seals and reserve deployment |
 | Journey completion and circuit transmission progress | Other transient combat states |
 
-Incomplete machinery must retain a supported local retry. Rest cannot reconstruct permanent barriers. Armour pickups fill only the newly added segment; repair/reconstruction fill the earned maximum. The Foundry's pre-Boost living-return restriction is intentional; death still returns to A.
+Incomplete machinery must retain a supported local retry. Rest cannot reconstruct permanent barriers. Armour pickups fill only the newly added segment; repair/reconstruction fill the earned maximum.
 
 ## 3. Abilities
 
@@ -287,17 +287,14 @@ Solid arrows describe dependencies, not mandatory hub visits; dotted arrows are 
 
 The permanent refuge ring is **A–B** through the original workroom ascent after Boost; **B–C** through the Phoenix breach and later cage; **C–D** through restored optical descent then thermal route; **D–A** through the shaft released from below. The garden far-bank loop links B and A. Local returns supplement this ring; exact openings are in [regional journeys](#7-regional-journeys).
 
-Every Boss and every dense encounter, including optional fights and reinforcement waves, needs a short, safe retry. Measure from regained control at the actual reconstruction point to the first meaningful decision of the fight. Include travel, lifts, doors and combat on the approach. Keep the retry within **25 seconds** at ordinary drive speed. Completed firefights and solved machinery stay clear along that approach.
+Every Boss and every dense encounter, including optional fights and reinforcement waves, needs a short, safe retry. Measure from regained control at the last activated Hive to the first meaningful decision of the fight. Include travel, lifts, doors and combat on the approach. An earned return route should let the player bypass previously cleared fights and solved machinery.
 
 Keep shortcuts sparse. Before adding one, identify the specific stretch of completed play it saves and the view or piece of machinery that makes arriving there memorable. Prefer one shared return for a workshop and its arena. Open it from the far side, frame a familiar landmark from a new angle, and make its destination recognizable before the player commits. Merge neighboring returns that save the same walk.
-
-After the opening Overdrive encounter, distant fights use local reconstruction on the approach the Tank actually drove. During a sealed arena or a coordinated squad encounter, a fatal hit returns the Tank to stable travel ground shortly before the engagement. On reconstruction, the fight resets and the Tank is protected until it drives or attacks. The four Hives continue to own deliberate repair and saved journey anchors. Where an earned physical return already provides the short retry, use that route.
 
 Inside-release doors generally become permanently bidirectional; their visible working face is accessible only from the earned side. A genuinely one-way carrier needs an independent visible return. Secondary approaches preserve the boundary they preview. Two equivalent slopes or parallel routes with the same exposure do not qualify as a shortcut.
 
 | Composition target | Travel cost |
 | --- | --- |
-| Refuge → discovered major Boss entrance | About 10–25 s |
 | D → Keeper | About 10–15 s |
 | Completed first use → refuge or clear transport junction | About 15–35 s |
 | Earned shortcut between the same landmarks | At least halves original cost |

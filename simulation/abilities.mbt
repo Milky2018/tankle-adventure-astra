@@ -22,7 +22,6 @@ pub fn Game::laser(
   }
   let live = firing && !p.overheated && !p.stunned(self.time)
   if live {
-    self.leave_recovery()
     p.continuous_heat(laser_tuning.heat_per_second * dt, self.time)
   }
   let mut ray = Ray::{ origin, direction: aim.sub(origin).normalized(), }
@@ -132,7 +131,6 @@ pub fn Game::magnet(
     }
     return
   }
-  self.leave_recovery()
   let direction = aim.sub(origin).normalized()
   let mut best : (HitTarget, Vec3, Double)? = None
   fn consider(target : HitTarget, position : Vec3, radius : Double) -> Unit {

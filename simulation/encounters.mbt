@@ -302,12 +302,7 @@ fn Game::advance_encounters(self : Game, resting : Bool, dt : Double) -> Unit {
       self.player,
       self.time,
     ) {
-    if event is Sealed(id) && self.active_arena() is Some(arena) {
-      self.engage_recovery(id, Some(arena))
-    }
     if event is Released(id, boss) {
-      self.recovery.owner = None
-      self.recovery.approach.clear()
       fn owned(owner : String) -> Bool {
         owner == boss ||
         self.enemies.any(fn(e) {
@@ -325,9 +320,6 @@ fn Game::advance_encounters(self : Game, resting : Bool, dt : Double) -> Unit {
         }
       }
     }
-  }
-  if self.progress.combat_arena is Some(_) {
-    self.recovery.last_engaged = self.time
   }
   self.encounters.update_waves(self.player, resting, dt)
   for battle, signal in self.encounters.battle_signals {

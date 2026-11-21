@@ -10,7 +10,6 @@ pub(all) enum Effect {
   Acquired(String)
   Activated(String)
   Repaired(String)
-  FieldRepaired
 }
 
 ///|
@@ -97,7 +96,6 @@ pub fn Game::fire(
   if !p.shoot_heat(self.time, cost=tuning.heat, cooldown=tuning.cooldown) {
     return false
   }
-  self.leave_recovery()
   let range = p.scope_range(tuning.range)
   let target = if mortar {
     self.mortar_target(queries, origin, aim)

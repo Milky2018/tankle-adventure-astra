@@ -139,10 +139,13 @@ test "final docking requires the defeated Keeper and a continuous stationary hol
   game.dock(true, false, 2)
   assert_true(game.ending_at is Some(_))
   assert_true(game.progress.has("endingSeen"))
-  game.respawn()
+  game.continue_after_ending()
   assert_true(game.ending_at is None)
   assert_true(game.progress.has("keeper"))
-  assert_eq(game.progress.anchor, "last-refuge")
+  assert_true(game.player.position() == game.hives[3].position)
+  assert_eq(game.progress.anchor, game.hives[0].id)
+  game.respawn()
+  assert_true(game.player.position() == game.hives[0].position)
 }
 
 ///|

@@ -323,7 +323,6 @@ pub(all) enum Effect {
   Acquired(String)
   Activated(String)
   Repaired(String)
-  FieldRepaired
 }
 
 pub(all) struct Encounters {
@@ -496,17 +495,16 @@ pub(all) struct Game {
   mut death_at : Double?
   mut ending_at : Double?
   mut time : Double
-  // private fields
 }
 pub fn Game::active_arena(Self) -> Arena?
 pub fn Game::active_boss(Self) -> Enemy?
 pub fn Game::advance_combat(Self, Queries, Vec3, Vec3, firing~ : Bool, magnet~ : Bool, dt~ : Double) -> Unit
 pub fn Game::advance_world(Self, Double) -> Unit
 pub fn Game::cast(Self, Queries, Ray, Double, targets? : Bool, refuge? : Bool, ground? : Bool, optical? : Bool, visible? : (Vec3) -> Bool) -> Hit?
+pub fn Game::continue_after_ending(Self) -> Unit
 pub fn Game::detonate_mine(Self, Int32) -> Unit
 pub fn Game::dock(Self, Bool, Bool, Double) -> Unit
 pub fn Game::drift(Self, Vec3, Bool) -> Vec2
-pub fn Game::field_recovered(Self) -> Bool
 pub fn Game::fire(Self, Queries, Vec3, Vec3) -> Bool
 pub fn Game::ground_target(Self, Queries, Vec3) -> Vec3
 pub fn Game::hit_enemy(Self, Int32, Double, Vec3, DamageKind, part? : Int32) -> Double

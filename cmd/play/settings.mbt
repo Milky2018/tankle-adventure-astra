@@ -292,12 +292,12 @@ fn Session::mount_settings(self : Session) -> Unit {
   @host.on_click("settings-button", fn() { self.pause(true) })
   @host.on_click("resume", fn() { self.pause(false) })
   @host.on_click("ending-continue", fn() {
-    self.game.respawn()
+    self.game.continue_after_ending()
     self.view.update_ending(self.game)
     @host.hidden("ending", true)
   })
   @host.on_click("ending-menu", fn() {
-    self.game.respawn()
+    self.game.continue_after_ending()
     self.view.update_ending(self.game)
     self.menu_open = true
     @host.hidden("ending", true)

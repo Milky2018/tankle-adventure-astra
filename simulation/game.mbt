@@ -1,6 +1,5 @@
 ///|
 pub(all) struct Game {
-  priv recovery : RecoveryTrail
   mut aim_point : Vec3
   mut last_hit : String
   puzzles : Puzzles
@@ -17,7 +16,6 @@ pub(all) struct Game {
   floor_heat : Array[Belt]
   currents : Array[Current]
   mut velocity : Vec2
-  priv start : Vec3
   mut previous_player : Vec3
   mut held_cover : (Int32, Double)?
   beams : Array[Beam]
@@ -46,12 +44,10 @@ pub fn Game::new(start? : Vec3) -> Game {
   player.heading = hive.heading
   player.aim = hive.heading
   {
-    recovery: RecoveryTrail::new(),
     aim_point: { x: 0, y: 0, z: 0, },
     last_hit: "",
     puzzles: Puzzles::new(),
     player,
-    start,
     progress,
     world: authored_world(),
     commands: Commands::new(authored_controls(), authored_circuits()),
@@ -194,9 +190,6 @@ pub fn Game::cast(
 
 ///|
 pub fn Game::hurt(self : Game, amount : Double, source : Vec3) -> Bool {
-  if self.recovery.sheltered {
-    return false
-  }
   if refuge_at(self.player.position(), self.hives, self.progress) is Some(_) {
     return false
   }

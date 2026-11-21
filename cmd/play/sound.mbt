@@ -158,7 +158,7 @@ fn Sound::update(
         @sim.Hurt => "hurt"
         @sim.Acquired(_) => "unlock"
         @sim.Activated(_) => "lever"
-        @sim.Repaired(_) | @sim.FieldRepaired => "repair"
+        @sim.Repaired(_) => "repair"
       },
       gain~,
     )

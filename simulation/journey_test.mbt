@@ -208,13 +208,13 @@ test "mortar preserves an elevated tray and forecasts an intercepting ceiling" {
 }
 
 ///|
-test "a playtest start lasts until another repair room becomes the anchor" {
+test "a custom starting position does not replace the repair anchor" {
   let start : @simulation.Vec3 = { x: 290, y: -24, z: 120, }
   let game = @simulation.Game::new(start~)
   assert_true(game.player.position() == start)
   game.player.x += 12
   game.respawn()
-  assert_true(game.player.position() == start)
+  assert_true(game.player.position() == game.hives[0].position)
   game.progress.anchor = game.hives[1].id
   game.respawn()
   assert_true(game.player.position() == game.hives[1].position)
@@ -236,7 +236,7 @@ test "thermal grates go cold when their shutdown or release circuit is completed
 }
 
 ///|
-test "a defeated crew retries from its driven approach to each remote boss" {
+test "death in each remote boss arena returns to the last activated repair hive" {
   let probes = [
     ("foundry", 218, 16, -176, 1),
     ("guardian", 202, 16, 32, 1),
@@ -250,6 +250,17 @@ test "a defeated crew retries from its driven approach to each remote boss" {
       y: y.to_double(),
       z: z.to_double(),
     })
+    let hive = game.hives[1]
+    let p = game.player
+    let start = p.position()
+    p.x = hive.position.x
+    p.y = hive.position.y
+    p.z = hive.position.z
+    assert_true(game.interact())
+    assert_eq(game.progress.anchor, hive.id)
+    p.x = start.x
+    p.y = start.y
+    p.z = start.z
     game.player.abilities.overdrive = true
     // The returning Tank has already earned the machinery on its approach.
     for b in game.world.solids {
@@ -270,33 +281,12 @@ test "a defeated crew retries from its driven approach to each remote boss" {
       }
     }
     assert_eq(game.progress.combat_arena, Some(id))
-    let entry = game.player.position()
     game.player.hp = 0
     game.advance_world(0.02)
     game.time += 2.6
     game.advance_world(0.02)
-    assert_true(game.field_recovered())
-    assert_true(game.player.position().distance(entry) <= 34)
-    assert_false(
-      game.encounters.arenas
-      .iter()
-      .find_first(fn(a) { a.id == id })
-      .unwrap()
-      .contains(game.player.position()),
-    )
-    let regained = game.time
-    assert_false(game.hurt(5, entry))
-    for _ in 0..<200 {
-      game.time += 0.02
-      game.advance_world(0.02)
-      game.move_player(step, false, 0.02)
-      game.update_enemies(queries, 0.02)
-      if game.progress.combat_arena == Some(id) {
-        break
-      }
-    }
-    assert_eq(game.progress.combat_arena, Some(id))
-    assert_false(game.field_recovered())
-    assert_true(game.time - regained < 25)
+    assert_true(game.player.position() == hive.position)
+    assert_eq(game.player.hp, game.player.max_hp())
+    assert_true(game.progress.combat_arena is None)
   }
 }
