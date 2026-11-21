@@ -69,21 +69,22 @@ fn Game::release_warning(
   match attack {
     CannonAttack => {
       for offset in [-0.18, 0.0, 0.18] {
-        self.shoot_enemy(queries, index, offset~, speed=23)
+        self.shoot_enemy(
+          queries,
+          index,
+          offset~,
+          side=if e.attack_cycle % 4 == 1 { -1 } else { 1 },
+          speed=23,
+        )
       }
       e.enter(Vent(e.timing.post_recovery), spec.recovery)
     }
     Torpedoes => {
-      let origin = e
-        .position()
-        .add({ x: 0, y: if e.afloat { 0.55 } else { 1.5 }, z: 0, })
-      let target = if e.afloat { { ..e.lock, y: origin.y, } } else { e.lock }
       for delay in [0.0, 0.65] {
         self.shoot_enemy(
           queries,
           index,
-          origin~,
-          target~,
+          side=if delay == 0 { -1 } else { 1 },
           delay~,
           torpedo=e.afloat,
           speed=if e.afloat { 12 } else { 18 },
@@ -96,7 +97,7 @@ fn Game::release_warning(
     ChargeAttack => e.enter(Charge, if kind == Prototype { 1.2 } else { 0.75 })
     SweepAttack => e.enter(Flame, 1.8)
     RailAttack => {
-      let origin = e.position().add({ x: 0, y: 1.5, z: 0, })
+      let origin = e.aim_weapon(self.time, Some(e.lock)).muzzle
       let direction = e.lock.sub(origin).normalized()
       let end = origin.add(
         direction.scale(
@@ -142,7 +143,7 @@ fn Game::release_warning(
         let next = seen.predict(0.3, limit=6)
         e.lock = { ..next, y: next.y + 1.2, }
       }
-      self.shoot_enemy(queries, index, offset=-0.08)
+      self.shoot_enemy(queries, index, offset=-0.08, side=-1)
       e.enter(Burst(if kind == Flanker { 5 } else { 2 }), 0.18)
     }
     Shot | ShieldShot | Reflect | Mine => {

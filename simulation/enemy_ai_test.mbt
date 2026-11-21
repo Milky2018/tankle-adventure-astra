@@ -66,6 +66,12 @@ test "an alert turret waits until its target enters weapon range before warning 
     game.update_enemies(queries, 1.0 / 60)
   }
   assert_eq(game.shots.length(), 1)
+  let shot = game.shots[0]
+  assert_true(shot.origin.z > turret.z + 1.6)
+  assert_true(shot.origin.y > turret.y + 1.4)
+  assert_true(
+    shot.direction.dot(turret.lock.sub(shot.origin).normalized()) > 0.99999,
+  )
 }
 
 ///|
@@ -237,4 +243,77 @@ test "reset rebuilds squad membership even when placement ids and counts stay th
   assert_true(game.hit_enemy(0, 0.1, second, CannonHit) > 0)
   assert_true(game.enemies[1].last_seen == Some(second))
   assert_true(old.last_seen == Some(first))
+}
+
+///|
+test "welder sweeps the beam from the off-centre nozzle as the tool turns" {
+  let game = @simulation.Game::new()
+  let enemy = @simulation.Enemy::new(
+    {
+      ..game.enemies[0].definition,
+      kind: Welder,
+      spawn: { x: 500, y: 0, z: 500, },
+      emplacement: true,
+      encounter: None,
+    },
+    game.progress,
+  )
+  game.enemies.clear()
+  game.enemies.push(enemy)
+  enemy.awake = true
+  enemy.aim = 0
+  enemy.phase = Flame
+  enemy.timer = 1.8
+  game.player.x = 500
+  game.player.y = 0
+  game.player.z = 512
+  let q = @simulation.Queries::{ geometry: fn(_, _, _) { None }, }
+  let headings = []
+  for _ in 0..<2 {
+    game.update_enemies(q, 0.5)
+    let beam = game.beams[game.beams.length() - 1]
+    headings.push(beam.direction.x)
+    let pose = enemy.weapon_pose.unwrap()
+    let outlet = enemy
+      .position()
+      .add(@simulation.Vec3::{ x: 0.44, y: 1.36, z: 1.78, }.rotate_y(pose.yaw))
+    assert_true(beam.origin.distance(outlet) < 0.00001)
+    assert_true(beam.direction.dot(pose.direction) > 0.99999)
+  }
+  assert_true(headings[0] < 0 && headings[1] > 0)
+}
+
+///|
+test "delayed hunter round leaves the other tube at its current position" {
+  let game = @simulation.Game::new()
+  let e = @simulation.Enemy::new(
+    {
+      ..game.enemies[0].definition,
+      kind: Hunter,
+      spawn: { x: 500, y: 0, z: 500, },
+      emplacement: true,
+      encounter: None,
+    },
+    game.progress,
+  )
+  game.enemies.clear()
+  game.enemies.push(e)
+  game.player.x = 500
+  game.player.y = 0
+  game.player.z = 520
+  e.awake = true
+  e.phase = Warn(Fire(Torpedoes))
+  e.lock = game.player.position().add({ x: 0, y: 1.2, z: 0, })
+  e.timer = 0
+  let q = @simulation.Queries::{ geometry: fn(_, _, _) { None }, }
+  game.update_enemies(q, 0.01)
+  let first = game.shots[0]
+  let second = game.shots[1]
+  assert_true(first.origin.x < 500)
+  assert_true(second.delay > 0)
+  e.x += 2
+  game.update_shots(q, 0.66)
+  assert_true(second.origin.x > e.x)
+  assert_true(second.origin.distance(e.weapon_pose.unwrap().muzzle) < 0.00001)
+  assert_true(second.distance < 0.3)
 }

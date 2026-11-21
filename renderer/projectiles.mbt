@@ -72,7 +72,7 @@ fn Projectiles::update(
     mesh.position.set(shot.position.x, shot.position.y, shot.position.z)
     |> ignore
     mesh.scale.set(1, 1, if shot.mortar { 1 } else { 2.5 }) |> ignore
-    if shot.mortar && shot.owner is None {
+    if shot.mortar {
       mesh.look_at(
         vector(
           @sim.mortar_position(

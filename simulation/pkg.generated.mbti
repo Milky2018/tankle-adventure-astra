@@ -314,6 +314,7 @@ pub fn Delivery::to_json(Self) -> @json.Json
 
 pub(all) enum Effect {
   Fired(Vec3, Weapon)
+  EnemyFired(Vec3, Weapon)
   Impact(Vec3, Bool)
   Chips(Vec3, Vec3)
   Ricochet(Vec3, Vec3)
@@ -346,6 +347,7 @@ pub(all) struct Enemy {
   parts : Array[EnemyPart]
   mut phase : Phase
   mut timer : Double
+  mut weapon_pose : WeaponPose?
   mut aim : Double
   mut flash : Double
   mut armor : Double
@@ -384,6 +386,7 @@ pub fn Enemy::contact_damage(Self) -> Double
 pub fn Enemy::damage_amount(Self, Double, Vec3, DamageKind, part_index? : Int32) -> Double
 pub fn Enemy::in_suction(Self, Vec3, reach? : Double) -> Bool
 pub fn Enemy::magnet_pullable(Self) -> Bool
+pub fn Enemy::model_position(Self, Double) -> Vec3
 pub fn Enemy::new(EnemyDef, Progress) -> Self
 pub fn Enemy::on_field(Self) -> Bool
 pub fn Enemy::position(Self) -> Vec3
@@ -448,10 +451,18 @@ pub fn EnemyKind::is_boss(Self) -> Bool
 pub fn EnemyKind::not_equal(Self, Self) -> Bool
 
 pub(all) struct EnemyPart {
+  mut weapon_pose : WeaponPose?
   mut position : Vec3
   mut hp : Double
   max_hp : Double
   radius : Double
+}
+
+pub(all) struct EnemyShotSource {
+  enemy : Int32
+  part : Int32?
+  side : Double
+  spread : Double
 }
 
 pub(all) struct EnemySpec {
@@ -794,7 +805,7 @@ pub fn Rect::not_equal(Self, Self) -> Bool
 pub(all) struct Shot {
   id : Int32
   owner : String?
-  origin : Vec3
+  mut origin : Vec3
   mut position : Vec3
   mut direction : Vec3
   target : Vec3
@@ -805,7 +816,7 @@ pub(all) struct Shot {
   duration : Double
   arc : Double
   mine_owner : String?
-  source : (Int32, Int32)?
+  source : EnemyShotSource?
   torpedo : Bool
   mut homing : Bool
   mut captured : Bool
@@ -935,6 +946,14 @@ pub(all) enum Weapon {
 pub fn Weapon::equal(Self, Self) -> Bool
 #deprecated
 pub fn Weapon::not_equal(Self, Self) -> Bool
+
+pub(all) struct WeaponPose {
+  yaw : Double
+  tilt : Double
+  pivot_height : Double
+  direction : Vec3
+  muzzle : Vec3
+}
 
 pub(all) struct World {
   decks : Array[Deck]

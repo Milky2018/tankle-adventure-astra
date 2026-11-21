@@ -296,6 +296,7 @@ fn View::update_effects(
   }
   for event in game.effects {
     match event {
+      @sim.EnemyFired(p, _) => emit(Flare, p, up.scale(0), 0.085, 2.1, 0xffac4b)
       @sim.Chips(p, n) | @sim.Ricochet(p, n) => shower(p, n, false)
       @sim.Armored(p) => shower(p, up, false)
       @sim.Impact(p, blast) => shower(p, up, blast)

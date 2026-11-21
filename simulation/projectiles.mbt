@@ -1,6 +1,7 @@
 ///|
 pub(all) enum Effect {
   Fired(Vec3, Weapon)
+  EnemyFired(Vec3, Weapon)
   Impact(Vec3, Bool)
   Chips(Vec3, Vec3)
   Ricochet(Vec3, Vec3)
@@ -13,10 +14,18 @@ pub(all) enum Effect {
 }
 
 ///|
+pub(all) struct EnemyShotSource {
+  enemy : Int32
+  part : Int32?
+  side : Double
+  spread : Double
+}
+
+///|
 pub(all) struct Shot {
   id : Int32
   owner : String?
-  origin : Vec3
+  mut origin : Vec3
   mut position : Vec3
   mut direction : Vec3
   target : Vec3
@@ -27,7 +36,7 @@ pub(all) struct Shot {
   duration : Double
   arc : Double
   mine_owner : String?
-  source : (Int32, Int32)?
+  source : EnemyShotSource?
   torpedo : Bool
   mut homing : Bool
   mut captured : Bool
@@ -142,23 +151,23 @@ fn Game::shoot_enemy(
   speed? : Double,
   torpedo~ : Bool = false,
   homing~ : Bool = false,
-  origin? : Vec3,
+  side~ : Double = 1,
   duration? : Double,
   range? : Double,
 ) -> Unit {
   let enemy = self.enemies[index]
   let spec = enemy.spec()
-  let origin = origin.unwrap_or(
-    source
-    .map(fn(i) { enemy.parts[i].position })
-    .unwrap_or(
-      enemy
-      .position()
-      .add({ x: 0, y: enemy.definition.kind.firing_height(), z: 0, }),
-    ),
-  )
+  let origin = enemy.position()
   let aim = target.unwrap_or(enemy.lock)
   let mortar = lob || enemy.definition.kind is (Artillery | Siege | Miner)
+  let burst = enemy.definition.kind is (Skirmisher | Flanker)
+  let aim = if burst {
+    origin.add(aim.sub(origin).rotate_y(offset))
+  } else if torpedo {
+    { ..aim, y: origin.y + 1.08, }
+  } else {
+    aim
+  }
   let speed = if enemy.definition.kind == Keeper {
     Double::max(15, origin.distance(aim) / 2.5)
   } else {
@@ -173,12 +182,12 @@ fn Game::shoot_enemy(
     )
   }
   self.next_projectile += 1
-  self.shots.push({
+  let shot : Shot = {
     id: self.next_projectile,
     owner: Some(enemy.definition.id),
     origin,
     position: origin,
-    direction: aim.sub(origin).normalized().rotate_y(offset),
+    direction: aim.sub(origin).normalized(),
     target: if mortar {
       self.ground_target(queries, aim)
     } else {
@@ -207,35 +216,91 @@ fn Game::shoot_enemy(
     } else {
       None
     },
-    source: source.map(fn(part) { (index, part) }),
+    source: Some({
+      enemy: index,
+      part: source,
+      side,
+      spread: if burst {
+        0
+      } else {
+        offset
+      },
+    }),
     torpedo,
     homing,
     captured: false,
     delay,
     age: 0,
     distance: 0,
-  })
-  self.effects.push(Fired(origin, if mortar { Mortar } else { Cannon }))
+  }
+  self.shots.push(shot)
+  if delay <= 0 {
+    self.launch_enemy_shot(queries, shot)
+  }
+}
+
+///|
+fn Game::launch_enemy_shot(self : Game, queries : Queries, shot : Shot) -> Unit {
+  guard shot.source is Some(source) else { return }
+  let e = self.enemies[source.enemy]
+  if !e.on_field() || (source.part is Some(i) && e.parts[i].hp <= 0) {
+    shot.captured = true
+    return
+  }
+  // The tangent at the start of the parabolic arc points four arc heights above impact.
+  let axis = if shot.mortar {
+    { ..shot.target, y: shot.target.y + 4 * shot.arc, }
+  } else {
+    shot.target
+  }
+  let pose = e.aim_weapon(
+    self.time,
+    Some(axis),
+    side=source.side,
+    part?=source.part,
+  )
+  shot.origin = pose.muzzle
+  shot.position = pose.muzzle
+  shot.direction = pose.direction.rotate_y(source.spread)
+  let bearing = match source.part {
+    Some(i) => e.parts[i].position
+    None =>
+      e.model_position(self.time).add({ x: 0, y: pose.pivot_height, z: 0, })
+  }
+  let barrel = pose.muzzle.sub(bearing)
+  if self.cast(
+      queries,
+      { origin: bearing, direction: barrel.normalized(), },
+      barrel.length(),
+      targets=false,
+    )
+    is Some(hit) {
+    self.impact(queries, hit, shot)
+    shot.captured = true
+    return
+  }
+  self.effects.push(
+    EnemyFired(pose.muzzle, if shot.mortar { Mortar } else { Cannon }),
+  )
 }
 
 ///|
 pub fn Game::update_shots(self : Game, queries : Queries, dt : Double) -> Unit {
   for i = self.shots.length() - 1; i >= 0; i = i - 1 {
     let shot = self.shots[i]
-    if shot.delay > 0 &&
-      shot.source is Some((enemy, part)) &&
-      self.enemies[enemy].parts[part].hp <= 0 {
-      shot.captured = true
+    let flight_dt = Double::max(0, dt - Double::max(0, shot.delay))
+    if shot.delay > 0 {
+      shot.delay -= dt
+      if shot.delay > 0 {
+        continue
+      }
+      self.launch_enemy_shot(queries, shot)
     }
     if shot.captured {
       self.shots.remove(i) |> ignore
       continue
     }
-    if shot.delay > 0 {
-      shot.delay -= dt
-      continue
-    }
-    shot.age += dt
+    shot.age += flight_dt
     if shot.homing {
       let offset = self.player
         .position()
@@ -247,8 +312,8 @@ pub fn Game::update_shots(self : Game, queries : Queries, dt : Double) -> Unit {
         let heading = @math.atan2(shot.direction.x, shot.direction.z)
         let delta = clamp(
           angle_delta(heading, @math.atan2(offset.x, offset.z)),
-          -0.9 * dt,
-          0.9 * dt,
+          -0.9 * flight_dt,
+          0.9 * flight_dt,
         )
         shot.direction = shot.direction.rotate_y(delta)
       }
@@ -262,7 +327,7 @@ pub fn Game::update_shots(self : Game, queries : Queries, dt : Double) -> Unit {
         shot.arc,
       )
     } else {
-      shot.position.add(shot.direction.scale(dt * shot.speed))
+      shot.position.add(shot.direction.scale(flight_dt * shot.speed))
     }
     let path = next.sub(shot.position)
     let distance = path.length()
@@ -270,7 +335,7 @@ pub fn Game::update_shots(self : Game, queries : Queries, dt : Double) -> Unit {
     let hostile = shot.owner is Some(_)
     let mut hit = self.cast(queries, ray, distance, targets=!hostile)
     if shot.torpedo && hit is None {
-      let support = self.world.support(next.x, next.z, next.y - 0.55, true)
+      let support = self.world.support(next.x, next.z, next.y - 1.08, true)
       if support is None || (support is Some(s) && !s.deck.water) {
         hit = Some({ point: next, distance, normal: None, target: Terrain, })
       }

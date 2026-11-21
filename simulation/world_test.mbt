@@ -53,3 +53,37 @@ test "each lift carries its centre and leaves an open shaft at both landings" {
     }
   }
 }
+
+///|
+test "industrial approaches leave room for the hull in both directions" {
+  let world = @simulation.authored_world()
+  let state = @simulation.Progress::new()
+  for
+    (x, y, z, dx, dz) in [
+      (280.0, -24.0, 121.0, -10.0, 0.0), // Coolant intake doorway
+      (65.055, 16.0, -166.5, 0.0, 10.0), // Recoil bench to the inspection belt
+      (-145.0, 8.0, 0.96, 14.0, 0.0), // Dispatch crane approach
+    ] {
+    let player = @simulation.Player::new()
+    player.x = x
+    player.y = y
+    player.z = z
+    world.move_player(player, dx, dz, state)
+    assert_true((player.x - x - dx).abs() < 0.001)
+    assert_true((player.z - z - dz).abs() < 0.001)
+    world.move_player(player, -dx, -dz, state)
+    assert_true((player.x - x).abs() < 0.001)
+    assert_true((player.z - z).abs() < 0.001)
+  }
+}
+
+///|
+test "the recoil workbench still stops the hull beside the clear lane" {
+  let world = @simulation.authored_world()
+  let player = @simulation.Player::new()
+  player.x = 65.0
+  player.y = 16.0
+  player.z = -160.0
+  world.move_player(player, 3.0, 0.0, @simulation.Progress::new())
+  assert_true(player.x < 66.0)
+}

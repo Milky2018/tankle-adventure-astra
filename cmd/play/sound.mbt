@@ -135,6 +135,7 @@ fn Sound::update(
   for event in game.effects {
     let distance = match event {
       @sim.Fired(at, _)
+      | @sim.EnemyFired(at, _)
       | @sim.Impact(at, _)
       | @sim.Chips(at, _)
       | @sim.Ricochet(at, _)
@@ -149,8 +150,8 @@ fn Sound::update(
     }
     self.play(
       match event {
-        @sim.Fired(_, @sim.Mortar) => "mortar"
-        @sim.Fired(_, _) => "shot"
+        @sim.Fired(_, @sim.Mortar) | @sim.EnemyFired(_, @sim.Mortar) => "mortar"
+        @sim.Fired(_, _) | @sim.EnemyFired(_, _) => "shot"
         @sim.Impact(_, true) | @sim.Killed(_) => "explode"
         @sim.Impact(_, false) => "hit"
         @sim.Chips(_, _) => "chip"

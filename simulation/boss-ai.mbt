@@ -60,16 +60,11 @@ fn Game::launch_boss(
       }
     Seekers =>
       for side in [-1.0, 1.0] {
-        let origin = Vec3::{
-          x: enemy.x + @math.cos(enemy.aim) * side * 2,
-          y: enemy.y + 1.2,
-          z: enemy.z - @math.sin(enemy.aim) * side * 2,
-        }
         self.shoot_enemy(
           queries,
           index,
           offset=side * 0.24,
-          origin~,
+          side~,
           target={ ..enemy.lock, y: enemy.y + 1.2, },
           homing=true,
           speed=22,
@@ -87,6 +82,7 @@ fn Game::launch_boss(
             queries,
             index,
             offset=offset + (if wave > 0 { 0.075 } else { 0.0 }),
+            side=if wave % 2 == 0 { -1 } else { 1 },
             source?,
             delay=wave.to_double() * pattern.spacing,
             speed=pattern.speed,
@@ -118,7 +114,11 @@ fn Game::beam(
   minimum~ : Double = 0,
 ) -> Hit? {
   let enemy = self.enemies[index]
-  let origin = enemy.position().add({ x: 0, y: 1.8, z: 0, })
+  let origin = if enemy.definition.kind == Sorter {
+    enemy.position().add({ x: 0, y: 1.8, z: 0, })
+  } else {
+    enemy.aim_weapon(self.time, None, heading=angle).muzzle
+  }
   let direction = Vec3::{ x: @math.sin(angle), y: 0, z: @math.cos(angle), }
   let hit = self.cast(
     queries,
@@ -129,8 +129,8 @@ fn Game::beam(
   )
   let length = hit.map(fn(h) { h.distance }).unwrap_or(reach)
   self.beams.push({ enemy: index, origin, direction, length, width, })
-  let dx = self.player.x - enemy.x
-  let dz = self.player.z - enemy.z
+  let dx = self.player.x - origin.x
+  let dz = self.player.z - origin.z
   let along = dx * direction.x + dz * direction.z
   let side = (dx * direction.z - dz * direction.x).abs()
   if (self.player.y - enemy.y).abs() < 2 &&

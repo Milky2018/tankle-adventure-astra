@@ -137,7 +137,12 @@ fn Game::active_enemy(
         } else {
           0.08
         }
-        self.shoot_enemy(queries, index, offset~)
+        self.shoot_enemy(
+          queries,
+          index,
+          offset~,
+          side=if left % 2 == 0 { 1 } else { -1 },
+        )
         if left > 1 {
           e.enter(Burst(left - 1), 0.18)
         } else {
@@ -145,7 +150,7 @@ fn Game::active_enemy(
         }
       }
     RailShot(end) => {
-      let origin = e.position().add({ x: 0, y: 1.5, z: 0, })
+      let origin = e.aim_weapon(self.time, Some(e.lock)).muzzle
       self.beams.push({
         enemy: index,
         origin,
@@ -178,8 +183,8 @@ fn Game::active_enemy(
     Repair(i) => {
       if self.enemies[i].hp > 0 {
         let ally = self.enemies[i]
-        let origin = e.position().add({ x: 0, y: 1.5, z: 0, })
         let end = ally.position().add({ x: 0, y: 1.5, z: 0, })
+        let origin = e.aim_weapon(self.time, Some(end)).muzzle
         if origin.distance(end) < 11 &&
           self.clear_sight(queries, origin, end, clearance=0.8) {
           ally.hp = Double::min(ally.max_hp, ally.hp + dt * 0.8)
@@ -312,6 +317,7 @@ fn Game::update_enemy(
   if active && clear {
     self.alert_squad(index, p.position())
   }
+  let shots_before = self.next_projectile
   if e.stunned_until > self.time {
     if !(e.phase is Stunned(_)) {
       let interrupted = if e.timing.resume_after_flinch {
@@ -367,8 +373,34 @@ fn Game::update_enemy(
   } else {
     self.active_enemy(queries, index, distance, sighting, dt)
   }
-  if active {
+  if active && self.next_projectile == shots_before {
     self.reposition_enemy(queries, index, distance, sighting, dt)
+  }
+  match e.phase {
+    Warn(Fire(SweepAttack)) =>
+      e.aim_weapon(self.time, None, heading=e.aim - 0.7) |> ignore
+    Warn(Fire(ChargeAttack | SuctionAttack)) | Idle | Charge | Bite | Suction =>
+      e.weapon_pose = None
+    Warn(Aid(i)) =>
+      e.aim_weapon(
+        self.time,
+        Some(self.enemies[i].position().add({ x: 0, y: 1.5, z: 0, })),
+      )
+      |> ignore
+    Warn(Volley({ kind: ArmSweep, .. }, _)) => e.weapon_pose = None
+    Warn(Volley({ kind: Batteries, .. }, sources)) =>
+      for part in sources {
+        if part is Some(i) {
+          e.aim_weapon(self.time, Some(e.lock), part=i) |> ignore
+        }
+      }
+    Warn(Fire(Lob | Mine)) | Warn(Volley({ kind: Barrage, .. }, _)) => {
+      let arc = if kind.is_boss() { 10.0 } else { 9.0 }
+      e.aim_weapon(self.time, Some({ ..e.lock, y: e.lock.y + 4 * arc, }))
+      |> ignore
+    }
+    Warn(_) => e.aim_weapon(self.time, Some(e.lock)) |> ignore
+    _ => ()
   }
   self.enemy_contact(index)
 }

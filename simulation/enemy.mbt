@@ -157,6 +157,7 @@ pub(all) struct EnemyDef {
 
 ///|
 pub(all) struct EnemyPart {
+  mut weapon_pose : WeaponPose?
   mut position : Vec3
   mut hp : Double
   max_hp : Double
@@ -177,6 +178,7 @@ pub(all) struct Enemy {
   parts : Array[EnemyPart]
   mut phase : Phase
   mut timer : Double
+  mut weapon_pose : WeaponPose?
   mut aim : Double
   mut flash : Double
   mut armor : Double
@@ -215,6 +217,7 @@ pub fn Enemy::new(definition : EnemyDef, progress : Progress) -> Enemy {
   let parts : Array[EnemyPart] = []
   for i, hp in definition.part_hp {
     parts.push({
+      weapon_pose: None,
       position: {
         x: p.x + (if i == 0 { -4 } else { 4 }),
         y: p.y + 1.7,
@@ -249,6 +252,7 @@ pub fn Enemy::new(definition : EnemyDef, progress : Progress) -> Enemy {
     parts,
     phase: Idle,
     timer: definition.startup.unwrap_or(1),
+    weapon_pose: None,
     aim: @math.PI / 2,
     flash: 0,
     armor: 0,

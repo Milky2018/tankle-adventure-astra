@@ -3,6 +3,8 @@ priv struct EnemyVisual {
   root : @core.Object3D
   body : @core.Object3D
   turret : @core.Object3D
+  launcher : @core.Object3D?
+  part_guns : Array[@core.Object3D?]
   warning : @core.Object3D?
   charge : @core.Object3D?
   zone : @core.Object3D?
@@ -80,6 +82,10 @@ fn enemy_visuals(
       root,
       body: get("/model/body").unwrap(),
       turret: get("/model/turret").unwrap(),
+      launcher: get("/model/launcher"),
+      part_guns: Array::makei(enemy.parts.length(), fn(j) {
+        get("/parts/\{j}/gun")
+      }),
       warning: get("/warning"),
       charge: get("/charge/root"),
       zone: get("/zone"),
@@ -154,19 +160,8 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
     v.root.scale.set(v.scale.x, v.scale.y * (1 - collapse * 0.7), v.scale.z)
     |> ignore
     v.root.rotation.set(0, 0, collapse * 0.12) |> ignore
-    let deploy = if e.deploy_until > 0 {
-      1.8 * Double::max(0, (e.deploy_until - game.time) / 2)
-    } else {
-      0.0
-    }
-    v.root.position.set(
-      e.x,
-      e.y -
-      deploy +
-      (if e.afloat { @math.sin(game.time * 2.7 + e.x) * 0.055 } else { 0.0 }),
-      e.z,
-    )
-    |> ignore
+    let base = e.model_position(game.time)
+    v.root.position.set(base.x, base.y, base.z) |> ignore
     v.body.rotation.set(
       0,
       if e.definition.kind == @sim.Hunter {
@@ -180,7 +175,33 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
     if e.flash > 0 && e.armor <= 0 {
       v.body.rotate_x(-0.10 * @sim.clamp(e.flash / 0.14, 0, 1)) |> ignore
     }
-    v.turret.rotation.set(0, e.aim, 0) |> ignore
+    let pose = e.weapon_pose
+    v.turret.rotation.set(0, pose.map(fn(p) { p.yaw }).unwrap_or(e.aim), 0)
+    |> ignore
+    if v.launcher is Some(launcher) {
+      launcher.rotation.set(-pose.map(fn(p) { p.tilt }).unwrap_or(0), 0, 0)
+      |> ignore
+    } else if pose is Some(p) {
+      // The imported tool is modeled about the chassis origin. Pitch it about the bearing.
+      let pivot = p.pivot_height / v.scale.y
+      let shift = pivot * @math.sin(p.tilt)
+      v.turret.position.set(
+        shift * @math.sin(p.yaw),
+        pivot * (1 - @math.cos(p.tilt)),
+        shift * @math.cos(p.yaw),
+      )
+      |> ignore
+      v.turret.rotate_x(-p.tilt) |> ignore
+    } else {
+      v.turret.position.set(0, 0, 0) |> ignore
+    }
+    for j, gun in v.part_guns {
+      if gun is Some(node) && e.parts[j].weapon_pose is Some(p) {
+        node.rotation.set(0, p.yaw, 0) |> ignore
+        node.rotate_x(-p.tilt) |> ignore
+        node.update_matrix_world(force=true)
+      }
+    }
     if v.armor is Some(armor) {
       armor.visible = !e.shield_removed
       if e.definition.magnetic_shield {
@@ -256,13 +277,21 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
         (e.phase.is_warning() || e.phase is @sim.RailShot(_))
       if e.phase.is_warning() {
         line_points(warning, [
-          vector(e.position().add({ x: 0, y: 1.5, z: 0, })),
+          vector(
+            pose
+            .map(fn(p) { p.muzzle })
+            .unwrap_or(e.position().add({ x: 0, y: 1.5, z: 0, })),
+          ),
           vector(e.lock),
         ])
       }
       if e.phase is @sim.RailShot(end) {
         line_points(warning, [
-          vector(e.position().add({ x: 0, y: 1.5, z: 0, })),
+          vector(
+            pose
+            .map(fn(p) { p.muzzle })
+            .unwrap_or(e.position().add({ x: 0, y: 1.5, z: 0, })),
+          ),
           vector(end),
         ])
       }
