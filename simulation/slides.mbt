@@ -86,7 +86,7 @@ pub fn Game::pull_slide(
     }
     let pushed : Array[(Enemy, Hull)] = []
     for e in self.enemies {
-      if e.hp <= 0 || (e.y - body.y).abs() >= 2.5 {
+      if !e.on_field() || (e.y - body.y).abs() >= 2.5 {
         continue
       }
       let rect = Rect::{
@@ -124,7 +124,7 @@ pub fn Game::pull_slide(
         0.01 ||
         self.enemies.any(fn(other) {
           other.definition.id != e.definition.id &&
-          other.hp > 0 &&
+          other.on_field() &&
           (other.y - hull.y).abs() < 2.5 &&
           Vec2::{ x: other.x - hull.x, z: other.z - hull.z, }.length() <
           other.radius + e.radius

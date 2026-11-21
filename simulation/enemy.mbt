@@ -293,6 +293,11 @@ pub fn Enemy::swims(self : Enemy) -> Bool {
 }
 
 ///|
+pub fn Enemy::on_field(self : Enemy) -> Bool {
+  self.hp > 0 && (self.definition.wave == 0 || self.awake)
+}
+
+///|
 pub fn Enemy::magnet_pullable(self : Enemy) -> Bool {
   match self.definition.kind {
     Scout | Interceptor | Skirmisher | Flanker | Miner | Repairer => true

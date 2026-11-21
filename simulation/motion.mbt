@@ -37,7 +37,7 @@ pub fn World::step_machinery(
     bodies.push(player)
   }
   for enemy in enemies {
-    if enemy.hp > 0 {
+    if enemy.on_field() {
       bodies.push(enemy)
     }
   }

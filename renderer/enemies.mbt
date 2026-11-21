@@ -118,7 +118,7 @@ fn enemy_visuals(
 fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
   for i, v in self.enemies {
     let e = game.enemies[i]
-    let alive = e.hp > 0
+    let alive = e.on_field()
     let pulling = game.magnet_lock is Some(@sim.EnemyTarget(target, _)) &&
       target == i &&
       alive

@@ -76,7 +76,7 @@ fn Hud::update(
   )
   @host.hidden("overdrive", !p.abilities.overdrive)
   @host.style("boost-fill", "width", "\{(p.speed-1)/2.2*100}%")
-  @host.hidden("drive-hint", game.time > 7)
+  @host.hidden("drive-hint", game.time > 7 && !game.field_recovered())
   @host.hidden("magnet-tool", !p.abilities.magnet)
   @host.hidden("flotation-tool", !p.abilities.flotation)
   @host.hidden("weapon-key", !p.abilities.mortar && !p.abilities.laser)

@@ -10,6 +10,7 @@ pub(all) enum Effect {
   Acquired(String)
   Activated(String)
   Repaired(String)
+  FieldRepaired
 }
 
 ///|
@@ -96,6 +97,7 @@ pub fn Game::fire(
   if !p.shoot_heat(self.time, cost=tuning.heat, cooldown=tuning.cooldown) {
     return false
   }
+  self.leave_recovery()
   let range = p.scope_range(tuning.range)
   let target = if mortar {
     self.mortar_target(queries, origin, aim)
@@ -278,7 +280,7 @@ pub fn Game::update_shots(self : Game, queries : Queries, dt : Double) -> Unit {
     if hostile && shot.mine_owner is None {
       let mut limit = hit.map(fn(h) { h.distance }).unwrap_or(distance)
       for j, enemy in self.enemies {
-        if enemy.hp <= 0 || shot.owner == Some(enemy.definition.id) {
+        if !enemy.on_field() || shot.owner == Some(enemy.definition.id) {
           continue
         }
         if ray.sphere(
@@ -437,7 +439,8 @@ pub fn Game::impact(
       self.hurt(10, blast) |> ignore
     }
     for index, enemy in self.enemies {
-      if enemy.hp <= 0 || (hostile && shot.owner == Some(enemy.definition.id)) {
+      if !enemy.on_field() ||
+        (hostile && shot.owner == Some(enemy.definition.id)) {
         continue
       }
       let center = enemy.position().add({ x: 0, y: 1.5, z: 0, })
@@ -566,7 +569,7 @@ pub fn Game::detonate_mine(self : Game, index : Int32) -> Unit {
     self.hurt(5, mine.position) |> ignore
   }
   for i, enemy in self.enemies {
-    if enemy.hp > 0 &&
+    if enemy.on_field() &&
       (enemy.y - mine.position.y).abs() < 2 &&
       Vec2::{ x: enemy.x - mine.position.x, z: enemy.z - mine.position.z, }.length() <
       3 {

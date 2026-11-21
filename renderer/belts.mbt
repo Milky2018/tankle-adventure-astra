@@ -67,6 +67,7 @@ fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
     )
   }
   let matrix = @m3.Matrix4::new()
+  let tread = @m3.Matrix4::new()
   let rotation = @m3.Quaternion::new(0, 0, 0, 1)
   let axis = @m3.Vector3::new(0, 1, 0)
   for belt in self.belts {
@@ -83,6 +84,19 @@ fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
     let velocity = motion.velocity()
     let horizontal = b.velocity.x != 0
     let speed = if horizontal { velocity.x } else { velocity.z }
+    // The raised chevrons point down the shoe's negative travel axis.
+    // A stopped drive keeps its normal facing.
+    let facing = if speed == 0 {
+      if horizontal {
+        b.velocity.x
+      } else {
+        b.velocity.z
+      }
+    } else {
+      speed
+    }
+    let turn = if facing > 0 { -1.0 } else { 1.0 }
+    tread.make_scale(turn, 1, turn) |> ignore
     belt.phase += dt *
       speed *
       (1.0 + d.rise / d.rect.d * (d.rise / d.rect.d)).sqrt()
@@ -98,7 +112,7 @@ fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
           ) %
           travel -
           travel / 2
-        matrix.make_translation(
+        tread.set_position(
           if horizontal {
             along
           } else {
@@ -112,7 +126,7 @@ fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
           },
         )
         |> ignore
-        segment.mesh.set_matrix_at(i, matrix) |> ignore
+        segment.mesh.set_matrix_at(i, tread) |> ignore
       }
       data.instance_matrix.set_needs_update(true)
       rotation.set_from_axis_angle(axis, -belt.phase / 0.22) |> ignore

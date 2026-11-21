@@ -234,3 +234,69 @@ test "thermal grates go cold when their shutdown or release circuit is completed
     }
   }
 }
+
+///|
+test "a defeated crew retries from its driven approach to each remote boss" {
+  let probes = [
+    ("foundry", 218, 16, -176, 1),
+    ("guardian", 202, 16, 32, 1),
+    ("sorter", 53, -8, -110, -1),
+    ("keeper", 0, -56, 74, -1),
+  ]
+  let queries = @simulation.Queries::{ geometry: fn(_, _, _) { None }, }
+  for (id, x, y, z, sign) in probes {
+    let game = @simulation.Game::new(start={
+      x: x.to_double(),
+      y: y.to_double(),
+      z: z.to_double(),
+    })
+    game.player.abilities.overdrive = true
+    // The returning Tank has already earned the machinery on its approach.
+    for b in game.world.solids {
+      if b.arena is None &&
+        !b.permanent &&
+        !game.encounters.arenas.any(fn(a) { a.id == b.id }) {
+        game.progress.complete(b.id) |> ignore
+      }
+    }
+    let step = @simulation.Vec2::{ x: 0, z: sign.to_double(), }
+    for _ in 0..<200 {
+      game.time += 0.02
+      game.advance_world(0.02)
+      game.move_player(step, false, 0.02)
+      game.update_enemies(queries, 0.02)
+      if game.progress.combat_arena == Some(id) {
+        break
+      }
+    }
+    assert_eq(game.progress.combat_arena, Some(id))
+    let entry = game.player.position()
+    game.player.hp = 0
+    game.advance_world(0.02)
+    game.time += 2.6
+    game.advance_world(0.02)
+    assert_true(game.field_recovered())
+    assert_true(game.player.position().distance(entry) <= 34)
+    assert_false(
+      game.encounters.arenas
+      .iter()
+      .find_first(fn(a) { a.id == id })
+      .unwrap()
+      .contains(game.player.position()),
+    )
+    let regained = game.time
+    assert_false(game.hurt(5, entry))
+    for _ in 0..<200 {
+      game.time += 0.02
+      game.advance_world(0.02)
+      game.move_player(step, false, 0.02)
+      game.update_enemies(queries, 0.02)
+      if game.progress.combat_arena == Some(id) {
+        break
+      }
+    }
+    assert_eq(game.progress.combat_arena, Some(id))
+    assert_false(game.field_recovered())
+    assert_true(game.time - regained < 25)
+  }
+}

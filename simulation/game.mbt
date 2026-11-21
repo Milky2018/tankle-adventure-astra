@@ -1,5 +1,6 @@
 ///|
 pub(all) struct Game {
+  priv recovery : RecoveryTrail
   mut aim_point : Vec3
   mut last_hit : String
   puzzles : Puzzles
@@ -45,6 +46,7 @@ pub fn Game::new(start? : Vec3) -> Game {
   player.heading = hive.heading
   player.aim = hive.heading
   {
+    recovery: RecoveryTrail::new(),
     aim_point: { x: 0, y: 0, z: 0, },
     last_hit: "",
     puzzles: Puzzles::new(),
@@ -100,7 +102,7 @@ pub fn Game::cast(
   }
   if targets && !ground {
     for i, enemy in self.enemies {
-      if enemy.hp <= 0 {
+      if !enemy.on_field() {
         continue
       }
       accept(
@@ -192,6 +194,9 @@ pub fn Game::cast(
 
 ///|
 pub fn Game::hurt(self : Game, amount : Double, source : Vec3) -> Bool {
+  if self.recovery.sheltered {
+    return false
+  }
   if refuge_at(self.player.position(), self.hives, self.progress) is Some(_) {
     return false
   }
@@ -213,7 +218,7 @@ pub fn Game::hit_enemy(
   part? : Int32,
 ) -> Double {
   let enemy = self.enemies[index]
-  if enemy.hp <= 0 {
+  if !enemy.on_field() {
     return 0
   }
   let id = enemy.definition.id

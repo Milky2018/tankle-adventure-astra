@@ -323,6 +323,7 @@ pub(all) enum Effect {
   Acquired(String)
   Activated(String)
   Repaired(String)
+  FieldRepaired
 }
 
 pub(all) struct Encounters {
@@ -385,6 +386,7 @@ pub fn Enemy::damage_amount(Self, Double, Vec3, DamageKind, part_index? : Int32)
 pub fn Enemy::in_suction(Self, Vec3, reach? : Double) -> Bool
 pub fn Enemy::magnet_pullable(Self) -> Bool
 pub fn Enemy::new(EnemyDef, Progress) -> Self
+pub fn Enemy::on_field(Self) -> Bool
 pub fn Enemy::position(Self) -> Vec3
 pub fn Enemy::spec(Self) -> EnemySpec
 pub fn Enemy::swims(Self) -> Bool
@@ -504,6 +506,7 @@ pub fn Game::cast(Self, Queries, Ray, Double, targets? : Bool, refuge? : Bool, g
 pub fn Game::detonate_mine(Self, Int32) -> Unit
 pub fn Game::dock(Self, Bool, Bool, Double) -> Unit
 pub fn Game::drift(Self, Vec3, Bool) -> Vec2
+pub fn Game::field_recovered(Self) -> Bool
 pub fn Game::fire(Self, Queries, Vec3, Vec3) -> Bool
 pub fn Game::ground_target(Self, Queries, Vec3) -> Vec3
 pub fn Game::hit_enemy(Self, Int32, Double, Vec3, DamageKind, part? : Int32) -> Double

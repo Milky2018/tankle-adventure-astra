@@ -82,6 +82,7 @@ pub fn Game::restore(self : Game, text : String) -> Bool {
   }
   self.player.apply_upgrades(self.progress, pickups=self.pickups)
   self.progress.events.clear()
+  self.death_at = None
   self.respawn()
   true
 }

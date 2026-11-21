@@ -218,11 +218,26 @@ pub fn Game::update_enemies(
   }
   self.previous_player = p.position()
   self.beams.clear()
-  let resting = refuge_at(p.position(), self.hives, self.progress) is Some(_)
+  let resting = self.recovery.sheltered ||
+    refuge_at(p.position(), self.hives, self.progress) is Some(_)
   self.encounters.index_roster(self.enemies)
   self.advance_encounters(resting, dt)
+  let mut contacts = 0
   for index, e in self.enemies {
     self.update_enemy(queries, index, e, resting, dt)
+    // Independent patrols can converge without belonging to an authored squad.
+    if !resting &&
+      self.progress.combat_arena is None &&
+      e.on_field() &&
+      e.readable &&
+      e.alert_until > self.time &&
+      (e.y - p.y).abs() < 3 &&
+      horizontal_distance(e.position(), p.position()) < 34 {
+      contacts += 1
+      if contacts == 2 {
+        self.engage_recovery(e.definition.id, None)
+      }
+    }
   }
 }
 
@@ -237,6 +252,9 @@ fn Game::update_enemy(
 ) -> Unit {
   let p = self.player
   let kind = e.definition.kind
+  if e.definition.wave > 0 && !e.awake {
+    return
+  }
   self.drift_enemy(e, dt)
   if e.hp <= 0 {
     return
@@ -306,6 +324,17 @@ fn Game::update_enemy(
       clear ||
       ((supported || committed || retaliating) && (e.y - p.y).abs() < 4)
     )
+  if active && clear && self.progress.combat_arena is None {
+    if e.definition.battle is Some(id) &&
+      self.encounters.battles.get(id) is Some(group) &&
+      group.length() >= 2 {
+      self.engage_recovery(id, None)
+    } else if e.definition.encounter is Some(id) &&
+      self.encounters.squads.get(id) is Some(group) &&
+      group.length() >= 2 {
+      self.engage_recovery(id, None)
+    }
+  }
   if active && clear {
     self.alert_squad(index, p.position())
   }

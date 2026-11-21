@@ -71,7 +71,7 @@ pub fn Game::move_enemy(
     }
     let blocked = self.enemies.any(fn(other) {
       other.definition.id != enemy.definition.id &&
-      other.hp > 0 &&
+      other.on_field() &&
       (other.y - body.y).abs() < 2 &&
       horizontal_distance(other.position(), position) <
       enemy.radius + other.radius + 0.15

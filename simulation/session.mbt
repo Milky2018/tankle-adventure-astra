@@ -37,6 +37,9 @@ pub fn Game::move_player(
     return
   }
   let moving = movement.length() > 0
+  if moving {
+    self.leave_recovery()
+  }
   p.update_heat(dt, self.time, boost, moving)
   let knock = p.hit_displacement(self.time, dt)
   let speed = drive_tuning.speed *
@@ -142,6 +145,9 @@ pub fn Game::interact(self : Game) -> Bool {
   if id == "dock" {
     return false
   }
+  self.recovery.owner = None
+  self.recovery.approach.clear()
+  self.leave_recovery()
   self.progress.anchor = id
   self.effects.push(Repaired(id))
   self.player.hp = self.player.max_hp()
@@ -155,7 +161,21 @@ pub fn Game::interact(self : Game) -> Bool {
 
 ///|
 pub fn Game::reset_enemies(self : Game) -> Unit {
+  self.reset_roster(None)
+}
+
+///|
+fn Game::reset_roster(self : Game, retry : String?) -> Unit {
   for i, enemy in self.enemies {
+    // Field recovery re-arms the fight without repopulating the cleared approach.
+    if retry is Some(owner) &&
+      enemy.hp <= 0 &&
+      enemy.definition.id != owner &&
+      enemy.definition.encounter != retry &&
+      enemy.definition.battle != retry &&
+      enemy.definition.reserve_for != retry {
+      continue
+    }
     self.enemies[i] = Enemy::new(enemy.definition, self.progress)
     self.enemies[i].timer = enemy.timing.reset_delay
     if self.encounters.for_boss(enemy) is Some(arena) &&
@@ -192,6 +212,7 @@ pub fn Game::advance_world(self : Game, dt : Double) -> Unit {
   if self.player.hp <= 0 || self.ending_at is Some(_) {
     return
   }
+  self.recovery.record(self.player.position())
   self.commands.advance(self.progress, dt, self.time) |> ignore
   self.update_puzzles(dt)
   let p = self.player
@@ -260,7 +281,11 @@ pub fn Game::respawn(self : Game) -> Unit {
     .find_first(fn(h) { h.id == self.progress.anchor })
     .unwrap_or(self.hives[0])
   let p = self.player
-  let point = if hive.id == self.hives[0].id {
+  let forward = self.recovery_point()
+  let retry = if forward is Some(_) { self.recovery.owner } else { None }
+  let point = if forward is Some(pos) {
+    pos
+  } else if hive.id == self.hives[0].id {
     self.start
   } else {
     hive.position
@@ -268,14 +293,26 @@ pub fn Game::respawn(self : Game) -> Unit {
   p.x = point.x
   p.y = point.y
   p.z = point.z
-  p.heading = hive.heading
-  p.aim = hive.heading
+  p.heading = if forward is Some(_) {
+    self.recovery.heading
+  } else {
+    hive.heading
+  }
+  p.aim = p.heading
+  self.recovery.sheltered = forward is Some(_)
+  self.recovery.owner = None
+  self.recovery.approach.clear()
+  self.recovery.recent.clear()
+  self.recovery.record(point)
   p.hp = p.max_hp()
   p.heat = 0
   p.overheated = false
   p.speed = 1
-  p.deployed = false
-  p.afloat = false
+  p.afloat = forward is Some(_) &&
+    self.world.support(point.x, point.z, point.y, p.abilities.flotation)
+    is Some(s) &&
+    s.deck.water
+  p.deployed = p.afloat
   p.last_heat = -10
   p.boost_cooling = false
   p.action_heat_at = -10
@@ -299,8 +336,14 @@ pub fn Game::respawn(self : Game) -> Unit {
   }
   p.invincible_until = self.time + 1.5
   self.death_at = None
-  self.effects.push(Repaired(hive.id))
-  self.reset_enemies()
+  self.effects.push(
+    if forward is Some(_) {
+      FieldRepaired
+    } else {
+      Repaired(hive.id)
+    },
+  )
+  self.reset_roster(retry)
 }
 
 ///|

@@ -287,6 +287,12 @@ Solid arrows describe dependencies, not mandatory hub visits; dotted arrows are 
 
 The permanent refuge ring is **A–B** through the original workroom ascent after Boost; **B–C** through the Phoenix breach and later cage; **C–D** through restored optical descent then thermal route; **D–A** through the shaft released from below. The garden far-bank loop links B and A. Local returns supplement this ring; exact openings are in [regional journeys](#7-regional-journeys).
 
+Every Boss and every dense encounter, including optional fights and reinforcement waves, needs a short, safe retry. Measure from regained control at the actual reconstruction point to the first meaningful decision of the fight. Include travel, lifts, doors and combat on the approach. Keep the retry within **25 seconds** at ordinary drive speed. Completed firefights and solved machinery stay clear along that approach.
+
+Keep shortcuts sparse. Before adding one, identify the specific stretch of completed play it saves and the view or piece of machinery that makes arriving there memorable. Prefer one shared return for a workshop and its arena. Open it from the far side, frame a familiar landmark from a new angle, and make its destination recognizable before the player commits. Merge neighboring returns that save the same walk.
+
+After the opening Overdrive encounter, distant fights use local reconstruction on the approach the Tank actually drove. During a sealed arena or a coordinated squad encounter, a fatal hit returns the Tank to stable travel ground shortly before the engagement. On reconstruction, the fight resets and the Tank is protected until it drives or attacks. The four Hives continue to own deliberate repair and saved journey anchors. Where an earned physical return already provides the short retry, use that route.
+
 Inside-release doors generally become permanently bidirectional; their visible working face is accessible only from the earned side. A genuinely one-way carrier needs an independent visible return. Secondary approaches preserve the boundary they preview. Two equivalent slopes or parallel routes with the same exposure do not qualify as a shortcut.
 
 | Composition target | Travel cost |
