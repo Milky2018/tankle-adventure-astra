@@ -49,6 +49,7 @@ test "an opened gate stops constraining the boom and an overhanging ramp still d
     rect: { x: 0, z: 0, w: 10, d: 10, },
     y: 6,
     rise: 4,
+    map_label: "Ramp",
     water: false,
   }
   let world : @sim.World = {

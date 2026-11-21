@@ -47,6 +47,15 @@ const arrayFn = (name, type, values, print) => {
     .map((s) => `  ${s},`)
     .join("\n")}\n]\n}\n`;
 };
+const mapRegions = {
+  foundry: "Recycling Foundry", transit: "Freight Exchange", garden: "Sunken Gardens",
+  testworks: "Proving Grounds", optics: "Silent Observatory", circulation: "Circulation Works",
+  furnace: "Central Furnace",
+};
+const deck = (d) => {
+  const name = mapRegions[d.region] ?? d.id.replaceAll("-", " ").replace(/\b\w/g, c => c.toUpperCase());
+  return `{ id: ${str(d.id)}, map_label: ${str(name)}, rect: ${rect(d)}, y: ${d.y}, rise: ${d.rise ?? 0}, water: ${!!d.water} }`;
+};
 writeFileSync(
   "simulation/level-world.generated.mbt",
   "// Generated from content/levels/city. Run npm run build:content; do not edit.\n\n" +
@@ -55,8 +64,7 @@ writeFileSync(
         "authored_decks",
         "Deck",
         content.foldedDecks,
-        (d) =>
-          `{ id: ${str(d.id)}, rect: ${rect(d)}, y: ${d.y}, rise: ${d.rise ?? 0}, water: ${!!d.water} }`,
+        deck,
       ),
       arrayFn("authored_arenas", "Arena", read("arenas"), (a) =>
         `{id:${str(a.id)},boss:${str(a.boss)},rect:${rect(a)},y:${a.y},cover:${optional(a.cover)},music:${str(a.music)},victory_effects:[${(a.victoryEffects ?? []).map(str)}]}`,
@@ -178,7 +186,7 @@ fn authored_battle_signals() -> Map[String, String] {
 `].join("\n"),
 );
 const belt = (b) =>
-  `{deck:{id:${str(b.id)},rect:${rect(b)},y:${b.y},rise:${b.rise ?? 0},water:false},velocity:{x:${b.vx ?? 0},z:${b.vz ?? 0}},heat:${b.heat ?? 0},release:${optional(b.release)},stop:${optional(b.stop)},drive:${b.drive ? `Some({enemy:${str(b.drive.enemy)},part:${b.drive.part}})` : "None"}}`;
+  `{deck:${deck(b)},velocity:{x:${b.vx ?? 0},z:${b.vz ?? 0}},heat:${b.heat ?? 0},release:${optional(b.release)},stop:${optional(b.stop)},drive:${b.drive ? `Some({enemy:${str(b.drive.enemy)},part:${b.drive.part}})` : "None"}}`;
 writeFileSync(
   "simulation/level-motion.generated.mbt",
   [

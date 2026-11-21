@@ -1,6 +1,7 @@
 ///|
 struct Projectiles {
   meshes : Map[Int32, @core.Object3D]
+  shell : @core.BufferGeometry
   geometry : @core.BufferGeometry
   friendly : @core.Material
   hostile : @core.Material
@@ -10,6 +11,22 @@ struct Projectiles {
 fn Projectiles::new() -> Projectiles {
   {
     meshes: {},
+    shell: @geometries.LatheGeometry::new(
+      points=[
+        (0.0, -0.36),
+        (0.14, -0.36),
+        (0.15, -0.24),
+        (0.20, -0.19),
+        (0.20, 0.10),
+        (0.16, 0.21),
+        (0.065, 0.36),
+        (0.0, 0.38),
+      ].map(fn(pair) {
+        let (radius, height) = pair
+        @m3.Vector2::new(radius, height)
+      }),
+      segments=10,
+    ).rotate_x(@math.PI / 2),
     geometry: @geometries.SphereGeometry::new(
       radius=0.19,
       width_segments=8,
@@ -33,7 +50,11 @@ fn Projectiles::update(
       Some(mesh) => mesh
       None => {
         let mesh = @core.Mesh::new(
-          geometry=self.geometry,
+          geometry=if shot.mortar && shot.owner is None {
+            self.shell
+          } else {
+            self.geometry
+          },
           material=Single(
             if shot.owner is Some(_) {
               self.hostile
@@ -51,7 +72,21 @@ fn Projectiles::update(
     mesh.position.set(shot.position.x, shot.position.y, shot.position.z)
     |> ignore
     mesh.scale.set(1, 1, if shot.mortar { 1 } else { 2.5 }) |> ignore
-    mesh.look_at(vector(shot.position.add(shot.direction)))
+    if shot.mortar && shot.owner is None {
+      mesh.look_at(
+        vector(
+          @sim.mortar_position(
+            shot.origin,
+            shot.target,
+            shot.age + 0.01,
+            shot.duration,
+            shot.arc,
+          ),
+        ),
+      )
+    } else {
+      mesh.look_at(vector(shot.position.add(shot.direction)))
+    }
     mesh.update_matrix_world(force=true)
   }
   let removed : Array[Int32] = []

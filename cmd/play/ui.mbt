@@ -6,7 +6,8 @@ struct Hud {
   mut reveal_at : Double
   mut layer : Double?
   mut layers : String
-  mut health : String
+  mut health : (Int32, Int32)
+  mut equipped : @sim.Weapon?
   mut map_at : Double
   mut acquired_until : Double
 }
@@ -24,7 +25,8 @@ fn Hud::new() -> Hud {
     reveal_at: -10,
     layer: None,
     layers: "",
-    health: "",
+    health: (-1, -1),
+    equipped: None,
     map_at: -1,
     acquired_until: -1,
   }
@@ -40,21 +42,23 @@ fn Hud::update(
   let p = game.player
   @host.hidden("hud", game.ending_at is Some(_))
   self.death_iris(game, view)
-  let mut health = ""
-  for i in 0..<(p.max_hp() / 5).to_int() {
-    health += "<i class=\"" +
-      (if p.hp <= i.to_double() * 5 {
+  let hp = (p.hp.ceil().to_int(), p.max_hp().to_int())
+  if self.health != hp {
+    self.health = hp
+    let (current, maximum) = hp
+    let mut ticks = ""
+    for i in 0..<(maximum / 5) {
+      let state = if current <= i * 5 {
         "empty"
-      } else if p.hp < (i + 1).to_double() * 5 {
+      } else if current < (i + 1) * 5 {
         "half"
       } else {
         ""
-      }) +
-      "\"></i>"
-  }
-  if health != self.health {
-    self.health = health
-    @host.html("hp", health)
+      }
+      ticks += "<i class=\"\{state}\"></i>"
+    }
+    @host.html("hp", ticks)
+    @host.text("hp-value", "\{current}/\{maximum}")
   }
   @host.class_toggle("status", "critical", p.hp > 0 && p.hp <= 15)
   @host.style("heat", "stroke-dashoffset", "\{100.0-p.heat}")
@@ -72,24 +76,21 @@ fn Hud::update(
   )
   @host.hidden("overdrive", !p.abilities.overdrive)
   @host.style("boost-fill", "width", "\{(p.speed-1)/2.2*100}%")
-  @host.hidden(
-    "tools",
-    !p.abilities.magnet &&
-    !p.abilities.flotation &&
-    !p.abilities.mortar &&
-    !p.abilities.laser,
-  )
+  @host.hidden("drive-hint", game.time > 7)
   @host.hidden("magnet-tool", !p.abilities.magnet)
   @host.hidden("flotation-tool", !p.abilities.flotation)
-  @host.hidden("weapon-tool", !p.abilities.mortar && !p.abilities.laser)
-  @host.text(
-    "weapon-icon",
-    match p.weapon {
-      @sim.Cannon => "▬"
-      @sim.Mortar => "⌒"
-      @sim.Laser => "↯"
-    },
-  )
+  @host.hidden("weapon-key", !p.abilities.mortar && !p.abilities.laser)
+  if self.equipped != Some(p.weapon) {
+    self.equipped = Some(p.weapon)
+    let name = match p.weapon {
+      @sim.Cannon => "Cannon"
+      @sim.Mortar => "Mortar"
+      @sim.Laser => "Laser"
+    }
+    @host.text("weapon-name", name)
+    @host.attribute("weapon-tool", "data-weapon", name)
+  }
+  @host.class_toggle("magnet-tool", "active", game.magnet_end is Some(_))
   @host.class_toggle("flotation-tool", "active", p.deployed)
   let boss = game.active_boss().filter(fn(e) { e.hp > 0 })
   @host.style(
@@ -131,6 +132,12 @@ fn Hud::update(
     @host.style("interaction", "top", "\{screen.z}px")
   }
   if game.time - self.map_at >= 0.1 || map_open {
+    let area = game.world
+      .support(p.x, p.z, p.y, p.deployed)
+      .map(fn(s) { s.deck.map_label })
+      .unwrap_or("Local Map")
+    @host.text("map-area", area)
+    @host.text("map-height", "\{p.y.round().to_int()} m")
     self.map_at = game.time
     self.draw_map(game, view, false)
     if map_open {
@@ -202,9 +209,9 @@ fn Hud::draw_map(
         d.rect.w * scale,
         d.rect.d * scale,
         if d.water {
-          "#4e8587"
+          "#47716c"
         } else {
-          "#829185"
+          "#647764"
         },
         alpha,
       )

@@ -3,6 +3,7 @@ pub(all) struct LaserSegment {
   from : Vec3
   to : Vec3
   live : Bool
+  contact : Bool
 }
 
 ///|
@@ -26,9 +27,14 @@ pub fn Game::laser(
   let mut ray = Ray::{ origin, direction: aim.sub(origin).normalized(), }
   let mut remaining = laser_tuning.range
   for _ in 0..<laser_tuning.segments {
-    let hit = self.cast(queries, ray, remaining)
+    let hit = self.cast(queries, ray, remaining, optical=true)
     let end = hit.map(fn(h) { h.point }).unwrap_or(ray.point(remaining))
-    self.laser_path.push({ from: ray.origin, to: end, live, })
+    self.laser_path.push({
+      from: ray.origin,
+      to: end,
+      live,
+      contact: hit is Some(_),
+    })
     guard hit is Some(hit) else { break }
     let normal = match hit.target {
       MirrorTarget(i) => {
@@ -62,7 +68,10 @@ pub fn Game::laser(
             )
             |> ignore
           }
-        ControlTarget(i) =>
+        ControlTarget(i) => {
+          if self.commands.controls[i].actions.contains(LaserAction) {
+            self.commands.controls[i].flash = 0.13
+          }
           self.commands.activate(
             self.progress,
             self.commands.controls[i].id,
@@ -71,6 +80,7 @@ pub fn Game::laser(
             self.time,
           )
           |> ignore
+        }
         MineTarget(i) => self.detonate_mine(i)
         TorpedoTarget(i) => self.shots[i].captured = true
         _ => ()

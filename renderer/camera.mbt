@@ -89,7 +89,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     lighting: CityLights::new(nodes),
     machinery: Machinery::new(nodes, game),
     feeds: feeds(scene),
-    effects: Effects::new(),
+    effects: Effects::new(scene),
     belts: belts(nodes, game),
     grates: game.floor_heat.filter_map(fn(grate) {
       nodes

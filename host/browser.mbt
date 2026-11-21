@@ -135,7 +135,7 @@ pub extern "js" fn canvas_begin(
   height : Int32,
   angle : Double,
 ) -> Unit =
-  #| (ctx,width,height,angle) => { if(ctx.canvas.width!==width)ctx.canvas.width=width;if(ctx.canvas.height!==height)ctx.canvas.height=height;ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.fillStyle='#102b2e';ctx.fillRect(0,0,width,height);ctx.translate(width/2,height/2);ctx.rotate(angle); }
+  #| (ctx,width,height,angle) => { if(ctx.canvas.width!==width)ctx.canvas.width=width;if(ctx.canvas.height!==height)ctx.canvas.height=height;ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.fillStyle='#192e27';ctx.fillRect(0,0,width,height);ctx.translate(width/2,height/2);ctx.rotate(angle); }
 
 ///|
 pub extern "js" fn rectangle(

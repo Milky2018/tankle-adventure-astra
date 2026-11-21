@@ -43,6 +43,6 @@ pub fn View::present(
   self.update_enemies(game, dt)
   self.update_projectiles(game)
   self.update_feeds(game)
-  self.update_effects(game, aim, queries, dt)
+  self.update_effects(game, aim, queries)
   self.update_ending(game)
 }

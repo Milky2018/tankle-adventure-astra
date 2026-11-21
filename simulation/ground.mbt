@@ -11,6 +11,7 @@ pub fn World::ground_patches(self : World, player : Player) -> Array[Deck] {
   for lift in self.lifts {
     candidates.push({
       id: lift.id,
+      map_label: "Lift",
       rect: lift.rect,
       y: lift.y,
       rise: 0,

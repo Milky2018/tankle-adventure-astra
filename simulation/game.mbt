@@ -87,6 +87,7 @@ pub fn Game::cast(
   targets~ : Bool = true,
   refuge~ : Bool = true,
   ground~ : Bool = false,
+  optical~ : Bool = false,
   visible~ : (Vec3) -> Bool = fn(_) { true },
 ) -> Hit? {
   let mut hit = (queries.geometry)(ray, range, ground)
@@ -136,7 +137,10 @@ pub fn Game::cast(
     for i, control in self.commands.controls {
       if control.actions.contains(Use) ||
         control.actions.contains(Dock) ||
-        self.commands.active(self.progress, control.id) {
+        (
+          self.commands.active(self.progress, control.id) &&
+          !(optical && control.actions == [LaserAction])
+        ) {
         continue
       }
       let center = control.position.add(

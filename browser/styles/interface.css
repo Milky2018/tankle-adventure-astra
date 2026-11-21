@@ -164,3 +164,53 @@
 #settings:has(#camera-adjust[open]) .panel { width: 330px; max-height: calc(100vh - 32px); padding: 20px; }
 #settings:has(#camera-adjust[open]) .settings-grid, #settings:has(#camera-adjust[open]) .subtitle { display: none; }
 #settings:has(#camera-adjust[open]) #camera-options { display: block; }
+
+/* Enamel instrument plates with a pressed brass lip. */
+.folded-ui #hud { --enamel: linear-gradient(155deg,#36493a,#152b24 48%,#10221d); --rim: linear-gradient(130deg,#e4c98c,#8d8054 45%,#d0ac66); }
+.folded-ui :is(#status,#tools,#minimap-wrap) { isolation:isolate; clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px); background:var(--rim); border:0; }
+.folded-ui :is(#status,#tools,#minimap-wrap)::before { content:''; position:absolute; inset:1.5px; z-index:-1; clip-path:inherit; background:var(--enamel); }
+.folded-ui #status { left:clamp(10px,2vw,32px); bottom:clamp(12px,2.8vh,32px); gap:8px; padding:7px 15px 8px 9px; }
+.folded-ui .status-icon { width:25px; height:31px; border:none; background:none; }
+.folded-ui .status-icon svg { width:25px; }
+.folded-ui .meters { width:clamp(70px,8vw,130px); }
+.hull-readout,.map-readout { display:flex; justify-content:space-between; align-items:center; color:#ecddb2; font:600 10px/1.2 ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; }
+.folded-ui #hp { height:10px; margin:3px 0 0; transform:skewX(-18deg); }
+.folded-ui #hp i:not(.empty):not(.half) { background:#f2dfad; }
+.folded-ui #status.critical #hp i:not(.empty) { background:#ff926a; }
+.folded-ui #overdrive { opacity:1; margin-top:4px; }
+.folded-ui #tools { left:auto; right:clamp(10px,2vw,32px); bottom:clamp(12px,2.8vh,32px); padding:8px 13px; min-height:44px; gap:10px; color:#f7e5b3; }
+.folded-ui #tools>div { opacity:1; gap:6px; }
+#weapon-tool svg { width:38px;height:22px;fill:currentColor; }
+#weapon-tool path { display:none; }
+#weapon-tool[data-weapon="Cannon"] .cannon,#weapon-tool[data-weapon="Mortar"] .mortar,#weapon-tool[data-weapon="Laser"] .laser { display:block; }
+#weapon-name { font:600 14px Georgia,serif; }
+#tools :is(#magnet-tool,#flotation-tool) { padding-left:8px;border-left:1px solid #b5a37280; }
+#tools :is(#magnet-tool,#flotation-tool) svg { width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8; }
+.folded-ui #tools .active { color:#fff4be; filter:drop-shadow(0 0 3px currentColor); }
+.folded-ui #tools #magnet-tool.active { color:#8edaff; }
+.folded-ui #tools kbd,.map-readout kbd { padding:2px 3px;font:9px ui-monospace,monospace; background:#e7d6ad; color:#17291f; border:0; }
+.folded-ui #minimap-wrap { width:clamp(104px,11vw,158px); height:clamp(114px,11vw,158px); padding:22px 4px 18px; top:clamp(12px,2.8vh,32px); right:clamp(10px,2vw,32px); }
+.folded-ui #minimap { display:block; }
+.folded-ui .map-corners { inset:22px 5px 18px; background:repeating-linear-gradient(0deg,transparent 0 17px,#d0bd8d10 17px 18px),repeating-linear-gradient(90deg,transparent 0 17px,#d0bd8d10 17px 18px); }
+.map-readout { position:absolute; inset:auto 10px 4px; }
+.folded-ui #reticle { width:44px; height:44px; color:#ffedbf; }
+.folded-ui #reticle svg { position:absolute; inset:0; width:100%; height:100%; transform:none; fill:none; stroke-linecap:round; }
+.sight { stroke:currentColor; stroke-width:1.25; }
+.folded-ui .reticle-heat { stroke-width:2; }
+.folded-ui .heat-track { stroke:#f0dcab66; }
+#drive-hint { position:absolute; bottom:24px; left:50%; transform:translateX(-50%); color:#fff3ce; font:12px Georgia,serif; text-shadow:0 1px 4px #111; white-space:nowrap; }
+#drive-hint kbd { padding:3px 4px; }
+.folded-ui #acquired.ability-acquired { bottom:88px; }
+@media(max-width:580px) {
+  #drive-hint { bottom:74px; }
+  .folded-ui #tools { gap:5px; padding:7px 9px; }
+  #weapon-tool svg { width:23px; }
+  #tools :is(#magnet-tool,#flotation-tool) { padding-left:4px; }
+  .folded-ui #status { padding:7px; gap:3px; }
+}
+
+#map-area { position:absolute; left:5px; right:5px; top:4px; text-align:center; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; color:#f5e4bc; font:600 clamp(10px,.9vw,13px)/1.2 Georgia,serif; }
+@media (max-width:360px) {
+  .folded-ui #tools { bottom:68px; }
+  #drive-hint { top:20px; bottom:auto; left:62px; transform:none; }
+}

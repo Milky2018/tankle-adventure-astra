@@ -95,6 +95,19 @@ fn Session::bindings(self : Session) -> Unit {
       self.settings.bindings.get(action).unwrap_or("Unbound") +
       "</button></div>"
   }
+  for
+    action in [
+      "up", "left", "down", "right", "map", "interact", "weapon", "magnet", "float",
+    ] {
+    let key = self.settings.bindings.get(action).unwrap_or("—")
+    let legend = match key {
+      "Mouse0" => "LMB"
+      "Mouse1" => "MMB"
+      "Mouse2" => "RMB"
+      _ => key.strip_prefix("Key").map(fn(s) { s.to_owned() }).unwrap_or(key)
+    }
+    @host.text(action + "-key", legend)
+  }
   @host.html("bindings", markup)
   for action in self.settings.bindings.keys() {
     @host.on_click("binding-" + action, fn() {

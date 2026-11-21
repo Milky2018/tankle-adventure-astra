@@ -1,6 +1,7 @@
 ///|
 pub(all) struct Deck {
   id : String
+  map_label : String
   rect : Rect
   y : Double
   rise : Double
@@ -153,6 +154,7 @@ pub fn World::support(
       best = Some({
         deck: {
           id: lift.id,
+          map_label: "Lift",
           rect: lift.rect,
           y: lift.y,
           rise: 0,

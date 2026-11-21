@@ -293,6 +293,7 @@ pub fn DamageKind::not_equal(Self, Self) -> Bool
 
 pub(all) struct Deck {
   id : String
+  map_label : String
   rect : Rect
   y : Double
   rise : Double
@@ -499,7 +500,7 @@ pub fn Game::active_arena(Self) -> Arena?
 pub fn Game::active_boss(Self) -> Enemy?
 pub fn Game::advance_combat(Self, Queries, Vec3, Vec3, firing~ : Bool, magnet~ : Bool, dt~ : Double) -> Unit
 pub fn Game::advance_world(Self, Double) -> Unit
-pub fn Game::cast(Self, Queries, Ray, Double, targets? : Bool, refuge? : Bool, ground? : Bool, visible? : (Vec3) -> Bool) -> Hit?
+pub fn Game::cast(Self, Queries, Ray, Double, targets? : Bool, refuge? : Bool, ground? : Bool, optical? : Bool, visible? : (Vec3) -> Bool) -> Hit?
 pub fn Game::detonate_mine(Self, Int32) -> Unit
 pub fn Game::dock(Self, Bool, Bool, Double) -> Unit
 pub fn Game::drift(Self, Vec3, Bool) -> Vec2
@@ -593,6 +594,7 @@ pub(all) struct LaserSegment {
   from : Vec3
   to : Vec3
   live : Bool
+  contact : Bool
 }
 
 pub(all) struct Lift {

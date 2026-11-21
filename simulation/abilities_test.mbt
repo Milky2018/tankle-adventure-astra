@@ -36,6 +36,8 @@ test "laser reflection follows the outgoing face without spending heat on its gu
   }
   game.laser(queries, { x: 0, y: 2, z: 0, }, { x: 10, y: 2, z: 0, }, false, 0.1)
   assert_eq(game.laser_path.length(), 2)
+  assert_true(game.laser_path[0].contact)
+  assert_false(game.laser_path[1].contact)
   assert_true(game.laser_path[1].to.z > 80)
   assert_true((game.laser_path[1].to.x - 5).abs() < 0.0001)
   assert_eq(game.player.heat, 0)
@@ -141,4 +143,23 @@ test "final docking requires the defeated Keeper and a continuous stationary hol
   assert_true(game.ending_at is None)
   assert_true(game.progress.has("keeper"))
   assert_eq(game.progress.anchor, "last-refuge")
+}
+
+///|
+test "a latched optical receiver holds the beam at its face" {
+  let game = @simulation.Game::new()
+  game.player.abilities.laser = true
+  game.player.weapon = Laser
+  let face = game.commands.controls
+    .iter()
+    .find_first(fn(c) { c.id == "lens-return" })
+    .unwrap().position
+  let origin = face.add({ x: 4, y: 0, z: 0, })
+  let queries = @simulation.Queries::{ geometry: fn(_, _, _) { None }, }
+  game.laser(queries, origin, face, true, 0.02)
+  let impact = game.laser_path[0].to
+  assert_true(game.progress.pending.contains("lens-return"))
+  game.laser(queries, origin, face, true, 0.02)
+  assert_true(game.laser_path[0].contact)
+  assert_eq(game.laser_path[0].to.distance(impact), 0)
 }
