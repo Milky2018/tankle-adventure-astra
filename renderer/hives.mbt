@@ -2,10 +2,9 @@
 priv struct HiveVisual {
   body : @sim.Hive
   root : @core.Object3D
-  halo : @core.Object3D?
   scan : @core.Object3D?
   arms : Array[@core.Object3D?]
-  lamps : Array[@core.Object3D?]
+  beacon : @core.Object3D?
   mut proximity : Double
   mut pulse : Double
 }
@@ -26,10 +25,9 @@ fn hives(
     {
       body,
       root: get("root").unwrap(),
-      halo: get("halo"),
       scan: get("scan"),
       arms: Array::makei(2, fn(j) { get("arms/\{j}/pivot") }),
-      lamps: Array::makei(4, fn(j) { get("lamps/\{j}") }),
+      beacon: get("lamps/0"),
       proximity: 0,
       pulse: 0,
     }
@@ -65,20 +63,14 @@ fn View::update_hives(self : View, game : @sim.Game, dt : Double) -> Unit {
         arm.rotation.set(
           0,
           0,
-          (if i == 0 { -1.0 } else { 1.0 }) *
-          (0.55 - v.proximity * 0.4 - work * 0.55),
+          (if i == 0 { 1.0 } else { -1.0 }) *
+          (0.82 - v.proximity * 0.44 - work * 0.95),
         )
         |> ignore
       }
     }
-    let lamp_color = if active || nearby { 0x9ad4ba } else { 0x829185 }
-    if v.halo is Some(halo) {
-      let scale = 1.0 + @math.sin(game.time * 2) * 0.025 + v.proximity * 0.08
-      halo.scale.set(scale, scale, scale) |> ignore
-      color(halo, lamp_color)
-    }
     if v.scan is Some(scan) {
-      scan.visible = nearby || v.pulse > 0
+      scan.visible = v.pulse > 0
       scan.position.set_y(
         0.25 + (if v.pulse > 0 { (1.8 - v.pulse) * 1.8 % 1 * 2.4 } else { 0 }),
       )
@@ -90,10 +82,8 @@ fn View::update_hives(self : View, game : @sim.Game, dt : Double) -> Unit {
       }
       scan.scale.set(scale, scale, scale) |> ignore
     }
-    for lamp in v.lamps {
-      if lamp is Some(lamp) {
-        color(lamp, if v.pulse > 0 { 0xffdf9a } else { lamp_color })
-      }
+    if v.beacon is Some(beacon) {
+      color(beacon, if active { 0xa4efd0 } else { 0x627d72 })
     }
   }
 }

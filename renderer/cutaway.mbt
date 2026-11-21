@@ -119,6 +119,8 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
   }
   let reflected = if !probe {
     ""
+  } else if finish == "opticalMirror" {
+    mirror_reflection
   } else if finish == "canal" {
     canal_reflection
   } else {

@@ -10,6 +10,7 @@ priv struct ControlVisual {
   body : @sim.Control
   root : @core.Object3D
   lamp : @core.Object3D?
+  semaphore : @core.Object3D?
   moving : @core.Object3D?
   cover : @core.Object3D?
   back : @core.Object3D?
@@ -21,7 +22,26 @@ priv struct ControlVisual {
 }
 
 ///|
+priv struct LiftVisual {
+  body : @sim.Lift
+  deck : @core.Object3D
+  rods : @core.Object3D?
+  counterweight : @core.Object3D?
+  pointer : @core.Object3D?
+}
+
+///|
+priv struct PickupVisual {
+  body : @sim.Pickup
+  root : @core.Object3D
+  item : @core.Object3D?
+  jaws : Array[@core.Object3D?]
+  mut opening : Double
+}
+
+///|
 priv struct Machinery {
+  mut installing : (String, Double)?
   ram : @core.Object3D?
   flywheel : @core.Object3D?
   door_status : @core.Object3D?
@@ -30,11 +50,9 @@ priv struct Machinery {
   side_handles : Array[(@core.Object3D?, @core.Object3D?)]
   walls : Array[WallVisual]
   controls : Array[ControlVisual]
-  lifts : Array[(@sim.Lift, @core.Object3D, @core.Object3D?)]
+  lifts : Array[LiftVisual]
   mirrors : Array[(@sim.Mirror, @core.Object3D)]
-  pickups : Array[
-    (@sim.Pickup, @core.Object3D, @core.Object3D?, @core.Object3D?),
-  ]
+  pickups : Array[PickupVisual]
 }
 
 ///|
@@ -76,6 +94,7 @@ fn Machinery::new(
         body,
         root: node,
         lamp: get("world/controls/\{body.id}/lamp"),
+        semaphore: get("world/controls/\{body.id}/semaphore"),
         moving: get("world/controls/\{body.id}/moving"),
         cover,
         back: get("world/controls/\{body.id}/housing/0"),
@@ -95,10 +114,17 @@ fn Machinery::new(
       })
     }
   }
-  let lifts : Array[(@sim.Lift, @core.Object3D, @core.Object3D?)] = []
+  let lifts : Array[LiftVisual] = []
   for body in game.world.lifts {
     if get("world/views/lifts/\{body.id}/root") is Some(node) {
-      lifts.push((body, node, get("world/views/lifts/\{body.id}/rods")))
+      let prefix = "world/views/lifts/\{body.id}/"
+      lifts.push({
+        body,
+        deck: node,
+        rods: get(prefix + "rods"),
+        counterweight: get(prefix + "counterweight"),
+        pointer: get(prefix + "pointer"),
+      })
     }
   }
   let mirrors : Array[(@sim.Mirror, @core.Object3D)] = []
@@ -107,19 +133,17 @@ fn Machinery::new(
       mirrors.push((body, node))
     }
   }
-  let pickups : Array[
-    (@sim.Pickup, @core.Object3D, @core.Object3D?, @core.Object3D?),
-  ] = []
+  let pickups : Array[PickupVisual] = []
   for body in game.pickups {
     if get("world/views/pickups/\{body.id}/root") is Some(node) {
-      pickups.push(
-        (
-          body,
-          node,
-          get("world/views/pickups/\{body.id}/item"),
-          get("world/views/pickups/\{body.id}/cage"),
-        ),
-      )
+      let prefix = "world/views/pickups/\{body.id}/"
+      pickups.push({
+        body,
+        root: node,
+        item: get(prefix + "item"),
+        jaws: Array::makei(2, fn(i) { get(prefix + "jaws/\{i}") }),
+        opening: 0,
+      })
     }
   }
   let obstacles : Array[(@sim.Solid, @core.Object3D, @sim.Vec3)] = []
@@ -148,6 +172,7 @@ fn Machinery::new(
     )
   })
   {
+    installing: None,
     ram: get("opening/ram"),
     flywheel: get("opening/flywheel"),
     door_status: get("opening/door-status"),
@@ -344,6 +369,9 @@ fn Machinery::update(self : Machinery, game : @sim.Game, dt : Double) -> Unit {
         |> ignore
       }
     }
+    if c.semaphore is Some(flag) {
+      flag.rotation.set_z((1 - c.engaged) * 1.45) |> ignore
+    }
     if c.moving is Some(moving) {
       if b.rotor {
         moving.rotation.set(0, 0, -@math.PI / 4 + c.engaged * @math.PI / 4)
@@ -361,8 +389,17 @@ fn Machinery::update(self : Machinery, game : @sim.Game, dt : Double) -> Unit {
     }
     c.root.update_matrix_world(force=true)
   }
-  for (body, node, rods) in self.lifts {
-    if rods is Some(rods) {
+  for lift in self.lifts {
+    let body = lift.body
+    let node = lift.deck
+    if lift.counterweight is Some(weight) {
+      weight.position.set_y(body.stops[body.stops.length() - 1] - body.y)
+      |> ignore
+    }
+    if lift.pointer is Some(pointer) {
+      pointer.position.set_y(body.y - body.stops[0]) |> ignore
+    }
+    if lift.rods is Some(rods) {
       rods.scale.set_y(body.y - 0.55 - rods.position.y) |> ignore
       rods.update_matrix_world(force=true)
     }
@@ -377,18 +414,62 @@ fn Machinery::update(self : Machinery, game : @sim.Game, dt : Double) -> Unit {
     |> ignore
     node.update_matrix_world(force=true)
   }
-  for (body, node, item, cage) in self.pickups {
+  for event in game.effects {
+    if event is @sim.Acquired(id) {
+      self.installing = Some((id, game.time))
+    }
+  }
+  if self.installing is Some((_, start)) && game.time - start >= 0.65 {
+    self.installing = None
+  }
+  for pickup in self.pickups {
+    let body = pickup.body
+    let node = pickup.root
     node.position.set_y(body.position.y) |> ignore
     let unlocked = body.requires is None ||
       (body.requires is Some(id) && game.progress.has(id))
     node.visible = body.preview || unlocked
-    if item is Some(item) {
-      item.visible = !game.progress.has(body.id)
-      item.position.set_y(@math.sin(game.time * 2) * 0.15) |> ignore
-      item.rotation.set(0, game.time * 0.35, 0) |> ignore
+    if pickup.item is Some(item) {
+      if self.installing is Some((id, start)) && id == body.id {
+        let t = smooth(0, 0.65, game.time - start)
+        let p = game.player
+        let rear = vector({
+          x: p.x - @math.sin(p.heading) * 1.2,
+          y: p.y + 0.75,
+          z: p.z - @math.cos(p.heading) * 1.2,
+        })
+        let target = node.world_to_local(rear)
+        item.visible = true
+        item.position.set(
+          target.x * t,
+          target.y * t + @math.sin(t * @math.PI) * 0.6,
+          target.z * t,
+        )
+        |> ignore
+        item.scale.set_scalar(1 - 0.85 * t) |> ignore
+      } else {
+        item.visible = !game.progress.has(body.id)
+      }
     }
-    if cage is Some(cage) {
-      cage.visible = !unlocked
+    let angle = if game.progress.has(body.id) {
+      1.34
+    } else if unlocked {
+      0.62
+    } else {
+      0.0
+    }
+    pickup.opening = damp(pickup.opening, angle, 12, dt)
+    for side, jaw in pickup.jaws {
+      if jaw is Some(jaw) {
+        jaw.rotation.set_z(
+          if side == 0 {
+            pickup.opening
+          } else {
+            -pickup.opening
+          },
+        )
+        |> ignore
+      }
     }
     node.update_matrix_world(force=true)
   }

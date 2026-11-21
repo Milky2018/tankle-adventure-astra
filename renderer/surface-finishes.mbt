@@ -17,6 +17,13 @@ let room_reflection : String =
   #| }
 
 ///|
+let mirror_reflection : String =
+  #| vec3 eye = isOrthographic ? -vec3(viewMatrix[0][2],viewMatrix[1][2],viewMatrix[2][2]) : normalize(apertureWorld-cameraPosition);
+  #| vec3 worldNormal = inverseTransformDirection(normal,viewMatrix);
+  #| vec3 room = roomReflection(reflect(eye,worldNormal)).rgb;
+  #| outgoingLight = outgoingLight * .15 + room * vec3(.96,1.00,.98);
+
+///|
 let wet_floor : String =
   #| vec3 eye = isOrthographic ? -vec3(viewMatrix[0][2],viewMatrix[1][2],viewMatrix[2][2]) : normalize(apertureWorld-cameraPosition);
   #| vec2 uv = apertureWorld.xz;

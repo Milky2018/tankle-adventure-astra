@@ -87,3 +87,33 @@ test "the recoil workbench still stops the hull beside the clear lane" {
   world.move_player(player, 3.0, 0.0, @simulation.Progress::new())
   assert_true(player.x < 66.0)
 }
+
+///|
+test "repair stations have a clear drive-through lane between solid tool cabinets" {
+  let game = @simulation.Game::new()
+  for hive in game.hives {
+    let p = game.player
+    let x = hive.position.x
+    let z = hive.position.z
+    let dx = @math.sin(hive.heading)
+    let dz = @math.cos(hive.heading)
+    for sign in [-1.0, 1.0] {
+      p.x = x - sign * 4 * dx
+      p.y = hive.position.y
+      p.z = z - sign * 4 * dz
+      game.world.move_player(p, sign * 8 * dx, sign * 8 * dz, game.progress)
+      assert_true((p.x - x - sign * 4 * dx).abs() < 0.001)
+      assert_true((p.z - z - sign * 4 * dz).abs() < 0.001)
+      p.x = x
+      p.z = z
+      game.world.move_player(
+        p,
+        sign * 4.35 * dz,
+        -sign * 4.35 * dx,
+        game.progress,
+      )
+      let lateral = ((p.x - x) * dz - (p.z - z) * dx).abs()
+      assert_true(lateral > 1 && lateral < 3.5)
+    }
+  }
+}
