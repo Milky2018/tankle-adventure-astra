@@ -1,4 +1,8 @@
 {
+  "recoil-return": [
+    { "frequency": 137, "end": 58, "duration": 0.12, "gain": 0.11, "type": "triangle", "delay": 0.026 },
+    { "noise": true, "cutoff": 1830, "duration": 0.045, "gain": 0.075, "delay": 0.093 }
+  ],
   "hoist-drive": [
     { "frequency": 68, "end": 126, "duration": 0.46, "gain": 0.089, "type": "triangle", "attack": 0.06 },
     { "noise": true, "cutoff": 620, "duration": 0.20, "gain": 0.045 }

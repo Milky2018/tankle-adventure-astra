@@ -316,6 +316,7 @@ pub(all) enum Effect {
   Fired(Vec3, Weapon)
   EnemyFired(Vec3, Weapon)
   Impact(Vec3, Bool)
+  ReinforcedStrike(Vec3, Vec3, Weapon)
   Chips(Vec3, Vec3)
   Ricochet(Vec3, Vec3)
   Armored(Vec3)
@@ -824,6 +825,7 @@ pub(all) struct Shot {
   mut age : Double
   mut distance : Double
 }
+pub fn Shot::reinforced(Self) -> Bool
 
 #derive(@json.FromJson, @json.ToJson)
 pub(all) struct Signal {

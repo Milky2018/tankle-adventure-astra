@@ -4,6 +4,7 @@ struct Projectiles {
   shell : @core.BufferGeometry
   geometry : @core.BufferGeometry
   friendly : @core.Material
+  bright : @core.Material
   hostile : @core.Material
 }
 
@@ -33,6 +34,7 @@ fn Projectiles::new() -> Projectiles {
       height_segments=6,
     ),
     friendly: basic_material(0xffedbe),
+    bright: basic_material(0xffffee),
     hostile: basic_material(0xff7948),
   }
 }
@@ -58,6 +60,8 @@ fn Projectiles::update(
           material=Single(
             if shot.owner is Some(_) {
               self.hostile
+            } else if shot.reinforced() {
+              self.bright
             } else {
               self.friendly
             },
@@ -71,7 +75,9 @@ fn Projectiles::update(
     mesh.visible = shot.delay <= 0
     mesh.position.set(shot.position.x, shot.position.y, shot.position.z)
     |> ignore
-    mesh.scale.set(1, 1, if shot.mortar { 1 } else { 2.5 }) |> ignore
+    let size = if shot.reinforced() { 1.4 } else { 1.0 }
+    mesh.scale.set(size, size, size * (if shot.mortar { 1 } else { 2.5 }))
+    |> ignore
     if shot.mortar {
       mesh.look_at(
         vector(

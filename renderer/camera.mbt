@@ -148,6 +148,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
       )
     }
   }
+  view.update_player(game, 0)
   view.resize()
   view
 }

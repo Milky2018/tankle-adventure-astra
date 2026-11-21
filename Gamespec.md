@@ -657,7 +657,9 @@ Ten one-time discoveries span different stages and detour types: easy local find
 
 Equipment persists through repair, death and reload without repeated collection. Reinforcement preserves rate, range and blast radius; cooling preserves delay, costs and Overheat thresholds; scope preserves damage, Cannon speed, Mortar duration and firing rate, leaves Laser range unchanged and extends Mortar preview reach. Pickup fills only an added armour segment.
 
-Acquisition pairs a pictogram/name with the numerical benefit. Persistent HUD cards show Armor's five collection pips, Cooling +25%, each reinforced weapon +50%, and the telescopic-reticle Scope +50% range. Reinforced Cannon/Mortar rounds are brighter and larger, Mortar adds an inner blast ring and Laser a thicker core. Ordinary weapon appearances remain unchanged.
+Acquisition pairs a pictogram/name with the numerical benefit. Persistent HUD cards show Armor's five collection pips, Cooling +25%, each reinforced weapon +50%, and the telescopic-reticle Scope +50% range. Reinforced Cannon/Mortar rounds are brighter and larger, Mortar adds an inner blast ring and Laser a thicker core. The selected weapon occupies the turret cradle. Cannon has a long barrel and gains a copper recoil jacket, Mortar a raised cup with two brass pressure bands, and Laser a ceramic projector with a stepped focusing iris. A reinforced Cannon shot has a short white muzzle flash and a metallic return stroke.
+
+Tankle carries the equipment it has collected. Overdrive adds a rear gearbox which Phoenix replaces with twin exhausts. The magnetic winch opens its blue pole shoes when used. The folded flotation tanks swing down alongside the tracks when deployed. The copper circulation loop shows flow during red contact. Each armour pack fits one location: Foundry nose, Reservoir left track guard, Proving right track guard, Lens turret cheeks and Hearth rear apron. The filter opens while Heat falls. The rangefinder extends for Cannon and Mortar and stows for Laser.
 
 ## 9. Ending
 

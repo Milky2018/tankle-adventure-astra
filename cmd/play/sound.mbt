@@ -133,6 +133,9 @@ fn Sound::update(
     self.phases[key] = travelling
   }
   for event in game.effects {
+    if event is @sim.Fired(_, @sim.Cannon) && p.upgrades.cannon {
+      self.play("recoil-return")
+    }
     let distance = match event {
       @sim.Fired(at, _)
       | @sim.EnemyFired(at, _)
@@ -154,6 +157,7 @@ fn Sound::update(
         @sim.Fired(_, _) | @sim.EnemyFired(_, _) => "shot"
         @sim.Impact(_, true) | @sim.Killed(_) => "explode"
         @sim.Impact(_, false) => "hit"
+        @sim.ReinforcedStrike(_, _, _) => continue
         @sim.Chips(_, _) => "chip"
         @sim.Armored(_) | @sim.Ricochet(_, _) => "armor"
         @sim.Hurt => "hurt"

@@ -328,3 +328,43 @@ test "mortar flinch follows the machine even outside its original encounter" {
     )
   }
 }
+
+///|
+test "a refit changes the next projectile and its impact, including with an earlier shot in flight" {
+  let game = @simulation.Game::new()
+  let from = @simulation.Vec3::{ x: 500, y: 2, z: 500, }
+  let to = @simulation.Vec3::{ x: 500, y: 2, z: 505, }
+  let normal = @simulation.Vec3::{ x: 0, y: 0, z: -1, }
+  let queries = @simulation.Queries::{
+    geometry: fn(ray, limit, _) {
+      let distance = to.z - ray.origin.z
+      if distance >= 0 && distance <= limit {
+        Some({
+          target: @simulation.Terrain,
+          point: to,
+          distance,
+          normal: Some(normal),
+        })
+      } else {
+        None
+      }
+    },
+  }
+  assert_true(game.fire(queries, from, to))
+  let coil = game.pickups
+    .iter()
+    .find_first(fn(p) { p.id == "cannon-coil" })
+    .unwrap()
+  game.progress.complete(coil.requires.unwrap()) |> ignore
+  assert_true(game.player.acquire(coil, game.progress))
+  game.time += 0.6
+  assert_true(game.fire(queries, from, to))
+  assert_false(game.shots[0].reinforced())
+  assert_true(game.shots[1].reinforced())
+  game.update_shots(queries, 0.2)
+  assert_eq(game.shots.length(), 0)
+  let upgraded = game.effects.filter(fn(e) {
+    e is @simulation.ReinforcedStrike(_, _, @simulation.Cannon)
+  })
+  assert_eq(upgraded.length(), 1)
+}

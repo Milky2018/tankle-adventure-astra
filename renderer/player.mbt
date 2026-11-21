@@ -9,6 +9,7 @@ priv struct HullColor {
 
 ///|
 priv struct PlayerVisual {
+  equipment : CrawlerEquipment
   smoke : @core.Object3D?
   turret_y : Double
   floats : @core.Object3D?
@@ -53,6 +54,7 @@ fn PlayerVisual::new(nodes : Map[String, @core.Object3D]) -> PlayerVisual {
     }
   })
   {
+    equipment: CrawlerEquipment::new(nodes),
     smoke: nodes.get("player-death-smoke"),
     turret_y: nodes.get("player/turret").unwrap().position.y,
     floats: nodes.get("player/floats"),
@@ -71,6 +73,7 @@ fn PlayerVisual::new(nodes : Map[String, @core.Object3D]) -> PlayerVisual {
 fn View::update_player(self : View, game : @sim.Game, dt : Double) -> Unit {
   let v = self.player_visual
   let p = game.player
+  v.equipment.update(game, dt)
   let travel = @sim.Vec2::{ x: p.x - v.position.x, z: p.z - v.position.z, }.length()
   for wheel in v.wheels {
     if travel < 5 {
@@ -95,7 +98,7 @@ fn View::update_player(self : View, game : @sim.Game, dt : Double) -> Unit {
   }
   v.position = p.position()
   if v.floats is Some(floats) {
-    floats.visible = p.deployed
+    floats.visible = p.abilities.flotation
     floats.matrix_auto_update = true
     floats.position.set_y(
       if travel > 0.001 {
@@ -107,25 +110,37 @@ fn View::update_player(self : View, game : @sim.Game, dt : Double) -> Unit {
     |> ignore
   }
   for i, arm in v.arms {
-    if arm is Some(arm) {
+    if p.abilities.flotation && arm is Some(arm) {
       arm.matrix_auto_update = true
       let side = if i == 0 { -1.0 } else { 1.0 }
       arm.position.set_x(
         damp(
           arm.position.x,
-          side * (if p.deployed { 1.65 } else { 1.25 }),
+          side * (if p.deployed { 2.04 } else { 1.72 }),
           8,
           dt,
         ),
       )
       |> ignore
-      arm.rotation.set(0, 0, @math.sin(game.time * 3 + side) * 0.015) |> ignore
+      arm.position.set_y(
+        damp(arm.position.y, if p.deployed { 0.18 } else { 1.18 }, 8, dt),
+      )
+      |> ignore
+      arm.rotation.set(
+        0,
+        0,
+        damp(arm.rotation.z, if p.deployed { 0 } else { -side * 1.32 }, 8, dt),
+      )
+      |> ignore
     }
   }
   if v.exhaust is Some(exhaust) {
     exhaust.visible = p.hp > 0 && p.phoenix_ready() && p.ending_time == 0
     exhaust.matrix_auto_update = true
-    exhaust.scale.set(1, 1, 0.85 + @math.sin(game.time * 50) * 0.15) |> ignore
+    let pulse = 0.9 + @math.sin(game.time * 50) * 0.1
+    for jet in exhaust.children {
+      jet.scale.set_z(pulse * 3.0) |> ignore
+    }
   }
   let tint = @m3.Color::from_hex(
     if p.ending_time > 0 {

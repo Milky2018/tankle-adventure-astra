@@ -3,6 +3,7 @@ pub(all) enum Effect {
   Fired(Vec3, Weapon)
   EnemyFired(Vec3, Weapon)
   Impact(Vec3, Bool)
+  ReinforcedStrike(Vec3, Vec3, Weapon)
   Chips(Vec3, Vec3)
   Ricochet(Vec3, Vec3)
   Armored(Vec3)
@@ -43,6 +44,14 @@ pub(all) struct Shot {
   mut delay : Double
   mut age : Double
   mut distance : Double
+}
+
+///|
+/// The projectile retains the damage it was launched with, even after a refit.
+pub fn Shot::reinforced(self : Shot) -> Bool {
+  self.owner is None &&
+  self.damage >
+  (if self.mortar { mortar_tuning.damage } else { cannon_tuning.damage })
 }
 
 ///|
@@ -461,6 +470,11 @@ pub fn Game::impact(
     .scale(if shot.mortar { 0.05 } else { 0 }),
   )
   let hostile = shot.owner is Some(_)
+  if shot.reinforced() {
+    self.effects.push(
+      ReinforcedStrike(blast, normal, if shot.mortar { Mortar } else { Cannon }),
+    )
+  }
   if !shot.mortar && hit.target is Terrain {
     self.effects.push(Chips(hit.point, normal))
   } else if shot.mortar || hostile || !(hit.target is EnemyTarget(_, _)) {
