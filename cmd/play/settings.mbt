@@ -299,9 +299,8 @@ fn Session::mount_settings(self : Session) -> Unit {
   @host.on_click("ending-menu", fn() {
     self.game.continue_after_ending()
     self.view.update_ending(self.game)
-    self.menu_open = true
     @host.hidden("ending", true)
-    @host.hidden("journey", false)
+    self.show_journey()
   })
   @host.on_click("fullscreen", fn() { @host.fullscreen() })
   @host.on_click("close-map", fn() {
@@ -310,25 +309,39 @@ fn Session::mount_settings(self : Session) -> Unit {
   })
   @host.on_click("journey-button", fn() {
     self.pause(false)
-    self.menu_open = true
     self.keys.clear()
-    @host.hidden("journey", false)
+    self.show_journey()
     @host.release_pointer()
   })
-  @host.on_click("journey-continue", fn() {
+  fn play() {
+    self.has_journey = true
     self.menu_open = false
-    @host.hidden("journey", true)
+    @host.close_dialog("journey")
     self.sound.start()
-  })
-  @host.on_click("new-game", fn() { @host.remove_save() })
-  for id in ["journey-start"] {
-    @host.on_click(id, fn() {
-      if self.restart_armed {
-        @host.remove_save()
-      } else {
-        self.restart_armed = true
-        @host.text(id, "Erase save & restart")
-      }
-    })
   }
+  @host.on_click("journey-continue", play)
+  @host.on_click("new-game", fn() { @host.remove_save() })
+  @host.on_click("journey-start", fn() {
+    if self.has_journey {
+      @host.remove_save()
+    } else {
+      @host.write_save(self.game.save())
+      play()
+    }
+  })
+}
+
+///|
+fn Session::show_journey(self : Session) -> Unit {
+  self.menu_open = true
+  @host.hidden("journey-continue", !self.has_journey)
+  @host.class_toggle("journey-start", "journey-primary", !self.has_journey)
+  @host.open_dialog(
+    "journey",
+    if self.has_journey {
+      "journey-continue"
+    } else {
+      "journey-start"
+    },
+  )
 }

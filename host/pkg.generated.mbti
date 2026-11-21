@@ -25,6 +25,8 @@ pub fn capture_pointer() -> Unit
 
 pub fn class_toggle(String, String, Bool) -> Unit
 
+pub fn close_dialog(String) -> Unit
+
 pub fn create_audio() -> Audio
 
 pub fn create_renderer() -> @webgl.WebGLRenderer
@@ -64,6 +66,8 @@ pub fn on_key((String, Bool, Bool) -> Unit) -> Unit
 pub fn on_pointer((Double, Double, Double, Double) -> Unit) -> Unit
 
 pub fn on_resize(() -> Unit) -> Unit
+
+pub fn open_dialog(String, String) -> Unit
 
 pub fn pixel_ratio() -> Double
 

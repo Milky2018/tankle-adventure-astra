@@ -1,6 +1,8 @@
 .journey-menu {
   position: fixed;
   inset: 0;
+  width: 100%; height: 100%; max-width: none; max-height: none;
+  margin: 0; border: 0;
   z-index: 20;
   display: flex;
   align-items: center;
@@ -9,6 +11,7 @@
   color: #f8e7bd;
   background: linear-gradient(90deg, #100e0abb, transparent 58%), url('./journey-workshop.webp') center / cover no-repeat, #14241e;
 }
+.journey-menu:not([open]) { display: none; }
 .journey-panel { width: min(46vw, 660px); text-align: center; font-family: Georgia, serif; }
 .journey-panel h1 { margin: 0 0 clamp(28px, 5vh, 56px); line-height: 1; text-shadow: 0 2px 10px #180f06; }
 .journey-main-title { display: block; font-size: clamp(28px, 4.3vw, 76px); white-space: nowrap; letter-spacing: .025em; }

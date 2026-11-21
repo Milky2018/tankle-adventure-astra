@@ -51,7 +51,10 @@
         <div class="panel-footer"><button id="new-game" class="secondary">Restart</button><button id="resume" class="primary">Resume <span>↗</span></button></div>
       </section>
     </div>
-    <div id="journey" class="journey-menu" hidden role="dialog" aria-modal="true" aria-labelledby="journey-title"><section class="journey-panel"><header><h1 id="journey-title"><span class="journey-main-title">TANKLE ADVENTURE</span><span class="journey-subtitle">ASTRA</span></h1></header><div class="journey-actions"><button id="journey-continue" class="journey-primary">Continue</button><button id="journey-start">New game</button></div></section></div>
+    <dialog id="journey" class="journey-menu" aria-labelledby="journey-title"><section class="journey-panel"><header><h1 id="journey-title"><span class="journey-main-title">TANKLE ADVENTURE</span><span class="journey-subtitle">ASTRA</span></h1></header><div class="journey-actions">
+      <button id="journey-continue" class="journey-primary">Continue</button>
+      <button id="journey-start">New Game</button>
+    </div></section></dialog>
     <div id="ending" hidden role="dialog" aria-modal="true" aria-labelledby="ending-title"><section><h1 id="ending-title">Mission Accomplished</h1><div class="ending-actions"><button id="ending-continue">Continue</button><button id="ending-menu">Main menu</button></div></section></div>
     <script type="module" src="/browser/main.js"></script>
   </body>

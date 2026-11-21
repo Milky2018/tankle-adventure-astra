@@ -35,6 +35,10 @@ export async function loadScene(url, parse, ready, failed) {
 }
 export function onKey(callback) {
   addEventListener('keydown', event => {
+    if (document.getElementById('journey').open && ['Tab', 'Space', 'Enter'].includes(event.code)) {
+      if (event.repeat && event.code !== 'Tab') event.preventDefault();
+      return;
+    }
     if (['Tab', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.code)) event.preventDefault();
     callback(event.code, true, event.repeat);
   });

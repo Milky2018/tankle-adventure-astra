@@ -730,7 +730,7 @@ Keep original durations, including tracks below 90 seconds. Battle1 loops to abo
 
 **Tankle Adventure** stays on one title line, **Astra** on a smaller subtitle line. Finished-game presentation uses restrained architectural imagery, oxidized brass, deliberate motion, clear focus and consistent spacing rather than dashboard clutter. Keep only headings, setting labels and necessary controls: no promotional copy, campaign captions, instruction footnotes or player-facing archived/preview maps.
 
-Main menu: Continue, New game and applicable Back. With existing progress, New game requires a second explicitly labelled **Erase save & restart** action. Pause-menu **Restart immediately clears progress and restarts, without confirmation**. Pause emphasizes Resume and coherent display, camera, audio and input groups, including persistent settings, complete remapping, keyboard focus, reduced motion and compact layouts.
+The title screen always offers **New Game**, which starts at the Old Repair Room and immediately replaces any existing save. **Continue** appears only when a resumable journey exists and resumes that journey. Pause-menu **Restart immediately clears progress and restarts, without confirmation**. Pause emphasizes Resume and coherent display, camera, audio and input groups, including persistent settings, complete remapping, keyboard focus, reduced motion and compact layouts.
 
 | HUD element | Behaviour |
 | --- | --- |

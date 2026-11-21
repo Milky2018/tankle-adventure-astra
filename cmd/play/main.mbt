@@ -4,7 +4,7 @@ struct Session {
   sound : Sound
   mut rebinding : String?
   mut menu_open : Bool
-  mut restart_armed : Bool
+  mut has_journey : Bool
   hud : Hud
   game : @sim.Game
   queries : @sim.Queries
@@ -134,12 +134,15 @@ pub fn start() -> Unit {
   @host.load_scene(
     "/generated/art/folded-scene.json.gz",
     fn(scene) {
-      let game = if @host.query("chapter") == "circulation" {
-        @sim.Game::new(start={ x: 290, y: -24, z: 120, })
+      let direct = @host.direct_entry()
+      let (game, restored) = if @host.query("chapter") == "circulation" {
+        (@sim.Game::new(start={ x: 290, y: -24, z: 120, }), false)
       } else {
         let game = @sim.Game::new()
-        game.restore(@host.read_save()) |> ignore
-        game
+        (game, game.restore(@host.read_save()))
+      }
+      if direct && !restored {
+        @host.write_save(game.save())
       }
       let settings = Settings::load()
       let view = @view.View::new(scene, game)
@@ -153,8 +156,8 @@ pub fn start() -> Unit {
         settings,
         sound: Sound::new(),
         rebinding: None,
-        menu_open: !@host.direct_entry(),
-        restart_armed: false,
+        menu_open: !direct,
+        has_journey: restored || direct,
         hud: Hud::new(),
         queries: view.queries(game),
         aim_queries: view.queries(game, aiming=true),
@@ -206,7 +209,9 @@ pub fn start() -> Unit {
       view.barrel.matrix_auto_update = true
       view.position_player(game.player, game.world, 0)
       session.mount_settings()
-      @host.hidden("journey", !session.menu_open)
+      if session.menu_open {
+        session.show_journey()
+      }
       @host.inspect_projection(fn(x, y, z) {
         let p = view.project({ x, y, z, })
         [p.x, p.z]

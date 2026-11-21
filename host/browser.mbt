@@ -95,7 +95,11 @@ pub fn remove_save() -> Unit {
 
 ///|
 extern "js" fn restart(clear_save~ : Bool) -> Unit =
-  #| clear => { if (clear) localStorage.removeItem('tankle-moonbit-v1'); location.reload(); }
+  #| clear => {
+  #|   if (clear) localStorage.removeItem('tankle-moonbit-v1');
+  #|   history.replaceState({ ...history.state, tankleRestart: true }, '');
+  #|   location.reload();
+  #| }
 
 ///|
 pub extern "js" fn pointer_locked() -> Bool =
@@ -252,8 +256,25 @@ pub extern "js" fn write_preferences(value : String) -> Unit =
 
 ///|
 pub extern "js" fn direct_entry() -> Bool =
-  #| () => new URLSearchParams(location.search).has('chapter')
+  #| () => {
+  #|   const { tankleRestart, ...state } = history.state ?? {};
+  #|   if (tankleRestart) history.replaceState(state, '');
+  #|   return !!tankleRestart || new URLSearchParams(location.search).has('chapter');
+  #| }
 
 ///|
 pub extern "js" fn query(key : String) -> String =
   #| key => new URLSearchParams(location.search).get(key) ?? ''
+
+///|
+pub extern "js" fn open_dialog(id : String, focus : String) -> Unit =
+  #| (id, focus) => {
+  #|   const dialog = document.getElementById(id);
+  #|   dialog.oncancel = event => event.preventDefault();
+  #|   if (!dialog.open) dialog.showModal();
+  #|   document.getElementById(focus).focus();
+  #| }
+
+///|
+pub extern "js" fn close_dialog(id : String) -> Unit =
+  #| id => document.getElementById(id).close()
