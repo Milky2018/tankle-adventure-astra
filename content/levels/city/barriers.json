@@ -35,25 +35,179 @@
   },
   {
     "id": "inspection-ascent-west",
-    "x": 103.8,
+    "x": 103.24,
     "z": -42,
-    "w": 0.2,
-    "d": 24,
+    "w": 0.76,
+    "d": 3,
     "y": 0,
     "h": 9,
     "permanent": true,
     "circuitKey": "inspection-ascent-west:103.8000:0.0000:-42.0000"
   },
   {
+    "id": "inspection-ascent-west-1",
+    "x": 103.24,
+    "z": -39,
+    "w": 0.76,
+    "d": 3,
+    "y": 0,
+    "h": 8,
+    "permanent": true,
+    "circuitKey": "inspection-ascent-west-1:103.2400:0.0000:-39.0000"
+  },
+  {
+    "id": "inspection-ascent-west-2",
+    "x": 103.24,
+    "z": -36,
+    "w": 0.76,
+    "d": 3,
+    "y": 0,
+    "h": 7,
+    "permanent": true,
+    "circuitKey": "inspection-ascent-west-2:103.2400:0.0000:-36.0000"
+  },
+  {
+    "id": "inspection-ascent-west-3",
+    "x": 103.24,
+    "z": -33,
+    "w": 0.76,
+    "d": 3,
+    "y": 0,
+    "h": 6,
+    "permanent": true,
+    "circuitKey": "inspection-ascent-west-3:103.2400:0.0000:-33.0000"
+  },
+  {
+    "id": "inspection-ascent-west-4",
+    "x": 103.24,
+    "z": -30,
+    "w": 0.76,
+    "d": 3,
+    "y": 0,
+    "h": 5,
+    "permanent": true,
+    "circuitKey": "inspection-ascent-west-4:103.2400:0.0000:-30.0000"
+  },
+  {
+    "id": "inspection-ascent-west-5",
+    "x": 103.24,
+    "z": -27,
+    "w": 0.76,
+    "d": 3,
+    "y": 0,
+    "h": 4,
+    "permanent": true,
+    "circuitKey": "inspection-ascent-west-5:103.2400:0.0000:-27.0000"
+  },
+  {
+    "id": "inspection-ascent-west-6",
+    "x": 103.24,
+    "z": -24,
+    "w": 0.76,
+    "d": 3,
+    "y": 0,
+    "h": 3,
+    "permanent": true,
+    "circuitKey": "inspection-ascent-west-6:103.2400:0.0000:-24.0000"
+  },
+  {
+    "id": "inspection-ascent-west-7",
+    "x": 103.24,
+    "z": -21,
+    "w": 0.76,
+    "d": 3,
+    "y": 0,
+    "h": 2,
+    "permanent": true,
+    "circuitKey": "inspection-ascent-west-7:103.2400:0.0000:-21.0000"
+  },
+  {
     "id": "inspection-ascent-east",
     "x": 115.8,
     "z": -42,
-    "w": 0.2,
-    "d": 24,
+    "w": 0.76,
+    "d": 3,
     "y": 0,
     "h": 9,
     "permanent": true,
     "circuitKey": "inspection-ascent-east:115.8000:0.0000:-42.0000"
+  },
+  {
+    "id": "inspection-ascent-east-1",
+    "x": 115.8,
+    "z": -39,
+    "w": 0.76,
+    "d": 3,
+    "y": 0,
+    "h": 8,
+    "permanent": true,
+    "circuitKey": "inspection-ascent-east-1:115.8000:0.0000:-39.0000"
+  },
+  {
+    "id": "inspection-ascent-east-2",
+    "x": 115.8,
+    "z": -36,
+    "w": 0.76,
+    "d": 3,
+    "y": 0,
+    "h": 7,
+    "permanent": true,
+    "circuitKey": "inspection-ascent-east-2:115.8000:0.0000:-36.0000"
+  },
+  {
+    "id": "inspection-ascent-east-3",
+    "x": 115.8,
+    "z": -33,
+    "w": 0.76,
+    "d": 3,
+    "y": 0,
+    "h": 6,
+    "permanent": true,
+    "circuitKey": "inspection-ascent-east-3:115.8000:0.0000:-33.0000"
+  },
+  {
+    "id": "inspection-ascent-east-4",
+    "x": 115.8,
+    "z": -30,
+    "w": 0.76,
+    "d": 3,
+    "y": 0,
+    "h": 5,
+    "permanent": true,
+    "circuitKey": "inspection-ascent-east-4:115.8000:0.0000:-30.0000"
+  },
+  {
+    "id": "inspection-ascent-east-5",
+    "x": 115.8,
+    "z": -27,
+    "w": 0.76,
+    "d": 3,
+    "y": 0,
+    "h": 4,
+    "permanent": true,
+    "circuitKey": "inspection-ascent-east-5:115.8000:0.0000:-27.0000"
+  },
+  {
+    "id": "inspection-ascent-east-6",
+    "x": 115.8,
+    "z": -24,
+    "w": 0.76,
+    "d": 3,
+    "y": 0,
+    "h": 3,
+    "permanent": true,
+    "circuitKey": "inspection-ascent-east-6:115.8000:0.0000:-24.0000"
+  },
+  {
+    "id": "inspection-ascent-east-7",
+    "x": 115.8,
+    "z": -21,
+    "w": 0.76,
+    "d": 3,
+    "y": 0,
+    "h": 2,
+    "permanent": true,
+    "circuitKey": "inspection-ascent-east-7:115.8000:0.0000:-21.0000"
   },
   {
     "id": "inspection-tray",
@@ -209,19 +363,6 @@
     "circuitKey": "east-bank-valve:-82.0000:-9.3000:80.0000"
   },
   {
-    "id": "filter-spares",
-    "kind": "filter",
-    "x": -142,
-    "y": -8,
-    "z": 107,
-    "w": 6,
-    "d": 2,
-    "h": 1.7,
-    "permanent": true,
-    "exploration": true,
-    "circuitKey": "filter-spares:-142.0000:-9.3000:107.0000"
-  },
-  {
     "id": "recoil-spares",
     "kind": "rack",
     "x": 66,
@@ -326,19 +467,6 @@
     "circuitKey": "separator-service-pump:346.0000:-25.3000:188.0000"
   },
   {
-    "id": "coolant-spare-jackets",
-    "kind": "filter",
-    "x": 353,
-    "y": -24,
-    "z": 174,
-    "w": 4,
-    "d": 5,
-    "h": 2.4,
-    "permanent": true,
-    "exploration": true,
-    "circuitKey": "coolant-spare-jackets:353.0000:-25.3000:174.0000"
-  },
-  {
     "id": "hearth-tool-bench",
     "kind": "rack",
     "x": 84,
@@ -363,19 +491,6 @@
     "permanent": true,
     "exploration": true,
     "circuitKey": "service-compressor:114.0000:-1.3000:2.0000"
-  },
-  {
-    "id": "service-stores",
-    "kind": "rack",
-    "x": 129,
-    "y": 0,
-    "z": 2,
-    "w": 5,
-    "d": 2,
-    "h": 2.4,
-    "permanent": true,
-    "exploration": true,
-    "circuitKey": "service-stores:129.0000:-1.3000:2.0000"
   },
   {
     "id": "freight-side-cargo",
@@ -441,19 +556,6 @@
     "permanent": true,
     "exploration": true,
     "circuitKey": "rangefinder-approach-pump:372.0000:22.7000:-40.0000"
-  },
-  {
-    "id": "rangefinder-return-spares",
-    "kind": "rack",
-    "x": 401,
-    "y": 24,
-    "z": -34,
-    "w": 3,
-    "d": 6,
-    "h": 2,
-    "permanent": true,
-    "exploration": true,
-    "circuitKey": "rangefinder-return-spares:401.0000:22.7000:-34.0000"
   },
   {
     "id": "scope-screen",
@@ -3180,7 +3282,7 @@
   },
   {
     "id": "proving-inspection",
-    "x": 194,
+    "x": 198,
     "z": -158,
     "w": 1,
     "d": 8,

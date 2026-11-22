@@ -4,6 +4,8 @@ struct Cutaway {
   sight_length : @core.Uniform
   distance : @core.Uniform
   water_time : @core.Uniform
+  wake_speed : @core.Uniform
+  currents : Array[(@sim.Current, @m3.Vector3)]
   heading : @core.Uniform
   direction : @m3.Vector3
   enabled : @core.Uniform
@@ -50,9 +52,16 @@ let support_shader : String =
   #| cut *= 1.0-supportKeep;
 
 ///|
-fn Cutaway::new(scene : @core.Object3D) -> Cutaway {
+fn Cutaway::new(
+  scene : @core.Object3D,
+  currents~ : Array[@sim.Current] = [],
+) -> Cutaway {
   let cutaway = {
     water_time: @core.Uniform::new(Number(0)),
+    wake_speed: @core.Uniform::new(Number(0)),
+    currents: currents.map(fn(c) {
+      (c, @m3.Vector3::new(c.velocity.x, c.velocity.z, c.y))
+    }),
     heading: @core.Uniform::new(Number(0)),
     player: @m3.Vector3::new(0, -8, 86),
     sight_length: @core.Uniform::new(Number(0)),
@@ -176,6 +185,7 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
     #| float radius = length(delta-viewDirection*along);
     #| float nearest = clamp(along, 0.0, sightLength);
     #| float eyeCut = smoothstep(-0.8,0.0,along)*(1.0-smoothstep(2.05,2.42,length(delta-viewDirection*nearest)));
+    #| eyeCut *= max(smoothstep(-.05,.42,dot(delta.xz,viewDirection.xz)),smoothstep(.6,1.65,delta.y));
   let overhead = if camera_only {
     "0.0"
   } else {
@@ -241,6 +251,32 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
       )
     }
     uniforms["waterTime"] = self.water_time
+    let mut water_source = ""
+    if finish == "canal" && probe {
+      uniforms["wakeSpeed"] = self.wake_speed
+      let mut regions = ""
+      water_source = "uniform float wakeSpeed;\n"
+      for i, (c, velocity) in self.currents {
+        let bounds = "currentBounds\{i}"
+        let flow = "currentFlow\{i}"
+        uniforms[bounds] = @core.Uniform::new(
+          Vector4(
+            @m3.Vector4::new(
+              c.rect.x,
+              c.rect.z,
+              c.rect.x + c.rect.w,
+              c.rect.z + c.rect.d,
+            ),
+          ),
+        )
+        uniforms[flow] = @core.Uniform::new(Vector3(velocity))
+        water_source += "uniform vec4 \{bounds}; uniform vec3 \{flow};\n"
+        regions += "if (abs(p.y-\{flow}.z)<0.5 && all(greaterThanEqual(p.xz,\{bounds}.xy)) && all(lessThanEqual(p.xz,\{bounds}.zw))) return \{flow}.xy;\n"
+      }
+      water_source += "vec2 canalFlow(vec3 p){\n" +
+        regions +
+        "return vec2(0.0);\n}\n"
+    }
     uniforms["hullHeading"] = self.heading
     uniforms["aperturePlayer"] = @core.Uniform::new(Vector3(self.player))
     uniforms["apertureDirection"] = @core.Uniform::new(Vector3(self.direction))
@@ -279,7 +315,9 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
       .replace(
         old="#include <emissivemap_pars_fragment>",
         new=if probe {
-          "#include <emissivemap_pars_fragment>\n" + room_reflection
+          "#include <emissivemap_pars_fragment>\n" +
+          water_source +
+          room_reflection
         } else {
           "#include <emissivemap_pars_fragment>"
         },
@@ -374,7 +412,11 @@ fn Cutaway::aim_visible(
     if self.sight_length.value is Number(length) {
       let nearest = @sim.clamp(along, 0, length)
       cut = smooth(-0.8, 0, along) *
-        (1 - smooth(2.05, 2.42, delta.sub(dir.scale(nearest)).length()))
+        (1 - smooth(2.05, 2.42, delta.sub(dir.scale(nearest)).length())) *
+        Double::max(
+          smooth(-0.05, 0.42, delta.x * dir.x + delta.z * dir.z),
+          smooth(0.6, 1.65, delta.y),
+        )
     }
   } else {
     let delta = pos.sub(point(self.player)).sub({ x: 0, y: 1.3, z: 0, })

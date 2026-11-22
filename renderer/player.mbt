@@ -75,14 +75,14 @@ fn View::update_player(self : View, game : @sim.Game, dt : Double) -> Unit {
   let p = game.player
   v.equipment.update(game, dt)
   let travel = @sim.Vec2::{ x: p.x - v.position.x, z: p.z - v.position.z, }.length()
-  for wheel in v.wheels {
-    if travel < 5 {
-      wheel.rotate_y(-travel * 2.4) |> ignore
-    }
-  }
   if dt > 0 && travel < 5 {
     let forward = (p.x - v.position.x) * @math.sin(p.heading) +
       (p.z - v.position.z) * @math.cos(p.heading)
+    if !p.afloat {
+      for wheel in v.wheels {
+        wheel.rotate_y(-forward * 2.4) |> ignore
+      }
+    }
     let speed = damp(v.speed, forward / dt, 12, dt)
     let acceleration = (speed - v.speed) / dt
     v.pitch = damp(
@@ -97,6 +97,11 @@ fn View::update_player(self : View, game : @sim.Game, dt : Double) -> Unit {
     v.pitch = 0
   }
   v.position = p.position()
+  self.cutaway.wake_speed.value = Number(if p.afloat { v.speed } else { 0 })
+  for (current, velocity) in self.cutaway.currents {
+    let flow = current.flow(game.progress)
+    velocity.set(flow.x, flow.z, current.y) |> ignore
+  }
   if v.floats is Some(floats) {
     floats.visible = p.abilities.flotation
     floats.matrix_auto_update = true

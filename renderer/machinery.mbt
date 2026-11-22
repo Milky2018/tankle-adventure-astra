@@ -2,7 +2,6 @@
 priv struct WallVisual {
   body : @sim.Solid
   mesh : @core.Object3D
-  mut open : Double
 }
 
 ///|
@@ -77,7 +76,7 @@ fn Machinery::new(
   let walls : Array[WallVisual] = []
   for body in game.world.solids {
     if get("world/walls/\{body.circuit_key}/mesh") is Some(mesh) {
-      walls.push({ body, mesh, open: 0, })
+      walls.push({ body, mesh, })
     }
   }
   let controls : Array[ControlVisual] = []
@@ -270,18 +269,14 @@ fn Machinery::update(self : Machinery, game : @sim.Game, dt : Double) -> Unit {
   }
   for wall in self.walls {
     let b = wall.body
-    wall.open = damp(
-      wall.open,
-      if b.active(game.progress) {
-        0
-      } else {
-        1
-      },
-      9,
-      dt,
-    )
+    let height = b.exposed_height(game.progress)
+    let sliding = !b.permanent && b.rail is None
+    if sliding {
+      wall.mesh.visible = height > 0
+      wall.mesh.scale.set_y(height / b.h) |> ignore
+    }
     let x = b.rect.x + b.rect.w / 2
-    let y = b.y + b.h / 2 - wall.open * (b.h + 0.5)
+    let y = b.y + height / 2
     let z = b.rect.z + b.rect.d / 2
     if wall.mesh.position.x != x ||
       wall.mesh.position.y != y ||
@@ -289,12 +284,15 @@ fn Machinery::update(self : Machinery, game : @sim.Game, dt : Double) -> Unit {
       wall.mesh.position.set(x, y, z) |> ignore
       wall.mesh.update_matrix_world(force=true)
     }
-    wall.mesh.visible = wall.open < 0.999
   }
   for c in self.controls {
     let b = c.body
     if c.wall is Some(wall) {
-      let p = point(wall.mesh.position).add(c.offset)
+      let body = wall.body
+      let height = body.exposed_height(game.progress)
+      let offset = { ..c.offset, y: c.offset.y * height / body.h, }
+      let p = point(wall.mesh.position).add(offset)
+      c.root.visible = height > 0
       b.position = p
       c.root.position.copy(vector(p)) |> ignore
     }

@@ -117,3 +117,42 @@ test "repair stations have a clear drive-through lane between solid tool cabinet
     }
   }
 }
+
+///|
+test "a shutter blocks only its exposed section and waits for a hull in the opening" {
+  let gate = @simulation.authored_world().solids
+    .iter()
+    .find_first(fn(b) { b.id == "arena-prototype-entry" })
+    .unwrap()
+  let world : @simulation.World = {
+    decks: [],
+    solids: [gate],
+    obstacles: [],
+    architecture: [],
+    architecture_grid: Map([]),
+    lifts: [],
+  }
+  let state = @simulation.Progress::new()
+  let player = @simulation.Player::new()
+  let x = gate.rect.x + gate.rect.w / 2
+  let z = gate.rect.z + gate.rect.d / 2
+  fn step(dt : Double) -> Unit {
+    world.step_machinery(state, player, dt, [])
+  }
+  step(0)
+  state.combat_arena = gate.arena
+  player.x = x
+  player.y = gate.y
+  player.z = z
+  step(1)
+  assert_true(world.blocked(x, gate.y, z, state) is None)
+  player.x = x - 20
+  step(1)
+  state.combat_arena = None
+  step(0.125)
+  assert_eq(gate.exposed_height(state), gate.h / 2)
+  assert_true(world.blocked(x, gate.y, z, state) is Some(_))
+  assert_true(world.blocked(x, gate.y + gate.h / 2, z, state) is None)
+  step(0.125)
+  assert_true(world.blocked(x, gate.y, z, state) is None)
+}

@@ -13,7 +13,11 @@ const catalog = Object.fromEntries(
 validateCatalog(catalog);
 validateTuning(JSON.parse(readFileSync("content/abilities.json", "utf8")));
 const bindings = new Set();
-walk(readScene().object, (object) => {
+const scene = readScene();
+const geometryIds = new Set(scene.geometries.map((geometry) => geometry.uuid));
+walk(scene.object, (object) => {
+  if (object.geometry && !geometryIds.has(object.geometry))
+    throw new Error(`Missing geometry ${object.geometry} for ${object.name ?? object.uuid}`);
   if (object.matrix?.some((value) => !Number.isFinite(value)))
     throw new Error(`Invalid scene transform: ${object.name ?? object.uuid}`);
   const binding = object.userData?.binding;

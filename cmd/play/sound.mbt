@@ -194,7 +194,7 @@ fn Sound::update(
   let speed = Double::min(24, game.velocity.length())
   if moving && p.hp > 0 && game.time - self.engine_at > 0.17 - speed * 0.003 {
     self.engine_at = game.time
-    if speed > 1 {
+    if speed > 1 && !p.afloat {
       self.play("tread", gain=Double::min(1, speed / 12))
     }
     @host.audio_voice(

@@ -215,10 +215,11 @@ fn GeometryQueries::cast(
       }
     }
     for (wall, object) in self.walls {
-      if wall.active(self.state) &&
+      let height = wall.exposed_height(self.state)
+      if height > 0 &&
         ray.box({ x: wall.rect.x, y: wall.y, z: wall.rect.z, }, {
           x: wall.rect.x + wall.rect.w,
-          y: wall.y + wall.h,
+          y: wall.y + height,
           z: wall.rect.z + wall.rect.d,
         })
         is Some((distance, _)) &&

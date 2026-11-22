@@ -219,7 +219,7 @@ fn Hud::draw_map(
   }
   for b in game.world.solids {
     if !b.permanent &&
-      b.active(game.progress) &&
+      b.exposed_height(game.progress) > 0.1 &&
       (b.y - layer).abs() < 3 &&
       known.any(fn(d) { d.rect.contains(b.rect.x, b.rect.z) }) {
       @host.rectangle(

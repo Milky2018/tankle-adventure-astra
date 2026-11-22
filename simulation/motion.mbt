@@ -41,6 +41,23 @@ pub fn World::step_machinery(
       bodies.push(enemy)
     }
   }
+  for solid in self.solids {
+    if solid.permanent || solid.rail is Some(_) || solid.red || solid.phoenix {
+      continue
+    }
+    let target = if solid.active(state) { solid.h } else { 0.0 }
+    let previous = solid.shutter_height.unwrap_or(target)
+    if previous < target &&
+      bodies.any(fn(body) {
+        let p = body.position()
+        p.y + 2 > solid.y &&
+        p.y < solid.y + solid.h &&
+        solid.rect.contains(p.x, p.z, margin=0.9)
+      }) {
+      continue
+    }
+    solid.shutter_height = Some(approach(previous, target, dt * solid.h * 4))
+  }
   step_transport(self.solids, dt, bodies)
   self.step_lifts(state, dt, bodies)
 }
@@ -218,6 +235,15 @@ pub(all) struct Current {
   velocity : Vec2
   sluice : String?
   diverted : Vec2
+}
+
+///|
+pub fn Current::flow(self : Current, progress : Progress) -> Vec2 {
+  if self.sluice is Some(id) && progress.has(id) {
+    self.diverted
+  } else {
+    self.velocity
+  }
 }
 
 ///|

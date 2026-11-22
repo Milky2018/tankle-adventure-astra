@@ -39,6 +39,7 @@ pub(all) struct Solid {
   mut rect : Rect
   mut y : Double
   h : Double
+  mut shutter_height : Double?
   permanent : Bool
   motion : Transport?
   mut direction : Double
@@ -68,6 +69,14 @@ pub fn Solid::active(self : Solid, state : Progress) -> Bool {
     self.id,
     is_local=self.local_control == Some(id),
   )
+}
+
+///|
+pub fn Solid::exposed_height(self : Solid, state : Progress) -> Double {
+  match self.shutter_height {
+    Some(height) => height
+    None => if self.active(state) { self.h } else { 0 }
+  }
 }
 
 ///|
@@ -178,9 +187,10 @@ pub fn World::blocked(
 ) -> Collision? {
   for bodies in [self.obstacles, self.solids] {
     for solid in bodies {
-      if solid.active(state) &&
+      let height = solid.exposed_height(state)
+      if height > 0 &&
         y + 2 > solid.y + 0.12 &&
-        y < solid.y + solid.h - 0.1 &&
+        y < solid.y + height - 0.1 &&
         solid.rect.contains(x, z, margin=radius) {
         return Some(Barrier(solid))
       }

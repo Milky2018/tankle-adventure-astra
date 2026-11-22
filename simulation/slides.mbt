@@ -61,7 +61,7 @@ pub fn Game::pull_slide(
       ] {
       if blockers.any(fn(b) {
           b.id != body.id &&
-          b.active(self.progress) &&
+          b.exposed_height(self.progress) > 0.1 &&
           (b.y - body.y).abs() < 2.5 &&
           overlap_area(candidate, b.rect) > 0 &&
           overlap_area(candidate, b.rect) >= overlap_area(body.rect, b.rect)

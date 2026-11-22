@@ -13,11 +13,7 @@ pub fn Game::drift(self : Game, position : Vec3, deployed : Bool) -> Vec2 {
     for current in self.currents {
       if current.rect.contains(position.x, position.z) &&
         (current.y - position.y).abs() < 0.5 {
-        let velocity = if current.sluice is Some(id) && self.progress.has(id) {
-          current.diverted
-        } else {
-          current.velocity
-        }
+        let velocity = current.flow(self.progress)
         return { x: belt.x + velocity.x, z: belt.z + velocity.z, }
       }
     }
@@ -265,6 +261,9 @@ pub fn Game::continue_after_ending(self : Game) -> Unit {
 
 ///|
 fn Game::reconstruct_at(self : Game, id : String) -> Unit {
+  for solid in self.world.solids {
+    solid.shutter_height = None
+  }
   let hive = self.hives
     .iter()
     .find_first(fn(h) { h.id == id })

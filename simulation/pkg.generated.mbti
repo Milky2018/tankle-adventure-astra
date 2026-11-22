@@ -277,6 +277,7 @@ pub(all) struct Current {
   sluice : String?
   diverted : Vec2
 }
+pub fn Current::flow(Self, Progress) -> Vec2
 
 #derive(Eq)
 pub(all) enum DamageKind {
@@ -855,6 +856,7 @@ pub(all) struct Solid {
   mut rect : Rect
   mut y : Double
   h : Double
+  mut shutter_height : Double?
   permanent : Bool
   motion : Transport?
   mut direction : Double
@@ -867,6 +869,7 @@ pub(all) struct Solid {
 }
 pub fn Solid::active(Self, Progress) -> Bool
 pub fn Solid::coordinate(Self, Axis) -> Double
+pub fn Solid::exposed_height(Self, Progress) -> Double
 pub fn Solid::set_coordinate(Self, Axis, Double) -> Unit
 
 pub(all) struct Support {

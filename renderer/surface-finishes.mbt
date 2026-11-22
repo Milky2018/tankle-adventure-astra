@@ -37,7 +37,8 @@ let wet_floor : String =
 ///|
 let canal_reflection : String =
   #| vec3 eye = isOrthographic ? -vec3(viewMatrix[0][2],viewMatrix[1][2],viewMatrix[2][2]) : normalize(apertureWorld-cameraPosition);
-  #| vec2 p = apertureWorld.xz;
+  #| vec2 flow = canalFlow(apertureWorld);
+  #| vec2 p = apertureWorld.xz - flow*waterTime*.55;
   #| float swell = sin(dot(p,vec2(.72,.40))+waterTime*.93);
   #| float crossWave = cos(dot(p,vec2(-.33,1.21))-waterTime*1.14);
   #| float capillary = sin(dot(p,vec2(2.86,2.29))+crossWave*1.6-waterTime*1.63);
@@ -49,7 +50,13 @@ let canal_reflection : String =
   #| vec3 sceneLight = mix(texture2D(map,skyUv).rgb,shore.rgb,shore.a);
   #| float fresnel = .074+.86*pow(1.0-max(0.0,dot(-eye,waterNormal)),2.1);
   #| vec3 water = mix(vec3(.018,.061,.064),vec3(.045,.13,.113),.5+.5*swell*crossWave);
-  #| outgoingLight = mix(water,sceneLight*1.18,fresnel);
+  #| float driftFoam = smoothstep(.69,.91,swell*.48 + crossWave*.34 + capillary*.18) * min(.30,length(flow)*.072);
+  #| vec2 hull = apertureWorld.xz-aperturePlayer.xz, bow = vec2(sin(hullHeading),cos(hullHeading));
+  #| float behind = -dot(hull,bow)*sign(wakeSpeed), beam = abs(dot(hull,vec2(bow.y,-bow.x)));
+  #| float wake = smoothstep(.0,1.3,behind)*(1.0-smoothstep(2.5,8.0,behind));
+  #| wake *= (1.0-smoothstep(.10,.62,abs(beam-1.6-behind*.24))) * smoothstep(.5,7.0,abs(wakeSpeed));
+  #| wake *= (1.0-smoothstep(.25,.8,abs(apertureWorld.y-aperturePlayer.y)))*(.55+.28*capillary);
+  #| outgoingLight = mix(mix(water,sceneLight*1.18,fresnel),vec3(.50,.65,.58),clamp(driftFoam+wake,0.0,.58));
 
 ///|
 let steam_fragment : String =

@@ -97,11 +97,12 @@ fn CameraSpace::boom_limit(
       limit = Double::min(limit, entry)
     }
   }
-  fn visit(s : @sim.Solid) {
+  fn visit(s : @sim.Solid, height : Double) {
+    guard height > 0 else { return }
     let r = s.rect
     box({ x: r.x, y: s.y, z: r.z, }, {
       x: r.x + r.w,
-      y: s.y + s.h,
+      y: s.y + height,
       z: r.z + r.d,
     })
   }
@@ -128,14 +129,12 @@ fn CameraSpace::boom_limit(
       let cell = (x, z)
       if world.architecture_grid.get(cell) is Some(items) {
         for s in items {
-          visit(s)
+          visit(s, s.h)
         }
       }
       if self.gates.get(cell) is Some(gates) {
         for gate in gates {
-          if gate.active(state) {
-            visit(gate)
-          }
+          visit(gate, gate.exposed_height(state))
         }
       }
       if self.faces.get(cell) is Some(faces) {
@@ -151,9 +150,7 @@ fn CameraSpace::boom_limit(
     }
   }
   for solid in self.mobile {
-    if solid.active(state) {
-      visit(solid)
-    }
+    visit(solid, solid.exposed_height(state))
   }
   for lift in world.lifts {
     let r = lift.rect

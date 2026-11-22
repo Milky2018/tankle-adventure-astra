@@ -24,7 +24,7 @@ const str = JSON.stringify;
 const optional = (value) => (value == null ? "None" : `Some(${str(value)})`);
 const rect = (r) => `{ x: ${r.x}, z: ${r.z}, w: ${r.w}, d: ${r.d} }`;
 const solid = (s) =>
-  `{ id: ${str(s.id ?? "")}, rect: ${rect(s)}, y: ${s.y}, h: ${s.h}, permanent: ${!!s.permanent}, motion: ${s.motion ? `Some({ axis: ${s.motion.axis.toUpperCase()}, min: ${s.motion.min}, max: ${s.motion.max}, speed: ${s.motion.speed} })` : "None"}, direction: 1, red: ${!!s.red}, phoenix: ${!!s.phoenix}, rail: ${s.rail ? `Some({axis: ${s.rail.axis.toUpperCase()}, min: ${s.rail.min}, max: ${s.rail.max}, release: ${optional(s.rail.release)}, latch: ${optional(s.rail.latch)}})` : "None"}, arena: ${optional(s.arena)}, local_control: ${optional(s.localControl)}, circuit_key: ${str(circuitTargetKey(s))} }`;
+  `{ id: ${str(s.id ?? "")}, rect: ${rect(s)}, y: ${s.y}, h: ${s.h}, shutter_height: None, permanent: ${!!s.permanent}, motion: ${s.motion ? `Some({ axis: ${s.motion.axis.toUpperCase()}, min: ${s.motion.min}, max: ${s.motion.max}, speed: ${s.motion.speed} })` : "None"}, direction: 1, red: ${!!s.red}, phoenix: ${!!s.phoenix}, rail: ${s.rail ? `Some({axis: ${s.rail.axis.toUpperCase()}, min: ${s.rail.min}, max: ${s.rail.max}, release: ${optional(s.rail.release)}, latch: ${optional(s.rail.latch)}})` : "None"}, arena: ${optional(s.arena)}, local_control: ${optional(s.localControl)}, circuit_key: ${str(circuitTargetKey(s))} }`;
 const arrayFn = (name, type, values, print) => {
   if (values.length > 256) {
     const parts = [];

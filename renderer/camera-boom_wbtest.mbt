@@ -35,6 +35,7 @@ test "an opened gate stops constraining the boom and an overhanging ramp still d
     y: 0,
     h: 6,
     permanent: false,
+    shutter_height: None,
     motion: None,
     direction: 0,
     red: true,

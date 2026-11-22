@@ -113,7 +113,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     boom_length: 15,
     progress: game.progress,
     camera_space: CameraSpace::new(scene, game.world),
-    cutaway: Cutaway::new(scene),
+    cutaway: Cutaway::new(scene, currents=game.currents),
     clerestories,
     room_visibility: RoomVisibility::new(scene),
     projectiles: Projectiles::new(),
