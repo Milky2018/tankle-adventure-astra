@@ -228,7 +228,7 @@ pub fn Game::hit_enemy(
   }
   let dealt = enemy.damage_amount(amount, origin, kind, part_index?=part)
   enemy.hp = Double::max(0, enemy.hp - dealt)
-  enemy.flash = 0.14
+  enemy.flash = if dealt > 0 { 0.14 } else { 0 }
   if dealt > 0 && kind == MortarHit && !enemy.definition.kind.is_boss() {
     enemy.stunned_until = self.time + enemy.timing.mortar_flinch
   }

@@ -252,6 +252,7 @@ pub fn Game::advance_world(self : Game, dt : Double) -> Unit {
 ///|
 pub fn Game::respawn(self : Game) -> Unit {
   self.reconstruct_at(self.progress.anchor)
+  self.effects.push(Respawned)
 }
 
 ///|

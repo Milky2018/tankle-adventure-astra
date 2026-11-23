@@ -183,36 +183,3 @@ export function validateCatalog(catalog) {
     ), `Missing conveyor geometry metadata: ${belt.id}`);
   return true;
 }
-
-export function validateTuning(tuning) {
-  const fields = {
-    cannon: ["damage", "heat", "cooldown", "range", "speed"],
-    mortar: ["damage", "heat", "cooldown", "range", "speed", "duration", "arc"],
-    laser: ["damagePerSecond", "heatPerSecond", "range", "segments"],
-    magnet: ["range", "lockedRange", "idleHeatPerSecond", "pullHeatPerSecond"],
-    drive: [
-      "speed",
-      "overdrive",
-      "phoenix",
-      "boostHeatPerSecond",
-      "accelerationTime",
-      "decelerationTime",
-    ],
-  };
-  for (const section of Object.keys(tuning))
-    if (!(section in fields))
-      throw new Error(`Unknown abilities section: ${section}`);
-  for (const [section, keys] of Object.entries(fields)) {
-    const values = tuning[section] ?? {};
-    for (const key of Object.keys(values))
-      if (!keys.includes(key))
-        throw new Error(`Unknown abilities.${section}.${key}`);
-    for (const key of keys)
-      if (!Number.isFinite(values[key]) || values[key] <= 0)
-        throw new Error(
-          `abilities.${section}.${key} must be a positive number`,
-        );
-  }
-  if (!Number.isInteger(tuning.laser.segments))
-    throw new Error("abilities.laser.segments must be an integer");
-}

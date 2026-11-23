@@ -38,6 +38,7 @@ To build the offline archive from this checkout, run `npm run build:offline` aft
 - `cmd/play/`: browser session and interface policy in MoonBit.
 - `host/` and `browser/host.js`: browser I/O, packed buffer loading and three.mbt scene deserialization.
 - `content/levels/city/`: editable JSON definitions for floors, collision, enemies, controls, circuits, lifts, pickups and repair hives.
+- `cmd/tuning/`: validates weapon and drive parameters and generates their MoonBit records at build time. Run `moon run --target native cmd/tuning -- content/abilities.json` to check edits, or append `simulation/tuning.generated.mbt` to generate the records.
 - `content/abilities.json`: weapon damage, heat, range and movement parameters. `content/sounds.json` contains sound synthesis parameters.
 - `content/art/`: packed Three.js scene resources. Use the official editor workflow below to edit them.
 - `editor/` and `scripts/editor-server.mjs`: local authoring UI and loopback-only content/save/build service.
@@ -83,7 +84,7 @@ The simulation suite covers collision, heat, incoming damage, enemy armor, weapo
 
 The local editor was exercised through search, floor focus, gizmo dragging, property changes, undo/redo, repeated saves, character part scale/color editing and save/build/play. The running game reflected edited enemy position/health and cannon heat. Test content was restored afterwards.
 
-Browser acceptance uses a fresh save and real keyboard/mouse input: both opening relays, the Prototype fight, Overdrive acquisition, the reverse conveyor, the local shortcut and a return to the repair hive (10 to 25 hull). Third-person movement and firing, rebinding, pause, map layer selection and camera settings were also exercised. This is an opening-loop acceptance run, not a claim that every later encounter has been played through.
+Browser acceptance uses a fresh save and real keyboard/mouse input: both opening relays, the Scrap Ram fight, Overdrive acquisition, the reverse conveyor, the local shortcut and a return to the repair hive (10 to 25 hull). Third-person movement and firing, rebinding, pause, map layer selection and camera settings were also exercised. This is an opening-loop acceptance run, not a claim that every later encounter has been played through.
 
 Run `typed-opening-check.js`, `typed-first-boss-check.js` and `typed-return-check.js` in order through `playwright-cli run-code`; they deliberately replace the save in the test browser profile. Run `interface-check.js` after that route. Diagnostics and screenshots are written under ignored `output/playwright/`. Close the test browser after use.
 

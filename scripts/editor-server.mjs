@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { gzipSync } from "node:zlib";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { validateTuning } from "./content/validate.mjs";
+import { runTuning } from "./content/tuning.mjs";
 import { setupEditor, upstreamDirectory } from "./setup-editor.mjs";
 
 const digest = (data) => createHash("sha256").update(data).digest("hex");
@@ -151,8 +151,8 @@ export function createEditorServer() {
           const source = await readFile("content/abilities.json");
           if (revision !== digest(source))
             throw new Error("Skills changed on disk. Reload before saving.");
-          validateTuning(values);
           const data = JSON.stringify(values, null, 2) + "\n";
+          await runTuning(["-"], data);
           await writeFile("content/abilities.json", data);
           return json({ revision: digest(data) });
         }

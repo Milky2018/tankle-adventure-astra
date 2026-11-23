@@ -21,6 +21,7 @@ priv struct LaserTuning {
 ///|
 priv struct MagnetTuning {
   range : Double
+  shield_range : Double
   locked_range : Double
   idle_heat_per_second : Double
   pull_heat_per_second : Double

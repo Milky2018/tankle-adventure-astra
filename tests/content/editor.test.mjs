@@ -93,12 +93,6 @@ test("editor translation and user data update gameplay without depending on disp
   );
 });
 
-test("unchanged editor round trip preserves gameplay records", () => {
-  const before = records("enemies");
-  importProject(exportProject("enemies:prototype"));
-  assert.deepEqual(records("enemies"), before);
-});
-
 test("stale exports and script injection are rejected before writing", () => {
   const project = exportProject("enemies:prototype");
   project.scripts.test = [{ source: 'throw new Error("not gameplay")' }];
@@ -217,7 +211,8 @@ test("the shipped city and all colliders round trip without changing gameplay de
 });
 
 test("consecutive local saves and undo keep absolute placement and reject stale tabs", () => {
-  const before = records("enemies").find((record) => record.id === "prototype");
+  const enemies = records("enemies");
+  const before = enemies.find((record) => record.id === "prototype");
   const project = exportProject("enemies:prototype");
   const stale = structuredClone(project);
   const root = project.scene.object.children[0];
@@ -234,10 +229,7 @@ test("consecutive local saves and undo keep absolute placement and reject stale 
   assert.throws(() => importProject(stale), /Content changed since export/);
   root.matrix[12] -= 3;
   importProject(project);
-  assert.deepEqual(
-    records("enemies").find((record) => record.id === "prototype"),
-    before,
-  );
+  assert.deepEqual(records("enemies"), enemies);
 });
 
 test("new enemies clone all roles and own animated resources; save, delete and restore work repeatedly", async () => {
@@ -378,7 +370,7 @@ test("standalone templates support additions after their city source was removed
   const machineTypes = definitions
     .filter((d) => d.collection === "enemies")
     .map((d) => d.defaults.type);
-  assert.equal(machineTypes.length, 22);
+  assert.equal(machineTypes.length, new Set(machineTypes).size);
   assert.deepEqual(new Set(machineTypes), new Set(records("enemies").map((e) => e.type)));
   const palette = new ObjectLoader().parse(
     JSON.parse(

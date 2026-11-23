@@ -55,7 +55,7 @@ fn EnemyDef::combat_spec(self : EnemyDef) -> EnemySpec {
     Welder => enemy_profile(6.8, 18.0, 0.9, 0.9, Weapon(SweepAttack))
     Repairer => enemy_profile(4.5, 10.0, 1.0, 2.0, RepairAllies)
     Reflector => enemy_profile(3.2, 16.0, 1.6, 1.9, Weapon(Reflect))
-    Prototype =>
+    ScrapRam =>
       enemy_profile(4.2, 20.0, 1.5, 1.6, Weapon(ChargeAttack), charge_speed=21)
     Guardian => enemy_profile(3.8, 12.0, 1.5, 1.6, BossCycle)
     Sorter | Overseer | Keeper => enemy_profile(0.0, 27.0, 1.4, 2.4, BossCycle)
@@ -149,7 +149,7 @@ fn heavy(kind : EnemyKind) -> Bool {
     | Siege
     | Scout
     | Interceptor
-    | Prototype
+    | ScrapRam
     | Welder
     | Hunter
     | Dredger => true

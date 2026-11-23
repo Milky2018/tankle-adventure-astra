@@ -12,6 +12,7 @@ pub(all) enum Effect {
   Acquired(String)
   Activated(String)
   Repaired(String)
+  Respawned
 }
 
 ///|
@@ -177,7 +178,8 @@ fn Game::shoot_enemy(
   } else {
     aim
   }
-  let speed = if enemy.definition.kind == Keeper {
+  let speed = if enemy.definition.kind == Keeper &&
+    enemy.last_boss_attack != Some(Needle) {
     Double::max(15, origin.distance(aim) / 2.5)
   } else {
     speed.unwrap_or(
@@ -255,6 +257,9 @@ fn Game::launch_enemy_shot(self : Game, queries : Queries, shot : Shot) -> Unit 
   if !e.on_field() || (source.part is Some(i) && e.parts[i].hp <= 0) {
     shot.captured = true
     return
+  }
+  if source.part is Some(i) {
+    e.parts[i].recoil = 1.35
   }
   // The tangent at the start of the parabolic arc points four arc heights above impact.
   let axis = if shot.mortar {

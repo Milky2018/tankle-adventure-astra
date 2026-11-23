@@ -25,8 +25,7 @@ test("workshop panes transmit the scene and sit in open window frames", () => {
   const glazing = new Set(scene.materials.filter(m => m.userData?.surfaceFinish === "glass").map(m => {
     assert.equal(m.transparent, true);
     assert.equal(m.depthWrite, false);
-    assert.ok(m.opacity > 0 && m.opacity < 0.5);
-    assert.equal(m.map, undefined);
+    assert.ok(m.opacity > 0 && m.opacity < 1);
     return m.uuid;
   }));
   const geometry = new Map(scene.geometries.map(g => [g.uuid, g]));

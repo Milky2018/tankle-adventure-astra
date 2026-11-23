@@ -70,7 +70,7 @@ test("hardware instances retain active transforms, depth layers and the original
   instanceRepeatedShapes(s, a => a);
   assert.ok(s.object.children.every(o=>o.type==="InstancedMesh" && o.layers===4 && o.matrix[12]===5));
   const xs = s.object.children.flatMap(o=>o.instanceMatrix.array.filter((_,i)=>i%16===12));
-  assert.deepEqual(xs,Array.from({length:128},(_,i)=>i).filter(i=>i!==1 && i!==3));
+  assert.deepEqual(xs.sort((a,b)=>a-b),Array.from({length:128},(_,i)=>i).filter(i=>i!==1 && i!==3));
   const extracted = s.geometries.at(-1).data;
   assert.deepEqual(extracted.index.array,[0,1,2]);
   assert.equal(extracted.attributes.position.array.byteOffset,36);
@@ -86,7 +86,9 @@ test("roller instances keep segment transforms and independent belt animations",
     });
   }
   instanceRepeatedShapes(s, a => a);
-  for (const root of s.object.children.filter(n => n.type === "Group")) {
+  for (const belt of ["feed", "return"]) {
+    const root = s.object.children.find(n => n.userData?.binding === "world/belts/" + belt + "/segments/0/root");
+    assert.ok(root, belt + " segment was lost");
     const [a, b] = root.children;
     const batch = s.object.children.find(n => n.userData.binding === a.userData.rollerBatch);
     assert.equal(batch.type, "InstancedMesh");
@@ -118,10 +120,10 @@ test("fixed switch housings batch across circuit folders while mounted controls 
   });
   s.object.children.push(...roots);
   batchFittings(s, a => a, [], controls);
-  const combined = s.object.children.filter(n => n.name === "Workshop fittings");
+  const combined = s.object.children.filter(n => n.type === "BatchedMesh");
   assert.equal(combined.length, 1);
   assert.deepEqual(combined[0].boundingBox, { min: [3, 0, 0], max: [26, 1, 0] });
-  assert.equal(roots[2].children.find(n => n.name === "Workshop fittings").type, "Mesh");
+  assert.equal(roots[2].children.filter(n => n.type === "Mesh" && !n.userData?.binding).length, 1);
   for (const root of roots) {
     assert.equal(root.children.find(n => n.userData?.binding.endsWith("/lamp")).material, "iron");
   }

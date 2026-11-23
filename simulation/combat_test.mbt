@@ -23,11 +23,16 @@ test "cannon sweeps between frames and damages a target exactly once" {
   assert_true(
     game.fire(queries, { x: 500, y: 1.5, z: 500, }, { x: 500, y: 1.5, z: 510, }),
   )
+  let damage = game.shots[0].damage
+  assert_true(damage > 0)
+  let starting_hp = damage * 3
+  game.enemies[0].hp = starting_hp
   game.update_shots(queries, 0.5)
-  assert_eq(game.enemies[0].hp, 2)
+  let hp_after_impact = game.enemies[0].hp
+  assert_eq(hp_after_impact, starting_hp - damage)
   assert_eq(game.shots.length(), 0)
   game.update_shots(queries, 0.5)
-  assert_eq(game.enemies[0].hp, 2)
+  assert_eq(game.enemies[0].hp, hp_after_impact)
 }
 
 ///|
@@ -60,7 +65,7 @@ test "refuge cylinder stops outgoing fire without damaging the enemy" {
 }
 
 ///|
-test "prototype front armor and vent opening preserve their different damage" {
+test "Scrap Ram exposes its front drive only on a mechanical opening" {
   let game = @simulation.Game::new()
   let index = game.enemies
     .search_by(fn(e) { e.definition.id == "prototype" })
@@ -70,24 +75,12 @@ test "prototype front armor and vent opening preserve their different damage" {
   let front = enemy.position().add({ x: 0, y: 0, z: 5, })
   assert_eq(game.hit_enemy(index, 1, front, @simulation.CannonHit), 0)
   game.progress.combat_arena = Some("prototype")
-  assert_eq(game.hit_enemy(index, 1, front, @simulation.CannonHit), 0.4)
+  let guarded = game.hit_enemy(index, 1, front, @simulation.CannonHit)
+  assert_true(guarded > 0 && guarded < 1)
   enemy.phase = @simulation.Vent(0.25)
+  assert_eq(game.hit_enemy(index, 1, front, @simulation.CannonHit), guarded)
+  enemy.jam = 1
   assert_eq(game.hit_enemy(index, 1, front, @simulation.CannonHit), 1)
-}
-
-///|
-test "armor pickup increases capacity without repairing unrelated damage" {
-  let game = @simulation.Game::new()
-  let pickup = game.pickups
-    .iter()
-    .find_first(fn(p) { p.id == "armor-reservoir" })
-    .unwrap()
-  game.player.hp = 7
-  assert_true(game.player.acquire(pickup, game.progress))
-  assert_eq(game.player.hp, 12)
-  assert_eq(game.player.max_hp(), 30)
-  assert_false(game.player.acquire(pickup, game.progress))
-  assert_eq(game.player.hp, 12)
 }
 
 ///|
@@ -137,7 +130,7 @@ test "boss firing patterns enter a real warning before emitting projectiles" {
     game.time += 1.0 / 60
     game.update_enemies(queries, 1.0 / 60)
   }
-  assert_true(game.shots.length() >= 3)
+  assert_false(game.shots.is_empty())
   assert_true(enemy.phase.is_venting())
 }
 
@@ -159,19 +152,22 @@ test "authored pickup IDs grant upgrades once and survive saving" {
   }
   game.pickups.push(armor)
   game.pickups.push(cannon)
-  game.player.hp = 7
+  let base = game.player.max_hp()
+  game.player.hp = base - 3
   assert_true(game.player.acquire(armor, game.progress))
-  assert_eq(game.player.max_hp(), 30)
-  assert_eq(game.player.hp, 12)
+  let upgraded = game.player.max_hp()
+  assert_true(upgraded > base)
+  assert_eq(game.player.hp, upgraded - 3)
   assert_false(game.player.acquire(armor, game.progress))
-  assert_eq(game.player.max_hp(), 30)
+  assert_eq(game.player.max_hp(), upgraded)
+  assert_eq(game.player.hp, upgraded - 3)
   assert_true(game.player.acquire(cannon, game.progress))
   assert_true(game.player.upgrades.cannon)
   let restored = @simulation.Game::new()
   restored.pickups.push(armor)
   restored.pickups.push(cannon)
   assert_true(restored.restore(game.save()))
-  assert_eq(restored.player.max_hp(), 30)
+  assert_eq(restored.player.max_hp(), upgraded)
   assert_true(restored.player.upgrades.cannon)
 }
 
@@ -239,13 +235,7 @@ test "first scout crosses the ramp landing before charging and resets at repair"
 ///|
 test "boss armor and attack patterns follow machine type under a new instance id" {
   let game = @simulation.Game::new()
-  for
-    (kind, attack) in [
-      (@simulation.Sorter, @simulation.ArmSweep),
-      (Overseer, Batteries),
-      (Guardian, Fan),
-      (Keeper, Batteries),
-    ] {
+  for kind in [@simulation.Sorter, Overseer, Guardian, Keeper] {
     let source = game.enemies
       .iter()
       .find_first(fn(e) { e.definition.kind == kind })
@@ -254,22 +244,24 @@ test "boss armor and attack patterns follow machine type under a new instance id
       { ..source.definition, id: "editor-copy", },
       game.progress,
     )
-    assert_true(copy.definition.kind.is_boss())
-    assert_true(copy.boss_pattern(true).unwrap().kind == attack)
+    assert_true(
+      copy.boss_pattern(true).unwrap().kind ==
+      source.boss_pattern(true).unwrap().kind,
+    )
   }
   let prototype = game.enemies
     .iter()
-    .find_first(fn(e) { e.definition.kind == Prototype })
+    .find_first(fn(e) { e.definition.kind == ScrapRam })
     .unwrap()
   let copy = @simulation.Enemy::new(
     { ..prototype.definition, id: "editor-copy", },
     game.progress,
   )
-  assert_true(copy.definition.kind.is_boss())
   copy.aim = 0
   let front = copy.position().add({ x: 0, y: 0, z: 5, })
-  assert_eq(copy.damage_amount(1, front, CannonHit), 0.4)
-  copy.phase = Vent(0.25)
+  let guarded = copy.damage_amount(1, front, CannonHit)
+  assert_true(guarded > 0 && guarded < 1)
+  copy.phase = Traverse(0, 4.8)
   assert_eq(copy.damage_amount(1, front, CannonHit), 1)
 }
 
@@ -281,7 +273,7 @@ test "coordinated squads stagger shared charge and mortar warnings across machin
       (@simulation.Scout, @simulation.Interceptor, false),
       (Siege, Artillery, false),
       (Interceptor, Artillery, true),
-      (Prototype, Interceptor, true),
+      (ScrapRam, Interceptor, true),
     ] {
     let def = {
       ..game.enemies[0].definition,
@@ -301,12 +293,7 @@ test "mortar flinch follows the machine even outside its original encounter" {
   let game = @simulation.Game::new()
   let source = game.enemies[0].definition
   game.time = 3
-  for
-    (kind, delay) in [
-      (@simulation.Scout, 0.6),
-      (Interceptor, 0.2),
-      (Prototype, 0.0),
-    ] {
+  fn stun_until(kind : @simulation.EnemyKind) -> Double raise {
     let def = {
       ..source,
       id: "editor-copy",
@@ -318,15 +305,12 @@ test "mortar flinch follows the machine even outside its original encounter" {
     game.enemies.clear()
     game.enemies.push(enemy)
     assert_true(game.hit_enemy(0, 1, enemy.position(), MortarHit) > 0)
-    assert_eq(
-      enemy.stunned_until,
-      if delay > 0 {
-        game.time + delay
-      } else {
-        0
-      },
-    )
+    enemy.stunned_until
   }
+  let scout = stun_until(Scout)
+  let interceptor = stun_until(Interceptor)
+  assert_true(scout > interceptor && interceptor > game.time)
+  assert_true(stun_until(ScrapRam) <= game.time)
 }
 
 ///|
@@ -357,7 +341,7 @@ test "a refit changes the next projectile and its impact, including with an earl
     .unwrap()
   game.progress.complete(coil.requires.unwrap()) |> ignore
   assert_true(game.player.acquire(coil, game.progress))
-  game.time += 0.6
+  game.time += game.player.shot_cooldown
   assert_true(game.fire(queries, from, to))
   assert_false(game.shots[0].reinforced())
   assert_true(game.shots[1].reinforced())

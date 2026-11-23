@@ -2,6 +2,6 @@
   "cannon": { "damage": 1, "heat": 20, "cooldown": 0.5, "range": 24, "speed": 38 },
   "mortar": { "damage": 2, "heat": 35, "cooldown": 1.05, "range": 24, "speed": 38, "duration": 1.15, "arc": 10 },
   "laser": { "damagePerSecond": 3, "heatPerSecond": 24, "range": 90, "segments": 5 },
-  "magnet": { "range": 13, "lockedRange": 18, "idleHeatPerSecond": 3, "pullHeatPerSecond": 12 },
+  "magnet": { "range": 17, "shieldRange": 27, "lockedRange": 22, "idleHeatPerSecond": 3, "pullHeatPerSecond": 12 },
   "drive": { "speed": 10, "overdrive": 1.6, "phoenix": 3.2, "boostHeatPerSecond": 15, "accelerationTime": 0.5, "decelerationTime": 0.35 }
 }

@@ -2,10 +2,11 @@
 // gameplay behavior remains hand-written MoonBit.
 import { readFileSync, writeFileSync } from "node:fs";
 import { buildRuntimeArt } from "./content/runtime-art.mjs";
+import { checkContent } from "./check-content.mjs";
 import { circuitKey } from "./content/catalog.mjs";
 const read = (name) =>
   JSON.parse(readFileSync(`content/levels/city/${name}.json`, "utf8"));
-await import("./check-content.mjs");
+await checkContent("simulation/tuning.generated.mbt");
 const circuitTargetKey = circuitKey;
 const content = {
   foldedDecks: read("decks"),
@@ -53,7 +54,7 @@ const mapRegions = {
   furnace: "Central Furnace",
 };
 const deck = (d) => {
-  const name = mapRegions[d.region] ?? d.id.replaceAll("-", " ").replace(/\b\w/g, c => c.toUpperCase());
+  const name = mapRegions[d.region] ?? d.id.replace(/^prototype-/, "scrap-ram-").replaceAll("-", " ").replace(/\b\w/g, c => c.toUpperCase());
   return `{ id: ${str(d.id)}, map_label: ${str(name)}, rect: ${rect(d)}, y: ${d.y}, rise: ${d.rise ?? 0}, water: ${!!d.water} }`;
 };
 writeFileSync(
@@ -91,7 +92,7 @@ const name = (s) => s[0].toUpperCase() + s.slice(1);
 const vec3 = (p) => `{ x: ${p.x}, y: ${p.y}, z: ${p.z} }`;
 const numberOption = (n) => (n == null ? "None" : `Some(${n})`);
 const enemy = (e) => `{
-  id: ${str(e.id)}, kind: ${name(e.type)}, spawn: ${vec3(e)}, hp: ${e.hp},
+  id: ${str(e.id)}, kind: ${e.type === "prototype" ? "ScrapRam" : name(e.type)}, spawn: ${vec3(e)}, hp: ${e.hp},
   persistent: ${!!e.persistent}, emplacement: ${!!e.emplacement}, magnetic_shield: ${!!e.magneticShield}, coordinated: ${!!e.coordinated},
   encounter: ${optional(e.encounter)}, battle: ${optional(e.battle)}, wave: ${e.wave ?? 0}, startup: ${numberOption(e.startup)}, opening_crossing: ${e.openingCrossing ?? 0},
   spotter_height: ${numberOption(e.spotterHeight)}, detection_range: ${numberOption(e.detectionRange)}, patrol: ${e.patrol ? `Some(${rect(e.patrol)})` : "None"},
@@ -218,23 +219,3 @@ fn belt_segments() -> Map[String, Array[(Double, Int32)]] {
 );
 buildRuntimeArt("content/art", "public/generated/art", content.foldedSolids, content.foldedControls);
 await import("./sound-data.mjs");
-const tuning = JSON.parse(readFileSync("content/abilities.json", "utf8"));
-const record = (fields) =>
-  "{" +
-  Object.entries(fields)
-    .map(([key, value]) => `${key}:${value}`)
-    .join(",") +
-  "}";
-const { laser, magnet, drive } = tuning;
-writeFileSync(
-  "simulation/tuning.generated.mbt",
-  [
-    `let cannon_tuning : ProjectileTuning = ${record({ ...tuning.cannon, duration: 1.15, arc: 10 })}`,
-    `let mortar_tuning : ProjectileTuning = ${record(tuning.mortar)}`,
-    `let laser_tuning : LaserTuning = ${record({ damage_per_second: laser.damagePerSecond, heat_per_second: laser.heatPerSecond, range: laser.range, segments: laser.segments })}`,
-    `let magnet_tuning : MagnetTuning = ${record({ range: magnet.range, locked_range: magnet.lockedRange, idle_heat_per_second: magnet.idleHeatPerSecond, pull_heat_per_second: magnet.pullHeatPerSecond })}`,
-    `let drive_tuning : DriveTuning = ${record({ speed: drive.speed, overdrive: drive.overdrive, phoenix: drive.phoenix, boost_heat_per_second: drive.boostHeatPerSecond, acceleration_time: drive.accelerationTime, deceleration_time: drive.decelerationTime })}`,
-  ]
-    .map((source) => "///|\n" + source + "\n")
-    .join("\n"),
-);

@@ -8,9 +8,21 @@ fn Game::begin_warning(
 ) -> Unit {
   let e = self.enemies[index]
   let kind = e.definition.kind
-  let attack = if kind == Prototype {
+  let attack = if kind == ScrapRam {
     e.attack_cycle += 1
-    if e.attack_cycle % 2 == 1 {
+    let distance = horizontal_distance(sighting, e.position())
+    if distance >= 8 && e.attack_cycle % 5 == 0 {
+      e.sweep_sign = -e.sweep_sign
+      e.enter(Traverse(e.aim + e.sweep_sign * @math.PI / 2, 4.8), 0.75)
+      return
+    }
+    if distance < 8 && e.attack_cycle % 3 == 0 {
+      e.enter(Traverse(e.aim + @math.PI, 5.2), 0.85)
+      return
+    }
+    if e.attack_cycle % 4 == 3 {
+      BurstAttack
+    } else if e.attack_cycle % 2 == 1 {
       CannonAttack
     } else {
       ChargeAttack
@@ -19,7 +31,7 @@ fn Game::begin_warning(
     weapon
   }
   e.volley_cycle += 1
-  let warn = if kind == Prototype {
+  let warn = if kind == ScrapRam {
     if e.hp / e.max_hp < 0.55 {
       0.85
     } else {
@@ -94,7 +106,7 @@ fn Game::release_warning(
       e.enter(Vent(e.timing.post_recovery), spec.recovery)
     }
     SuctionAttack => e.enter(Suction, 2.8)
-    ChargeAttack => e.enter(Charge, if kind == Prototype { 1.2 } else { 0.75 })
+    ChargeAttack => e.enter(Charge, if kind == ScrapRam { 1.2 } else { 0.75 })
     SweepAttack => e.enter(Flame, 1.8)
     RailAttack => {
       let origin = e.aim_weapon(self.time, Some(e.lock)).muzzle
@@ -247,10 +259,11 @@ fn Game::charge_enemy(
   }
   let blocked = horizontal_distance(e.position(), before) < 0.001
   if e.timer <= 0 || blocked {
-    if e.definition.kind == Prototype && blocked {
+    if e.definition.kind == ScrapRam && blocked {
+      e.jam = 2.1
       self.effects.push(Armored(e.position()))
     }
-    if e.definition.kind == Prototype &&
+    if e.definition.kind == ScrapRam &&
       !blocked &&
       e.hp / e.max_hp < 0.55 &&
       !e.chain &&
@@ -261,7 +274,13 @@ fn Game::charge_enemy(
       e.lock = target.add({ x: 0, y: 1.2, z: 0, })
     } else {
       e.chain = false
-      e.enter(Vent(e.timing.post_recovery), e.spec().recovery)
+      if e.definition.kind == ScrapRam && !blocked {
+        e.jam = 1.05
+      }
+      e.enter(
+        Vent(e.timing.post_recovery),
+        Double::max(e.jam, e.spec().recovery),
+      )
     }
   }
 }

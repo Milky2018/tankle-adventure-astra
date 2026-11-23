@@ -18,7 +18,7 @@ pub(all) enum EnemyKind {
   Siege
   Prism
   Flanker
-  Prototype
+  ScrapRam
   Sorter
   Overseer
   Guardian
@@ -31,7 +31,7 @@ pub extend EnemyKind with Eq::{equal, not_equal}
 
 ///|
 pub fn EnemyKind::is_boss(self : EnemyKind) -> Bool {
-  self is (Prototype | Sorter | Overseer | Guardian | Keeper)
+  self is (ScrapRam | Sorter | Overseer | Guardian | Keeper)
 }
 
 ///|
@@ -53,6 +53,7 @@ pub(all) enum Phase {
   RailShot(Vec3)
   Flame
   Sweep(Double)
+  Traverse(Double, Double)
   Repair(Int32)
   Suction
   Bite
@@ -107,6 +108,13 @@ pub(all) enum BossAttack {
   Seekers
   Fan
   ArmSweep
+  BackSweep
+  ArmThrust
+  WalkingDrop
+  Pincer
+  Needle
+  Crossfire
+  Sidestep
 }
 
 ///|
@@ -157,6 +165,7 @@ pub(all) struct EnemyDef {
 
 ///|
 pub(all) struct EnemyPart {
+  mut recoil : Double
   mut weapon_pose : WeaponPose?
   mut position : Vec3
   mut hp : Double
@@ -188,6 +197,9 @@ pub(all) struct Enemy {
   mut awake : Bool
   mut deploy : Double
   mut deploy_until : Double
+  mut last_boss_attack : BossAttack?
+  mut stopped_arm : (Double, Double)?
+  mut jam : Double
   mut attack_cycle : Int32
   mut chain : Bool
   mut warning_age : Double
@@ -195,7 +207,6 @@ pub(all) struct Enemy {
   mut lock : Vec3
   mut second_lock : Vec3?
   mut sweep_sign : Double
-  mut sweep_right : Bool
   mut alert_until : Double
   mut last_seen : Vec3?
   mut dead_at : Double?
@@ -217,6 +228,7 @@ pub fn Enemy::new(definition : EnemyDef, progress : Progress) -> Enemy {
   let parts : Array[EnemyPart] = []
   for i, hp in definition.part_hp {
     parts.push({
+      recoil: 0,
       weapon_pose: None,
       position: {
         x: p.x + (if i == 0 { -4 } else { 4 }),
@@ -262,6 +274,9 @@ pub fn Enemy::new(definition : EnemyDef, progress : Progress) -> Enemy {
     awake: definition.wave == 0 && definition.activation is None,
     deploy: 0,
     deploy_until: 0,
+    last_boss_attack: None,
+    stopped_arm: None,
+    jam: 0,
     attack_cycle: 0,
     chain: false,
     warning_age: 0,
@@ -269,7 +284,6 @@ pub fn Enemy::new(definition : EnemyDef, progress : Progress) -> Enemy {
     lock: p,
     second_lock: None,
     sweep_sign: 1,
-    sweep_right: false,
     alert_until: 0,
     last_seen: None,
     dead_at: None,

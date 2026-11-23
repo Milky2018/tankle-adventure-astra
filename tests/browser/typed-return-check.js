@@ -64,7 +64,7 @@ async page => {
     await move(-28,100,true);
     await move(-28,66);await shoot(-28,-12.75,59.1,"prototype-shortcut");await move(-28,52);await move(-40,52);await move(-40,86,true);await move(0,86);await use();
     const state=await page.evaluate(()=>__typedRead());
-    if(state.hp!==25)throw Error('Repair hive did not restore hull');
+    if(state.hp!==Number(await page.locator('#hp').getAttribute('aria-valuemax')))throw Error('Repair hive did not restore hull');
     await page.screenshot({path:'output/playwright/typed-repair-return.png'});
     await page.evaluate(data=>window.__returnEvidence=data,{legs,state,errors});
     if(errors.length)throw Error(errors.join('\n'));

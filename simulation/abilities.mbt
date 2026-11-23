@@ -139,7 +139,11 @@ pub fn Game::magnet(
     let locked = self.magnet_lock == Some(target)
     let body = target is SlideTarget(_) || target is CoverTarget(_)
     if distance >=
-      (if locked && body {
+      (if target is EnemyTarget(i, _) &&
+        self.enemies[i].definition.magnetic_shield &&
+        !self.enemies[i].shield_removed {
+        magnet_tuning.shield_range
+      } else if locked && body {
         magnet_tuning.locked_range
       } else {
         magnet_tuning.range
@@ -250,7 +254,9 @@ pub fn Game::magnet(
     return
   }
   self.magnet_end = Some(
-    best.map(fn(c) { c.1 }).unwrap_or(origin.add(direction.scale(13))),
+    best
+    .map(fn(c) { c.1 })
+    .unwrap_or(origin.add(direction.scale(magnet_tuning.range))),
   )
   if best is Some((target, _, _)) {
     let moved = match target {
@@ -326,6 +332,7 @@ pub fn Game::magnet(
         e.shield_pull += dt / 0.7
         if e.shield_pull >= 1 {
           e.shield_removed = true
+          self.effects.push(Armored(e.position().add({ x: 0, y: 1.5, z: 0, })))
           e.stunned_until = self.time + 2.2
         }
       }

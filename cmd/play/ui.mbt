@@ -9,6 +9,7 @@ struct Hud {
   mut health : (Int32, Int32)
   mut equipped : @sim.Weapon?
   mut map_at : Double
+  mut acquired_action : String?
   mut acquired_until : Double
 }
 
@@ -24,6 +25,7 @@ fn Hud::new() -> Hud {
     health: (-1, -1),
     equipped: None,
     map_at: -1,
+    acquired_action: None,
     acquired_until: -1,
   }
 }
@@ -54,7 +56,8 @@ fn Hud::update(
       ticks += "<i class=\"\{state}\"></i>"
     }
     @host.html("hp", ticks)
-    @host.text("hp-value", "\{current}/\{maximum}")
+    @host.attribute("hp", "aria-valuemax", "\{maximum}")
+    @host.attribute("hp", "aria-valuenow", "\{current}")
   }
   @host.class_toggle("status", "critical", p.hp > 0 && p.hp <= 15)
   @host.style("heat", "stroke-dashoffset", "\{100.0-p.heat}")
@@ -83,7 +86,7 @@ fn Hud::update(
       @sim.Mortar => "Mortar"
       @sim.Laser => "Laser"
     }
-    @host.text("weapon-name", name)
+    @host.attribute("weapon-tool", "aria-label", name)
     @host.attribute("weapon-tool", "data-weapon", name)
   }
   @host.class_toggle("magnet-tool", "active", game.magnet_end is Some(_))
@@ -99,6 +102,13 @@ fn Hud::update(
     },
   )
   if boss is Some(boss) {
+    @host.attribute("boss-fill", "aria-label", boss.definition.kind.boss_name())
+    @host.attribute("boss-fill", "aria-valuetext", boss.boss_status())
+    @host.attribute(
+      "boss-fill",
+      "aria-valuenow",
+      "\{(boss.hp/boss.max_hp*100).round().to_int()}",
+    )
     @host.style("boss-fill", "width", "\{boss.hp/boss.definition.hp*100}%")
   }
   let interaction = game.interactable()
@@ -131,9 +141,8 @@ fn Hud::update(
     let area = game.world
       .support(p.x, p.z, p.y, p.deployed)
       .map(fn(s) { s.deck.map_label })
-      .unwrap_or("Local Map")
+      .unwrap_or("")
     @host.text("map-area", area)
-    @host.text("map-height", "\{p.y.round().to_int()} m")
     self.map_at = game.time
     self.draw_map(game, view, false)
     if map_open {

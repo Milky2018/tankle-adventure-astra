@@ -78,8 +78,9 @@ export function audioVoice(audio, noisy, frequency, end, duration, gain, delay, 
   envelope.connect(panner);panner.connect(master);source.start(at,noisy?Math.random()*1.5:0);source.stop(at+duration+.012);
   source.onended=()=>{source.disconnect();filter?.disconnect();envelope.disconnect();panner.disconnect();};
 }
-export function setMusic(audio,url,volume,paused) {
+export function setMusic(audio,url,volume,paused,restart) {
   if(audio.music.getAttribute('src')!==url)audio.music.src=url;
+  if(restart)audio.music.currentTime=0;
   audio.music.volume=volume;
   if(paused)audio.music.pause();else if(audio.music.paused)audio.music.play().catch(()=>{});
 }

@@ -165,9 +165,10 @@ test "a shutter blocks only its exposed section and waits for a hull in the open
   step(1)
   state.combat_arena = None
   step(0.125)
-  assert_eq(gate.exposed_height(state), gate.h / 2)
+  let exposed = gate.exposed_height(state)
+  assert_true(exposed > 0 && exposed < gate.h)
   assert_true(world.blocked(x, gate.y, z, state) is Some(_))
-  assert_true(world.blocked(x, gate.y + gate.h / 2, z, state) is None)
+  assert_true(world.blocked(x, gate.y + exposed, z, state) is None)
   step(0.125)
   assert_true(world.blocked(x, gate.y, z, state) is None)
 }

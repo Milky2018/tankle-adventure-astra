@@ -74,7 +74,7 @@ Third person follows behind and above the hull with one centred reticle. Mouse l
 
 Settings show an unobscured paused-scene preview. The driving camera remembers pitch, follow distance, height, shoulder offset and mouse sensitivity. Driving and ending shots share a radial render distance of 230 units by default. Reset restores the camera defaults. Third-person defaults: **pitch 15.3°, distance 15, height 2.5, shoulder offset 0**. Mouse sensitivity is **1–10, default 3**, corresponding to the former 1×–10× response without a multiplier label. Presentation settings do not change gameplay values.
 
-Clicking the playfield captures the mouse; pause and map release it. Without capture, middle-button drag turns the view alongside weapon inputs. One pause action opens settings, including while captured. The active playfield hides the native cursor. Gameplay never pulls the camera toward a solution. Wall and ceiling contact can shorten the camera arm along the requested sightline. The field of view stays fixed. See [presentation](#10-presentation-and-interface).
+Clicking the playfield captures the mouse; pause and map release it. Without capture, middle-button drag turns the view alongside weapon inputs. One pause action opens settings, including while captured. The active playfield hides the native cursor. Gameplay never pulls the camera toward a solution. Wall and ceiling contact can shorten the camera arm along the requested sightline. After contact the arm holds its shortened length for 0.18 seconds of clearance before easing out. The field of view stays fixed. See [presentation](#10-presentation-and-interface).
 
 ### Aim and damage feedback
 
@@ -113,7 +113,7 @@ On death, the Tank reconstructs at the last Hive the player activated. The Old R
 
 On its own floor, an active Hive reserves **18 units free of enemies, measured to body edges**. Spawns, reinforcements, patrols, pursuit, charges, pulls and drifting mines respect it. Entering the inner **5-unit** maintenance area ends pursuit; mobile enemies return home. A thin mint ring marks protection: incoming/outgoing attacks dissipate with sparks and a blocked sound; blast and contact cannot hurt the protected Tank. Magnet can operate machinery but cannot attack outside. Mortar preview shows boundary interception. Holding fire does not remove protection; leaving restores normal reach and vulnerability. Protection does not extend across floors.
 
-At zero HP, tracks stop, turret drops, lights extinguish and smoke rises. Music immediately stops and discards the failed encounter's continuation; machinery remains audible. A brief held view precedes a Hive-shaped iris closing and reopening around the reconstructed Tank. The sequence lasts about **three seconds**, is skippable, restores HP, clears Heat and retracts Flotation. Exploration music resumes according to permanent acquisitions, as defined in [music](#music).
+At zero HP, tracks stop, turret drops, lights extinguish and smoke rises. Music immediately stops and discards the failed encounter's continuation; machinery remains audible. A brief held view precedes a Hive-shaped iris closing and reopening around the reconstructed Tank. The sequence lasts about **three seconds**, is skippable, restores HP, clears Heat and retracts Flotation. Exploration music restarts from the beginning of the track selected according to permanent acquisitions, as defined in [music](#music).
 
 | Persists through rest, death and reload | Resets with the encounter |
 | --- | --- |
@@ -130,7 +130,7 @@ Incomplete machinery must retain a supported local retry. Rest cannot reconstruc
 | Ability | Acquisition | Exploration / combat purpose |
 | --- | --- | --- |
 | Standard Cannon | Starting equipment | Break exposed supports, scrap and impact mechanisms / reliable direct fire |
-| Overdrive | R1 Prototype | Reverse conveyors, use momentum machinery / evade, reposition and ram |
+| Overdrive | R1 Scrap Ram | Reverse conveyors, use momentum machinery / evade, reposition and ram |
 | Magnetic Traction | R2 workshop | Remove blue locks and reposition selected cover / strip shields, pull light enemies, disarm mines and intercept shells |
 | Flotation Chassis | R3 dry filter ferry berth | Cross the water network / change firing banks and avoid physically lower floor hazards |
 | Mortar | R2 cargo installation after Sorter | Reach protected overhead targets / delayed attacks over cover |
@@ -154,7 +154,7 @@ Phoenix upgrades Overdrive's existing input but counts as an acquisition. Circul
 
 **Mortar:** the launch-time aimed surface determines the arc, **actual collision determines explosion**, for player, ordinary-enemy and Boss shells alike. Contact with terrain, walls, ceilings, machinery or damage volumes detonates. A missing/moving support lets the shell continue forward under gravity; shells lost outside playable space disappear without a blast. Elevated trays are real aiming surfaces. Blasts respect solid cover. Overhead hits bypass ordinary frontal guard plates but not Boss roof armour. Survivors stagger as specified in their [enemy entries](#enemy-catalogue). Mortar does not home or pass roofs because the cursor lies beyond them.
 
-Mortar aim uses the normal reticle plus a light curved guide and dashed landing/blast ring. Forecast the continuing arc to its first collision, including lower floors beyond the intended point. Early interception shortens the guide and makes the ring amber; no predicted collision means no ring. Preview neither locks moving enemies nor promises damage through walls.
+Mortar aim uses the normal reticle plus a light curved guide and dashed landing/blast ring. Forecast the continuing arc to its first collision, including lower floors beyond the intended point. Early interception shortens the guide and makes the ring amber; no predicted collision means no ring. A small vertical impact-camera view centres its crosshair on that same first collision and shows nearby terrain. It turns amber on interception and blanks when there is no return. Preview neither locks moving enemies nor promises damage through walls.
 
 **Laser:** holding fire sustains a beam. Opaque structure and nearer bodies stop it; reflection follows actual faces, including tilted or enemy-mounted mirrors. Reflected damage direction is the **last arriving segment**, not the player's position. Selecting Laser shows a thin dashed actual-path preview and final contact light: no Heat, damage or activation, available during Overheat, removed on switching, death or docking. The damaging beam follows it, retaining a faint guide where foreground obscures segments. The preview never moves the reticle or selects a target. Mirror puzzle rules are in [machinery](#5-machinery).
 
@@ -183,7 +183,7 @@ Express routes connect actual neighbors through player-controlled travel, with l
 
 | Parameter | Value |
 | --- | ---: |
-| Acquire / retain dragged object | 13 / 18 units |
+| Acquire / retain dragged object | 17 / 22 units; removable enemy plates acquire at 27 |
 | Empty scan / connected pull Heat | 3 / 12 per second |
 | Driving during traction | Normal speed |
 | Movable cover travel | 12 units/s, clearance-limited |
@@ -214,7 +214,7 @@ A passive closed coolant loop uses jackets, moving pipes and steam; no new input
 | Full Phoenix | 24 |
 | Same-target repeat interval | 0.5 s |
 
-The multiplier applies once to positive base contact tiers. All enemy categories qualify, including shields, Prototype and Bosses; ordinary ram immunity does not cancel Circulation. Bodies remain solid and hostile damage still applies. Staying hot trades ranged fire for contact and travel; cooling restores fire. Maximum speed and acceleration do not change.
+The multiplier applies once to positive base contact tiers. All enemy categories qualify, including shields, Scrap Ram and Bosses; ordinary ram immunity does not cancel Circulation. Bodies remain solid and hostile damage still applies. Staying hot trades ranged fire for contact and travel; cooling restores fire. Maximum speed and acceleration do not change.
 
 ## 4. World and progression
 
@@ -236,7 +236,7 @@ R2's turntable is the reference height. Neighboring authoring bands begin about 
 
 | Refuge | Identity | Expeditions |
 | --- | --- | --- |
-| A — Old Repair Room | Starting room facing the bent press | Foundry, Prototype, later foundation returns |
+| A — Old Repair Room | Starting room facing the bent press | Foundry, Scrap Ram, later foundation returns |
 | B — Central Transit | Split flywheel; orange bulkhead ahead, cage above, canal below | Three middle acquisitions and direct R4 retry |
 | C — Eastern Distribution Hall | Beyond bulkhead, three coolant mains at the service junction | Optics, circulation returns and late revisits |
 | D — Furnace Service Room | Deep core, empty predecessor berth | Final supply, Keeper and continued exploration |
@@ -247,7 +247,7 @@ Refuges are complete protected rooms with broken hostile sightlines. Other alcov
 
 | Stage | Remembered boundary | Resolution |
 | --- | --- | --- |
-| R1 commitment loop | Entrance conveyor prevents ordinary retreat | Prototype → Overdrive → short reverse lesson → reverse original entrance to A |
+| R1 commitment loop | Entrance conveyor prevents ordinary retreat | Scrap Ram → Overdrive → short reverse lesson → reverse original entrance to A |
 | R2–R4 nested stage | Orange bulkhead near B blocks visible deeper city; ordinary Boost fails | Independently acquire Magnet, Mortar and Flotation; combine them for R4; Overseer → Phoenix → roof return → break original bulkhead to C |
 | R5–R7 progressive penetration | Optical descent unavailable, lower hot passage unsustainable, core visible above entry | Laser restores optics; Guardian admits R6; Circulation resolves remembered heat; existing tools restore final feed; Keeper → voluntary docking |
 
@@ -255,7 +255,7 @@ All seven acquired abilities and all five Bosses are required. **All six orders 
 
 ```mermaid
 flowchart TD
-    A["A / R1: Prototype → Overdrive"] --> B["B / orange bulkhead preview"]
+    A["A / R1: Scrap Ram → Overdrive"] --> B["B / orange bulkhead preview"]
     B --> M["Workshop → Magnet"]
     B --> O["Cargo → Sorter → Mortar"]
     B --> W["Dry filters → Flotation"]
@@ -459,7 +459,7 @@ Red forward prongs; predicts observed movement until commitment. Brake or revers
 
 HP: cooling west service 24; western furnace feed 27. Movement 7.6, reach 24; warning 0.85 s, recovery 0.75 s. Three-shot fan, projectile speed 36, damage 1 segment per hit. Frontal damage reduction 60%; blue shield absorbs 75% of cold Phoenix impact outside recovery. Initial readiness 0.4–0.7 s; sight reacquisition 0.2 s; post-recovery pause 0.12 s. Mortar deals full damage and causes 0.2 s flinch, after which the committed attack resumes without losing elapsed warning.
 
-Thick side armour and a conspicuous blue front shield. Magnet removal, overhead Mortar, rear shots, recovery windows and red impact counter it.
+Thick side armour and a conspicuous blue front shield. Magnetic tension rocks the plate before tearing it off its mount and dropping it onto the floor. Magnet removal, overhead Mortar, rear shots, recovery windows and red impact counter it.
 
 #### Siege Carrier
 
@@ -479,35 +479,35 @@ HP: optical vestibule 15; furnace loading floor 18. Movement 12.4, reach 36; war
 
 Burgundy panels and twin antennae; reacquires visible movement between rounds, strafes through firing and recovery, and evades visible airborne Mortars. Direct fire, interception or Mortar where terrain restricts motion are effective.
 
-#### Prototype
+#### Scrap Ram
 
 **Boss; guards Overdrive.** HP 9. Spread projectiles and committed charges each deal 1 segment.
 
-Pressing carriage with radiator lids; alternates three-shot spread volleys and broad committed charges. Below roughly half HP, charges twice with a fresh warning for each. Bait solid cover to cancel the follow-up and expose the drive.
+The pressing carriage uses a three-shot fan, a tracking burst, a straight ram, close-range reverse and lateral reposition. Below 55% hull it can chain two charges, each with its own warning. The rear takes full damage at all times. The front takes 40% while plated. Bait a collision to lift the radiator lids and cancel the follow-up, or attack while it reverses or travels sideways.
 
 #### Sorter
 
 **Boss; guards Mortar.** HP 12. Arm sweep and ground barrage each deal 2 segments; barrage arc height 10.
 
-Rail-cover freight machine; alternates committed arm sweeps and ground barrages, including against cargo campers. Pale → red → dark warns the sweep. Its thick movable rail shield intercepts the arm with a bright collision burst and heavy clang, immediately interrupting the sweep and exposing the venting drive. Cannon/Boost suffice; Magnet adds cover control.
+The freight machine winds its steel arm for a forehand, backhand or telescoping thrust. At range it lays shells across the lane, walks them along the lane or brackets both sides before striking the centre. Ground markers show the committed impacts. Flank its gearbox for full damage. Catch the actual arm on the movable rail shield to arrest it for two seconds and expose the drive from the front. Cannon and driving suffice. Magnet lets the player set the stop.
 
 #### Overseer
 
 **Boss; guards Phoenix.** HP 14: two side batteries at 4 each, core 6. Fans/battery shots deal 1 segment; aimed barrages deal 2, with arc height 10.
 
-Alternates staggered fans and aimed barrages; one finite light reserve pair below 60% HP. Use cover, side routes and drive windows. Destroying a battery cancels its unlaunched volley and stops associated machinery.
+Each side battery protects its breech from the front until it fires. The recoil opens that shutter for 1.35 seconds. Its outer cylinder can also be attacked from the corresponding flank. The batteries stagger volleys, cross fire, place paired precision shots, or lay shells across, along or around a lane. Destroying one cancels its pending shots. Both destroyed permanently expose the core, which retains a fan and indirect fire. One finite light reserve pair deploys below 60% HP.
 
 #### Optical Guardian
 
 **Boss; guards first R6 entry.** HP 36; front, sides and roof armoured, rear vulnerable. Recovery 2.2 s. Five-lane fans deal 1 segment; paired seekers deal 2.
 
-Tracks between attacks, then holds facing through warning, attack and recovery. Fast fans alternate with seekers whose bounded turning ends before impact. Two broad flank-rear mirrors each permit a single-bounce rear shot from the approach. Dodge, then aim during stable recovery; red contact follows the universal rule.
+Tracks between attacks, then holds facing through warning, attack and recovery. It uses fans, paired precision shots, crossing bursts, seekers whose bounded turning ends before impact, and lateral repositioning when crowded or screened. Two broad flank-rear mirrors each permit a single-bounce rear shot from the approach. Dodge, then aim during stable recovery; red contact follows the universal rule.
 
 #### Final Keeper
 
 **Boss; victory enables voluntary ending.** HP 63: two feeds at 6.75 each, core 49.5. Fans/battery shots deal 1 segment; seekers, barrages and exposed-core sweep deal 2. Barrage arc height 10.
 
-Alternates batteries, seeking pairs, barrages and exposed-core sweep. Below 40%, tighter fans overlap a delayed ground strike. Reserve pairs become eligible at 65% and 32%; at most two are alive/deploying. Destroy feeds to stop their belts and open flanks; once both are gone, the core remains vulnerable even during attacks.
+The port feed powers paired seekers, walking shells and bracketing salvos. The starboard feed powers battery volleys, crossfire and cross-lane barrages. Either feed takes damage continuously. Destroying one removes its attacks and interrupts its unlaunched shots. The exposed core uses precision pairs, fans, a traversing heat beam and ground attacks. Below 40%, its fan can overlap a delayed ground strike. Reserve pairs become eligible at 65% and 32%; at most two are alive/deploying. Destroy feeds to stop their belts and open flanks; once both are gone, the core remains vulnerable even during attacks.
 
 Target duration is 20–40 seconds with ordinary or fully reinforced weapons, without a forced timer or phase damage quota. Endurance belongs mainly to the core; feeds dismantle quickly. Warned indirect fire counters permanent crate shelter using sightings or incoming fire, never unseen movement through walls. Mortar, relocation, reflection and red ramming remain useful. Full-speed red damage carries through a destroyed feed into the core; three clean impacts can win, without a component cap.
 
@@ -549,11 +549,11 @@ This section owns local layouts, acquisition lessons, returns and narrative/arch
 
 **Route:** A faces one shared ramp with a downhill conveyor. Solid sides prevent walking around it or leaving sideways; the lower landing enters press-side bays, freight underpasses and an open machine court. A visible Scout introduces threat before attacking. Passing cargo interrupts a Turret's line, allowing following cover or moving to a firing position.
 
-A visible shot switch powers only the first door, which opens onto a permanently level service passage. A second local switch independently powers the Boss entrance. There is no combined requirement or first-switch branch to that entrance. The separate return mouth has a one-sided door **before** its conveyor, so early visitors can turn back. Its latch is embedded only on the Boss-return face; Prototype's original victory exit remains a separate automatic shutter.
+A visible shot switch powers only the first door, which opens onto a permanently level service passage. A second local switch independently powers the Boss entrance. There is no combined requirement or first-switch branch to that entrance. The separate return mouth has a one-sided door **before** its conveyor, so early visitors can turn back. Its latch is embedded only on the Boss-return face; Scrap Ram's original victory exit remains a separate automatic shutter.
 
-**Acquisition and return:** Prototype's court has solid charge obstacles, clear flanks and a visible Overdrive cradle. Victory opens its exit. Workers stay on their floor rather than pursue into the reward/lesson. The quiet cradle leads to a short, level reverse belt with safe run-up and a start apron that catches failure. Its service passage passes below the upper entrance corridor and reconnects to the **foot of the original ramp**. Cool while traversing, open the embedded shortcut latch from inside, then reverse the original downhill belt to A. Both belts keep running; the circuit uses neither another ramp/lift nor an ordinary bypass.
+**Acquisition and return:** Scrap Ram's court has solid charge obstacles, clear flanks and a visible Overdrive cradle. Victory opens its exit. Workers stay on their floor rather than pursue into the reward/lesson. The quiet cradle leads to a short, level reverse belt with safe run-up and a start apron that catches failure. Its service passage passes below the upper entrance corridor and reconnects to the **foot of the original ramp**. Cool while traversing, open the embedded shortcut latch from inside, then reverse the original downhill belt to A. Both belts keep running; the circuit uses neither another ramp/lift nor an ordinary bypass.
 
-**Onward and later return:** from A, Boost now crosses the separate northward opposing belt into the former Overseer workroom: a Turret covers open floor, a Skirmisher pressures the other flank, and a Guard protects the ascent to B. They remain in the workroom, away from the belt, ascent and Hives; the exit stays open without waves or a kill gate. Only the original workroom ascent reaches Transit; inside service releases make return ordinary. This ordinary encounter, B and the middle expeditions separate Prototype from the next Boss.
+**Onward and later return:** from A, Boost now crosses the separate northward opposing belt into the former Overseer workroom: a Turret covers open floor, a Skirmisher pressures the other flank, and a Guard protects the ascent to B. They remain in the workroom, away from the belt, ascent and Hives; the exit stays open without waves or a kill gate. Only the original workroom ascent reaches Transit; inside service releases make return ordinary. This ordinary encounter, B and the middle expeditions separate Scrap Ram from the next Boss.
 
 An early scrap-inspection alcove off the first-door service lane overlooks water separating it from the Transit shore ramp. That water prevents an opening bypass; Flotation later makes it a bidirectional return without a door or Boss-state check. The separate garden-side east door also reconnects to A later. Preservation and reclamation remain an observed contradiction, not exposition.
 
@@ -719,7 +719,7 @@ Nine recordings from the owner's RPG Maker MZ collection provide four acquisitio
 | Overdrive acquired | Scene5 |
 | Phoenix acquired | Scene7 |
 | Water Circulation acquired | Dungeon1 |
-| Prototype | Battle1 |
+| Scrap Ram | Battle1 |
 | Overseer | Battle3 |
 | Sorter | Battle4 |
 | Optical Guardian | Battle6 |
@@ -737,15 +737,15 @@ The title screen always offers **New Game**, which starts at the Old Repair Room
 
 | HUD element | Behaviour |
 | --- | --- |
-| Hull, lower left | Segments without a number; acceleration gauge may sit beside it, Heat may not |
+| Hull, lower left | A hull symbol and unlabelled segments without a number; acceleration gauge may sit beside it, Heat may not |
 | Reticle | Sole aim cursor with the Heat ring defined in core systems |
-| Equipment tray | Distinct pictograms and concise English names; selected weapon and actual bindings; acquired tools/upgrades persist visibly after notice/reload |
+| Equipment tray | The selected weapon and installed tools use distinct pictograms and their current bindings; acquired tools/upgrades persist visibly after notice/reload |
 | State | Flotation deployed, boost active, full Phoenix and red Circulation reflected on both body and equipment |
-| Boss, top centre | Active sealed encounter HP, even behind cover; ordinary enemies do not add world name/bar clutter |
+| Boss, top centre | An unlabelled health bar during a sealed encounter, even behind cover. Moving armour, exposed parts and impact feedback communicate vulnerability. |
 
 Use the same silhouettes on HUD/map: long Cannon barrel; raised tube/lob for Mortar; straight ray for Laser; pontoons/waves for Flotation; engine chevrons for Overdrive; stacked armour for capacity; framed fan for cooling; scope reticle for range. Phoenix upgrades the acceleration slot; weapons show cycling while tools retain their own actions. Optional improvement displays follow [equipment](#8-optional-equipment).
 
-Contact acquires modules; deliberate nearby use can also collect. A pulse and about **eight seconds** of pictorial control feedback use actual bindings and show new weapons' cycle/fire relation. Keep player control and safe first-use space rather than forced pauses or paragraphs. First-use glyphs disappear once learned. Uncaptured mouse look can be hinted until used. Low-priority help yields during combat.
+Contact acquires modules; deliberate nearby use can also collect. A pulse and about **eight seconds** of pictorial control feedback use actual bindings and show new weapons' cycle/fire relation. Keep player control and safe first-use space rather than forced pauses or paragraphs. Mouse bindings use a mouse silhouette with the bound button highlighted in both the equipment tray and acquisition notice. First-use glyphs disappear once learned. Uncaptured mouse look can be hinted until used. Low-priority help yields during combat.
 
 ### Map
 

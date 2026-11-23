@@ -31,11 +31,25 @@ fn Enemy::resolve_damage(
     return 0
   }
   let mut amount = initial_amount
-  if definition.kind == Prototype && !self.phase.is_venting() && !rear && !red {
+  if definition.kind == ScrapRam && !self.drive_exposed() && !rear && !red {
     amount *= 0.4
   }
-  if definition.kind is (Overseer | Sorter) && !self.phase.is_venting() && !red {
+  if definition.kind == Sorter &&
+    !red &&
+    !self.drive_exposed() &&
+    bearing > 0.35 {
     return 0
+  }
+  if definition.kind == Overseer &&
+    !red &&
+    part_index is Some(i) &&
+    self.parts.get(i) is Some(part) &&
+    part.hp > 0 &&
+    !self.battery_exposed(i) {
+    // The cylinder is open from the outside flank even behind its front shutter.
+    if (origin.x - part.position.x) * (if i == 0 { -1.0 } else { 1.0 }) < 2.0 {
+      return 0
+    }
   }
   if definition.kind == Bastion &&
     !self.shield_removed &&
@@ -151,7 +165,7 @@ fn Enemy::shot_damage(self : Enemy, heavy_projectile : Bool) -> Double {
 ///|
 pub fn Enemy::contact_damage(self : Enemy) -> Double {
   if self.phase == Charge &&
-    self.definition.kind is (Scout | Interceptor | Prototype) {
+    self.definition.kind is (Scout | Interceptor | ScrapRam) {
     5
   } else {
     0
@@ -187,7 +201,8 @@ fn Game::enemy_contact(self : Game, index : Int32) -> Unit {
       }
     } else if e.contact_damage() > 0 {
       self.hurt(e.contact_damage(), e.position()) |> ignore
-      if e.definition.kind == Prototype && e.phase == Charge {
+      if e.definition.kind == ScrapRam && e.phase == Charge {
+        e.jam = 1.0
         e.enter(Vent(e.timing.post_recovery), 1.6)
       }
     }

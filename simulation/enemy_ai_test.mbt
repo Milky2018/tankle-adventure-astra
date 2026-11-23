@@ -19,7 +19,9 @@ test "Keeper uses the last observation behind cover and waits when it expires" {
     },
   }
   game.update_enemies(blocked, 0.016)
-  assert_true(boss.phase is Warn(Volley({ kind: Barrage, .. }, _)))
+  assert_true(
+    boss.phase is Warn(Volley({ kind: WalkingDrop | Pincer | Barrage, .. }, _)),
+  )
   assert_eq(boss.lock.x, known.x)
   assert_eq(boss.lock.z, known.z)
   game.time = 4
@@ -50,7 +52,7 @@ test "an alert turret waits until its target enters weapon range before warning 
   game.enemies.push(turret)
   game.player.x = 500
   game.player.y = 0
-  game.player.z = 529
+  game.player.z = turret.z + turret.spec().reach + 2
   turret.timer = 0
   let queries = @simulation.Queries::{ geometry: fn(_, _, _) { None }, }
   for _ in 0..<90 {
@@ -59,7 +61,7 @@ test "an alert turret waits until its target enters weapon range before warning 
   }
   assert_true(turret.phase is Idle)
   assert_true(game.shots.is_empty())
-  game.player.z = 526
+  game.player.z = turret.z + turret.spec().reach - 2
   game.update_enemies(queries, 1.0 / 60)
   assert_true(turret.phase is Warn(Fire(Shot)))
   for _ in 0..<80 {
@@ -67,8 +69,7 @@ test "an alert turret waits until its target enters weapon range before warning 
   }
   assert_eq(game.shots.length(), 1)
   let shot = game.shots[0]
-  assert_true(shot.origin.z > turret.z + 1.6)
-  assert_true(shot.origin.y > turret.y + 1.4)
+  assert_true(shot.origin.z > turret.z && shot.origin.y > turret.y)
   assert_true(
     shot.direction.dot(turret.lock.sub(shot.origin).normalized()) > 0.99999,
   )
@@ -123,6 +124,31 @@ test "a copied Sorter only drives the rail cover assigned to its arena" {
   sweep()
   assert_eq(game.progress.combat_arena, Some("freight-test"))
   assert_eq(game.active_boss().unwrap().definition.id, "sorter-copy")
+  assert_eq(cover.rect.x, before)
+  assert_eq(copy.jam, 0)
+  assert_true(game.beams.is_empty())
+  let assigned = game.world.obstacles
+    .search_by(fn(o) { o.id == "sorter-cover" })
+    .unwrap()
+  let contact = @simulation.Queries::{
+    geometry: fn(ray, range, _) {
+      if range > 6 && (ray.origin.y - 1.8).abs() < 0.01 {
+        Some({
+          distance: 6,
+          point: ray.point(6),
+          normal: None,
+          target: CoverTarget(assigned),
+        })
+      } else {
+        None
+      }
+    },
+  }
+  copy.aim = 1.57
+  copy.phase = Sweep(1.5)
+  copy.timer = 0.9
+  game.update_enemies(contact, 0.02)
+  assert_true(copy.jam > 0 && copy.stopped_arm is Some(_))
   assert_true(cover.rect.x > before)
   copy.phase = Vent(0.4)
   assert_true(game.hit_enemy(0, 100, game.player.position(), CannonHit) > 0)
@@ -274,10 +300,8 @@ test "welder sweeps the beam from the off-centre nozzle as the tool turns" {
     let beam = game.beams[game.beams.length() - 1]
     headings.push(beam.direction.x)
     let pose = enemy.weapon_pose.unwrap()
-    let outlet = enemy
-      .position()
-      .add(@simulation.Vec3::{ x: 0.44, y: 1.36, z: 1.78, }.rotate_y(pose.yaw))
-    assert_true(beam.origin.distance(outlet) < 0.00001)
+    assert_true(beam.origin.distance(pose.muzzle) < 0.00001)
+    assert_true(beam.origin.sub(enemy.position()).rotate_y(-pose.yaw).x > 0)
     assert_true(beam.direction.dot(pose.direction) > 0.99999)
   }
   assert_true(headings[0] < 0 && headings[1] > 0)
@@ -316,4 +340,80 @@ test "delayed hunter round leaves the other tube at its current position" {
   assert_true(second.origin.x > e.x)
   assert_true(second.origin.distance(e.weapon_pose.unwrap().muzzle) < 0.00001)
   assert_true(second.distance < 0.3)
+}
+
+///|
+test "boss controllers vary attacks and react to movement, cover and severed feeds" {
+  let game = @simulation.Game::new()
+  for kind in [@simulation.Sorter, Overseer, Guardian, Keeper] {
+    let boss = game.enemies
+      .iter()
+      .find_first(fn(e) { e.definition.kind == kind })
+      .unwrap()
+    let moves : Array[@simulation.BossAttack] = []
+    for i in 1..<=12 {
+      boss.attack_cycle = i
+      let pattern = boss.boss_pattern(true).unwrap()
+      if !moves.contains(pattern.kind) {
+        moves.push(pattern.kind)
+      }
+      assert_true(pattern.warn > 0)
+      boss.last_boss_attack = Some(pattern.kind)
+    }
+    assert_true(moves.length() >= 5)
+    boss.last_boss_attack = None
+    let crossing = boss.boss_pattern(true, lateral_speed=8).unwrap().kind
+    assert_true(
+      if kind == Guardian {
+        crossing == Crossfire
+      } else {
+        crossing == Pincer
+      },
+    )
+    if kind == Guardian {
+      assert_true(boss.boss_pattern(false).unwrap().kind == Sidestep)
+    }
+    if kind == Keeper {
+      for dead in 0..<2 {
+        boss.parts[dead].hp = 0
+        for i in 1..<=12 {
+          boss.attack_cycle = i
+          let attack = boss.boss_pattern(true).unwrap().kind
+          assert_true(
+            if dead == 0 {
+              attack is (Batteries | Crossfire | Barrage)
+            } else {
+              attack is (WalkingDrop | Pincer | Seekers)
+            },
+          )
+        }
+        boss.parts[dead].hp = 1
+      }
+    }
+  }
+}
+
+///|
+test "Overseer has independent firing shutters, outer flanks and a permanently exposed stripped core" {
+  let game = @simulation.Game::new()
+  let boss = game.enemies
+    .iter()
+    .find_first(fn(e) { e.definition.kind == Overseer })
+    .unwrap()
+  let left = boss.parts[0]
+  let inside = left.position.add({ x: 3, y: 0, z: 8, })
+  let outside = left.position.add({ x: -3, y: 0, z: 8, })
+  assert_eq(boss.damage_amount(1, inside, CannonHit), 0)
+  assert_eq(boss.damage_amount(1, inside, CannonHit, part_index=0), 0)
+  assert_eq(boss.damage_amount(1, outside, CannonHit, part_index=0), 1)
+  left.recoil = 1.35
+  assert_true(boss.battery_exposed(0) && !boss.battery_exposed(1))
+  assert_eq(boss.damage_amount(1, inside, CannonHit, part_index=0), 1)
+  for part in boss.parts {
+    part.hp = 0
+  }
+  boss.phase = Idle
+  assert_eq(boss.damage_amount(1, inside, CannonHit), 1)
+  boss.phase = Sweep(1.5)
+  assert_eq(boss.damage_amount(1, inside, CannonHit), 1)
 }

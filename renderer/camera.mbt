@@ -6,6 +6,7 @@ pub(all) struct View {
   priv hives : Array[HiveVisual]
   priv player_visual : PlayerVisual
   priv renewal : Renewal
+  priv mortar_scope : MortarScope
   priv effects : Effects
   priv feeds : Array[Feed]
   priv machinery : Machinery
@@ -13,6 +14,7 @@ pub(all) struct View {
   priv projectiles : Projectiles
   priv lighting : CityLights
   priv room_visibility : RoomVisibility
+  priv mut release_delay : Double
   priv mut boom_length : Double
   priv camera_space : CameraSpace
   priv progress : @sim.Progress
@@ -79,6 +81,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     lighting: CityLights::new(nodes),
     machinery: Machinery::new(nodes, game),
     feeds: feeds(scene),
+    mortar_scope: MortarScope::new(),
     effects: Effects::new(scene),
     belts: belts(nodes, game),
     grates: game.floor_heat.filter_map(fn(grate) {
@@ -99,6 +102,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     sensitivity: 3,
     ground_clearance: 0,
     boom_length: 15,
+    release_delay: 0,
     progress: game.progress,
     camera_space: CameraSpace::new(scene, game.world),
     cutaway: Cutaway::new(scene, currents=game.currents, player=player_visual),
@@ -164,6 +168,10 @@ pub fn View::position_player(
   if self.cutaway.water_time.value is Number(elapsed) {
     self.cutaway.water_time.value = Number(elapsed + dt)
   }
+  self.mortar_scope.refresh_in = Double::max(
+    0,
+    self.mortar_scope.refresh_in - dt,
+  )
   self.ground_pose(player, world, dt)
   self.body.rotation.set(0, player.heading, 0) |> ignore
   self.root.update_matrix_world(force=true)
@@ -194,10 +202,18 @@ pub fn View::position_player(
   )
   // Compress immediately on contact, ease back after rounding the corner.
   let target = Double::min(desired, Double::max(5.5, free))
-  self.boom_length = if target <= self.boom_length || dt <= 0 {
-    target
+  if dt <= 0 {
+    self.boom_length = target
+    self.release_delay = 0
+  } else if target <= self.boom_length {
+    if target < desired - 0.05 {
+      self.release_delay = 0.18
+    }
+    self.boom_length = target
   } else {
-    damp(self.boom_length, target, 4, dt)
+    let available = Double::max(0, dt - self.release_delay)
+    self.release_delay = Double::max(0, self.release_delay - dt)
+    self.boom_length = damp(self.boom_length, target, 4, available)
   }
   self.third.position.copy(
     offset.multiply_scalar(self.boom_length / desired).add(vector(anchor)),
@@ -231,6 +247,7 @@ pub fn View::draw(
     self.scene,
   )
   self.cutaway.update(player, world, camera)
+  self.draw_mortar_scope(player)
   let blocked = !self.film &&
     self.camera_space.hull_hidden(
       self.body,

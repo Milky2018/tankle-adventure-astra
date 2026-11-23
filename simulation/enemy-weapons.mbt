@@ -26,7 +26,7 @@ fn EnemyKind::socket(self : EnemyKind, side : Double) -> (Vec3, Double) {
     Reflector => (0, 1.75, 0.43, 0)
     Prism => (0, 2.0, 0.43, 0)
     Hunter => (side * 0.55, 1.08, 1.5, 0)
-    Prototype => (side * 0.41, 1.55, 1.95, 0)
+    ScrapRam => (side * 0.41, 1.55, 1.95, 0)
     Overseer => (side * 0.65, 1.8, 1.46, 0)
     Keeper => (side * 0.75, 1.54, 1.40, 0)
     Guardian => (0, 1.85, 0.828, 0)
@@ -36,7 +36,7 @@ fn EnemyKind::socket(self : EnemyKind, side : Double) -> (Vec3, Double) {
   }
   let scale = match self {
     Sorter | Overseer | Keeper => 1.8
-    Prototype | Guardian => 1.35
+    ScrapRam | Guardian => 1.35
     _ => 1.0
   }
   (Vec3::{ x, y, z, }.scale(scale), elevation)

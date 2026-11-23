@@ -212,6 +212,7 @@ pub extern "js" fn music(
   url : String,
   volume : Double,
   paused : Bool,
+  restart : Bool,
 ) -> Unit = "setMusic"
 
 ///|
@@ -278,3 +279,11 @@ pub extern "js" fn open_dialog(id : String, focus : String) -> Unit =
 ///|
 pub extern "js" fn close_dialog(id : String) -> Unit =
   #| id => document.getElementById(id).close()
+
+///|
+pub extern "js" fn copy_mortar_scope(size : Int32) -> Unit =
+  #| size => {
+  #|   const src = document.getElementById('game');
+  #|   const dst = document.getElementById('mortar-image');
+  #|   dst.getContext('2d').drawImage(src, 0, src.height-size, size, size, 0, 0, dst.width, dst.height);
+  #| }

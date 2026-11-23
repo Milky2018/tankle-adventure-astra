@@ -101,6 +101,7 @@ fn Sound::update(
       url,
       settings.volume * gain,
       paused || !settings.music || p.hp <= 0,
+      game.effects.any(fn(event) { event is @sim.Respawned }),
     )
   }
   if paused || !settings.sfx {
@@ -164,6 +165,7 @@ fn Sound::update(
         @sim.Acquired(_) => "unlock"
         @sim.Activated(_) => "lever"
         @sim.Repaired(_) => "repair"
+        @sim.Respawned => continue
       },
       gain~,
     )

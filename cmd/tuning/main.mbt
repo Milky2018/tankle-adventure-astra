@@ -1,0 +1,123 @@
+///|
+fn field_name(key : String) -> String {
+  let name = StringBuilder()
+  for c in key {
+    if c.is_ascii_uppercase() {
+      name.write_char('_')
+    }
+    name.write_char(c.to_ascii_lowercase())
+  }
+  name.to_string()
+}
+
+///|
+fn compile_tuning(source : String) -> String raise {
+  let schema : Array[(String, String, Array[String])] = [
+    (
+      "cannon",
+      "ProjectileTuning",
+      ["damage", "heat", "cooldown", "range", "speed"],
+    ),
+    (
+      "mortar",
+      "ProjectileTuning",
+      ["damage", "heat", "cooldown", "range", "speed", "duration", "arc"],
+    ),
+    (
+      "laser",
+      "LaserTuning",
+      ["damagePerSecond", "heatPerSecond", "range", "segments"],
+    ),
+    (
+      "magnet",
+      "MagnetTuning",
+      [
+        "range", "shieldRange", "lockedRange", "idleHeatPerSecond", "pullHeatPerSecond",
+      ],
+    ),
+    (
+      "drive",
+      "DriveTuning",
+      [
+        "speed", "overdrive", "phoenix", "boostHeatPerSecond", "accelerationTime",
+        "decelerationTime",
+      ],
+    ),
+  ]
+  guard @json.parse(source) is Object(sections) else {
+    raise Failure("abilities must be an object")
+  }
+  for section in sections.keys() {
+    guard schema.any(fn(entry) { entry.0 == section }) else {
+      raise Failure("Unknown abilities section: \{section}")
+    }
+  }
+  let declarations = []
+  for entry in schema {
+    let (section, type_name, keys) = entry
+    guard sections.get(section) is Some(Object(values)) else {
+      raise Failure("abilities.\{section} must be an object")
+    }
+    for key in values.keys() {
+      guard keys.contains(key) else {
+        raise Failure("Unknown abilities.\{section}.\{key}")
+      }
+    }
+    let fields = []
+    for key in keys {
+      guard values.get(key) is Some(Number(n, ..)) && n.is_finite() && n > 0 else {
+        raise Failure("abilities.\{section}.\{key} must be a positive number")
+      }
+      let literal = if section == "laser" && key == "segments" {
+        guard n <= 2147483647 && n.to_int().to_double() == n else {
+          raise Failure(
+            "abilities.laser.segments must be a positive Int32 integer",
+          )
+        }
+        n.to_int().to_string()
+      } else {
+        n.to_string()
+      }
+      fields.push("\{field_name(key)}:\{literal}")
+    }
+    if section == "cannon" {
+      // Shared projectile record. Only mortar flight uses duration and arc.
+      fields.push("duration:1.15")
+      fields.push("arc:10")
+    }
+    declarations.push(
+      "///|\nlet \{section}_tuning : \{type_name} = {\{fields.join(",")}}\n",
+    )
+  }
+  declarations.join("\n")
+}
+
+///|
+async fn main {
+  try {
+    let args = @env.args()
+    guard args.length() == 2 || args.length() == 3 else {
+      raise Failure("Usage: tuning <abilities.json | -> [output.mbt]")
+    }
+    let source = if args[1] == "-" {
+      @stdio.stdin.text.read_all()
+    } else {
+      @fs.read_text(args[1])
+    }
+    let result = compile_tuning(source)
+    if args.length() == 3 {
+      @fs.write_text(args[2], result)
+    }
+  } catch {
+    err => {
+      let message = match err {
+        Failure(message) => message
+        other => other.to_string()
+      }
+      @stdio.stderr.text.write("\{message}\n") catch {
+        _ => ()
+      }
+      @env.exit(1)
+    }
+  }
+}

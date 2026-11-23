@@ -39,7 +39,10 @@ fn Hud::acquisitions(self : Hud, game : @sim.Game, settings : Settings) -> Unit 
     @host.text("acquired-title", label)
     @host.text("acquired-detail", detail)
     @host.hidden("acquired-key", action == "")
-    @host.text("acquired-key", settings.bindings.get(action).unwrap_or(""))
+    self.acquired_action = if action == "" { None } else { Some(action) }
+    if action != "" {
+      settings.show_binding("acquired-key", action)
+    }
   }
   @host.hidden(
     "acquired",

@@ -40,7 +40,7 @@ fn Game::idle_enemy(
         e.aim = @math.atan2(target.x - e.x, target.z - e.z)
       }
       if e.timer <= 0 {
-        e.begin_boss_attack(target, observation is Visible(_))
+        e.begin_boss_attack(target, observation)
       }
       return
     }
@@ -111,14 +111,29 @@ fn Game::active_enemy(
     Warn(Aid(i)) => if e.timer <= 0 { e.enter(Repair(i), 1.6) }
     Warn(Volley(pattern, sources)) =>
       if e.timer <= 0 {
-        if pattern.kind == ArmSweep {
+        if pattern.kind == Sidestep {
+          // Keep the rear intake in reach of the court's fixed flank mirrors.
+          let home = e.definition.spawn
+          let heading = if horizontal_distance(e.position(), home) > 3.6 {
+            @math.atan2(home.x - e.x, home.z - e.z)
+          } else {
+            e.aim + e.sweep_sign * @math.PI / 2
+          }
+          e.enter(Traverse(heading, 4.0), 0.95)
+        } else if pattern.kind.uses_arm() {
           e.enter(Sweep(pattern.recovery), 1.8)
         } else {
           self.launch_boss(queries, index, pattern, sources)
           e.enter(Vent(0.18), pattern.recovery)
         }
       }
-    Sweep(recovery) => self.sweep_boss(queries, index, recovery, dt)
+    Sweep(recovery) => self.sweep_boss(queries, index, recovery)
+    Traverse(direction, speed) => {
+      self.move_enemy(index, direction, speed, dt)
+      if e.timer <= 0 {
+        e.enter(Idle, 0.36)
+      }
+    }
     Charge => self.charge_enemy(index, observation, dt)
     Burst(left) =>
       if e.timer <= 0 {
@@ -255,6 +270,10 @@ fn Game::update_enemy(
     e.readable = false
     return
   }
+  e.jam = Double::max(0, e.jam - dt)
+  for part in e.parts {
+    part.recoil = Double::max(0, part.recoil - dt)
+  }
   e.flash = Double::max(0, e.flash - dt)
   e.armor = Double::max(0, e.armor - dt)
   let spec = e.spec()
@@ -387,14 +406,21 @@ fn Game::update_enemy(
         Some(self.enemies[i].position().add({ x: 0, y: 1.5, z: 0, })),
       )
       |> ignore
-    Warn(Volley({ kind: ArmSweep, .. }, _)) => e.weapon_pose = None
-    Warn(Volley({ kind: Batteries, .. }, sources)) =>
+    Warn(Volley({ kind: ArmSweep | BackSweep | ArmThrust, .. }, _)) =>
+      e.weapon_pose = None
+    Warn(Volley(pattern, sources)) if sources.any(fn(p) { p is Some(_) }) =>
       for part in sources {
         if part is Some(i) {
-          e.aim_weapon(self.time, Some(e.lock), part=i) |> ignore
+          let at = if pattern.kind.indirect() {
+            { ..e.lock, y: e.lock.y + 40, }
+          } else {
+            e.lock
+          }
+          e.aim_weapon(self.time, Some(at), part=i) |> ignore
         }
       }
-    Warn(Fire(Lob | Mine)) | Warn(Volley({ kind: Barrage, .. }, _)) => {
+    Warn(Fire(Lob | Mine))
+    | Warn(Volley({ kind: Barrage | WalkingDrop | Pincer, .. }, _)) => {
       let arc = if kind.is_boss() { 10.0 } else { 9.0 }
       e.aim_weapon(self.time, Some({ ..e.lock, y: e.lock.y + 4 * arc, }))
       |> ignore

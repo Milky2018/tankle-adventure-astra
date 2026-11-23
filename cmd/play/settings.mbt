@@ -68,6 +68,32 @@ fn Session::pause(self : Session, paused : Bool) -> Unit {
 }
 
 ///|
+fn Settings::show_binding(
+  self : Settings,
+  id : String,
+  action : String,
+) -> Unit {
+  let key = self.bindings.get(action).unwrap_or("—")
+  let button = match key {
+    "Mouse0" => Some("Left mouse button")
+    "Mouse1" => Some("Middle mouse button")
+    "Mouse2" => Some("Right mouse button")
+    _ => None
+  }
+  if button is Some(label) {
+    @host.html(
+      id,
+      "<span class=\"mouse-key\" data-button=\"\{key}\" role=\"img\" aria-label=\"\{label}\"></span>",
+    )
+  } else {
+    @host.text(
+      id,
+      key.strip_prefix("Key").map(fn(s) { s.to_owned() }).unwrap_or(key),
+    )
+  }
+}
+
+///|
 fn Session::bindings(self : Session) -> Unit {
   let mut markup = ""
   for
@@ -96,16 +122,13 @@ fn Session::bindings(self : Session) -> Unit {
   }
   for
     action in [
-      "up", "left", "down", "right", "map", "interact", "weapon", "magnet", "float",
+      "up", "left", "down", "right", "map", "interact", "fire", "weapon", "magnet",
+      "float",
     ] {
-    let key = self.settings.bindings.get(action).unwrap_or("—")
-    let legend = match key {
-      "Mouse0" => "LMB"
-      "Mouse1" => "MMB"
-      "Mouse2" => "RMB"
-      _ => key.strip_prefix("Key").map(fn(s) { s.to_owned() }).unwrap_or(key)
-    }
-    @host.text(action + "-key", legend)
+    self.settings.show_binding(action + "-key", action)
+  }
+  if self.hud.acquired_action is Some(action) {
+    self.settings.show_binding("acquired-key", action)
   }
   @host.html("bindings", markup)
   for action in self.settings.bindings.keys() {

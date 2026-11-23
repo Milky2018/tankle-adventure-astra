@@ -206,7 +206,15 @@ pub(all) enum BossAttack {
   Seekers
   Fan
   ArmSweep
+  BackSweep
+  ArmThrust
+  WalkingDrop
+  Pincer
+  Needle
+  Crossfire
+  Sidestep
 }
+pub fn BossAttack::uses_arm(Self) -> Bool
 
 #derive(Eq)
 pub(all) struct BossPattern {
@@ -323,6 +331,7 @@ pub(all) enum Effect {
   Acquired(String)
   Activated(String)
   Repaired(String)
+  Respawned
 }
 
 pub(all) struct Encounters {
@@ -356,6 +365,9 @@ pub(all) struct Enemy {
   mut awake : Bool
   mut deploy : Double
   mut deploy_until : Double
+  mut last_boss_attack : BossAttack?
+  mut stopped_arm : (Double, Double)?
+  mut jam : Double
   mut attack_cycle : Int32
   mut chain : Bool
   mut warning_age : Double
@@ -363,7 +375,6 @@ pub(all) struct Enemy {
   mut lock : Vec3
   mut second_lock : Vec3?
   mut sweep_sign : Double
-  mut sweep_right : Bool
   mut alert_until : Double
   mut last_seen : Vec3?
   mut dead_at : Double?
@@ -379,10 +390,15 @@ pub(all) struct Enemy {
   mut pump_sound_at : Double
   // private fields
 }
+pub fn Enemy::arm_pose(Self) -> (Double, Double)
 pub fn Enemy::armor_absorbs(Self, Double, Vec3, DamageKind, part_index? : Int32) -> Bool
-pub fn Enemy::boss_pattern(Self, Bool) -> BossPattern?
+pub fn Enemy::battery_exposed(Self, Int32) -> Bool
+pub fn Enemy::boss_pattern(Self, Bool, distance? : Double, lateral_speed? : Double) -> BossPattern?
+pub fn Enemy::boss_status(Self) -> String
 pub fn Enemy::contact_damage(Self) -> Double
 pub fn Enemy::damage_amount(Self, Double, Vec3, DamageKind, part_index? : Int32) -> Double
+pub fn Enemy::drive_exposed(Self) -> Bool
+pub fn Enemy::impact_pattern(Self, BossAttack) -> Array[BarrageTarget]
 pub fn Enemy::in_suction(Self, Vec3, reach? : Double) -> Bool
 pub fn Enemy::magnet_pullable(Self) -> Bool
 pub fn Enemy::model_position(Self, Double) -> Vec3
@@ -437,12 +453,13 @@ pub(all) enum EnemyKind {
   Siege
   Prism
   Flanker
-  Prototype
+  ScrapRam
   Sorter
   Overseer
   Guardian
   Keeper
 }
+pub fn EnemyKind::boss_name(Self) -> String
 #deprecated
 pub fn EnemyKind::equal(Self, Self) -> Bool
 pub fn EnemyKind::is_boss(Self) -> Bool
@@ -450,6 +467,7 @@ pub fn EnemyKind::is_boss(Self) -> Bool
 pub fn EnemyKind::not_equal(Self, Self) -> Bool
 
 pub(all) struct EnemyPart {
+  mut recoil : Double
   mut weapon_pose : WeaponPose?
   mut position : Vec3
   mut hp : Double
@@ -651,6 +669,7 @@ pub(all) enum Phase {
   RailShot(Vec3)
   Flame
   Sweep(Double)
+  Traverse(Double, Double)
   Repair(Int32)
   Suction
   Bite

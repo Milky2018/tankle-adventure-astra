@@ -9,6 +9,7 @@ priv struct EnemyVisual {
   charge : @core.Object3D?
   zone : @core.Object3D?
   armor : @core.Object3D?
+  shield_mount : ShieldMount?
   wake : @core.Object3D?
   arm : @core.Object3D?
   radiator : @core.Object3D?
@@ -90,6 +91,11 @@ fn enemy_visuals(
       charge: get("/charge/root"),
       zone: get("/zone"),
       armor: get("/model/frontArmor"),
+      shield_mount: if enemy.definition.magnetic_shield {
+        get("/model/frontArmor").map(ShieldMount::new)
+      } else {
+        None
+      },
       wake: get("/model/wake"),
       arm: get("/model/arm"),
       radiator: get("/model/radiator"),
@@ -128,7 +134,11 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
     let pulling = game.magnet_lock is Some(@sim.EnemyTarget(target, _)) &&
       target == i &&
       alive
-    let impact = if alive { @sim.clamp(e.flash / 0.14, 0, 1) } else { 0.0 }
+    let impact = if alive {
+      @sim.clamp(Double::max(e.flash / 0.14, e.armor / 0.2), 0, 1)
+    } else {
+      0.0
+    }
     if v.hull_finish is Some(m) && m.emissive is Some(tint) {
       if impact > 0 {
         tint.set_hex(if e.armor > 0 { 0xff7b24 } else { 0xff5010 }) |> ignore
@@ -210,27 +220,22 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
       v.turret.rotate_x(settle * 0.30) |> ignore
     }
     for j, gun in v.part_guns {
-      if gun is Some(node) && e.parts[j].weapon_pose is Some(p) {
+      if gun is Some(node) && e.parts[j].hp <= 0 {
+        node.rotation.set(0, 0, 0.65) |> ignore
+      } else if gun is Some(node) && e.parts[j].weapon_pose is Some(p) {
         node.rotation.set(0, p.yaw, 0) |> ignore
         node.rotate_x(-p.tilt) |> ignore
         node.update_matrix_world(force=true)
       }
     }
-    if v.armor is Some(armor) {
-      armor.visible = !e.shield_removed
-      if e.definition.magnetic_shield {
-        armor.position.set_z(
-          (if e.definition.kind == @sim.Dredger { 1.85 } else { 1.05 }) +
-          e.shield_pull * 0.9,
-        )
-        |> ignore
-      }
+    if v.armor is Some(armor) && v.shield_mount is Some(mount) {
+      mount.update(armor, self.scene, game, e)
     }
-    if e.definition.kind == @sim.Prototype && v.armor is Some(armor) {
+    if e.definition.kind == @sim.ScrapRam && v.armor is Some(armor) {
       armor.position.set_y(
         damp(
           armor.position.y,
-          if e.phase.is_venting() {
+          if e.drive_exposed() {
             2.7
           } else {
             1.2
@@ -247,7 +252,7 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
           shutter.position.set_y(
             damp(
               shutter.position.y,
-              if e.phase.is_venting() {
+              if e.battery_exposed(j) {
                 3.2
               } else {
                 1.7
@@ -259,13 +264,20 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
           |> ignore
         }
         if v.part_lamps[j] is Some(lamp) {
-          color(lamp, if alive && part.hp > 0 { 0xf07941 } else { 0x243e39 })
+          color(
+            lamp,
+            if !alive || part.hp <= 0 {
+              0x243e39
+            } else if e.battery_exposed(j) {
+              0xffdf99
+            } else {
+              0x655f4b
+            },
+          )
         }
       }
     }
-    let core_open = e.hp > 0 &&
-      e.parts.all(fn(p) { p.hp <= 0 }) &&
-      (e.definition.kind != @sim.Overseer || e.phase.is_venting())
+    let core_open = e.hp > 0 && e.parts.all(fn(p) { p.hp <= 0 })
     if v.core_lamp is Some(lamp) {
       color(lamp, if core_open { 0xf07941 } else { 0x243e39 })
     }
@@ -313,7 +325,11 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
     if v.charge is Some(charge) {
       charge.visible = alive &&
         e.phase.is_warning() &&
-        !(e.phase is @sim.Warn(Fire(CannonAttack)))
+        (
+          e.definition.kind != @sim.ScrapRam ||
+          e.phase is @sim.Warn(Fire(ChargeAttack))
+        ) &&
+        e.definition.kind != @sim.Sorter
       charge.position.set(e.x, e.y, e.z) |> ignore
       charge.rotation.set(0, e.aim, 0) |> ignore
       charge.update_matrix_world(force=true)
@@ -325,27 +341,11 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
       zone.position.set(e.lock.x, e.lock.y + 0.1, e.lock.z) |> ignore
       zone.update_matrix_world(force=true)
     }
-    if v.arm is Some(arm) {
-      if e.phase.is_warning() || e.phase is @sim.Sweep(_) {
-        arm.rotation.set(
-          0,
-          if e.phase.is_warning() {
-            -0.9
-          } else {
-            -0.9 + 1.8 * (1 - e.timer / 1.8)
-          },
-          0,
-        )
-        |> ignore
-      }
-      if e.phase.is_venting() {
-        arm.scale.set_z(
-          arm.scale.z + (0.28 - arm.scale.z) * (1 - @math.exp(-6 * dt)),
-        )
-        |> ignore
-      } else {
-        arm.scale.set_z(1) |> ignore
-      }
+    if v.arm is Some(arm) && e.definition.kind == @sim.Sorter {
+      let (turn, extension) = e.arm_pose()
+      v.turret.rotation.set(0, e.aim, 0) |> ignore
+      arm.rotation.set(0, turn, 0) |> ignore
+      arm.scale.set_z(extension) |> ignore
     }
     if v.radiator is Some(radiator) && radiator.kind is Mesh(mesh) {
       for material in mesh_materials(mesh.material) {
@@ -354,6 +354,14 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
           basic.set_hex(
             if !alive {
               0x302d29
+            } else if e.definition.kind is (@sim.ScrapRam | @sim.Sorter) {
+              if e.drive_exposed() {
+                0xffda73
+              } else {
+                0xe9964d
+              }
+            } else if e.definition.kind == @sim.Guardian {
+              0xffc06b
             } else if e.phase.is_warning() {
               0xffda73
             } else if e.phase.is_venting() {

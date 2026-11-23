@@ -117,7 +117,7 @@
 .folded-ui .status-icon { width:25px; height:31px; border:none; background:none; }
 .folded-ui .status-icon svg { width:25px; }
 .folded-ui .meters { width:clamp(70px,8vw,130px); }
-.hull-readout,.map-readout { display:flex; justify-content:space-between; align-items:center; color:#ecddb2; font:600 10px/1.2 ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; }
+.map-readout { display:flex; justify-content:flex-end; align-items:center; color:#ecddb2; font:600 10px/1.2 ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; }
 .folded-ui #hp { height:10px; margin:3px 0 0; transform:skewX(-18deg); }
 .folded-ui #hp i:not(.empty):not(.half) { background:#f2dfad; }
 .folded-ui #status.critical #hp i:not(.empty) { background:#ff926a; }
@@ -127,12 +127,16 @@
 #weapon-tool svg { width:38px;height:22px;fill:currentColor; }
 #weapon-tool path { display:none; }
 #weapon-tool[data-weapon="Cannon"] .cannon,#weapon-tool[data-weapon="Mortar"] .mortar,#weapon-tool[data-weapon="Laser"] .laser { display:block; }
-#weapon-name { font:600 14px Georgia,serif; }
 #tools :is(#magnet-tool,#flotation-tool) { padding-left:8px;border-left:1px solid #b5a37280; }
 #tools :is(#magnet-tool,#flotation-tool) svg { width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8; }
 .folded-ui #tools .active { color:#fff4be; filter:drop-shadow(0 0 3px currentColor); }
 .folded-ui #tools #magnet-tool.active { color:#8edaff; }
 .folded-ui #tools kbd,.map-readout kbd { padding:2px 3px;font:9px ui-monospace,monospace; background:#e7d6ad; color:#17291f; border:0; }
+#hud kbd:has(> .mouse-key) { padding:0; border:0; background:none; color:inherit; }
+.mouse-key { display:inline-block; position:relative; width:15px; height:21px; box-sizing:border-box; border:1px solid currentColor; border-radius:7px; vertical-align:middle; }
+.mouse-key::before { content:""; position:absolute; top:1px; left:1px; width:5px; height:8px; border-radius:5px 0 0 0; background:currentColor; }
+.mouse-key[data-button="Mouse2"]::before { left:auto; right:1px; border-radius:0 5px 0 0; }
+.mouse-key[data-button="Mouse1"]::before { left:5px; top:3px; width:3px; height:6px; border-radius:2px; }
 .folded-ui #minimap-wrap { width:clamp(104px,11vw,158px); height:clamp(114px,11vw,158px); padding:22px 4px 18px; top:clamp(12px,2.8vh,32px); right:clamp(10px,2vw,32px); }
 .folded-ui #minimap { display:block; }
 .folded-ui .map-corners { inset:22px 5px 18px; background:repeating-linear-gradient(0deg,transparent 0 17px,#d0bd8d10 17px 18px),repeating-linear-gradient(90deg,transparent 0 17px,#d0bd8d10 17px 18px); }
@@ -157,3 +161,11 @@
   .folded-ui #tools { bottom:68px; }
   #drive-hint { top:20px; bottom:auto; left:62px; transform:none; }
 }
+
+#mortar-scope{position:absolute;right:24px;bottom:100px;width:clamp(90px,16vmin,160px);aspect-ratio:1;border:2px solid #a19c80;background:#182322;color:#fff0b4;pointer-events:none}
+#mortar-scope canvas{width:100%;height:100%;display:block}
+#mortar-scope i{position:absolute;top:50%;left:50%;width:12%;height:12%;border:1px solid currentColor;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 1px #23251c}
+#mortar-scope i:after,#mortar-scope i:before{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:currentColor;width:8px;height:2px}
+#mortar-scope i:after{width:2px;height:8px}
+#mortar-scope.intercept{color:#ff8b54;border-color:currentColor}
+#mortar-scope.lost canvas,#mortar-scope.lost i{visibility:hidden}

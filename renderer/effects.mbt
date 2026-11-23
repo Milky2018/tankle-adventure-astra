@@ -62,6 +62,34 @@ fn View::update_effects(
   let effects = self.effects
   let strokes = effects.strokes
   let muzzle = self.visible_muzzle(game.player)
+  fn mark_impact(at : @sim.Vec3) {
+    let center = at.add({ x: 0, y: 0.12, z: 0, })
+    for j in 0..<12 {
+      let a = j.to_double() * @math.PI / 6
+      let b = a + @math.PI / 10
+      strokes.stroke(
+        center.add({ x: 2.4 * @math.sin(a), y: 0, z: 2.4 * @math.cos(a), }),
+        center.add({ x: 2.4 * @math.sin(b), y: 0, z: 2.4 * @math.cos(b), }),
+        0.10,
+        0xff8050,
+      )
+    }
+  }
+  if game.active_boss() is Some(e) {
+    if e.phase is @sim.Warn(Volley(pattern, _)) {
+      for target in e.impact_pattern(pattern.kind) {
+        mark_impact(target.position)
+      }
+    }
+    for shot in game.shots {
+      if shot.mortar &&
+        !shot.captured &&
+        shot.source is Some(src) &&
+        game.enemies[src.enemy].definition.id == e.definition.id {
+        mark_impact(shot.target)
+      }
+    }
+  }
   for b in game.beams {
     strokes.stroke(
       b.origin,
@@ -164,13 +192,14 @@ fn View::update_effects(
   }
   if game.player.weapon == @sim.Mortar &&
     game.player.hp > 0 &&
-    game.ending_at is None &&
-    game.time > effects.mortar_guide_after {
+    game.ending_at is None {
     let (points, hit, blocked) = game.predict_mortar(
       queries,
       self.weapon_origin(),
       aim,
     )
+    self.mortar_scope.contact = hit.map(fn(h) { h.point })
+    self.mortar_scope.blocked = blocked
     let hue = if blocked { 0xffad62 } else { 0xffe4a9 }
     let recovery = @sim.clamp(
       (game.time - effects.mortar_guide_after) / 0.20,
@@ -187,10 +216,8 @@ fn View::update_effects(
         hue,
       )
     }
-    if hit is Some(hit) {
-      let center = game
-        .ground_target(queries, hit.point.add({ x: 0, y: 0.15, z: 0, }))
-        .add({ x: 0, y: 0.07, z: 0, })
+    if recovery > 0 && hit is Some(hit) {
+      let center = hit.point.add({ x: 0, y: 0.07, z: 0, })
       for i in 0..<24 {
         let a = i.to_double() * @math.PI / 12
         let b = a + @math.PI / 18

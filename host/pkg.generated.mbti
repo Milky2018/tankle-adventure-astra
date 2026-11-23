@@ -27,6 +27,8 @@ pub fn class_toggle(String, String, Bool) -> Unit
 
 pub fn close_dialog(String) -> Unit
 
+pub fn copy_mortar_scope(Int32) -> Unit
+
 pub fn create_audio() -> Audio
 
 pub fn create_renderer() -> @webgl.WebGLRenderer
@@ -51,7 +53,7 @@ pub fn inspect_projection((Double, Double, Double) -> FixedArray[Double]) -> Uni
 
 pub fn load_scene(String, (@core.Object3D) -> Unit, (String) -> Unit) -> Unit
 
-pub fn music(Audio, String, Double, Bool) -> Unit
+pub fn music(Audio, String, Double, Bool, Bool) -> Unit
 
 pub fn on_blur(() -> Unit) -> Unit
 
