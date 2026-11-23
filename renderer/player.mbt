@@ -40,7 +40,7 @@ let hull_fill_fragment : String =
 ///|
 fn PlayerVisual::new(nodes : Map[String, @core.Object3D]) -> PlayerVisual {
   let wheels : Array[@core.Object3D] = []
-  for i in 0..<12 {
+  for i in 0..<8 {
     if nodes.get("player/tracks/\{i}") is Some(wheel) {
       wheel.matrix_auto_update = true
       wheels.push(wheel)
@@ -95,7 +95,7 @@ fn View::update_player(self : View, game : @sim.Game, dt : Double) -> Unit {
       (p.z - v.position.z) * @math.cos(p.heading)
     if !p.afloat {
       for wheel in v.wheels {
-        wheel.rotate_y(-forward * 2.4) |> ignore
+        wheel.rotate_x(forward / 0.32) |> ignore
       }
     }
     let speed = damp(v.speed, forward / dt, 12, dt)

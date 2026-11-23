@@ -177,6 +177,16 @@ test "mortar preserves an elevated tray and forecasts an intercepting ceiling" {
   assert_true(
     game.mortar_target(ground, origin, tray.position) == tray.position,
   )
+  let edge = tray.position.add({ x: 1.55, y: 0, z: 0, })
+  assert_true(game.mortar_target(ground, origin, edge) == edge)
+  let descent : @simulation.Ray = {
+    origin: edge.add({ x: 0, y: 3, z: 0, }),
+    direction: { x: 0, y: -1, z: 0, },
+  }
+  assert_true(
+    game.cast(ground, descent, 4, refuge=false)
+    is Some({ target: ControlTarget(_), .. }),
+  )
   let ceiling = @simulation.Queries::{
     geometry: fn(ray, range, _) {
       if ray.direction.y > 0 {

@@ -556,9 +556,15 @@ pub fn Game::impact(
     }
     if !hostile {
       for control in self.commands.controls {
-        if control.position.distance(hit.point) < 2 &&
-          (!control.top || blast.y >= control.position.y - 0.01) &&
-          self.blast_visible(queries, blast, control.position) {
+        let face = if control.top {
+          control.tray_face(hit.point)
+        } else {
+          control.position
+        }
+        let reach = if control.top { radius } else { 2.0 }
+        if face.distance(hit.point) <= reach &&
+          (!control.top || blast.y >= face.y - 0.01) &&
+          self.blast_visible(queries, blast, face) {
           control.flash = 0.2
           self.commands.activate(
             self.progress,
@@ -674,7 +680,7 @@ pub fn Game::mortar_target(
     z: origin.z + offset.z * factor,
   }
   if self.commands.controls.any(fn(c) {
-      c.top && c.position.distance(target) < 1.2
+      c.top && c.position.distance(target) <= c.strike_radius()
     }) {
     target
   } else {

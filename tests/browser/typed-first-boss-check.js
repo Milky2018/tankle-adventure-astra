@@ -2,6 +2,7 @@
 async page => {
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.locator('#resume').click();
+  await page.addScriptTag({path:'tests/browser/driving-controls.js'});
   const legs=[];
   async function move(x,z){
     let previous=null,stuck=0;
@@ -14,7 +15,7 @@ async page => {
       previous=p;
       const enemy=p.enemies.filter(e=>e.hp>0&&Math.abs(e.y-p.y)<2.5&&Math.hypot(e.x-p.x,e.z-p.z)<23).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];
       if(enemy){await aim(enemy.x,enemy.y+1.5,enemy.z);await page.mouse.down()}else{await page.mouse.up()}
-      const keys=Math.abs(dx)>Math.abs(dz)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD'];
+      const keys=await page.evaluate(d=>window.drivingControls.keys(d),[dx,dz]);
       for(const k of keys)await page.keyboard.down(k);
       await page.waitForTimeout(Math.min(160,Math.max(18,Math.max(Math.abs(dx),Math.abs(dz))/10*1000)));
       for(const k of keys)await page.keyboard.up(k);
@@ -22,8 +23,7 @@ async page => {
     throw Error('Route timeout');
   }
   async function aim(x,y,z){
-    const [screenX,screenY]=await page.evaluate(([x,y,z])=>window.__typedProject(x,y,z), [x,y,z]);
-    await page.mouse.move(screenX,screenY);
+    await page.evaluate(p=>window.drivingControls.aim(p),[x,y,z]);
   }
 
   async function clearReclaim(){
@@ -43,8 +43,8 @@ async page => {
       const e=enemies.find(e=>e.id==='reclaim-scout')??enemies[0];
       if(Math.hypot(p.x-orbit[corner][0],p.z-orbit[corner][1])<.7)corner=(corner+1)%4;
       const dx=orbit[corner][0]-p.x,dz=orbit[corner][1]-p.z;
-      const keys=Math.abs(dx)>Math.abs(dz)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD'];
       await aim(e.x,e.y+1.5,e.z);
+      const keys=await page.evaluate(d=>window.drivingControls.keys(d),[dx,dz]);
       if(e.id==='reclaim-scout'||e.vent)await page.mouse.down();else await page.mouse.up();
       for(const k of keys)await page.keyboard.down(k);await page.waitForTimeout(85);for(const k of keys)await page.keyboard.up(k);
     }
@@ -65,7 +65,7 @@ async page => {
   }
   try{
     await move(-57,52);await move(-57,76);await use();
-    await move(-57,95);await clearReclaim();await move(-57,118);await shoot(-65,-14.5,114,'relay-east');
+    await move(-57,95);await clearReclaim();await move(-57,118);await shoot(-50.72,-13.8,125,'relay-east');
     await move(-57,128);await move(-43,132);
     await page.screenshot({path:'output/playwright/typed-prototype-entry.png'});
     const orbit=[[-39,136],[-23,136],[-23,123],[-39,123]];let corner=0;
@@ -75,8 +75,8 @@ async page => {
       if(p.hp<=0)throw Error('Died in prototype fight');
       if(Math.hypot(p.x-orbit[corner][0],p.z-orbit[corner][1])<.8)corner=(corner+1)%orbit.length;
       const dx=orbit[corner][0]-p.x,dz=orbit[corner][1]-p.z;
-      const keys=Math.abs(dx)>Math.abs(dz)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD'];
       await aim(boss.x,boss.y+1.5,boss.z);
+      const keys=await page.evaluate(d=>window.drivingControls.keys(d),[dx,dz]);
       if(boss.vent)await page.mouse.down();else await page.mouse.up();
       for(const k of keys)await page.keyboard.down(k);
       await page.waitForTimeout(90);

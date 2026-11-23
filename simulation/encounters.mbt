@@ -277,6 +277,7 @@ pub fn Encounters::update_arenas(
         enemy.y = enemy.definition.spawn.y
         enemy.z = enemy.definition.spawn.z
         enemy.hp = enemy.max_hp
+        enemy.dead_at = None
         enemy.awake = false
         enemy.deploy_until = time + 2
         enemy.deploy = 0.001

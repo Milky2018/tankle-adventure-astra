@@ -4,7 +4,7 @@ async page => {
   await page.setViewportSize({width:1280,height:720});
   const version='v3';
   const base=page.url().startsWith('http')?new URL(page.url()).origin:'http://127.0.0.1:5175';
-  await page.goto(base+'/?chapter=folded&test&view=overhead');
+  await page.goto(base+'/?chapter=folded&test');
   await page.waitForFunction(()=>window.__typedRead,{},{timeout:60000});
   await page.waitForFunction(()=>!document.body.classList.contains('starting'),{},{timeout:60000});
   const startup=await page.evaluate(()=>({ready:performance.getEntriesByName('moonbit-first-frame')[0]?.startTime??performance.now(),resources:performance.getEntriesByType('resource').map(r=>({name:r.name.split('/').pop(),bytes:r.transferSize,end:r.responseEnd})).filter(r=>r.bytes>200000)}));

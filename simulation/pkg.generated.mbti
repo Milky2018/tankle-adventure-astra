@@ -63,8 +63,6 @@ pub fn refuge_at(Vec3, Array[Hive], Progress, radius? : Double) -> Hive?
 
 pub fn refuge_ray_distance(Vec3, Vec3, Double, Array[Hive], Progress) -> Double?
 
-pub fn screen_movement(Double, Double) -> Vec2
-
 pub fn supported_hull((Double, Double) -> Bool, Double, Double, radius? : Double) -> Bool
 
 pub fn wounded_ally(Int32, Array[Enemy]) -> Int32?
@@ -267,6 +265,7 @@ pub(all) struct Control {
   mut flash : Double
   mut pull : Double
 }
+pub fn Control::tray_face(Self, Vec3) -> Vec3
 
 pub(all) struct Current {
   rect : Rect

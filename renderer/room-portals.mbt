@@ -410,7 +410,6 @@ fn RoomVisibility::apply(
   self : RoomVisibility,
   camera : @core.Object3D,
   cut : Cutaway,
-  third : Bool,
 ) -> Unit {
   if self.bins.is_empty() || camera.layers.mask != 1 {
     return
@@ -422,9 +421,7 @@ fn RoomVisibility::apply(
       }
     }
   }
-  if third {
-    self.apply_portals(camera, cut)
-  }
+  self.apply_portals(camera, cut)
   if !self.hidden.is_empty() {
     for layers in self.shadow_layers {
       layers.enable(ShadowOnlyLayer)

@@ -6,8 +6,6 @@ priv struct CameraSettings {
   height : Double
   shoulder : Double
   sensitivity : Double
-  angle : Double
-  scale : Double
   render_distance : Double
 }
 
@@ -19,8 +17,6 @@ fn CameraSettings::new() -> CameraSettings {
     height: 2.5,
     shoulder: 0,
     sensitivity: 3,
-    angle: @math.atan2(39.6, (28.0 * 28 * 2).sqrt()) * 180 / @math.PI,
-    scale: 17,
     render_distance: 230,
   }
 }
@@ -34,8 +30,6 @@ fn Session::apply_camera(self : Session) -> Unit {
   v.camera_height = c.height
   v.shoulder = c.shoulder
   v.sensitivity = c.sensitivity
-  v.overhead_angle = c.angle * @math.PI / 180
-  v.area = c.scale
   v.set_render_distance(c.render_distance)
   v.resize()
   v.position_player(self.game.player, self.game.world, 0)
@@ -51,8 +45,6 @@ fn Session::mount_camera(self : Session) -> Unit {
     ("height", "Camera height", 0.0, 5.0, 0.1, c.height),
     ("shoulder", "Shoulder offset", -3.0, 3.0, 0.1, c.shoulder),
     ("sensitivity", "Mouse sensitivity", 1.0, 10.0, 0.1, c.sensitivity),
-    ("angle", "Overhead angle", 30.0, 70.0, 1.0, c.angle),
-    ("scale", "Visible area", 12.0, 28.0, 0.5, c.scale),
     ("render-distance", "Render distance", 40.0, 400.0, 1.0, c.render_distance),
   ]
   let mut markup = ""
@@ -73,8 +65,6 @@ fn Session::mount_camera(self : Session) -> Unit {
         height: @host.setting_number("camera-height"),
         shoulder: @host.setting_number("camera-shoulder"),
         sensitivity: @host.setting_number("camera-sensitivity"),
-        angle: @host.setting_number("camera-angle"),
-        scale: @host.setting_number("camera-scale"),
         render_distance: @host.setting_number("camera-render-distance"),
       }
       self.apply_camera()

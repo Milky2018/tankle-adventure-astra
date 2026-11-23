@@ -18,7 +18,7 @@ priv struct EnemyVisual {
   core_shutters : Array[@core.Object3D?]
   hull_finish : @core.Material?
   shield_finish : @core.Material?
-  scale : @m3.Vector3
+  mut wreck_settle : Double
 }
 
 ///|
@@ -99,7 +99,7 @@ fn enemy_visuals(
       core_shutters: Array::makei(2, fn(j) { get("/coreModel/shutters/\{j}") }),
       hull_finish,
       shield_finish,
-      scale: root.scale.clone(),
+      wreck_settle: 0,
     }
     for
       node in [
@@ -128,7 +128,7 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
     let pulling = game.magnet_lock is Some(@sim.EnemyTarget(target, _)) &&
       target == i &&
       alive
-    let impact = @sim.clamp(e.flash / 0.14, 0, 1)
+    let impact = if alive { @sim.clamp(e.flash / 0.14, 0, 1) } else { 0.0 }
     if v.hull_finish is Some(m) && m.emissive is Some(tint) {
       if impact > 0 {
         tint.set_hex(if e.armor > 0 { 0xff7b24 } else { 0xff5010 }) |> ignore
@@ -143,7 +143,9 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
     if v.shield_finish is Some(m) && m.emissive is Some(tint) {
       tint.set_hex(if impact > 0 { 0xff7421 } else { 0x1385ff }) |> ignore
       m.emissive_intensity = Some(
-        if impact > 0 {
+        if !alive {
+          0
+        } else if impact > 0 {
           impact * 0.90
         } else if pulling {
           0.64 + 0.24 * @math.sin(game.time * 16)
@@ -152,14 +154,22 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
         },
       )
     }
-    v.root.visible = alive ||
-      (e.dead_at is Some(_) && e.definition.reserve_for is None)
+    v.root.visible = alive || e.dead_at is Some(_)
     let collapse = e.dead_at
       .map(fn(t) { @sim.clamp((game.time - t) / 0.45, 0, 1) })
       .unwrap_or(0)
-    v.root.scale.set(v.scale.x, v.scale.y * (1 - collapse * 0.7), v.scale.z)
-    |> ignore
-    v.root.rotation.set(0, 0, collapse * 0.12) |> ignore
+    let settle = collapse * (2 - collapse)
+    let lean = if i % 2 == 0 { 1.0 } else { -1.0 }
+    v.root.rotation.set(settle * 0.10, 0, lean * settle * 0.14) |> ignore
+    if settle != v.wreck_settle {
+      v.wreck_settle = settle
+      for finish in [v.hull_finish, v.shield_finish] {
+        if finish is Some(m) && m.color is Some(paint) {
+          paint.set_rgb(1 - settle * 0.69, 1 - settle * 0.75, 1 - settle * 0.77)
+          |> ignore
+        }
+      }
+    }
     let base = e.model_position(game.time)
     v.root.position.set(base.x, base.y, base.z) |> ignore
     v.body.rotation.set(
@@ -172,7 +182,7 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
       0,
     )
     |> ignore
-    if e.flash > 0 && e.armor <= 0 {
+    if impact > 0 && e.armor <= 0 {
       v.body.rotate_x(-0.10 * @sim.clamp(e.flash / 0.14, 0, 1)) |> ignore
     }
     let pose = e.weapon_pose
@@ -183,7 +193,7 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
       |> ignore
     } else if pose is Some(p) {
       // The imported tool is modeled about the chassis origin. Pitch it about the bearing.
-      let pivot = p.pivot_height / v.scale.y
+      let pivot = p.pivot_height / v.root.scale.y
       let shift = pivot * @math.sin(p.tilt)
       v.turret.position.set(
         shift * @math.sin(p.yaw),
@@ -194,6 +204,10 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
       v.turret.rotate_x(-p.tilt) |> ignore
     } else {
       v.turret.position.set(0, 0, 0) |> ignore
+    }
+    if collapse > 0 {
+      v.turret.rotate_z(lean * settle * 0.19) |> ignore
+      v.turret.rotate_x(settle * 0.30) |> ignore
     }
     for j, gun in v.part_guns {
       if gun is Some(node) && e.parts[j].weapon_pose is Some(p) {
@@ -245,7 +259,7 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
           |> ignore
         }
         if v.part_lamps[j] is Some(lamp) {
-          color(lamp, if part.hp > 0 { 0xf07941 } else { 0x243e39 })
+          color(lamp, if alive && part.hp > 0 { 0xf07941 } else { 0x243e39 })
         }
       }
     }
@@ -270,7 +284,7 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
       }
     }
     if v.wake is Some(wake) {
-      wake.visible = e.afloat
+      wake.visible = alive && e.afloat
     }
     if v.warning is Some(warning) {
       warning.visible = alive &&
@@ -338,7 +352,9 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
         if material.material_type is MeshBasicMaterial &&
           material.color is Some(basic) {
           basic.set_hex(
-            if e.phase.is_warning() {
+            if !alive {
+              0x302d29
+            } else if e.phase.is_warning() {
               0xffda73
             } else if e.phase.is_venting() {
               0xf07941

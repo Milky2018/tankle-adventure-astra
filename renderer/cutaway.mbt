@@ -9,7 +9,6 @@ struct Cutaway {
   heading : @core.Uniform
   direction : @m3.Vector3
   enabled : @core.Uniform
-  mode : @core.Uniform
   bounds : Array[@m3.Vector4]
   planes : Array[@m3.Vector4]
 }
@@ -33,7 +32,7 @@ let world_declarations : String =
   #| uniform vec3 aperturePlayer;
   #| uniform float hullHeading, waterTime;
   #| uniform float sightLength;
-  #| uniform float apertureMode, apertureEnabled, renderDistance;
+  #| uniform float apertureEnabled, renderDistance;
   #| uniform vec3 apertureDirection;
   #| uniform vec4 bounds0, bounds1, bounds2, bounds3;
   #| uniform vec4 plane0, plane1, plane2, plane3;
@@ -68,8 +67,7 @@ fn Cutaway::new(
     sight_length: @core.Uniform::new(Number(0)),
     distance: @core.Uniform::new(Number(230)),
     direction: @m3.Vector3::new(28, 39.6, 28).normalize(),
-    enabled: @core.Uniform::new(Number(1)),
-    mode: @core.Uniform::new(Number(1)),
+    enabled: @core.Uniform::new(Number(0)),
     bounds: Array::makei(4, fn(_) { @m3.Vector4::new(0, 0, 0, 0) }),
     planes: Array::makei(4, fn(_) { @m3.Vector4::new(0, 0, 0, 0) }),
   }
@@ -149,13 +147,6 @@ fn Cutaway::apply(
   } else {
     wet_floor
   }
-  let radius = if role == "structure" ||
-    role == "backdrop" ||
-    role == "enclosure" {
-    36.0
-  } else {
-    13.0
-  }
   // The atlas packs one plan of window light per eight-metre storey. Ramps
   // blend adjacent plans while the material continues to receive live shadows.
   let lighting = if finish == "paving" {
@@ -190,21 +181,21 @@ fn Cutaway::apply(
   } else {
     ""
   }
-  let camera_only = role == "fixture" || role == "belt"
   let terrain = role == "floor" || role == "belt"
   let aperture =
+    #| if (apertureEnabled > 0.0) {
     #| vec3 delta = apertureWorld-aperturePlayer-vec3(0.0,1.3,0.0);
     #| vec3 viewDirection = apertureDirection;
     #| float along = dot(delta,viewDirection);
-    #| float radius = length(delta-viewDirection*along);
-    #| float nearest = clamp(along, 0.0, sightLength);
-    #| float eyeCut = smoothstep(-0.8,0.0,along)*(1.0-smoothstep(2.05,2.42,length(delta-viewDirection*nearest)));
-    #| eyeCut *= max(smoothstep(-.05,.42,dot(delta.xz,viewDirection.xz)),smoothstep(.6,1.65,delta.y));
-  let overhead = if camera_only {
-    "0.0"
-  } else {
-    "(1.0-smoothstep(float(\{radius*5/13}),float(\{radius}),radius))*smoothstep(1.5,3.5,delta.y)*(1.0-smoothstep(55.0,62.0,along))"
-  }
+    #| float projection = sightLength / max(0.10,sightLength-along);
+    #| vec3 radial = (delta - viewDirection * along) * projection;
+    #| vec3 right = normalize(vec3(viewDirection.z, 0., -viewDirection.x));
+    #| vec3 up = cross(viewDirection, right);
+    #| vec3 hull = vec3(sin(hullHeading),0.,cos(hullHeading));
+    #| float halfWidth = 1.5 + 0.52*abs(dot(right,hull));
+    #| float halfHeight = 1.05 + 0.7*abs(viewDirection.y);
+    #| float silhouette = length(max(abs(vec2(dot(radial,right),dot(radial,up))) - vec2(halfWidth,halfHeight)*0.70,vec2(0.)));
+    #| float eyeCut = (1.-smoothstep(.32,.62,silhouette))*step(.05,along)*step(along,sightLength);
   let fragment = if hull_fill is Some(_) {
     hull_fill_fragment
   } else if finish == "enemyEnamel" {
@@ -214,7 +205,7 @@ fn Cutaway::apply(
       #| float induction = smoothstep(.20,.46,vColor.b-vColor.r) * smoothstep(.08,.26,vColor.b-vColor.g);
       #| float pigment = max(vColor.r,max(vColor.g,vColor.b));
       #| outgoingLight -= totalEmissiveRadiance * (.58*(1.0-pigment));
-      #| outgoingLight += diffuseColor.rgb*.42 + vColor.rgb*(.12+induction*.64);
+      #| outgoingLight += diffuseColor.rgb*.42 + vColor.rgb*diffuse*(.12+induction*.64);
       #| #include <opaque_fragment>
     )
   } else if finish == "glass" {
@@ -227,10 +218,8 @@ fn Cutaway::apply(
     "#include <opaque_fragment>"
   } else {
     aperture +
-    "\nfloat cut = mix(\{overhead},eyeCut,apertureMode)*apertureEnabled;\n" +
+    "\nfloat cut = eyeCut;\n" +
     (if terrain { support_shader } else { "" }) +
-    // Write solid color and depth together. Only the narrow edge of the
-    // camera cut uses ordered coverage, so aiming through its center is clear.
     (
       #|
       #| if (cut > 0.0) {
@@ -238,10 +227,10 @@ fn Cutaway::apply(
       #|   vec2 low = mod(pixel, 2.0), high = floor(pixel * 0.5);
       #|   float lo = 2.0*mod(low.x+low.y,2.0)+low.y;
       #|   float hi = 2.0*mod(high.x+high.y,2.0)+high.y;
-      #|   if (smoothstep(0.56,0.75,cut) > (4.0*lo+hi+0.5)/16.0) discard;
+      #|   if (0.625 * cut > (4.0*lo+hi+0.5)/16.0) discard;
+      #| }
       #| }
     ) +
-    "\noutgoingLight *= mix(1.0,0.65,smoothstep(3.0,12.0,abs(apertureWorld.y-aperturePlayer.y))*(1.0-apertureMode)*apertureEnabled);\n" +
     reflected +
     "\n" +
     contact +
@@ -298,7 +287,6 @@ fn Cutaway::apply(
     uniforms["apertureDirection"] = @core.Uniform::new(Vector3(self.direction))
     uniforms["renderDistance"] = self.distance
     uniforms["sightLength"] = self.sight_length
-    uniforms["apertureMode"] = self.mode
     uniforms["apertureEnabled"] = self.enabled
     for i in 0..<4 {
       uniforms["bounds\{i}"] = @core.Uniform::new(Vector4(self.bounds[i]))
@@ -383,17 +371,13 @@ fn Cutaway::update(
   p : @sim.Player,
   world : @sim.World,
   camera : @core.Object3D,
-  third : Bool,
 ) -> Unit {
   self.heading.value = Number(p.heading)
   self.player.set(p.x, p.y, p.z) |> ignore
   self.direction.copy(camera.position).sub(self.player) |> ignore
-  if third {
-    self.direction.set_y(self.direction.y - 1.3) |> ignore
-  }
+  self.direction.set_y(self.direction.y - 1.3) |> ignore
   self.sight_length.value = Number(self.direction.length())
   self.direction.normalize() |> ignore
-  self.mode.value = Number(if third { 1 } else { 0 })
   let mut slot = 0
   {
     let decks = world.ground_patches(p)
@@ -421,54 +405,4 @@ fn Cutaway::update(
 fn smooth(a : Double, b : Double, value : Double) -> Double {
   let t = @sim.clamp((value - a) / (b - a), 0, 1)
   t * t * (3 - 2 * t)
-}
-
-///|
-fn Cutaway::aim_visible(
-  self : Cutaway,
-  pos : @sim.Vec3,
-  terrain : Bool,
-  structure : Bool,
-  third : Bool,
-) -> Bool {
-  let mut cut = 0.0
-  if third {
-    let origin = point(self.player).add({ x: 0, y: 1.3, z: 0, })
-    let delta = pos.sub(origin)
-    let dir = point(self.direction)
-    let along = delta.dot(dir)
-    if self.sight_length.value is Number(length) {
-      let nearest = @sim.clamp(along, 0, length)
-      cut = smooth(-0.8, 0, along) *
-        (1 - smooth(2.05, 2.42, delta.sub(dir.scale(nearest)).length())) *
-        Double::max(
-          smooth(-0.05, 0.42, delta.x * dir.x + delta.z * dir.z),
-          smooth(0.6, 1.65, delta.y),
-        )
-    }
-  } else {
-    let delta = pos.sub(point(self.player)).sub({ x: 0, y: 1.3, z: 0, })
-    let direction = point(self.direction)
-    let along = delta.dot(direction)
-    let radius = delta.sub(direction.scale(along)).length()
-    let outer = if structure { 36.0 } else { 13.0 }
-    cut = (1 - smooth(outer * 5 / 13, outer, radius)) *
-      smooth(1.5, 3.5, delta.y) *
-      (1 - smooth(55, 62, along))
-  }
-  if terrain {
-    for i in 0..<4 {
-      let b = self.bounds[i]
-      let p = self.planes[i]
-      if p.z > 0 &&
-        pos.x >= b.x - 0.02 &&
-        pos.x <= b.z + 0.02 &&
-        pos.z >= b.y - 0.02 &&
-        pos.z <= b.w + 0.02 {
-        let height = p.x + p.y * @sim.clamp(pos.z - b.y, 0, b.w - b.y)
-        cut *= smooth(0.12, 0.3, (pos.y - height).abs())
-      }
-    }
-  }
-  cut < 0.655
 }

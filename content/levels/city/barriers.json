@@ -1390,7 +1390,8 @@
     "d": 12,
     "y": -16,
     "h": 3,
-    "circuitKey": "relay-west:-47.5000:-16.0000:44.0000"
+    "circuitKey": "relay-west:-47.5000:-16.0000:44.0000",
+    "localControl": "relay-west"
   },
   {
     "id": "relays",
@@ -1400,7 +1401,8 @@
     "d": 12,
     "y": -16,
     "h": 4,
-    "circuitKey": "relays:-50.5000:-16.0000:120.0000"
+    "circuitKey": "relays:-50.5000:-16.0000:120.0000",
+    "localControl": "relay-east"
   },
   {
     "id": "overdrive-return",
@@ -2483,7 +2485,8 @@
     "w": 1,
     "d": 46,
     "h": 3.5,
-    "circuitKey": "proving-transfer:100.0000:16.0000:-196.0000"
+    "circuitKey": "proving-transfer:100.0000:16.0000:-196.0000",
+    "localControl": "proving-transfer"
   },
   {
     "id": "proving-cover-0",

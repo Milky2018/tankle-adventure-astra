@@ -118,20 +118,45 @@ fn View::update_effects(
     }
   }
   if game.magnet_end is Some(end) {
-    strokes.stroke(
-      point(
+    let locked = game.magnet_lock is Some(_)
+    let warm = game.player.overheated
+    let hue = if warm { 0xe48442 } else if locked { 0x70ddff } else { 0x5688a4 }
+    for i, pole in self.player_visual.equipment.poles {
+      let start = point(pole.local_to_world(@m3.Vector3::new(0, 0, 0.44)))
+      let span = end.sub(start)
+      let side = if i == 0 { -1.0 } else { 1.0 }
+      let lateral = @sim.Vec2::{ x: span.z, z: -span.x, }
+      let width = side *
+        Double::min(0.7, span.length() * 0.06) /
+        Double::max(0.01, lateral.length())
+      let mut last = start
+      for j in 1..<=12 {
+        let t = j.to_double() / 12
+        let arc = @math.sin(t * @math.PI)
+        let next = start
+          .lerp(end, t)
+          .add({
+            x: lateral.x * width * arc,
+            y: arc * (0.12 + 0.11 * @math.sin(game.time * 12 + t * 9 + side)),
+            z: lateral.z * width * arc,
+          })
+        strokes.stroke(last, next, if locked { 0.065 } else { 0.028 }, hue)
+        last = next
+      }
+      effects.light.puff(start, 0.5, 0.5, 0.7, hue)
+    }
+    if locked {
+      let head = point(
         self.player_visual.equipment.winch.local_to_world(
           @m3.Vector3::new(1.03, 2, 1.56),
         ),
-      ),
-      end,
-      0.09,
-      if game.player.overheated {
-        0xff6846
-      } else {
-        0x86d5ef
-      },
-    )
+      )
+      for i in 0..<3 {
+        let t = (game.time * 1.8 + i.to_double() / 3) % 1
+        effects.light.puff(end.lerp(head, t), 0.65, 0.65, 0.85, 0xd3faff)
+      }
+      effects.light.puff(end, 1.3, 1.3, 0.9, hue)
+    }
   }
   if game.player.weapon == @sim.Mortar &&
     game.shots.any(fn(s) { s.mortar && s.owner is None }) {
@@ -350,7 +375,25 @@ fn View::update_effects(
         }
       @sim.Armored(p) => shower(p, up, false)
       @sim.Impact(p, blast) => shower(p, up, blast)
-      @sim.Killed(i) => shower(game.enemies[i].position().add(up), up, true)
+      @sim.Killed(i) => {
+        let center = game.enemies[i].position().add(up)
+        shower(center, up, true)
+        for j in 0..<5 {
+          let angle = j.to_double() * 2.4
+          emit(
+            Dust,
+            center,
+            {
+              x: @math.cos(angle) * 0.75,
+              y: 1.8 + j.to_double() * 0.25,
+              z: @math.sin(angle) * 0.75,
+            },
+            1.1 + j.to_double() * 0.18,
+            1.4,
+            0x514b45,
+          )
+        }
+      }
       _ => ()
     }
   }

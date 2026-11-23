@@ -82,19 +82,6 @@ pub fn Rect::contains(
 }
 
 ///|
-pub fn screen_movement(horizontal : Double, vertical : Double) -> Vec2 {
-  let length = Vec2::{ x: horizontal, z: vertical, }.length()
-  if length == 0 {
-    return { x: 0, z: 0, }
-  }
-  let divisor = Double::sqrt(2) * length
-  {
-    x: (horizontal + vertical) / divisor,
-    z: (vertical - horizontal) / divisor,
-  }
-}
-
-///|
 #deprecated
 pub extend Vec2 with Eq::{equal, not_equal}
 

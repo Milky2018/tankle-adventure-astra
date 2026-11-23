@@ -159,20 +159,6 @@
     "circuitKey": "coolant-maintenance-bridge:300.0000:-24.0000:100.0000"
   },
   {
-    "id": "proving-load",
-    "x": 92,
-    "z": -164,
-    "w": 8,
-    "d": 12,
-    "stops": [
-      16,
-      22
-    ],
-    "lock": "proving-transfer",
-    "settle": true,
-    "circuitKey": "proving-load:92.0000:16.0000:-164.0000"
-  },
-  {
     "id": "final-load",
     "x": 32,
     "z": 84,

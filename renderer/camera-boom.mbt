@@ -65,11 +65,11 @@ fn CameraSpace::boom_limit(
   offset : @sim.Vec3,
   world : @sim.World,
   state : @sim.Progress,
+  pad~ : Double = 0.45,
 ) -> Double {
   let end = origin.add(offset)
   let ray : @sim.Ray = { origin, direction: offset.normalized(), }
   let mut limit = offset.length()
-  let pad = 0.45
   let left = Double::min(origin.x, end.x) - pad
   let right = Double::max(origin.x, end.x) + pad
   let back = Double::min(origin.z, end.z) - pad
@@ -79,8 +79,8 @@ fn CameraSpace::boom_limit(
       hi.x < left ||
       lo.z > front ||
       hi.z < back ||
-      lo.y > end.y + pad ||
-      hi.y < origin.y - pad {
+      lo.y > Double::max(origin.y, end.y) + pad ||
+      hi.y < Double::min(origin.y, end.y) - pad {
       return
     }
     let padding : @sim.Vec3 = { x: pad, y: pad, z: pad, }
@@ -161,4 +161,38 @@ fn CameraSpace::boom_limit(
     })
   }
   limit
+}
+
+///|
+/// A visible turret crown or hull corner keeps the foreground fully opaque.
+fn CameraSpace::hull_hidden(
+  self : CameraSpace,
+  body : @core.Object3D,
+  muzzle : @sim.Vec3,
+  eye : @sim.Vec3,
+  world : @sim.World,
+  state : @sim.Progress,
+) -> Bool {
+  for
+    (x, y, z) in [
+      (0.0, 2.65, 0.0),
+      (-1.4, 1.3, -1.6),
+      (1.4, 1.3, -1.6),
+      (-1.4, 1.3, 1.6),
+      (1.4, 1.3, 1.6),
+      (-1.4, 0.55, 0.0),
+      (1.4, 0.55, 0.0),
+      (0.0, 1.65, 0.0),
+    ] {
+    let sample = point(
+      @m3.Vector3::new(x, y, z).apply_matrix4(body.matrix_world),
+    )
+    let offset = eye.sub(sample)
+    if self.boom_limit(sample, offset, world, state, pad=0) >=
+      offset.length() - 0.02 {
+      return false
+    }
+  }
+  let offset = eye.sub(muzzle)
+  self.boom_limit(muzzle, offset, world, state, pad=0) < offset.length() - 0.02
 }

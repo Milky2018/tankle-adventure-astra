@@ -158,11 +158,7 @@ fn Hud::draw_map(
   let known = game.world.decks.filter(fn(d) {
     game.progress.discovered.contains(d.id)
   })
-  let angle = if large || !view.third_person {
-    @math.PI / 4
-  } else {
-    view.yaw + @math.PI
-  }
+  let angle = if large { @math.PI / 4 } else { view.yaw + @math.PI }
   @host.canvas_begin(ctx, width, height, angle)
   let mut x0 = p.x - 8
   let mut x1 = p.x + 8

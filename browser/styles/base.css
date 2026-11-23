@@ -34,7 +34,7 @@ button:focus-visible{outline:2px solid #f9cf68;outline-offset:5px}
 #boss-health i{width:10px;height:10px;transform:rotate(45deg);background:#f4a36b}
 kbd{font:12px/1 ui-monospace,monospace;padding:7px 8px;border:1px solid #ddedcd70;border-bottom-width:3px;border-radius:5px;color:#f8f5d6;background:#173230b3;box-shadow:0 2px 8px #10232640}
 #interaction{position:absolute;display:none;transform:translate(-50%,-100%);animation:bob 1.5s infinite ease-in-out}
-#reticle{position:absolute;width:28px;height:28px;transform:translate(-50%,-50%);filter:drop-shadow(0 1px 3px #051b1b);color:#fff1c2}
+#reticle{position:absolute;left:50%;top:50%;width:28px;height:28px;transform:translate(-50%,-50%);filter:drop-shadow(0 1px 3px #051b1b);color:#fff1c2}
 .reticle-heat{position:absolute;left:-12px;top:-12px;width:52px;height:52px;fill:none;stroke-width:2.5;transform:rotate(-90deg)}
 .heat-track{stroke:#d8edca35}
 #heat{stroke:var(--heat-color,#ffeda3);stroke-dasharray:100;stroke-dashoffset:100;transition:stroke .2s}

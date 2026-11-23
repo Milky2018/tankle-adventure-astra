@@ -7,7 +7,6 @@ priv struct Settings {
   mut music : Bool
   mut sfx : Bool
   mut quality : String
-  mut third_person : Bool
 }
 
 ///|
@@ -25,7 +24,6 @@ fn Settings::new() -> Settings {
       "weapon": "KeyQ",
       "float": "KeyF",
       "interact": "KeyE",
-      "camera": "KeyC",
       "map": "Tab",
       "pause": "Escape",
       "skip": "Space",
@@ -34,15 +32,18 @@ fn Settings::new() -> Settings {
     music: true,
     sfx: true,
     quality: "high",
-    third_person: true,
   }
 }
 
 ///|
 fn Settings::load() -> Settings {
-  @json.from_json(@json.parse(@host.read_preferences())) catch {
+  let settings : Settings = @json.from_json(
+    @json.parse(@host.read_preferences()),
+  ) catch {
     _ => Settings::new()
   }
+  settings.bindings.remove("camera")
+  settings
 }
 
 ///|
@@ -81,7 +82,6 @@ fn Session::bindings(self : Session) -> Unit {
       ("weapon", "Weapon"),
       ("float", "Flotation"),
       ("interact", "Interact"),
-      ("camera", "Camera"),
       ("map", "Map"),
       ("pause", "Pause"),
       ("skip", "Skip"),
@@ -211,20 +211,6 @@ fn Session::input(
       self.sound.play("flotation")
     }
   }
-  if is_action("camera") {
-    self.view.third_person = !self.view.third_person
-    self.settings.third_person = self.view.third_person
-    self.settings.save()
-    @host.set_value(
-      "camera-view",
-      if self.view.third_person {
-        "third"
-      } else {
-        "overhead"
-      },
-    )
-    @host.release_pointer()
-  }
 }
 
 ///|
@@ -249,22 +235,12 @@ fn Session::mount_settings(self : Session) -> Unit {
   @host.set_value("quality", self.settings.quality)
   @host.set_checked("music", self.settings.music)
   @host.set_checked("sfx", self.settings.sfx)
-  @host.set_value(
-    "camera-view",
-    if self.view.third_person {
-      "third"
-    } else {
-      "overhead"
-    },
-  )
-  for id in ["volume", "music", "sfx", "quality", "camera-view"] {
+  for id in ["volume", "music", "sfx", "quality"] {
     @host.on_change(id, fn() {
       self.settings.volume = @host.setting_number("volume")
       self.settings.music = @host.setting_checked("music")
       self.settings.sfx = @host.setting_checked("sfx")
       self.settings.quality = @host.setting_value("quality")
-      self.view.third_person = @host.setting_value("camera-view") == "third"
-      self.settings.third_person = self.view.third_person
       self.view.renderer.set_pixel_ratio(
         if self.settings.quality == "low" {
           1

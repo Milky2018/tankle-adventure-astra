@@ -2,8 +2,29 @@
 async page => {
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.locator('#resume').click();
+  await page.addScriptTag({path:'tests/browser/driving-controls.js'});
   const legs=[];
   async function move(x,z,boost=false){
+    if (boost) {
+      const start = await page.evaluate(() => __typedRead());
+      const dx = x - start.x, dz = z - start.z, length = Math.hypot(dx,dz);
+      await page.evaluate(d => window.drivingControls.face(d), [dx,dz]);
+      await page.keyboard.down('ShiftLeft');
+      await page.keyboard.down('KeyW');
+      try {
+        await page.waitForFunction(([x,z,dx,dz,length]) => {
+          const p = __typedRead();
+          return (x-p.x)*dx+(z-p.z)*dz < 0.45*length;
+        }, [x,z,dx,dz,length], {timeout:18000});
+      } finally {
+        await page.keyboard.up('KeyW');
+        await page.keyboard.up('ShiftLeft');
+      }
+      const p = await page.evaluate(() => __typedRead());
+      if(Math.hypot(x-p.x,z-p.z)>2)throw Error(`Missed boost exit at ${p.x},${p.z}`);
+      legs.push({x:p.x,y:p.y,z:p.z,hp:p.hp});
+      return;
+    }
     let previous=null,stuck=0;
     for(let i=0;i<220;i++){
       const p=await page.evaluate(()=>__typedRead());
@@ -14,18 +35,16 @@ async page => {
       previous=p;
       const enemy=p.enemies.filter(e=>e.hp>0&&Math.abs(e.y-p.y)<2.5&&Math.hypot(e.x-p.x,e.z-p.z)<23).sort((a,b)=>Math.hypot(a.x-p.x,a.z-p.z)-Math.hypot(b.x-p.x,b.z-p.z))[0];
       if(enemy){await aim(enemy.x,enemy.y+1.5,enemy.z);await page.mouse.down()}else{await page.mouse.up()}
-      const keys=Math.abs(dx)>Math.abs(dz)?dx>0?['KeyS','KeyD']:['KeyW','KeyA']:dz>0?['KeyS','KeyA']:['KeyW','KeyD'];
-      if(boost&&Math.hypot(dx,dz)>2)await page.keyboard.down('ShiftLeft');
+      const keys=await page.evaluate(d=>window.drivingControls.keys(d),[dx,dz]);
       for(const k of keys)await page.keyboard.down(k);
-      await page.waitForTimeout(Math.min(160,Math.max(18,Math.max(Math.abs(dx),Math.abs(dz))/(boost?16:10)*1000)));
+      await page.waitForTimeout(Math.min(160,Math.max(18,Math.max(Math.abs(dx),Math.abs(dz))/10*1000)));
       for(const k of keys)await page.keyboard.up(k);
-      await page.keyboard.up('ShiftLeft');
     }
-    throw Error('Route timeout');
+    const p=await page.evaluate(()=>__typedRead());
+    throw Error(`Route to ${x},${z} timed out at ${p.x},${p.y},${p.z} (HP ${p.hp})`);
   }
   async function aim(x,y,z){
-    const [screenX,screenY]=await page.evaluate(([x,y,z])=>window.__typedProject(x,y,z), [x,y,z]);
-    await page.mouse.move(screenX,screenY);
+    await page.evaluate(p=>window.drivingControls.aim(p),[x,y,z]);
   }
 
   async function use(){await page.keyboard.press('KeyE')}

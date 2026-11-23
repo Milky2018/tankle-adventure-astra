@@ -97,13 +97,7 @@ test "save restores abilities and pending signals but reconstructs the player at
     game.progress.complete(id) |> ignore
   }
   assert_true(game.player.acquire(pickup, game.progress))
-  game.commands.activate(
-    game.progress,
-    "relay-west",
-    CannonAction,
-    game.player,
-    0,
-  )
+  game.commands.activate(game.progress, "load", MortarAction, game.player, 0)
   |> ignore
   game.advance_world(0.2)
   game.player.hp = 5
@@ -113,9 +107,9 @@ test "save restores abilities and pending signals but reconstructs the player at
   assert_true(restored.player.abilities.overdrive)
   assert_eq(restored.player.hp, 25)
   assert_true(restored.player.position() == restored.hives[0].position)
-  assert_true(restored.progress.pending.contains("relay-west"))
+  assert_true(restored.progress.pending.contains("load"))
   restored.advance_world(20)
-  assert_true(restored.progress.has("relay-west"))
+  assert_true(restored.progress.has("load"))
   assert_false(restored.restore("broken save"))
 }
 

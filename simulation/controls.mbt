@@ -33,6 +33,33 @@ pub(all) struct Control {
 }
 
 ///|
+/// Radius of the exposed face, measured in the authored instrument model.
+fn Control::strike_radius(self : Control) -> Double {
+  if self.top {
+    1.71
+  } else if self.mount is Some(_) && self.actions.contains(CannonAction) {
+    1.14
+  } else {
+    0.95
+  }
+}
+
+///|
+/// Closest point on the circular working surface of an open mortar tray.
+pub fn Control::tray_face(self : Control, p : Vec3) -> Vec3 {
+  let offset = Vec2::{ x: p.x - self.position.x, z: p.z - self.position.z, }
+  let scale = Double::min(
+    1,
+    self.strike_radius() / Double::max(0.001, offset.length()),
+  )
+  {
+    x: self.position.x + offset.x * scale,
+    y: self.position.y,
+    z: self.position.z + offset.z * scale,
+  }
+}
+
+///|
 pub(all) struct Circuit {
   id : String
   duration : Double

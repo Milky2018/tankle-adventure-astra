@@ -61,23 +61,23 @@
   },
   {
     "id": "relay-west",
-    "duration": 1.4,
+    "duration": 0.18,
     "branches": [
       {
         "key": "relay-west:-47.5000:-16.0000:44.0000",
         "target": "relay-west",
-        "duration": 1.4
+        "duration": 0.18
       }
     ]
   },
   {
     "id": "relay-east",
-    "duration": 1.4,
+    "duration": 0.18,
     "branches": [
       {
         "key": "relays:-50.5000:-16.0000:120.0000",
         "target": "relays",
-        "duration": 1.4
+        "duration": 0.18
       }
     ]
   },
@@ -281,17 +281,12 @@
   },
   {
     "id": "proving-transfer",
-    "duration": 1.4788888888888896,
+    "duration": 0.18,
     "branches": [
       {
         "key": "proving-transfer:100.0000:16.0000:-196.0000",
         "target": "proving-transfer",
-        "duration": 1.4788888888888896
-      },
-      {
-        "key": "proving-load:92.0000:16.0000:-164.0000",
-        "target": "proving-load",
-        "duration": 1.4
+        "duration": 0.18
       }
     ]
   },

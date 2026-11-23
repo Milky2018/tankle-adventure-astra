@@ -144,31 +144,28 @@ pub fn Game::cast(
       let center = control.position.add(
         control.facing.unwrap_or({ x: 0, y: 0, z: 0, }).scale(0.5),
       )
-      let normal = match control.optical_normal {
-        Some(n) => Some(n)
-        None => control.facing
+      let normal = if control.top {
+        Some(Vec3::{ x: 0, y: 1, z: 0, })
+      } else {
+        match control.optical_normal {
+          Some(n) => Some(n)
+          None => control.facing
+        }
       }
       let distance = match normal {
         Some(n) => ray.plane(center, n)
-        None =>
-          if control.top {
-            ray.plane(center, { x: 0, y: 1, z: 0, })
-          } else {
-            ray.sphere(center, 0.95)
-          }
+        None => ray.sphere(center, control.strike_radius())
       }
-      if (normal is Some(_) || control.top) &&
+      if normal is Some(_) &&
         distance is Some(d) &&
-        ray.point(d).distance(center) > 0.95 {
+        ray.point(d).distance(center) > control.strike_radius() {
         continue
       }
-      let target = if control.mount is Some(_) &&
+      let back = (control.top || control.mount is Some(_)) &&
         normal is Some(n) &&
-        ray.direction.dot(n) >= 0 {
-        BlockedControl(i)
-      } else {
-        ControlTarget(i)
-      }
+        ray.direction.dot(n) >= 0
+      let target = if back { BlockedControl(i) } else { ControlTarget(i) }
+      let normal = if back { normal.map(fn(n) { n.scale(-1) }) } else { normal }
       accept(distance, target, normal)
     }
   }

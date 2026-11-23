@@ -22,7 +22,6 @@ pub(all) struct View {
   ending : @core.Object3D
   mut film : Bool
   third : @core.Object3D
-  overhead : @core.Object3D
   root : @core.Object3D
   body : @core.Object3D
   turret : @core.Object3D
@@ -31,15 +30,12 @@ pub(all) struct View {
   mut camera_height : Double
   mut shoulder : Double
   mut sensitivity : Double
-  mut overhead_angle : Double
-  mut area : Double
   mut ground_clearance : Double
   mut yaw : Double
   mut pitch : Double
-  mut third_person : Bool
   // private fields
 }
-pub fn View::aim(Self, @simulation.Game, @simulation.Queries, @simulation.Vec2) -> @simulation.Vec3
+pub fn View::aim(Self, @simulation.Game, @simulation.Queries) -> @simulation.Vec3
 pub fn View::aim_player(Self, @simulation.Vec3, @simulation.Weapon) -> Unit
 pub fn View::camera(Self) -> @core.Object3D
 pub fn View::draw(Self, @simulation.Player, @simulation.World) -> Unit
@@ -47,7 +43,7 @@ pub fn View::new(@core.Object3D, @simulation.Game) -> Self
 pub fn View::position_player(Self, @simulation.Player, @simulation.World, Double) -> Unit
 pub fn View::present(Self, @simulation.Game, @simulation.Queries, @simulation.Vec3, Double) -> Unit
 pub fn View::project(Self, @simulation.Vec3) -> @simulation.Vec2
-pub fn View::queries(Self, @simulation.Game, aiming? : Bool) -> @simulation.Queries
+pub fn View::queries(Self, @simulation.Game) -> @simulation.Queries
 pub fn View::resize(Self) -> Unit
 pub fn View::set_render_distance(Self, Double) -> Unit
 pub fn View::turn(Self, Double, Double) -> Unit

@@ -17,14 +17,30 @@ test "camera retreats at a wall and clears an adjacent doorway" {
 }
 
 ///|
-test "aim stops at nearby cover ahead of the turret and ignores a blocker behind it" {
-  let cut = Cutaway::new(@core.Scene::new())
-  cut.player.set(0, 0, 0) |> ignore
-  cut.direction.set(0, 0, 1) |> ignore
-  cut.sight_length.value = Number(8)
-  assert_true(cut.aim_visible({ x: 0, y: 1.3, z: -1, }, false, true, true))
-  assert_false(cut.aim_visible({ x: 0, y: 1.3, z: 4, }, false, true, true))
-  assert_true(cut.aim_visible({ x: 3, y: 1.3, z: 4, }, false, true, true))
+test "foreground fading requires coverage of the turret and both hull sides" {
+  let game = @sim.Game::new()
+  let body = @core.Object3D::new()
+  body.position.set(4, 0, 4) |> ignore
+  body.update_matrix_world(force=true)
+  let muzzle : @sim.Vec3 = { x: 4, y: 2, z: 6, }
+  let world : @sim.World = {
+    decks: [],
+    solids: [],
+    architecture: [],
+    architecture_grid: Map([]),
+    obstacles: [],
+    lifts: [],
+  }
+  let space = CameraSpace::new(@core.Scene::new(), world)
+  let eye : @sim.Vec3 = { x: 4, y: 3, z: 12, }
+  assert_false(space.hull_hidden(body, muzzle, eye, world, game.progress))
+  space.faces[(0, 0)] = [({ x: 4, y: 0, z: 7, }, { x: 8, y: 6, z: 7, })]
+  assert_false(space.hull_hidden(body, muzzle, eye, world, game.progress))
+  space.faces[(0, 0)] = [({ x: 0, y: 0, z: 7, }, { x: 8, y: 6, z: 7, })]
+  assert_true(space.hull_hidden(body, muzzle, eye, world, game.progress))
+  assert_false(
+    space.hull_hidden(body, { x: 4, y: 2, z: 7.5, }, eye, world, game.progress),
+  )
 }
 
 ///|

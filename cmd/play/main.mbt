@@ -8,8 +8,6 @@ struct Session {
   hud : Hud
   game : @sim.Game
   queries : @sim.Queries
-  aim_queries : @sim.Queries
-  mut pointer : @sim.Vec2
   view : @view.View
   keys : Set[String]
   mut previous : Double
@@ -39,21 +37,17 @@ fn Session::advance(self : Session, milliseconds : Double) -> Unit {
       (if self.held("up") { 1.0 } else { 0.0 })
     let magnitude = (horizontal * horizontal + vertical * vertical).sqrt()
     let movement = if magnitude > 0 {
-      if self.view.third_person {
-        @sim.Vec2::{
-          x: (
-            -@math.cos(self.view.yaw) * horizontal -
-            @math.sin(self.view.yaw) * vertical
-          ) /
-          magnitude,
-          z: (
-            @math.sin(self.view.yaw) * horizontal -
-            @math.cos(self.view.yaw) * vertical
-          ) /
-          magnitude,
-        }
-      } else {
-        @sim.screen_movement(horizontal, vertical)
+      @sim.Vec2::{
+        x: (
+          -@math.cos(self.view.yaw) * horizontal -
+          @math.sin(self.view.yaw) * vertical
+        ) /
+        magnitude,
+        z: (
+          @math.sin(self.view.yaw) * horizontal -
+          @math.cos(self.view.yaw) * vertical
+        ) /
+        magnitude,
       }
     } else {
       @sim.Vec2::{ x: 0, z: 0, }
@@ -61,10 +55,15 @@ fn Session::advance(self : Session, milliseconds : Double) -> Unit {
     self.game.dock(self.held("interact"), magnitude > 0, dt)
     self.game.move_player(movement, self.held("boost"), dt)
     self.view.position_player(p, self.game.world, dt)
-    let aim = self.view.aim(self.game, self.aim_queries, self.pointer)
-    self.game.aim_point = aim
-    p.aim = @math.atan2(aim.x - p.x, aim.z - p.z)
-    self.view.aim_player(aim, p.weapon)
+    let aim = if p.hp > 0 && self.game.death_at is None {
+      let target = self.view.aim(self.game, self.queries)
+      self.game.aim_point = target
+      p.aim = @math.atan2(target.x - p.x, target.z - p.z)
+      self.view.aim_player(target, p.weapon)
+      target
+    } else {
+      self.game.aim_point
+    }
     self.game.advance_combat(
       self.queries,
       self.view.weapon_origin(),
@@ -83,24 +82,6 @@ fn Session::advance(self : Session, milliseconds : Double) -> Unit {
     self.hud.acquisitions(self.game, self.settings)
     self.game.effects.clear()
     self.hud.update(self.game, self.view, self.map_open)
-    @host.style(
-      "reticle",
-      "left",
-      if self.view.third_person {
-        "50%"
-      } else {
-        "\{(self.pointer.x+1)*50}%"
-      },
-    )
-    @host.style(
-      "reticle",
-      "top",
-      if self.view.third_person {
-        "50%"
-      } else {
-        "\{(1.0-self.pointer.z)*50}%"
-      },
-    )
     if self.game.time - self.saved_at >= 1 {
       self.saved_at = self.game.time
       @host.write_save(self.game.save())
@@ -142,11 +123,6 @@ pub fn start() -> Unit {
       }
       let settings = Settings::load()
       let view = @view.View::new(scene, game)
-      view.third_person = match @host.query("view") {
-        "overhead" => false
-        "third" => true
-        _ => settings.third_person
-      }
       let session = Session::{
         game,
         settings,
@@ -156,9 +132,7 @@ pub fn start() -> Unit {
         has_journey: restored || direct,
         hud: Hud::new(),
         queries: view.queries(game),
-        aim_queries: view.queries(game, aiming=true),
         view,
-        pointer: { x: 0, z: 0, },
         keys: Set([]),
         previous: 0,
         paused: false,
@@ -174,18 +148,12 @@ pub fn start() -> Unit {
         if button == 1 {
           session.looking = down
         }
-        if down &&
-          session.view.third_person &&
-          !session.paused &&
-          !session.map_open &&
-          !session.menu_open {
+        if down && !session.paused && !session.map_open && !session.menu_open {
           @host.capture_pointer()
         }
       })
-      @host.on_pointer(fn(dx, dy, x, y) {
-        session.pointer = { x, z: y, }
+      @host.on_pointer(fn(dx, dy, _, _) {
         if (session.looking || @host.pointer_locked()) &&
-          session.view.third_person &&
           !session.paused &&
           !session.map_open {
           session.view.turn(dx, dy)

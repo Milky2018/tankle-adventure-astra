@@ -112,27 +112,12 @@ pub fn View::aim(
   self : View,
   game : @sim.Game,
   queries : @sim.Queries,
-  pointer : @sim.Vec2,
 ) -> @sim.Vec3 {
   let picker = @core.Raycaster::new(
     origin=vector({ x: 0, y: 0, z: 0, }),
     direction=vector({ x: 0, y: 0, z: 1, }),
   )
-  picker.set_from_camera(
-    @m3.Vector2::new(
-      if self.third_person {
-        0
-      } else {
-        pointer.x
-      },
-      if self.third_person {
-        0
-      } else {
-        pointer.z
-      },
-    ),
-    self.camera(),
-  )
+  picker.set_from_camera(@m3.Vector2::new(0, 0), self.camera())
   let source = point(picker.ray.origin)
   let direction = point(picker.ray.direction)
   let turret = self.weapon_origin()
@@ -141,41 +126,25 @@ pub fn View::aim(
       (source.x - turret.x) * direction.x + (source.z - turret.z) * direction.z
     ) /
     Double::max(0.0001, horizontal)
-  let origin = if self.third_person {
-    source.add(
-      direction.scale(
-        Double::max(0, (1 - ahead) / Double::max(0.0001, horizontal)),
-      ),
-    )
-  } else {
-    source
-  }
+  let origin = source.add(
+    direction.scale(
+      Double::max(0, (1 - ahead) / Double::max(0.0001, horizontal)),
+    ),
+  )
   let ray = @sim.Ray::{ origin, direction, }
-  self.cutaway.update(game.player, game.world, self.camera(), self.third_person)
-  let hit = game.cast(queries, ray, 300, refuge=false, visible=fn(pos) {
-    self.cutaway.aim_visible(pos, false, false, self.third_person)
-  })
-  let mut target = match hit {
-    Some(hit) =>
-      if self.third_person ||
-        game.player.weapon == @sim.Mortar ||
-        !(hit.target is @sim.Terrain) {
-        hit.point
+  let mut target = match game.cast(queries, ray, 300, refuge=false) {
+    Some({ target: @sim.BlockedControl(i), point, .. }) if game.player.weapon ==
+      @sim.Mortar &&
+      game.commands.controls[i].top => {
+      let face = game.commands.controls[i].tray_face(point)
+      if point.y >= face.y - 0.5 && point.distance(face) < 0.8 {
+        face
       } else {
-        ray
-        .plane({ x: 0, y: hit.point.y + 2, z: 0, }, { x: 0, y: 1, z: 0, })
-        .map(fn(d) { ray.point(d) })
-        .unwrap_or(hit.point)
+        point
       }
-    None =>
-      if self.third_person {
-        ray.point(150)
-      } else {
-        ray
-        .plane(turret, { x: 0, y: 1, z: 0, })
-        .map(fn(d) { ray.point(d) })
-        .unwrap_or(ray.point(100))
-      }
+    }
+    Some(hit) => hit.point
+    None => ray.point(150)
   }
   if game.player.weapon != @sim.Mortar {
     let offset = target.sub(turret)

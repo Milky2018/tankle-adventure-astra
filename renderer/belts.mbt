@@ -96,7 +96,6 @@ fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
       speed
     }
     let turn = if facing > 0 { -1.0 } else { 1.0 }
-    tread.make_scale(turn, 1, turn) |> ignore
     belt.phase += dt *
       speed *
       (1.0 + d.rise / d.rect.d * (d.rise / d.rect.d)).sqrt()
@@ -112,13 +111,31 @@ fn View::update_belts(self : View, game : @sim.Game, dt : Double) -> Unit {
           ) %
           travel -
           travel / 2
+        // Each shoe rolls under the end drum before its index wraps around.
+        let edge = travel / 2 - along.abs()
+        let exposure = smooth(0, 0.55, edge)
+        let length_scale = Double::max(0.001, exposure)
+        tread.make_scale(
+          if horizontal {
+            turn * length_scale
+          } else {
+            turn
+          },
+          1,
+          if horizontal {
+            turn
+          } else {
+            turn * length_scale
+          },
+        )
+        |> ignore
         tread.set_position(
           if horizontal {
             along
           } else {
             0
           },
-          0.15,
+          -0.30 + 0.45 * exposure,
           if horizontal {
             0
           } else {

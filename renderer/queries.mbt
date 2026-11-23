@@ -8,9 +8,6 @@ priv struct Collider {
 
 ///|
 priv struct GeometryQueries {
-  aiming : Bool
-  visible : (@sim.Vec3, Bool, Bool) -> Bool
-  housing_pick : () -> Bool
   world : @sim.World
   state : @sim.Progress
   fixtures : Array[Collider]
@@ -55,11 +52,7 @@ fn Collider::in_range(self : Collider, ray : @sim.Ray, limit : Double) -> Bool {
 }
 
 ///|
-pub fn View::queries(
-  self : View,
-  game : @sim.Game,
-  aiming~ : Bool = false,
-) -> @sim.Queries {
+pub fn View::queries(self : View, game : @sim.Game) -> @sim.Queries {
   let root = self.scene
   let fixtures : Array[Collider] = []
   let surfaces : Array[Collider] = []
@@ -119,11 +112,6 @@ pub fn View::queries(
     }
   }
   let queries = GeometryQueries::{
-    aiming,
-    visible: fn(p, terrain, structure) {
-      self.cutaway.aim_visible(p, terrain, structure, self.third_person)
-    },
-    housing_pick: fn() { !aiming || self.third_person },
     world: game.world,
     state: game.progress,
     fixtures,
@@ -161,17 +149,6 @@ fn GeometryQueries::cast(
     for hit in hits {
       if hit.distance > limit {
         break
-      }
-      if self.aiming {
-        let shell = metadata_string(object.user_data, "renderRole") ==
-          "enclosure"
-        if !(self.visible)(
-            point(hit.point),
-            target is @sim.Terrain && !shell,
-            shell,
-          ) {
-          continue
-        }
       }
       let normal = hit.face.map(fn(face) {
         point(
@@ -228,9 +205,6 @@ fn GeometryQueries::cast(
       }
     }
     for housing in self.housings {
-      if !(self.housing_pick)() {
-        continue
-      }
       let bounds = @core.box3_set_from_object(@m3.Box3::new(), housing.object)
       if ray.box(point(bounds.min), point(bounds.max)) is Some((d, _)) &&
         d <= limit {
@@ -247,8 +221,7 @@ fn GeometryQueries::cast(
           z: solid.rect.z + solid.rect.d,
         })
         is Some((distance, normal)) &&
-        distance < limit &&
-        (!self.aiming || (self.visible)(ray.point(distance), false, true)) {
+        distance < limit {
         limit = distance
         result = Some({
           distance,
@@ -284,11 +257,7 @@ fn GeometryQueries::cast(
                   z: solid.rect.z + solid.rect.d,
                 })
                 is Some((distance, normal)) &&
-                distance < limit &&
-                (
-                  !self.aiming ||
-                  (self.visible)(ray.point(distance), false, true)
-                ) {
+                distance < limit {
                 limit = distance
                 result = Some({
                   distance,
