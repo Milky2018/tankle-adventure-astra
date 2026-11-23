@@ -63,6 +63,9 @@ test "industrial approaches leave room for the hull in both directions" {
       (280.0, -24.0, 121.0, -10.0, 0.0), // Coolant intake doorway
       (65.055, 16.0, -166.5, 0.0, 10.0), // Recoil bench to the inspection belt
       (-145.0, 8.0, 0.96, 14.0, 0.0), // Dispatch crane approach
+      (29.0, -8.0, -46.0, -11.0, 0.0), // Board the loading return lift
+      (40.0, 0.0, -96.0, 0.0, -10.0), // Enter the sorting return junction
+      (40.0, 0.0, -106.0, -12.0, 0.0), // Turn onto its west branch
     ] {
     let player = @simulation.Player::new()
     player.x = x
@@ -75,6 +78,18 @@ test "industrial approaches leave room for the hull in both directions" {
     assert_true((player.x - x).abs() < 0.001)
     assert_true((player.z - z).abs() < 0.001)
   }
+}
+
+///|
+test "the sluice bank allows a deployed hull to launch and land" {
+  let game = @simulation.Game::new(start={ x: 61, y: -8, z: 19, })
+  let p = game.player
+  p.abilities.flotation = true
+  p.deployed = true
+  game.world.move_player(p, 9, 0, game.progress)
+  assert_true(p.afloat && (p.x - 70).abs() < 0.001)
+  game.world.move_player(p, -9, 0, game.progress)
+  assert_true(!p.afloat && (p.x - 61).abs() < 0.001)
 }
 
 ///|
