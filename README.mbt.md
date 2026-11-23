@@ -20,14 +20,16 @@ On macOS, double-clicking `Play.command` runs the same command. Keep the termina
 
 ## Run
 
-Run these commands from the repository root. Moon fetches `moonbit-community/three@0.1.1` from Mooncakes during the build.
+From the repository root, build the game and serve it locally:
 
 ```sh
-npm ci
-npm run dev
+moon run cmd/web --target native
+moonx cli/serve@0.1.5 --port 5175 dist
 ```
 
-Open http://127.0.0.1:5175/. `npm run build` produces `dist/`; `npm run preview` serves that build. Rebuild MoonBit and reload the page after changing `.mbt` files.
+Open http://127.0.0.1:5175/. After changing MoonBit code or weapon and drive parameters, rerun the first command and reload the page. The server can stay running. The build compiles the browser game as an ES module and places it, the browser host, styles, music and prepared city assets in `dist/`.
+
+This workflow currently needs the generated level and sound definitions and `public/generated/art/` from the content build. On a fresh checkout, run `npm ci` and `npm run build:content` once to prepare them. Rerun the content build after editing the city, its art or the sound definitions. Rebuilding and serving a prepared checkout uses only the Moon toolchain.
 
 To build the offline archive from this checkout, run `npm run build:offline` after `npm ci`. It uses the `zip` command and writes `output/builds/Tankle-v3-dist.zip` with the production game, launcher, and this README.
 
@@ -36,6 +38,7 @@ To build the offline archive from this checkout, run `npm run build:offline` aft
 - `simulation/`: typed player, enemies, weapons, collision, machinery, progression and save state. No JavaScript values or dynamic property dispatch.
 - `renderer/`: scene views, cameras, picking, shader effects and WebGL rendering with three.mbt.
 - `cmd/play/`: browser session and interface policy in MoonBit.
+- `cmd/web/`: builds the browser game from prepared content and assembles the static site.
 - `host/` and `browser/host.js`: browser I/O, packed buffer loading and three.mbt scene deserialization.
 - `content/levels/city/`: editable JSON definitions for floors, collision, enemies, controls, circuits, lifts, pickups and repair hives.
 - `cmd/tuning/`: validates weapon and drive parameters and generates their MoonBit records at build time. Run `moon run --target native cmd/tuning -- content/abilities.json` to check edits, or append `simulation/tuning.generated.mbt` to generate the records.

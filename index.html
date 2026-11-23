@@ -1,10 +1,11 @@
 <!doctype html>
 <html lang="en">
   <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="theme-color" content="#122e30"/><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect x=%273%27 y=%277%27 width=%2726%27 height=%2722%27 rx=%276%27 fill=%27%23f1bd4b%27/%3E%3Cpath d=%27M16 2v17%27 stroke=%27%23203b3d%27 stroke-width=%276%27/%3E%3C/svg%3E"/><title>Tankle Adventure Astra</title>
-    <link rel="stylesheet" href="/browser/styles/base.css"/>
-    <link rel="stylesheet" href="/browser/styles/interface.css"/>
-    <link rel="stylesheet" href="/browser/styles/journey-menu.css"/>
-    <link rel="stylesheet" href="/browser/styles/startup.css"/>
+    <link rel="stylesheet" href="./browser/styles/base.css"/>
+    <link rel="stylesheet" href="./browser/styles/interface.css"/>
+    <link rel="stylesheet" href="./browser/styles/journey-menu.css"/>
+    <link rel="stylesheet" href="./browser/styles/startup.css"/>
+    <script type="importmap">{"imports":{"tankle-astra-platform/host":"./browser/host.js"}}</script>
   </head>
   <body class="starting folded-ui">
     <div id="startup" role="status" aria-live="polite">
@@ -59,6 +60,6 @@
       <button id="journey-start">New Game</button>
     </div></section></dialog>
     <div id="ending" hidden role="dialog" aria-modal="true" aria-labelledby="ending-title"><section><h1 id="ending-title">Mission Accomplished</h1><div class="ending-actions"><button id="ending-continue">Continue</button><button id="ending-menu">Main menu</button></div></section></div>
-    <script type="module" src="/browser/main.js"></script>
+    <script type="module" src="./browser/main.js"></script>
   </body>
 </html>
