@@ -140,12 +140,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     if target is None &&
       !view.film &&
       (camera.id == view.third.id || camera.id == view.overhead.id) {
-      view.room_visibility.apply(
-        camera,
-        view.cutaway,
-        view.third_person,
-        root.as_scene().fog is Some(_),
-      )
+      view.room_visibility.apply(camera, view.cutaway, view.third_person)
     }
   }
   view.update_player(game, 0)
@@ -308,16 +303,7 @@ pub fn View::project(self : View, position : @sim.Vec3) -> @sim.Vec2 {
 }
 
 ///|
-pub fn View::set_visibility(
-  self : View,
-  near : Double,
-  far : Double,
-  range : Double,
-) -> Unit {
-  if self.scene.as_scene().fog is Some(Fog(fog)) {
-    fog.near = near
-    fog.far = far
-  }
+pub fn View::set_render_distance(self : View, range : Double) -> Unit {
   self.cutaway.distance.value = Number(range)
   self.third.as_perspective_camera().far = range + 70
   self.ending.as_perspective_camera().far = range + 70

@@ -101,12 +101,9 @@ fn CityLights::update(
         |> ignore
       }
     }
-    if scene.as_scene().fog is Some(Fog(fog)) {
-      fog.color.set_hex(0xb2bfb7) |> ignore
-      fog.color.multiply_scalar(1 - 0.968 * exterior) |> ignore
-      if scene.as_scene().background is Some(Color(background)) {
-        background.copy(fog.color) |> ignore
-      }
+    if scene.as_scene().background is Some(Color(background)) {
+      background.set_hex(0xb2bfb7).multiply_scalar(1 - 0.968 * exterior)
+      |> ignore
     }
   }
   let dx = p.x - self.previous.x

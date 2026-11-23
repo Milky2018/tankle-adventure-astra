@@ -21,11 +21,12 @@ async page => {
   if((await page.locator('#binding-up').textContent())!=='KeyI')throw Error('Binding was not replaced');
   await page.locator('#camera-adjust summary').click();
   await page.locator('#camera-distance').fill('18');await page.locator('#camera-distance').dispatchEvent('change');
-  await page.locator('#camera-fog-start').fill('250');await page.locator('#camera-fog-start').dispatchEvent('change');
-  if(Number(await page.locator('#camera-fog-end').inputValue())<260)throw Error('Fog range invariant failed');
+  await page.locator('#camera-render-distance').fill('80');await page.locator('#camera-render-distance').dispatchEvent('change');
+  const savedRange=await page.evaluate(()=>JSON.parse(localStorage.getItem('tankle-moonbit-settings-v1')).camera.render_distance);
+  if(savedRange!==80)throw Error('Render distance adjustment was not saved');
   await page.screenshot({path:'output/playwright/typed-camera-preview.png'});
   await page.locator('#reset-camera').click();
-  if(Number(await page.locator('#camera-distance').inputValue())!==15)throw Error('Camera reset failed');
+  if(Number(await page.locator('#camera-distance').inputValue())!==15||Number(await page.locator('#camera-render-distance').inputValue())!==230)throw Error('Camera reset failed');
   await page.locator('#camera-adjust summary').click();
   await page.locator('#resume').click();
   await page.keyboard.down('KeyI');await page.waitForTimeout(1700);await page.keyboard.up('KeyI');

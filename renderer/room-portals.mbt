@@ -63,7 +63,6 @@ priv struct SceneryBin {
   bounds : @m3.Box3
   members : Array[(@core.Object3D, @m3.Matrix4)]
   rooms : Array[Int32]
-  mut fog_limited : Bool
   mut outer_faces : Int32
 }
 
@@ -131,6 +130,7 @@ fn RoomVisibility::new(scene : @core.Object3D) -> RoomVisibility {
     }
     guard node.layers.mask == 1 &&
       node.kind is Mesh(mesh) &&
+      scene_binding(node) != "city/sky" &&
       mesh.material is Single(material) &&
       material.depth_test &&
       material.displacement_map is None &&
@@ -170,17 +170,8 @@ fn RoomVisibility::new(scene : @core.Object3D) -> RoomVisibility {
       (center.z / 16).floor().to_int(),
     )
     let bin = bins.get_or_init(key, fn() {
-      {
-        bounds: @m3.Box3::new(),
-        members: [],
-        rooms: [],
-        fog_limited: true,
-        outer_faces: 0,
-      }
+      { bounds: @m3.Box3::new(), members: [], rooms: [], outer_faces: 0, }
     })
-    if material.fog != Some(true) {
-      bin.fog_limited = false
-    }
     bin.bounds.union(bounds) |> ignore
     // A moving door or vehicle may leave this bin after loading. Its world
     // matrix must still match this placement before it can be hidden.
@@ -420,16 +411,13 @@ fn RoomVisibility::apply(
   camera : @core.Object3D,
   cut : Cutaway,
   third : Bool,
-  fog : Bool,
 ) -> Unit {
   if self.bins.is_empty() || camera.layers.mask != 1 {
     return
   }
-  // The city's fog shader already discards every fragment beyond this radius.
-  if fog && cut.distance.value is Number(range) {
+  if cut.distance.value is Number(range) {
     for bin in self.bins {
-      if bin.fog_limited &&
-        bin.bounds.distance_to_point(cut.player) > range + 0.02 {
+      if bin.bounds.distance_to_point(cut.player) > range + 0.02 {
         self.hide_bin(bin)
       }
     }

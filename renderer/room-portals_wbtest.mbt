@@ -18,7 +18,6 @@ test "distance culling preserves shadow casters and rejects stale world bounds" 
       (rider, rider.matrix_world.clone()),
     ],
     rooms: [],
-    fog_limited: true,
     outer_faces: 0,
   }
   let shadow = @core.Layers::new()
@@ -34,14 +33,14 @@ test "distance culling preserves shadow casters and rejects stale world bounds" 
   cut.player.set(0, 0, 0) |> ignore
   lift.position.set_x(5) |> ignore
   lift.update_matrix_world(force=true)
-  visibility.apply(camera, cut, false, true)
+  visibility.apply(camera, cut, false)
   assert_false(camera.layers.test_(wall.layers))
   assert_true(shadow.test_(wall.layers))
   assert_true(camera.layers.test_(rider.layers))
   visibility.restore()
   assert_eq(wall.layers.mask, 1)
   assert_eq(shadow.mask, 1)
-  bin.fog_limited = false
-  visibility.apply(camera, cut, false, true)
+  cut.distance.value = Number(300)
+  visibility.apply(camera, cut, false)
   assert_true(camera.layers.test_(wall.layers))
 }

@@ -74,7 +74,7 @@ fn Cutaway::new(
   }
   let registered : Set[String] = Set([])
   scene.traverse(fn(object) {
-    if object.kind is Mesh(mesh) {
+    if object.kind is Mesh(mesh) && scene_binding(object) != "city/sky" {
       for material in mesh_materials(mesh.material) {
         if registered.contains(material.uuid) {
           continue
@@ -310,7 +310,12 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
     shader.fragment_shader = shader.fragment_shader
       .replace(
         old="#include <common>",
-        new=world_declarations + extra_varying + "\n" + extra_fragment,
+        new=world_declarations +
+          "\n" +
+          freight_declarations +
+          extra_varying +
+          "\n" +
+          extra_fragment,
       )
       .replace(
         old="#include <emissivemap_pars_fragment>",
@@ -326,21 +331,21 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
         old="#include <emissivemap_fragment>",
         new=if probe { "" } else { "#include <emissivemap_fragment>" },
       )
-      .replace(old="#include <opaque_fragment>", new=fragment)
-      .replace(old="#include <aomap_fragment>", new=lighting)
+      .replace(
+        old="#include <opaque_fragment>",
+        new=fragment + "\n" + freight_haze,
+      )
+      .replace(
+        old="#include <aomap_fragment>",
+        new=lighting + "\n" + freight_daylight,
+      )
       .replace(old="#include <map_fragment>", new=map_fragment)
       .replace(
-        old="#include <fog_fragment>",
+        old="#include <clipping_planes_fragment>",
         new=(
-          #| #ifdef USE_FOG
-          #| float playerDistance = distance(apertureWorld,aperturePlayer);
-          #| if(playerDistance > renderDistance) discard;
-          #| float underground = smoothstep(12.0,39.0,-aperturePlayer.y);
-          #| vec3 air = mix(vec3(.62,.68,.69),vec3(.49,.39,.32),underground);
-          #| float recess = 1.0-exp(-max(0.0,playerDistance-7.0)*mix(.011,.024,underground));
-          #| gl_FragColor.rgb = mix(gl_FragColor.rgb,air,recess*.54);
-          #| gl_FragColor.rgb = mix(gl_FragColor.rgb,fogColor,smoothstep(fogNear,fogFar,playerDistance));
-          #| #endif
+          #| #include <clipping_planes_fragment>
+          #| vec3 offsetFromPlayer = apertureWorld - aperturePlayer;
+          #| if (dot(offsetFromPlayer, offsetFromPlayer) > renderDistance * renderDistance) discard;
         ),
       )
   })

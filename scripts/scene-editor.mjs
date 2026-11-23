@@ -453,7 +453,6 @@ export function importProject(project, dryRun = false) {
     for (const key of [
       "background",
       "environment",
-      "fog",
       "backgroundBlurriness",
       "backgroundIntensity",
       "environmentIntensity",

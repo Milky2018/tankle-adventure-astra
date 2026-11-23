@@ -57809,5 +57809,57 @@
     "h": 1.51,
     "d": 0.5,
     "permanent": true
+  },
+  {
+    "id": "dispatch-window-south",
+    "room": "arsenal-dispatch",
+    "region": "transit",
+    "kind": "wall",
+    "x": -146.05,
+    "y": 8,
+    "z": -10,
+    "w": 2.3,
+    "h": 8.34,
+    "d": 8,
+    "permanent": true
+  },
+  {
+    "id": "dispatch-window-north",
+    "room": "arsenal-dispatch",
+    "region": "transit",
+    "kind": "wall",
+    "x": -146.05,
+    "y": 8,
+    "z": 14,
+    "w": 2.3,
+    "h": 8.34,
+    "d": 24,
+    "permanent": true
+  },
+  {
+    "id": "dispatch-window-transom",
+    "room": "arsenal-dispatch",
+    "region": "transit",
+    "kind": "wall",
+    "x": -146.05,
+    "y": 13.65,
+    "z": 6,
+    "w": 2.3,
+    "h": 2.69,
+    "d": 8,
+    "permanent": true
+  },
+  {
+    "id": "dispatch-window-loading-lintel",
+    "room": "arsenal-dispatch",
+    "region": "transit",
+    "kind": "wall",
+    "x": -146.05,
+    "y": 11.5,
+    "z": -2,
+    "w": 2.3,
+    "h": 4.84,
+    "d": 8,
+    "permanent": true
   }
 ]

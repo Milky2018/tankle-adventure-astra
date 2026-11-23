@@ -49,7 +49,7 @@ pub fn View::present(Self, @simulation.Game, @simulation.Queries, @simulation.Ve
 pub fn View::project(Self, @simulation.Vec3) -> @simulation.Vec2
 pub fn View::queries(Self, @simulation.Game, aiming? : Bool) -> @simulation.Queries
 pub fn View::resize(Self) -> Unit
-pub fn View::set_visibility(Self, Double, Double, Double) -> Unit
+pub fn View::set_render_distance(Self, Double) -> Unit
 pub fn View::turn(Self, Double, Double) -> Unit
 pub fn View::update_ending(Self, @simulation.Game) -> Unit
 pub fn View::update_machinery(Self, @simulation.Game, Double) -> Unit

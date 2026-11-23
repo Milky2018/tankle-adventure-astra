@@ -154,8 +154,11 @@ test("exported roots cannot be nested into a duplicate hierarchy", () => {
 test("full-scene settings round trip, while preview lights stay out of runtime assets", () => {
   const project = exportProject();
   project.scene.object.background = 0x123456;
+  project.scene.object.fog = { type: "Fog", color: 0xffffff, near: 200, far: 220 };
   importProject(project);
-  assert.equal(readScene().object.background, 0x123456);
+  const settings = readScene().object;
+  assert.equal(settings.background, 0x123456);
+  assert.equal(settings.fog, undefined);
   const single = exportProject("enemies:prototype");
   assert.ok(
     single.scene.object.children.some((object) => object.userData?.editorOnly),
