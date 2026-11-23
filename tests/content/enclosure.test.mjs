@@ -3,8 +3,33 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { gunzipSync } from "node:zlib";
 import { BufferGeometryLoader, FrontSide, Mesh, MeshBasicMaterial, Raycaster, Vector3 } from "three";
+import { walk } from "../../scripts/content/scene.mjs";
 
 const read = name => gunzipSync(readFileSync("content/art/city." + name + ".gz"));
+
+test("the seven regions have distinct finishes on their main walls", () => {
+  const scene = JSON.parse(read("scene.json"));
+  const walls = new Map();
+  walk(scene.object, node => {
+    if (node.name?.startsWith("Works · brickwork ")) {
+      walls.set(node.name.slice("Works · brickwork ".length), node.material);
+    }
+  });
+  const samples = ["foundry-awakening", "turntable", "reservoir-drydock", "proving-receiving",
+    "lens-vestibule", "coolant-west-service", "hearth-receiving"];
+  const finishes = new Map();
+  for (const room of samples) {
+    const material = scene.materials.find(m => m.uuid === walls.get(room));
+    assert.ok(material, room + " has a main wall");
+    const texture = scene.textures.find(t => t.uuid === material.map);
+    const pixels = scene.images.find(image => image.uuid === texture?.image)?.url;
+    assert.ok(pixels, room + " has a surface texture");
+    // Differently named materials can still sample the very same artwork.
+    const finish = material.color + "/" + pixels;
+    assert.ok(!finishes.has(finish), room + " shares its main wall finish with " + finishes.get(finish));
+    finishes.set(finish, room);
+  }
+});
 
 test("workshop interiors are enclosed and the open reservoir looks onto the quarry bank", () => {
   const scene = JSON.parse(read("scene.json"));
