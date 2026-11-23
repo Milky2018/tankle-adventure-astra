@@ -55,6 +55,7 @@ let support_shader : String =
 fn Cutaway::new(
   scene : @core.Object3D,
   currents~ : Array[@sim.Current] = [],
+  player? : PlayerVisual,
 ) -> Cutaway {
   let cutaway = {
     water_time: @core.Uniform::new(Number(0)),
@@ -72,6 +73,15 @@ fn Cutaway::new(
     bounds: Array::makei(4, fn(_) { @m3.Vector4::new(0, 0, 0, 0) }),
     planes: Array::makei(4, fn(_) { @m3.Vector4::new(0, 0, 0, 0) }),
   }
+  let hull_fills = Map([])
+  if player is Some(visual) {
+    for entry in visual.materials {
+      if entry.material.is_mesh_standard_material() ||
+        entry.material.is_mesh_toon_material() {
+        hull_fills[entry.material.uuid] = visual.fill_strength
+      }
+    }
+  }
   let registered : Set[String] = Set([])
   scene.traverse(fn(object) {
     if object.kind is Mesh(mesh) && scene_binding(object) != "city/sky" {
@@ -80,7 +90,7 @@ fn Cutaway::new(
           continue
         }
         registered.add(material.uuid) |> ignore
-        cutaway.apply(material)
+        cutaway.apply(material, hull_fills.get(material.uuid))
       }
     }
   })
@@ -88,7 +98,11 @@ fn Cutaway::new(
 }
 
 ///|
-fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
+fn Cutaway::apply(
+  self : Cutaway,
+  material : @core.Material,
+  hull_fill : @core.Uniform?,
+) -> Unit {
   let role = metadata_string(material.user_data, "renderRole")
   let finish = metadata_string(material.user_data, "surfaceFinish")
   let finish_uv = match finish {
@@ -191,7 +205,9 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
   } else {
     "(1.0-smoothstep(float(\{radius*5/13}),float(\{radius}),radius))*smoothstep(1.5,3.5,delta.y)*(1.0-smoothstep(55.0,62.0,along))"
   }
-  let fragment = if finish == "enemyEnamel" {
+  let fragment = if hull_fill is Some(_) {
+    hull_fill_fragment
+  } else if finish == "enemyEnamel" {
     // Preserve the moulded relief in shadow. Blue induction strips keep their
     // local colour even when the hull is lit only by the workshop skylights.
     (
@@ -293,7 +309,14 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
     } else {
       ""
     }
-    let extra_fragment = if finish == "vapor" { steam_fragment } else { "" }
+    let extra_fragment = if hull_fill is Some(strength) {
+      uniforms["hullFill"] = strength
+      "uniform float hullFill;"
+    } else if finish == "vapor" {
+      steam_fragment
+    } else {
+      ""
+    }
     shader.vertex_shader = shader.vertex_shader
       .replace(
         old="#include <common>",
@@ -350,7 +373,7 @@ fn Cutaway::apply(self : Cutaway, material : @core.Material) -> Unit {
       )
   })
   material.custom_program_cache_key = Some(fn() {
-    "typed-cutaway-\{role}-\{finish}-\{probe}"
+    "typed-cutaway-\{role}-\{finish}-\{probe}-\{hull_fill is Some(_)}"
   })
 }
 

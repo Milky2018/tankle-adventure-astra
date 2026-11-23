@@ -82,6 +82,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     object.matrix_auto_update = true
   }
   let enemies = enemy_visuals(nodes, game)
+  let player_visual = PlayerVisual::new(nodes)
   let view = {
     scene,
     nodes,
@@ -97,7 +98,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
       .map(fn(node) { (grate, node) })
     }),
     hives: hives(nodes, game),
-    player_visual: PlayerVisual::new(nodes),
+    player_visual,
     renewal: Renewal::new(nodes),
     root,
     body,
@@ -113,7 +114,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     boom_length: 15,
     progress: game.progress,
     camera_space: CameraSpace::new(scene, game.world),
-    cutaway: Cutaway::new(scene, currents=game.currents),
+    cutaway: Cutaway::new(scene, currents=game.currents, player=player_visual),
     clerestories,
     room_visibility: RoomVisibility::new(scene),
     projectiles: Projectiles::new(),

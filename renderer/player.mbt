@@ -17,11 +17,25 @@ priv struct PlayerVisual {
   wheels : Array[@core.Object3D]
   radiator : @core.Object3D?
   exhaust : @core.Object3D?
+  fill_strength : @core.Uniform
   materials : Array[HullColor]
   mut speed : Double
   mut pitch : Double
   mut position : @sim.Vec3
 }
+
+///|
+// Work in view space so turning the camera still reveals the turret profile.
+// Limit the fill by the light already reaching the paint. Unlit lenses keep
+// their authored colour and the underside receives no fill.
+let hull_fill_fragment : String =
+  #| float facing = max(dot(normal, vec3(-0.54, 0.64, 0.55)), 0.0);
+  #| const vec3 luma = vec3(0.2126, 0.7152, 0.0722);
+  #| float paint = max(dot(diffuseColor.rgb, luma), 0.001);
+  #| float exposure = dot(outgoingLight, luma) / paint;
+  #| float shadow = 1.0 - smoothstep(0.18, 0.95, exposure);
+  #| outgoingLight += diffuseColor.rgb * vec3(0.90, 0.96, 1.0) * (0.32 * facing * shadow * hullFill);
+  #| #include <opaque_fragment>
 
 ///|
 fn PlayerVisual::new(nodes : Map[String, @core.Object3D]) -> PlayerVisual {
@@ -62,6 +76,7 @@ fn PlayerVisual::new(nodes : Map[String, @core.Object3D]) -> PlayerVisual {
     wheels,
     radiator: nodes.get("player/radiator"),
     exhaust: nodes.get("phoenix-exhaust"),
+    fill_strength: @core.Uniform::new(Number(1)),
     materials,
     speed: 0,
     pitch: 0,
@@ -165,6 +180,13 @@ fn View::update_player(self : View, game : @sim.Game, dt : Double) -> Unit {
   } else {
     0.0
   }
+  v.fill_strength.value = Number(
+    if p.hp <= 0 || p.ending_time > 0 || p.red_contact() {
+      0
+    } else {
+      1
+    },
+  )
   let fade = p.hit_opacity(game.time)
   for entry in v.materials {
     entry.material.color.unwrap().copy(entry.color).lerp(tint, factor) |> ignore
