@@ -10,10 +10,8 @@ struct Session {
   queries : @sim.Queries
   aim_queries : @sim.Queries
   mut pointer : @sim.Vec2
-  mut firing : Bool
   view : @view.View
   keys : Set[String]
-  mut time : Double
   mut previous : Double
   mut paused : Bool
   mut looking : Bool
@@ -31,8 +29,7 @@ fn Session::advance(self : Session, milliseconds : Double) -> Unit {
   )
   self.previous = milliseconds
   if !self.paused && !self.map_open && !self.menu_open {
-    self.time += dt
-    self.game.time = self.time
+    self.game.time += dt
     let p = self.game.player
     self.game.advance_world(dt)
     self.view.update_machinery(self.game, dt)
@@ -68,12 +65,11 @@ fn Session::advance(self : Session, milliseconds : Double) -> Unit {
     self.game.aim_point = aim
     p.aim = @math.atan2(aim.x - p.x, aim.z - p.z)
     self.view.aim_player(aim, p.weapon)
-    self.firing = self.held("fire")
     self.game.advance_combat(
       self.queries,
       self.view.weapon_origin(),
       aim,
-      firing=self.firing,
+      firing=self.held("fire"),
       magnet=self.held("magnet"),
       dt~,
     )
@@ -105,8 +101,8 @@ fn Session::advance(self : Session, milliseconds : Double) -> Unit {
         "\{(1.0-self.pointer.z)*50}%"
       },
     )
-    if self.time - self.saved_at >= 1 {
-      self.saved_at = self.time
+    if self.game.time - self.saved_at >= 1 {
+      self.saved_at = self.game.time
       @host.write_save(self.game.save())
     }
   }
@@ -163,9 +159,7 @@ pub fn start() -> Unit {
         aim_queries: view.queries(game, aiming=true),
         view,
         pointer: { x: 0, z: 0, },
-        firing: false,
         keys: Set([]),
-        time: 0,
         previous: 0,
         paused: false,
         looking: false,
@@ -200,7 +194,6 @@ pub fn start() -> Unit {
       @host.on_blur(fn() {
         session.keys.clear()
         session.looking = false
-        session.firing = false
       })
       @host.on_resize(fn() {
         session.view.resize()

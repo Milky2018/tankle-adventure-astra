@@ -2,7 +2,6 @@
 <html lang="en">
   <head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="theme-color" content="#122e30"/><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect x=%273%27 y=%277%27 width=%2726%27 height=%2722%27 rx=%276%27 fill=%27%23f1bd4b%27/%3E%3Cpath d=%27M16 2v17%27 stroke=%27%23203b3d%27 stroke-width=%276%27/%3E%3C/svg%3E"/><title>Tankle Adventure Astra</title>
     <link rel="stylesheet" href="/browser/styles/base.css"/>
-    <link rel="stylesheet" href="/browser/styles/game.css"/>
     <link rel="stylesheet" href="/browser/styles/interface.css"/>
     <link rel="stylesheet" href="/browser/styles/journey-menu.css"/>
     <link rel="stylesheet" href="/browser/styles/startup.css"/>
@@ -11,13 +10,12 @@
     <div id="startup" role="status" aria-live="polite">
       <p>TANKLE ADVENTURE — ASTRA</p>
       <span id="startup-message">Loading the city…</span>
-      <button id="startup-retry" hidden onclick="location.reload()">Try again</button>
     </div>
     <canvas tabindex="-1" id="game" aria-label="Game view"></canvas>
-    <svg id="death-iris" hidden aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40"><path id="death-shutter" fill="#091213" fill-rule="evenodd" stroke="#8ba99b" stroke-width="3"/></svg><div id="vignette"></div><div id="damage"></div><div id="iris"></div>
+    <svg id="death-iris" hidden aria-hidden="true" style="position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40"><path id="death-shutter" fill="#091213" fill-rule="evenodd" stroke="#8ba99b" stroke-width="3"/></svg><div id="vignette"></div>
     <div id="hud">
       <button id="settings-button" class="icon-button" aria-label="Open settings"><svg viewBox="0 0 24 24"><path d="M9 3h6l1 3 3 1 2 5-2 5-3 1-1 3H9l-1-3-3-1-2-5 2-5 3-1z"/><circle cx="12" cy="12" r="3"/></svg></button>
-      <div id="boss-health"><i></i><div><span id="boss-fill"></span></div><i></i></div>
+      <div id="boss-health"><i></i><div><span id="boss-fill" aria-label="Boss health"></span></div><i></i></div>
       <div id="minimap-wrap"><span id="map-area"></span><canvas id="minimap" width="256" height="256"></canvas><div class="map-corners"></div><div class="map-readout"><span id="map-height"></span><kbd id="map-key">Tab</kbd></div></div>
       <div id="status">
         <div class="status-icon"><svg viewBox="0 0 40 40"><path d="M8 6h24v17L20 35 8 23z"/><path d="M13 11h14v10l-7 7-7-7z"/></svg></div>
@@ -35,7 +33,11 @@
         <div id="flotation-tool" aria-label="Flotation" hidden><svg viewBox="0 0 24 24"><path d="M3 12l2-5h14l2 5-3 3H6zM2 18q3-3 6 0t6 0t7 0"/></svg><kbd id="float-key"></kbd></div>
       </div>
       <div id="drive-hint"><kbd id="up-key">W</kbd><kbd id="left-key">A</kbd><kbd id="down-key">S</kbd><kbd id="right-key">D</kbd> Drive</div>
-      <div id="interaction"><kbd id="interact-key">E</kbd></div><div id="acquired"><svg viewBox="0 0 48 48"><path d="m27 2-19 26h15l-3 18 22-27H27z"/></svg><kbd>Shift</kbd></div>
+      <div id="interaction"><kbd id="interact-key">E</kbd></div>
+      <div id="acquired" role="status" aria-live="polite" hidden>
+        <kbd id="acquired-key"></kbd>
+        <div class="equipment-copy"><strong id="acquired-title"></strong><small id="acquired-detail"></small></div>
+      </div>
       <div id="reticle"><svg class="sight" viewBox="0 0 52 52"><path d="M13 26h6m14 0h6M26 33v5"/><circle cx="26" cy="26" r="3"/></svg>
         <svg class="reticle-heat" viewBox="0 0 52 52" aria-hidden="true">
           <path class="heat-track" d="M15 7a22 22 0 0133 19"/>

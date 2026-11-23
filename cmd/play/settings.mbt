@@ -59,7 +59,6 @@ fn Session::held(self : Session, action : String) -> Bool {
 fn Session::pause(self : Session, paused : Bool) -> Unit {
   self.paused = paused
   self.keys.clear()
-  self.firing = false
   self.looking = false
   @host.hidden("settings", !paused)
   if paused {

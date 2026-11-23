@@ -14,10 +14,6 @@ struct Hud {
 
 ///|
 fn Hud::new() -> Hud {
-  @host.attribute("boss-fill", "aria-label", "Boss health")
-  @host.html(
-    "bindings", "<p>W A S D — Drive</p><p>Mouse — Aim · Left button — Fire</p><p>Right button — Magnet · Shift — Overdrive</p><p>Q — Weapon · F — Flotation</p><p>E — Interact · C — Camera · Tab — Map</p>",
-  )
   {
     mini: @host.canvas("minimap"),
     map: @host.canvas("region-map"),

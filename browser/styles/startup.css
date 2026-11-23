@@ -2,5 +2,4 @@
 #startup { position: fixed; inset: 0; z-index: 100; display: grid; place-content: center; gap: 16px; text-align: center; background: #112829; color: #eaf7de; }
 #startup p { margin: 0; letter-spacing: .15em; color: #efcd79; }
 #startup span { font-size: 14px; }
-#startup button { justify-self: center; padding: 10px 20px; }
 .starting > :not(#startup) { visibility: hidden; }

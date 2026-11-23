@@ -36,24 +36,13 @@ fn Hud::acquisitions(self : Hud, game : @sim.Game, settings : Settings) -> Unit 
       @sim.Scope => ("Weapon Scope", "", "+50% Cannon and Mortar range", 6.0)
     }
     self.acquired_until = game.time + duration
-    @host.class_toggle("acquired", "ability-acquired", true)
-    @host.attribute("acquired", "role", "status")
-    @host.attribute("acquired", "aria-live", "polite")
-    @host.html(
-      "acquired", "<kbd id=\"acquired-key\"></kbd><div class=\"equipment-copy\"><strong id=\"acquired-title\"></strong><small id=\"acquired-detail\"></small></div>",
-    )
     @host.text("acquired-title", label)
     @host.text("acquired-detail", detail)
     @host.hidden("acquired-key", action == "")
     @host.text("acquired-key", settings.bindings.get(action).unwrap_or(""))
   }
-  @host.style(
+  @host.hidden(
     "acquired",
-    "display",
-    if game.time < self.acquired_until && game.player.hp > 0 {
-      "flex"
-    } else {
-      "none"
-    },
+    game.time >= self.acquired_until || game.player.hp <= 0,
   )
 }

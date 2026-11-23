@@ -82,25 +82,6 @@ pub fn Rect::contains(
 }
 
 ///|
-pub fn segment_circle(
-  a : Vec2,
-  b : Vec2,
-  center : Vec2,
-  radius : Double,
-) -> Bool {
-  let dx = b.x - a.x
-  let dz = b.z - a.z
-  let length_sq = dx * dx + dz * dz
-  let denominator = if length_sq == 0 { 1.0 } else { length_sq }
-  let t = clamp(
-    ((center.x - a.x) * dx + (center.z - a.z) * dz) / denominator,
-    0,
-    1,
-  )
-  Vec2::{ x: a.x + t * dx, z: a.z + t * dz, }.distance(center) <= radius
-}
-
-///|
 pub fn screen_movement(horizontal : Double, vertical : Double) -> Vec2 {
   let length = Vec2::{ x: horizontal, z: vertical, }.length()
   if length == 0 {

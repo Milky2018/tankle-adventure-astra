@@ -65,8 +65,6 @@ pub fn refuge_ray_distance(Vec3, Vec3, Double, Array[Hive], Progress) -> Double?
 
 pub fn screen_movement(Double, Double) -> Vec2
 
-pub fn segment_circle(Vec2, Vec2, Vec2, Double) -> Bool
-
 pub fn supported_hull((Double, Double) -> Bool, Double, Double, radius? : Double) -> Bool
 
 pub fn wounded_ally(Int32, Array[Enemy]) -> Int32?
