@@ -6,7 +6,7 @@ const root = new URL("../../", import.meta.url);
 
 export async function runTuning(args, input) {
   const job = exec("moon", [
-    "run", "--target", "native", "cmd/tuning", "--", ...args,
+    "run", "--quiet", "scripts/tuning.mbtx", "--", ...args,
   ], { cwd: root });
   job.child.stdin.on("error", (err) => {
     // An early compiler exit is reported by execFile with its diagnostics.

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { Box3, BufferGeometryLoader, Mesh, Raycaster, Vector3 } from "three";
+import { Box3, BufferGeometryLoader, Mesh, Raycaster, Vector3 } from "../../.editor/three-r185/build/three.core.js";
 import { readScene, walk } from "../../scripts/content/scene.mjs";
 
 test("enemy models stay outside the scenery cutaway, including detached boss parts", () => {

@@ -1,4 +1,4 @@
-import { Matrix4 } from "three";
+import { instance_belt_rollers } from "../../_build/js/release/build/tooling/art/art.js";
 
 // Static batches in the editor can contain thousands of copies of the same
 // primitive. WebGL2 can draw those copies together even without multi-draw.
@@ -69,44 +69,5 @@ export function instanceRepeatedShapes(scene, sourceView) {
     });
   }
   visit(scene.object);
-  instanceBeltRollers(scene, materials);
-}
-
-function instanceBeltRollers(scene, materials) {
-  const groups = new Map();
-  for (const root of scene.object.children ?? []) {
-    const belt = /^world\/belts\/([^/]+)\/segments\/\d+\/root$/.exec(root.userData?.binding ?? "");
-    if (!belt || root.visible === false || root.renderOrder || root.type !== "Group") continue;
-    for (const roller of root.children ?? []) {
-      if (roller.type !== "Mesh" || roller.children?.length || roller.visible === false ||
-          !roller.userData?.binding?.startsWith(root.userData.binding.slice(0, -4) + "rollers/")) continue;
-      const material = materials.get(roller.material);
-      if (!material) continue;
-      const { uuid, name, ...properties } = material;
-      const key = JSON.stringify([belt[1], roller.geometry, properties, roller.castShadow, roller.receiveShadow, roller.layers, roller.renderOrder]);
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push({ root, roller, belt: belt[1] });
-    }
-  }
-  let serial = 0;
-  for (const group of groups.values()) {
-    if (group.length < 2) continue;
-    const matrices = [];
-    const { roller: first, belt } = group[0];
-    const binding = "world/beltInstances/" + belt + "/" + serial++;
-    scene.object.children.push({
-      uuid: binding, name: "Conveyor rollers", type: "InstancedMesh",
-      matrix: new Matrix4().toArray(), matrixAutoUpdate: false, geometry: first.geometry, material: first.material,
-      layers: first.layers, renderOrder: first.renderOrder, castShadow: first.castShadow, receiveShadow: first.receiveShadow,
-      userData: { binding }, count: group.length, instanceMatrix: { type: "Float32Array", itemSize: 16, array: matrices, normalized: false },
-    });
-    for (const [index, { root, roller }] of group.entries()) {
-      matrices.push(...new Matrix4().fromArray(root.matrix).multiply(new Matrix4().fromArray(roller.matrix)).elements);
-      roller.type = "Object3D";
-      roller.userData.rollerBatch = binding;
-      roller.userData.instance = index;
-      delete roller.material;
-      delete roller.geometry;
-    }
-  }
+  instance_belt_rollers(scene);
 }

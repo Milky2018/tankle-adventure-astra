@@ -1,11 +1,37 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile, rename, rm } from "node:fs/promises";
 import { dirname } from "node:path";
 
-// Three.js r185, matching the project's installed Three.js release.
+import { fileURLToPath } from "node:url";
+
+// Upstream editor distribution pinned independently from the game renderer.
 const revision = "2431a09f46f34c560bc8e44b33be0e567723d5b9";
-export const upstreamDirectory = ".editor/three-r185";
+export const upstreamDirectory = fileURLToPath(new URL("../.editor/three-r185/", import.meta.url));
+const raw = "https://raw.githubusercontent.com/mrdoob/three.js/" + revision + "/";
+
+async function cacheFile(path, url) {
+  const dest = upstreamDirectory + path;
+  try { await access(dest); return; } catch (err) { if (err.code !== "ENOENT") throw err; }
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Editor dependency ${path}: HTTP ${res.status}`);
+  const bytes = Buffer.from(await res.arrayBuffer());
+  await mkdir(dirname(dest), { recursive: true });
+  const tmp = dest + "." + crypto.randomUUID();
+  try { await writeFile(tmp, bytes); await rename(tmp, dest); }
+  finally { await rm(tmp, { force: true }); }
+}
+
+export function ensureThreeFile(path) {
+  if (!/^(?:build|examples\/jsm)\/[a-zA-Z0-9_./-]+$/.test(path) || path.split("/").includes(".."))
+    throw new Error("Invalid editor library path");
+  return cacheFile(path, raw + path);
+}
+
+export const prepareEditorCore = () => ensureThreeFile("build/three.core.js");
 export async function setupEditor() {
+  await Promise.all([
+    prepareEditorCore(), ensureThreeFile("build/three.module.js"),
+  ]);
   try {
     if ((await readFile(`${upstreamDirectory}/.ready`, "utf8")) === revision)
       return;
@@ -27,7 +53,7 @@ export async function setupEditor() {
       for (let file; (file = files.pop()); ) {
         // Fetch the immutable blob, preserving upstream source and license.
         const response = await fetch(
-          `https://raw.githubusercontent.com/mrdoob/three.js/r185/${file.path}`,
+          `${raw}${file.path}`,
         );
         if (!response.ok)
           throw new Error(

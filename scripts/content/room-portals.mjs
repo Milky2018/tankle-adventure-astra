@@ -1,6 +1,6 @@
 // Bake the circulation works' visibility cells from the editable building envelope.
 // A missing, slanted or unsupported face stays open. Cell boundaries never add walls.
-import { Matrix4, Vector3 } from "three";
+import { compose_transform, determinant, project } from "../../_build/js/release/build/tooling/art/art.js";
 
 const step = 6;
 const low = [150, -42, 36],
@@ -16,7 +16,7 @@ export function bakeRoomPortals(scene, sourceView) {
   const materials = new Map(scene.materials.map((m) => [m.uuid, m]));
   function visit(node, parent) {
     if (node.visible === false || node.animations?.length) return;
-    const transform = parent.clone().multiply(new Matrix4().fromArray(node.matrix));
+    const transform = compose_transform(parent, node.matrix);
     const mat = materials.get(node.material);
     if (
       node.userData?.renderRole === "enclosure" &&
@@ -32,7 +32,7 @@ export function bakeRoomPortals(scene, sourceView) {
       (mat.opacity ?? 1) === 1 &&
       mat.visible !== false &&
       mat.depthWrite !== false &&
-      transform.determinant() > 0
+      determinant(transform) > 0
     ) {
       const data = geometry.get(node.geometry)?.data;
       if (
@@ -44,10 +44,7 @@ export function bakeRoomPortals(scene, sourceView) {
         const vertices = sourceView(data.attributes.position.array);
         const indices = sourceView(data.index.array);
         const point = (i) =>
-          new Vector3()
-            .fromArray(vertices, i * 3)
-            .applyMatrix4(transform)
-            .toArray();
+          project(transform, vertices[i*3], vertices[i*3+1], vertices[i*3+2]);
         for (let j = 0; j + 5 < indices.length; j += 6) {
           const [a, b, c, d, e, f] = indices.subarray(j, j + 6);
           if (a !== d || c !== e) continue;
@@ -88,7 +85,7 @@ export function bakeRoomPortals(scene, sourceView) {
   if (scene.animations?.length) return;
   const envelope = scene.object.children?.find((n) => n.name === "City · building envelope");
   if (!envelope || scene.object.visible === false || scene.object.animations?.length) return;
-  visit(envelope, new Matrix4().fromArray(scene.object.matrix));
+  visit(envelope, scene.object.matrix);
   if (!walls.size) return;
   const ids = new Int32Array(size[0] * size[1] * size[2]).fill(-1);
   const rooms = [];

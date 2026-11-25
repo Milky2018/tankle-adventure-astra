@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import test from "node:test";
-import { Box3, Matrix4, Vector3 } from "three";
+import { Box3, Matrix4, Vector3 } from "../../.editor/three-r185/build/three.core.js";
 
 test("static floor and depth batches leave the lift carriages room to descend", () => {
   const scene = JSON.parse(gunzipSync(readFileSync("content/art/city.scene.json.gz")));

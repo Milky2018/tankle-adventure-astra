@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Matrix4 } from "three";
+import { Matrix4 } from "../../.editor/three-r185/build/three.core.js";
 import { bakeCameraFaces } from "../../scripts/content/camera-faces.mjs";
 
 test("camera bounds follow the placed fixture without sealing gaps between panels", () => {

@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
-import { Matrix4 } from "three";
+import { Matrix4 } from "../../.editor/three-r185/build/three.core.js";
 import { buildRuntimeArt } from "../../scripts/content/runtime-art.mjs";
 
 test("compiled art preserves typed pixels and independent attributes with identical contents", () => {

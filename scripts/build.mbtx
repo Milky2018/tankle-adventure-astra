@@ -1,0 +1,119 @@
+---
+import {
+  "bobzhang/zip@0.1.3",
+  "bobzhang/zip@0.1.3/file",
+  "bobzhang/zip@0.1.3/member",
+  "bobzhang/zip@0.1.3/types/fpath",
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/fs",
+  "moonbitlang/core/async/process",
+  "moonbitlang/core/env",
+}
+---
+
+///|
+async fn copy_tree(source : String, target : String) -> Unit {
+  match @fs.kind(source) {
+    Directory => {
+      @fs.mkdir(target, recursive=true, allow_existing=true)
+      for name in @fs.readdir(source) {
+        copy_tree("\{source}/\{name}", "\{target}/\{name}")
+      }
+    }
+    Regular => @fs.write_binary(target, @fs.read_binary(source))
+    _ => raise Failure("Unexpected file type at \{source}")
+  }
+}
+
+///|
+async fn run_moon(args : Array[String]) -> Unit {
+  @process.run("moon", args[:], accepted_exit_code=code => code == 0) |> ignore
+}
+
+///|
+async fn main {
+  let args = @env.args()
+  guard args.length() == 1 || (args.length() == 2 && args[1] == "--offline") else {
+    raise Failure("Usage: moon run scripts/build.mbtx -- [--offline]")
+  }
+  run_moon(["run", "cmd/content"])
+  run_moon(["build", "cmd/play", "--release"])
+
+  // Prepare on the destination filesystem before replacing a playable build.
+  let stage = "_build/web-\{@env.now()}"
+  @fs.mkdir(stage)
+  let site = "\{stage}/site"
+  let previous = "\{stage}/previous"
+  errdefer @async.protect_from_cancel(() => {
+    if !@fs.exists(previous) {
+      @fs.remove(stage, recursive=true)
+    }
+  })
+  copy_tree("public", site)
+  copy_tree("index.html", "\{site}/index.html")
+  copy_tree("browser/styles", "\{site}/browser/styles")
+  for file in ["main.js", "host.js"] {
+    copy_tree("browser/\{file}", "\{site}/browser/\{file}")
+  }
+  let game = "_build/js/release/build/cmd/play"
+  @fs.mkdir("\{site}/\{game}", recursive=true)
+  copy_tree("\{game}/play.js", "\{site}/\{game}/play.js")
+  let had_previous = @fs.exists("dist")
+  if had_previous {
+    @fs.rename("dist", previous)
+  }
+  {
+    errdefer @async.protect_from_cancel(() => {
+      if had_previous {
+        @fs.rename(previous, "dist")
+      }
+    })
+    @fs.rename(site, "dist")
+  }
+  @fs.remove(stage, recursive=true)
+  println("Game ready in dist/")
+  if args.length() == 2 {
+    pack_offline()
+  }
+}
+
+///|
+async fn add_offline_file(archive : @zip.Archive, path : String) -> Unit {
+  if @fs.kind(path) is Directory {
+    for name in @fs.readdir(path, sort=true) {
+      add_offline_file(archive, "\{path}/\{name}")
+    }
+    return
+  }
+  let data = @fs.read_binary(path)
+  let file = if [".gz", ".jpg", ".png", ".jpeg", ".webm", ".webp"].any(s => {
+      path.has_suffix(s)
+    }) {
+    @file.File::stored_of_bytes(data, 0, data.length())
+  } else {
+    @file.File::deflate_of_bytes(data, 0, data.length(), level=Fast)
+  }
+  let mode = if path == "Play.command" { 0o100755 } else { 0o100644 }
+  archive.add(
+    @member.make(
+      @fpath.Fpath(path),
+      File(file),
+      mode=@member.FileMode::from_int(mode),
+    ),
+  )
+}
+
+///|
+async fn pack_offline() -> Unit {
+  let archive = @zip.Archive::empty()
+  for path in ["README.md", "Play.command", "dist"] {
+    add_offline_file(archive, path)
+  }
+  @fs.mkdir("output/builds", recursive=true, allow_existing=true)
+  let path = "output/builds/Tankle-v3-dist.zip"
+  let tmp = "\{path}.\{@env.now()}.tmp"
+  errdefer @fs.remove(tmp, allow_missing=true)
+  @fs.write_binary(tmp, archive.to_bytes())
+  @fs.rename(tmp, path, replace=true)
+  println(path)
+}

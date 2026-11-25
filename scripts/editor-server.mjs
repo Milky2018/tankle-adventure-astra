@@ -6,7 +6,7 @@ import { gzipSync } from "node:zlib";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { runTuning } from "./content/tuning.mjs";
-import { setupEditor, upstreamDirectory } from "./setup-editor.mjs";
+import { ensureThreeFile, upstreamDirectory } from "./setup-editor.mjs";
 
 const digest = (data) => createHash("sha256").update(data).digest("hex");
 const types = {
@@ -37,7 +37,7 @@ async function readJSON(request) {
 }
 function buildGame() {
   return new Promise((resolve, reject) => {
-    const child = spawn("npm", ["run", "build"], {
+    const child = spawn("moon", ["run", "scripts/build.mbtx"], {
       stdio: ["ignore", "pipe", "pipe"],
     });
     let log = "";
@@ -55,10 +55,10 @@ function buildGame() {
 function processScene(request) {
   return new Promise((resolve, reject) => {
     const child = spawn(
-      process.execPath,
+      "moon",
       [
-        fileURLToPath(new URL("./editor-scene-worker.mjs", import.meta.url)),
-        request.method,
+        "-C", fileURLToPath(new URL("..", import.meta.url)), "run", "cmd/editor", "--",
+        "scene-worker", request.method, process.cwd(),
       ],
       { stdio: ["pipe", "pipe", "pipe"] },
     );
@@ -168,12 +168,15 @@ export function createEditorServer() {
         const source = await readFile("content/abilities.json");
         return json({ values: JSON.parse(source), revision: digest(source) });
       }
+      if (url.pathname === "/pathtracer/index.module.js" || url.pathname === "/bvh/index.module.js") {
+        const module = new URL("../editor/vendor" + url.pathname + ".gz", import.meta.url);
+        response.writeHead(200, { "Content-Type": "text/javascript", "Content-Encoding": "gzip" });
+        return response.end(await readFile(module));
+      }
       const routes = [
         ["/upstream/", `${upstreamDirectory}/editor`],
-        ["/build/", "node_modules/three/build"],
-        ["/examples/", "node_modules/three/examples"],
-        ["/pathtracer/", "node_modules/three-gpu-pathtracer/build"],
-        ["/bvh/", "node_modules/three-mesh-bvh/build"],
+        ["/build/", upstreamDirectory + "build"],
+        ["/examples/", upstreamDirectory + "examples"],
         ["/assets/", "dist/assets"],
         ["/generated/", "dist/generated"],
         ["/music/", "dist/music"],
@@ -191,6 +194,8 @@ export function createEditorServer() {
       );
       if (!path.startsWith(root + sep))
         return json({ error: "Invalid path" }, 403);
+      if (prefix === "/examples/" || prefix === "/build/")
+        await ensureThreeFile(prefix.slice(1) + path.slice(root.length + 1));
       if (!(await stat(path)).isFile())
         return json({ error: "Not a file" }, 404);
       response.writeHead(200, {
@@ -206,9 +211,7 @@ export function createEditorServer() {
   });
 }
 
-if (resolve(process.argv[1] ?? "") === fileURLToPath(import.meta.url)) {
-  process.chdir(fileURLToPath(new URL("..", import.meta.url)));
-  await setupEditor();
+export function serveEditor() {
   const port = Number(process.env.EDITOR_PORT ?? 5176);
   createEditorServer().listen(port, "127.0.0.1", () =>
     console.log(`Project editor: http://127.0.0.1:${port}`),

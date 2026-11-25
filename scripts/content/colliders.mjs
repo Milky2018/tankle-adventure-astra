@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Matrix4, Vector3, Quaternion } from "three";
+import { Matrix4, Vector3, Quaternion } from "../../.editor/three-r185/build/three.core.js";
 
 export const collisionCollections = new Set([
   "decks",

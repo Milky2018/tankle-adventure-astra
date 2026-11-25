@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runTuning } from "./content/tuning.mjs";
 
-export async function checkContent(output) {
+export async function checkContent(output, checkScene = true) {
   const args = [resolve("content/abilities.json")];
   if (output) args.push(resolve(output));
   await runTuning(args);
@@ -19,6 +19,7 @@ export async function checkContent(output) {
       ]),
   );
   validateCatalog(catalog);
+  if (!checkScene) return;
   const bindings = new Set();
   const scene = readScene();
   const geometryIds = new Set(scene.geometries.map((geometry) => geometry.uuid));

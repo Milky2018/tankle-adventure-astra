@@ -1,3 +1,12 @@
+---
+import {
+  "moonbitlang/core/async/fs",
+  "moonbitlang/core/async/stdio",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+}
+---
+
 ///|
 fn field_name(key : String) -> String {
   let name = StringBuilder()
@@ -97,7 +106,9 @@ async fn main {
   try {
     let args = @env.args()
     guard args.length() == 2 || args.length() == 3 else {
-      raise Failure("Usage: tuning <abilities.json | -> [output.mbt]")
+      raise Failure(
+        "Usage: moon run scripts/tuning.mbtx -- <abilities.json | -> [output.mbt]",
+      )
     }
     let source = if args[1] == "-" {
       @stdio.stdin.text.read_all()

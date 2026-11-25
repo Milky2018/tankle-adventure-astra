@@ -5,7 +5,7 @@ import { cpSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createEditorServer } from "../../scripts/editor-server.mjs";
-import { Scene, Mesh, BoxGeometry, MeshBasicMaterial } from "three";
+import { Scene, Mesh, BoxGeometry, MeshBasicMaterial } from "../../.editor/three-r185/build/three.core.js";
 import { writeScene } from "../../scripts/content/scene.mjs";
 
 test("local skill editing validates writes, rejects stale tabs and foreign origins", async () => {

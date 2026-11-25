@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "milky/tankle-astra/tooling/art"
+
+import {
+  "moonbit-community/three/core",
+}
+
+// Values
+pub fn batch_fittings(@core.JsValue, FixedArray[@core.JsValue], FixedArray[@core.JsValue], (@core.JsValue) -> FixedArray[Double], (@core.JsValue) -> @core.BufferGeometry, ((FixedArray[@core.BufferGeometry]) -> @core.JsValue) -> Unit) -> Unit
+
+pub fn compose_transform(FixedArray[Double], FixedArray[Double]) -> FixedArray[Double]
+
+pub fn depth_geometry(FixedArray[Double], FixedArray[Int32]) -> @core.BufferGeometry
+
+pub fn determinant(FixedArray[Double]) -> Double
+
+pub fn geometry_center(@core.TypedArray, Int32) -> FixedArray[Double]
+
+pub fn identity() -> FixedArray[Double]
+
+pub fn instance_belt_rollers(@core.JsValue) -> Unit
+
+pub fn project(FixedArray[Double], Double, Double, Double) -> FixedArray[Double]
+
+pub fn read_geometry(@core.JsValue, @core.JsValue) -> @core.BufferGeometry
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

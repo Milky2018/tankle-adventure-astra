@@ -19,7 +19,8 @@ import {
   BatchedMesh,
   ObjectLoader,
   ImageLoader,
-} from "three";
+  Vector3,
+} from "../../.editor/three-r185/build/three.core.js";
 import { exportProject, importProject } from "../../scripts/scene-editor.mjs";
 import { readScene, writeScene } from "../../scripts/content/scene.mjs";
 
@@ -236,7 +237,6 @@ test("new enemies clone all roles and own animated resources; save, delete and r
   const { cloneEntity, entityBundle } = await import(
     "../../editor/entity-model.js"
   );
-  const { Vector3 } = await import("three");
   const original = new ObjectLoader().parse(exportProject().scene);
   const source = original.children[0];
   const effect = new Mesh(new BoxGeometry(), new MeshBasicMaterial());

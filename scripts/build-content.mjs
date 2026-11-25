@@ -1,12 +1,29 @@
 // Compile editable content into typed constants. Generated files are build outputs;
 // gameplay behavior remains hand-written MoonBit.
-import { readFileSync, writeFileSync } from "node:fs";
-import { buildRuntimeArt } from "./content/runtime-art.mjs";
+import { existsSync, readFileSync, readdirSync, writeFileSync, renameSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { checkContent } from "./check-content.mjs";
 import { circuitKey } from "./content/catalog.mjs";
 const read = (name) =>
   JSON.parse(readFileSync(`content/levels/city/${name}.json`, "utf8"));
-await checkContent("simulation/tuning.generated.mbt");
+execFileSync("moon", ["build", "tooling/art", "--release"], { stdio: "inherit" });
+const { buildRuntimeArt } = await import("./content/runtime-art.mjs");
+const hash = createHash("sha256");
+const directory = "public/generated/art";
+const stamp = "_build/city-art-cache.json";
+for (const path of [
+  ...["content/art", "content/levels/city", "scripts/content"].flatMap(dir =>
+    readdirSync(dir, { withFileTypes: true }).filter(f => f.isFile()).map(f => dir + "/" + f.name).sort()),
+  "scripts/build-content.mjs", "scripts/check-content.mjs", "_build/js/release/build/tooling/art/art.js",
+]) hash.update(path).update(readFileSync(path));
+const digest = hash.digest("hex");
+let cached;
+try { cached = JSON.parse(readFileSync(stamp, "utf8")); } catch (err) {
+  if (err.code !== "ENOENT" && !(err instanceof SyntaxError)) throw err;
+}
+const bake = cached?.digest !== digest || !Array.isArray(cached.files) || !cached.files.every(path => existsSync(directory + "/" + path));
+await checkContent("simulation/tuning.generated.mbt", bake);
 const circuitTargetKey = circuitKey;
 const content = {
   foldedDecks: read("decks"),
@@ -59,7 +76,7 @@ const deck = (d) => {
 };
 writeFileSync(
   "simulation/level-world.generated.mbt",
-  "// Generated from content/levels/city. Run npm run build:content; do not edit.\n\n" +
+  "// Generated from content/levels/city. Run moon run cmd/content; do not edit.\n\n" +
     [
       arrayFn(
         "authored_decks",
@@ -217,5 +234,12 @@ fn belt_segments() -> Map[String, Array[(Double, Int32)]] {
 }
 `,
 );
-buildRuntimeArt("content/art", "public/generated/art", content.foldedSolids, content.foldedControls);
+if (bake) {
+  buildRuntimeArt("content/art", directory, content.foldedSolids, content.foldedControls);
+  const files = ["folded-scene.json.gz", "folded-buffers.bin.gz", "folded-views.json.gz",
+    ...readdirSync(directory + "/images").map(name => "images/" + name)];
+  const tmp = stamp + "." + process.pid;
+  writeFileSync(tmp, JSON.stringify({ digest, files }));
+  renameSync(tmp, stamp);
+}
 await import("./sound-data.mjs");

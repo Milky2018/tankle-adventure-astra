@@ -4,7 +4,7 @@ The game has three independent concerns: authored content, gameplay simulation a
 
 ## Local project editor
 
-Run `npm run editor` from the repository root, then open <http://127.0.0.1:5176/>. Keep this server running while editing. The initial setup caches verified upstream r185 editor source and its MIT license in `.editor/three-r185/`; the viewport uses the project's installed Three.js 0.185.1. No external editor website is needed after setup.
+Run `moon run cmd/editor` from the repository root, then open <http://127.0.0.1:5176/>. Keep this server running while editing. The initial setup caches verified upstream r185 editor source and its MIT license in `.editor/three-r185/`; the viewport uses cached browser modules from that revision, with add-ons fetched on first use.
 
 1. Use **快速定位** to choose a checkpoint region, or search by object ID, name, type or encounter. Search spans floors; without search, the list follows **编辑楼层**. Categories include enemies, controls, barriers, pickups, checkpoints, lifts, mirrors, player art and collision volumes.
 2. Click an object to select it, switch to its floor and focus the camera. Left-drag rotates, right-drag pans, and the wheel zooms. **定位 F** returns to the selection; **区域俯视** gives a top view.
@@ -17,7 +17,7 @@ Floor clipping, the editor background and collision visibility are view preferen
 
 The local interface supports adding, copying and deleting enemies, controls and pickups, as well as editing existing gameplay objects and character parts. Use the official website workflow below for model import, detailed material/geometry editing and decorative additions. Other gameplay object types, circuit route definitions and bespoke puzzle behavior still require their source files. The player model's root position is an art preview; spawn position comes from checkpoint data. Runtime-controlled pivots may overwrite authored transforms, so adjust their mesh children.
 
-The local implementation is deliberately small: `editor/app.js` connects selection, view filtering and official commands; `editor/fields.js` builds property forms; `scripts/editor-server.mjs` serves pinned modules, validates content saves and runs the normal game build. Upstream editor source is cached unchanged rather than maintained as a fork. The editor renders on changes and does not expose path tracing. Large scene JSON operations run one at a time in `scripts/editor-scene-worker.mjs`; the process exits after each load/save so the service does not retain the unpacked scene heap.
+The local implementation is deliberately small: `editor/app.js` connects selection, view filtering and official commands; `editor/fields.js` builds property forms; `scripts/editor-server.mjs` serves pinned modules, validates content saves and runs the normal game build. The upstream viewport imports three-gpu-pathtracer 0.0.23 and three-mesh-bvh 0.7.4. Their browser distributions and licenses live in `editor/vendor/`. Upstream editor source is cached unchanged rather than maintained as a fork. The editor renders on changes and does not expose path tracing. Large scene JSON operations run one at a time in `scripts/editor-scene-worker.mjs`; the process exits after each load/save so the service does not retain the unpacked scene heap.
 
 ## Adding, copying and deleting gameplay objects
 
@@ -28,7 +28,7 @@ The local implementation is deliberately small: `editor/app.js` connects selecti
 
 For a new control, the **触发信号** (`effects`) field lists emitted signals, one per line. It starts with the new control ID. To operate an existing gate, use that gate's prerequisite signal. The **前置条件** (`requires`) field is optional; clear it to remove the prerequisite. These fields are regular forms, with no JSON editing required. Fresh pickup templates have no story prerequisite; upgrade effects and save restoration use their acquisition type rather than a fixed original ID.
 
-`editor/entity-model.js` owns complete entity copying, `entity-commands.js` provides undoable presence changes, and `entity-tools.js` owns the dialogs. `content/editor/templates.json` contains template labels and gameplay defaults; `templates.scene.json.gz` stores the independent model palette. Normal builds never regenerate this palette from the level. Maintainers can explicitly refresh it with `npm run editor:templates` after changing source art; every configured source must still exist when refreshing. This maintenance command is not needed to place or copy objects.
+`editor/entity-model.js` owns complete entity copying, `entity-commands.js` provides undoable presence changes, and `entity-tools.js` owns the dialogs. `content/editor/templates.json` contains template labels and gameplay defaults; `templates.scene.json.gz` stores the independent model palette. Normal builds never regenerate this palette from the level. Maintainers can explicitly refresh it with `moon run cmd/editor -- templates` after changing source art; every configured source must still exist when refreshing. This maintenance command is not needed to place or copy objects.
 
 ## Where to make a change
 
@@ -57,10 +57,10 @@ Skill times are seconds, movement/projectile speeds are units per second, ranges
 Install dependencies using the README's run instructions, then export from the repository root:
 
 ```sh
-npm run scene:export -- --list
-npm run scene:export -- output/editor/prototype.json --entity enemies:prototype
-npm run scene:export -- output/editor/player.json --entity player
-npm run scene:export -- output/editor/checkpoint.json --entity hives:awakening
+moon run cmd/editor -- export --list
+moon run cmd/editor -- export output/editor/prototype.json --entity enemies:prototype
+moon run cmd/editor -- export output/editor/player.json --entity player
+moon run cmd/editor -- export output/editor/checkpoint.json --entity hives:awakening
 ```
 
 Open <https://threejs.org/editor/> and choose **File → Open**. Use the exported project JSON, not the compressed source files. Select the object in the outliner. The editor's position fields and move gizmo change placement. Child meshes, geometry and materials can be edited normally. Small exports include preview lights that the importer discards.
@@ -70,9 +70,9 @@ For a gameplay root, **Properties → User data → `game`** contains editable d
 Choose **File → Save** to download the complete project. The object's separate “Export JSON” button does not export the complete round-trip project.
 
 ```sh
-npm run scene:import -- /path/to/project.json --check
-npm run scene:import -- /path/to/project.json
-npm run check
+moon run cmd/editor -- import /path/to/project.json --check
+moon run cmd/editor -- import /path/to/project.json
+moon run scripts/build.mbtx
 ```
 
 Import updates both scene resources and gameplay definitions, then repacks the resources. Start or rebuild the game to see the result. The `--check` form validates without writing. A revision stamp rejects stale exports after the source content changes; export a fresh project before the next editing session.
@@ -81,16 +81,16 @@ Import updates both scene resources and gameplay definitions, then repacks the r
 
 ```sh
 # All art and existing gameplay objects
-npm run scene:export -- output/editor/city.json
+moon run cmd/editor -- export output/editor/city.json
 
 # The same scene with explicit, editor-only wireframe collision boxes
-npm run scene:export -- output/editor/city-collision.json --colliders
+moon run cmd/editor -- export output/editor/city-collision.json --colliders
 
 # A small export containing a single floor collider
-npm run scene:export -- output/editor/floor.json --entity decks:press-working-floor
+moon run cmd/editor -- export output/editor/floor.json --entity decks:press-working-floor
 ```
 
-The full city has roughly 13,500 scene nodes. Prefer an entity export for character work, and close large editor projects when finished. `--colliders` overlays decks, architecture and obstacles; these helper meshes never ship in the game. Select a helper to translate or resize its axis-aligned collision box. Duplicate deck IDs are distinguished by frozen catalog slots in a full collision export.
+Use the local editor for a full-city session. Its binary attribute transfer avoids browser limits on reading large plain JSON strings. The full city has roughly 13,500 authored scene nodes. Prefer an entity export for character work, and close large editor projects when finished. `--colliders` overlays decks, architecture and obstacles; these helper meshes never ship in the game. Select a helper to translate or resize its axis-aligned collision box. Duplicate deck IDs are distinguished by frozen catalog slots in a full collision export.
 
 Art and collision are separate. Moving a decorative mesh does not move a wall or floor collider. Edit both when changing a passage. Sloped deck `rise`, conveyor segment layout, circuit routes and bespoke puzzle coordinates also require their corresponding definition or MoonBit changes. Circuit geometry is not automatically rerouted when a switch moves.
 
@@ -126,9 +126,9 @@ glTF/GLB is a model interchange format. Native editor project JSON retains Three
 
 The large scene is stored as compressed Three.js metadata and binary vertex buffers to keep loading and repository size manageable. The editor commands unpack and repack this representation; nobody should hand-edit it. Plain JSON gameplay catalogs remain diffable. Behavior remains readable MoonBit functions, with simulation tests independent of the browser.
 
-Use `npm run build:content` after editing JSON if working directly with `moon check`, `moon test` or `moon ide`. `npm run dev`, `npm run build`, `npm test` and `npm run check` already generate content first. After source changes, run `moon info --target js && moon fmt`; review interface changes intentionally.
+Use `moon run cmd/content` after editing JSON if working directly with `moon check`, `moon test` or `moon ide`. The build script `moon run scripts/build.mbtx` generates content first. After source changes, run `moon info && moon fmt`; review interface changes intentionally.
 
-The standalone import/export workflow was exercised against the live official r186 editor; the local entry pins upstream r185 and Three.js 0.185.1. Re-run the round-trip and browser checks when upgrading either side. Browser checks under `tests/browser/` use real input and read-only diagnostics; they do not teleport the player or grant abilities.
+The standalone import/export workflow was exercised against the live official r186 editor; the local entry pins the upstream r185 editor and core at the same revision. Re-run the round-trip and browser checks when upgrading either side. Browser checks under `tests/browser/` use real input and read-only diagnostics; they do not teleport the player or grant abilities.
 
 Temporary editor projects, test screenshots and logs belong under ignored `output/`. Remove stale exports after importing, close test browsers, and keep only the preview server currently in use.
 

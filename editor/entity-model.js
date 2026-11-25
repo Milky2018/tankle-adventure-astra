@@ -1,4 +1,3 @@
-import { Vector3 } from "three";
 import { belongsTo, entityPrefix, validateNewIdentity } from "./entity-data.js";
 
 export function entityBundle(scene, root) {
@@ -73,7 +72,7 @@ export function creationPosition(source, x, ground, z) {
     source.userData.entity.collection === "controls"
       ? (source.userData.game.ground ?? origin[1] - 1.3)
       : origin[1];
-  return new Vector3(
+  return source.position.clone().set(
     x + source.position.x - origin[0],
     ground + source.position.y - base,
     z + source.position.z - origin[2],

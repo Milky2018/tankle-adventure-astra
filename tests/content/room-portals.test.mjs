@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { Matrix4 } from "three";
+import { Matrix4 } from "../../.editor/three-r185/build/three.core.js";
 import { bakeRoomPortals } from "../../scripts/content/room-portals.mjs";
 
 function build(material = {}) {

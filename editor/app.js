@@ -1,3 +1,4 @@
+import { packSceneTransfer, unpackSceneTransfer } from "./scene-transfer.js";
 import * as THREE from "three";
 import { Editor } from "/upstream/js/Editor.js";
 import { Viewport } from "/upstream/js/Viewport.js";
@@ -486,7 +487,7 @@ async function save(preview = false) {
         editor.scene.background = editorBackground;
         applyFloor();
       }
-      const result = await api("scene", project);
+      const result = await api("scene", packSceneTransfer(project));
       editor.scene.userData.tankle.revision = result.revision;
       editor.scene.userData.tankle.roots = result.rootIds;
       editor.scene.userData.tankle.deleted = [];
@@ -543,7 +544,7 @@ window.addEventListener("keydown", (event) => {
 try {
   const [project, skills] = await Promise.all([api("scene"), api("abilities")]);
   $("loading").querySelector("p").textContent = "构建编辑视图…";
-  await editor.fromJSON(project);
+  await editor.fromJSON(unpackSceneTransfer(project));
   gameBackground = editor.scene.background;
   editor.scene.background = editorBackground;
   editor.signals.showHelpersChanged.dispatch({

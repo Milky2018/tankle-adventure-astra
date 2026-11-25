@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DoubleSide, Matrix4 } from "three";
+import { DoubleSide, Matrix4 } from "../../.editor/three-r185/build/three.core.js";
 import { batchFittings } from "../../scripts/content/batch-fittings.mjs";
 import { instanceRepeatedShapes } from "../../scripts/content/instance-repeats.mjs";
 

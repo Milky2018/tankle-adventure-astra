@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync, mkdirSync, readdirSync } from "node:fs";
+import { readEditorJSON, writeEditorJSON } from "./editor-json.mjs";
 import { dirname } from "node:path";
 import { createHash } from "node:crypto";
 import {
@@ -7,7 +8,7 @@ import {
   Matrix4,
   PerspectiveCamera,
   Vector3,
-} from "three";
+} from "../.editor/three-r185/build/three.core.js";
 import {
   readScene,
   writeScene,
@@ -108,7 +109,7 @@ export function exportProject(selection, { colliders = false } = {}) {
     }
     if (!entity)
       throw new Error(
-        `Unknown entity ${selection}. Use scene:export -- --list to see available objects.`,
+        `Unknown entity ${selection}. Use moon run cmd/editor -- export --list to see available objects.`,
       );
     prefix = entityPrefix(entity);
   } else if (selection === "player") prefix = "player";
@@ -229,7 +230,7 @@ export function importProject(project, dryRun = false) {
   const metadata = edited.object?.userData?.tankle;
   if (metadata?.version !== 1)
     throw new Error(
-      "Open a project produced by scene:export before importing edits.",
+      "Open a project produced by the editor export command before importing edits.",
     );
   if (metadata.revision !== revision())
     throw new Error(
@@ -495,22 +496,22 @@ if (command === "export") {
   } else {
     if (!file)
       throw new Error(
-        "Usage: npm run scene:export -- output/editor/prototype.json --entity enemies:prototype",
+        "Usage: moon run cmd/editor -- export output/editor/prototype.json --entity enemies:prototype",
       );
     const index = options.indexOf("--entity");
     const project = exportProject(index >= 0 ? options[index + 1] : undefined, {
       colliders: options.includes("--colliders"),
     });
     mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, JSON.stringify(project));
+    writeEditorJSON(file, project);
     console.log(`Editor project written to ${file}`);
   }
 } else if (command === "import") {
   if (!file)
     throw new Error(
-      "Usage: npm run scene:import -- path/to/editor-project.json [--check]",
+      "Usage: moon run cmd/editor -- import path/to/editor-project.json [--check]",
     );
   console.log(
-    importProject(JSON.parse(readFileSync(file)), options.includes("--check")),
+    importProject(readEditorJSON(file), options.includes("--check")),
   );
 }

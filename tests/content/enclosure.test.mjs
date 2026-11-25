@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { gunzipSync } from "node:zlib";
-import { BufferGeometryLoader, FrontSide, Mesh, MeshBasicMaterial, Raycaster, Vector3 } from "three";
+import { BufferGeometryLoader, FrontSide, Mesh, MeshBasicMaterial, Raycaster, Vector3 } from "../../.editor/three-r185/build/three.core.js";
 
 const read = name => gunzipSync(readFileSync("content/art/city." + name + ".gz"));
 
