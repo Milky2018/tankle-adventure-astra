@@ -44,102 +44,160 @@ let labels : Map[String, String] = {
 }
 
 ///|
-fn fields(
-  container : Raw,
-  values : Raw,
-  change : (Array[String], Raw) -> Unit,
-  path~ : Array[String] = [],
-) -> Unit {
-  for k in @archive.keys(values) {
-    let value = values.get(k)
-    let keys = path + [k]
-    let ty = @archive.kind(value)
-    let title = labels.get_or_default(k, k)
-    if ty == "array" && (k == "effects" || k == "weapons") {
-      let label = el("label", label=title)
-      let input = el("textarea")
-      input.set("rows", Raw::of(3))
-      let entries : FixedArray[String] = value.cast()
-      input.set("value", Raw::of(entries.iter().join("\n")))
-      attr(input, "aria-label", k)
-      handler(input, "change", () => {
-        let lines = str(input, "value")
-          .replace_all(old=",", new="\n")
-          .split("\n")
-          .map(s => s.trim().to_owned())
-          .filter(s => !s.is_empty())
-          .to_array()
-        change(keys, Raw::from_array(lines[:]))
-      })
-      append(label, input)
-      append(container, label)
-      continue
-    }
-    if exists(value) && (ty == "object" || ty == "array") {
-      let group = el("details")
-      append(group, el("summary", label=title))
-      fields(group, value, change, path=keys)
-      append(container, group)
-      continue
-    }
-    let label = el("label", style="property")
-    append(label, el("span", label=title))
-    let input = el("input")
-    let name = keys.join(".")
-    attr(input, "aria-label", name)
-    input.set(
-      "type",
-      Raw::of(
-        match ty {
-          "boolean" => "checkbox"
-          "number" => "number"
-          _ => "text"
-        },
-      ),
-    )
-    input.set("step", Raw::of("any"))
-    if ty == "boolean" {
-      input.set("checked", value)
-    } else {
-      input.set("value", if exists(value) { value } else { Raw::of("") })
-    }
-    input.set("disabled", Raw::of(k == "id" || k == "circuitKey"))
-    input.set("title", Raw::of(name))
-    handler(input, "change", () => {
-      let next = get(
-        input,
-        match ty {
-          "number" => "valueAsNumber"
-          "boolean" => "checked"
-          _ => "value"
-        },
-      )
-      if ty == "number" && !js_number(next).is_finite() {
-        input.set("value", value)
-      } else {
-        change(keys, next)
-      }
-    })
-    append(label, input)
-    append(container, label)
+priv enum FieldKey {
+  Property(String)
+  Index(Int32)
+}
+
+///|
+fn FieldKey::label(self : FieldKey) -> String {
+  match self {
+    Property(k) => k
+    Index(i) => i.to_string()
   }
 }
 
 ///|
-fn replace_field(value : Raw, path : Array[String], next : Raw) -> Raw {
-  let out = @model.clone(value)
-  let mut target = out
-  for k in path[:path.length() - 1] {
-    target = target.get(k)
+/// Copy only ancestors of the edit so undo retains the previous document.
+fn replace_field(value : Json, path : ArrayView[FieldKey], next : Json) -> Json {
+  match (path, value) {
+    ([], _) => next
+    ([Property(k), .. rest], Object(fields)) => {
+      let out = fields.copy()
+      if rest.is_empty() &&
+        next == "" &&
+        k
+        is ("requires"
+        | "lift"
+        | "mount"
+        | "encounter"
+        | "battle"
+        | "reserveFor") {
+        out.remove(k)
+      } else {
+        out[k] = replace_field(fields.get_or_default(k, @json.null), rest, next)
+      }
+      Json::object(out)
+    }
+    ([Index(i), .. rest], Array(items)) => {
+      let out = items.copy()
+      out[i] = replace_field(items[i], rest, next)
+      Json::array(out)
+    }
+    _ => value
   }
-  let key = path[path.length() - 1]
-  if next.strict_equal(Raw::of("")) &&
-    ["requires", "lift", "mount", "encounter", "battle", "reserveFor"].contains(
-      key,
-    ) {
-    @archive.remove(target, key)
-  } else {
-    target.set(key, next)
+}
+
+///|
+fn form_input(container : Raw, key : String, path : String) -> Raw {
+  let label = el("label", style="property")
+  append(label, el("span", label=labels.get_or_default(key, key)))
+  let input = el("input")
+  attr(input, "aria-label", path)
+  input.set("title", Raw::of(path))
+  input.set("disabled", Raw::of(key == "id" || key == "circuitKey"))
+  append(label, input)
+  append(container, label)
+  input
+}
+
+///|
+fn number_input(
+  input : Raw,
+  initial : Double,
+  change : (Double) -> Unit,
+) -> Unit {
+  let mut current = initial
+  input.set("type", Raw::of("number"))
+  input.set("step", Raw::of("any"))
+  input.set("value", Raw::of(initial))
+  handler(input, "change", () => {
+    let next = number(input, "valueAsNumber")
+    if next.is_finite() {
+      current = next
+      change(next)
+    } else {
+      input.set("value", Raw::of(current))
+    }
+  })
+}
+
+///|
+fn fields(
+  container : Raw,
+  values : Json,
+  change : (ArrayView[FieldKey], Json) -> Unit,
+) -> Unit {
+  fn visit_children(value : Json, visit : (FieldKey, Json) -> Unit) {
+    match value {
+      Object(record) =>
+        for key, child in record {
+          visit(Property(key), child)
+        }
+      Array(items) =>
+        for i, child in items {
+          visit(Index(i), child)
+        }
+      _ => ()
+    }
   }
-  out
+  fn render(
+    parent : Raw,
+    path : Array[FieldKey],
+    key : FieldKey,
+    value : Json,
+  ) {
+    let k = key.label()
+    let path = path + [key]
+    let title = labels.get_or_default(k, k)
+    match value {
+      Array(entries) if k is ("effects" | "weapons") => {
+        let label = el("label", label=title)
+        let input = el("textarea")
+        let lines = [ for item in entries if item is String(s) => s ]
+        input.set("rows", Raw::of(3))
+        input.set("value", Raw::of(lines.join("\n")))
+        attr(input, "aria-label", k)
+        handler(input, "change", () => {
+          let lines = str(input, "value")
+            .replace_all(old=",", new="\n")
+            .split("\n")
+            .map(s => s.trim().to_owned())
+            .filter(s => !s.is_empty())
+            .map(Json::string)
+            .to_array()
+          change(path[:], Json::array(lines))
+        })
+        append(label, input)
+        append(parent, label)
+      }
+      Object(_) | Array(_) => {
+        let group = el("details")
+        append(group, el("summary", label=title))
+        visit_children(value, (key, child) => render(group, path, key, child))
+        append(parent, group)
+      }
+      Number(n, ..) => {
+        let input = form_input(parent, k, path.map(FieldKey::label).join("."))
+        number_input(input, n, edited => change(path[:], Json::number(edited)))
+      }
+      True | False => {
+        let input = form_input(parent, k, path.map(FieldKey::label).join("."))
+        input.set("type", Raw::of("checkbox"))
+        input.set("checked", Raw::of(value is True))
+        handler(input, "change", () => {
+          change(path[:], Json::boolean(truth(input, "checked")))
+        })
+      }
+      Null | String(_) => {
+        let input = form_input(parent, k, path.map(FieldKey::label).join("."))
+        input.set("type", Raw::of("text"))
+        input.set("value", Raw::of(if value is String(s) { s } else { "" }))
+        handler(input, "change", () => {
+          change(path[:], Json::string(str(input, "value")))
+        })
+      }
+    }
+  }
+  visit_children(values, (key, child) => render(container, [], key, child))
 }

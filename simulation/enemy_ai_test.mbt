@@ -249,7 +249,7 @@ test "reset rebuilds squad membership even when placement ids and counts stay th
   let source = game.enemies[0].definition
   let def = {
     ..source,
-    kind: @simulation.Turret,
+    kind: Turret,
     spawn: { x: 500, y: 0, z: 500, },
     encounter: Some("pair"),
   }
@@ -345,7 +345,7 @@ test "delayed hunter round leaves the other tube at its current position" {
 ///|
 test "boss controllers vary attacks and react to movement, cover and severed feeds" {
   let game = @simulation.Game::new()
-  for kind in [@simulation.Sorter, Overseer, Guardian, Keeper] {
+  for kind in [@simulation.EnemyKind::Sorter, Overseer, Guardian, Keeper] {
     let boss = game.enemies
       .iter()
       .find_first(fn(e) { e.definition.kind == kind })

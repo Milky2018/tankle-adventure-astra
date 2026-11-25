@@ -72,19 +72,23 @@ fn part_label(n : Raw, index : Int32) -> String {
 ///|
 fn Workspace::properties(self : Workspace) -> Unit {
   self.refresh()
-  let root = self.root
-  let obj = get(self.editor, "selected")
   let panel = by_id("properties")
-  replace(panel, [
-    el("h2", label=if exists(root) { title(root) } else { "对象属性" }),
-  ])
-  guard exists(root) && exists(obj) else {
-    append(
-      panel,
-      el("p", label="点击左侧对象即可定位和编辑。", style="hint"),
-    )
-    return
+  let (root, obj) = match self.selection {
+    Nothing => {
+      replace(panel, [
+        el("h2", label="对象属性"),
+        el(
+          "p",
+          label="点击左侧对象即可定位和编辑。",
+          style="hint",
+        ),
+      ])
+      return
+    }
+    Whole(owner) => (owner, owner)
+    Part(root~, object~) => (root, object)
   }
+  replace(panel, [el("h2", label=title(root))])
   append(
     panel,
     el(
@@ -111,12 +115,13 @@ fn Workspace::properties(self : Workspace) -> Unit {
   menu.set("value", Raw::of(uuid(obj)))
   handler(menu, "change", () => {
     let id = menu.get("value")
-    self.part = !id.strict_equal(Raw::of(uuid(root)))
-    ignore(
-      call(self.editor, "select", [
-        call(root, "getObjectByProperty", [Raw::of("uuid"), id]),
-      ]),
-    )
+    let selected = call(root, "getObjectByProperty", [Raw::of("uuid"), id])
+    self.selection = if selected.strict_equal(root) {
+      Whole(root)
+    } else {
+      Part(root~, object=selected)
+    }
+    ignore(call(self.editor, "select", [selected]))
   })
   append(parts, menu)
   append(panel, parts)
@@ -131,7 +136,7 @@ fn Workspace::properties(self : Workspace) -> Unit {
       ),
     )
   }
-  if !obj.strict_equal(root) {
+  if self.selection is Part(..) {
     self.transform_fields(
       panel, obj, "rotation", "旋转（弧度）", "SetRotationCommand",
     )
@@ -187,27 +192,30 @@ fn Workspace::properties(self : Workspace) -> Unit {
       )
     }
     let game = get(data(root), "game")
-    if exists(game) {
-      let values = @archive.copy(game)
+    if exists(game) && game.to_json() is Object(record) {
+      let values = record.copy()
       if category(root) is ("controls" | "pickups") &&
-        !exists(get(values, "requires")) {
-        values.set("requires", Raw::of(""))
+        !values.contains("requires") {
+        values["requires"] = ""
       }
-      if category(root) == "controls" && !exists(get(values, "effects")) {
-        values.set("effects", Raw::from_array([entity(root).get("id")]))
+      if category(root) == "controls" && !values.contains("effects") {
+        values["effects"] = [Json::string(str(entity(root), "id"))]
       }
       for k in ["id", "circuitKey"] {
-        @archive.remove(values, k)
+        values.remove(k)
       }
       if collision {
         for k in ["w", "d", "h"] {
-          @archive.remove(values, k)
+          values.remove(k)
         }
       }
       append(panel, el("h3", label="游戏属性"))
-      fields(panel, values, (path, next) => {
+      fields(panel, Json::object(values), (path, next) => {
         let d = @archive.copy(data(root))
-        d.set("game", replace_field(d.get("game"), path, next))
+        d.set(
+          "game",
+          Raw::from_json(replace_field(d.get("game").to_json(), path, next)),
+        )
         self.execute("SetValueCommand", [root, Raw::of("userData"), d])
       })
     }

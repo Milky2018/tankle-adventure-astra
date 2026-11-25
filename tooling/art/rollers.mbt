@@ -75,7 +75,7 @@ fn bind_roller(n : Raw, batch : String, index : Int32) -> Unit {
 }
 
 ///|
-pub fn instance_belt_rollers(scene : @core.JsValue) -> Unit {
+fn instance_belt_rollers(scene : @core.JsValue) -> Unit {
   let materials : Map[String, @core.JsValue] = Map([])
   let entries : FixedArray[@core.JsValue] = scene.get("materials").cast()
   for m in entries {
@@ -124,19 +124,14 @@ pub fn instance_belt_rollers(scene : @core.JsValue) -> Unit {
     let matrices : Array[Double] = []
     for entry in group {
       let (_, segment, roller) = entry
-      for
-        n in compose_transform(
-          segment.get("matrix").cast(),
-          roller.get("matrix").cast(),
-        ) {
-        matrices.push(n)
-      }
+      let transform = node_matrix(segment).multiply(node_matrix(roller))
+      matrices.append(transform.elements)
     }
     attach_roller_batch(
       root,
       id,
       group[0].2,
-      identity(),
+      FixedArray::from_array(@math.Matrix4::new().elements[:]),
       FixedArray::from_array(matrices[:]),
       group.length(),
     )

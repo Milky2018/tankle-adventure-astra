@@ -2,6 +2,7 @@ import {
   "milky/tankle-astra/tooling/editor_model" @model,
   "milky/tankle-astra/tooling/archive",
   "moonbitlang/core/async/js_async",
+  "moonbitlang/core/json",
 }
 
 pkgtype(kind: "executable")

@@ -15,47 +15,36 @@ fn optional(r : Record, key : String) -> String {
 }
 
 ///|
-fn sequence(v : Json) -> String {
+fn sequence(v : Json) -> String raise {
   list(v).map(literal).join(",")
 }
 
 ///|
-fn rect(r : Record) -> String {
+fn rect(r : Record) -> String raise {
   "{ x: " +
-  literal(r["x"]) +
+  literal(required(r, "x")) +
   ", z: " +
-  literal(r["z"]) +
+  literal(required(r, "z")) +
   ", w: " +
-  literal(r["w"]) +
+  literal(required(r, "w")) +
   ", d: " +
-  literal(r["d"]) +
+  literal(required(r, "d")) +
   " }"
 }
 
 ///|
-fn vec3(r : Record) -> String {
-  "{ x: " +
-  literal(r["x"]) +
-  ", y: " +
-  literal(r["y"]) +
-  ", z: " +
-  literal(r["z"]) +
-  " }"
-}
-
-///|
-fn array_def(
+fn[T] array_def(
   name : String,
   ty : String,
-  rows : Array[Json],
-  encode : (Record) -> String,
-) -> String {
+  rows : Array[T],
+  encode : (T) -> String raise?,
+) -> String raise? {
   let declarations = []
   let chunks = (rows.length() + 255) / 256
   let calls = []
   for i in 0..<chunks.max(1) {
     let values = rows[i * 256:(i * 256 + 256).min(rows.length())].map(v => {
-      "  " + encode(object(v)) + ","
+      "  " + encode(v) + ","
     })
     let part = if chunks > 1 { name + "_" + i.to_string() } else { name }
     let visibility = if chunks > 1 { "" } else { "pub " }
@@ -105,10 +94,40 @@ fn catalog(name : String) -> Json raise {
 }
 
 ///|
-fn capitalized(s : String) -> String {
-  if s.is_empty() {
-    s
-  } else {
-    s[:1].to_owned().to_upper() + s[1:].to_owned()
+fn[T : @json.ToJson] source(v : T) -> String {
+  literal(@json.to_json(v))
+}
+
+///|
+fn[T : @json.ToJson] option_source(v : T?) -> String {
+  match v {
+    None => "None"
+    Some(a) => "Some(" + source(a) + ")"
   }
+}
+
+///|
+fn vec_source(x : Double, y : Double, z : Double) -> String {
+  "{ x: " + source(x) + ", y: " + source(y) + ", z: " + source(z) + " }"
+}
+
+///|
+fn rect_source(x : Double, z : Double, w : Double, d : Double) -> String {
+  "{ x: " +
+  source(x) +
+  ", z: " +
+  source(z) +
+  ", w: " +
+  source(w) +
+  ", d: " +
+  source(d) +
+  " }"
+}
+
+///|
+fn required(r : Record, key : String) -> Json raise {
+  guard r.get(key) is Some(v) else {
+    raise Failure("Missing authored field: " + key)
+  }
+  v
 }

@@ -2,25 +2,221 @@
 package "milky/tankle-astra/tooling/catalog"
 
 import {
+  "milky/tankle-astra/model/interaction",
+  "milky/tankle-astra/model/machine",
   "moonbitlang/core/json",
 }
 
 // Values
+pub fn decode(Map[String, @json.Json]) -> Level raise
+
 pub fn field(Map[String, @json.Json], String, default? : @json.Json) -> @json.Json
 
-pub fn list(@json.Json) -> Array[@json.Json]
+pub fn list(@json.Json) -> Array[@json.Json] raise
 
-pub fn num(@json.Json) -> Double
+pub fn num(@json.Json) -> Double raise
 
-pub fn object(@json.Json) -> Map[String, @json.Json]
+pub fn object(@json.Json) -> Map[String, @json.Json] raise
 
-pub fn text(@json.Json) -> String
+pub fn text(@json.Json) -> String raise
 
 pub fn validate(Map[String, @json.Json]) -> Unit raise
 
 // Errors
 
 // Types and methods
+#derive(@json.FromJson)
+pub struct Activation {
+  x : Double
+  y : Double
+  z : Double
+  radius : Double
+}
+
+#derive(@json.FromJson)
+pub struct Arena {
+  id : String
+  boss : String
+  x : Double
+  y : Double
+  z : Double
+  w : Double
+  d : Double
+  cover : String?
+  music : String
+  victory_effects : Array[String]?
+}
+
+pub struct Belt {
+  deck : Deck
+  motion : ConveyorMotion
+}
+pub impl @json.FromJson for Belt
+
+#derive(@json.FromJson)
+pub struct Branch {
+  key : String
+  target : String?
+  duration : Double?
+}
+
+#derive(@json.FromJson)
+pub struct Circuit {
+  id : String
+  duration : Double
+  cleared_battle : String?
+  branches : Array[Branch]
+}
+
+#derive(@json.FromJson)
+pub struct Control {
+  id : String
+  x : Double
+  y : Double
+  z : Double
+  ground : Double?
+  rest_y : Double?
+  kind : Trigger
+  weapons : Array[@interaction.Action]?
+  target_key : String?
+  circuit_key : String?
+  requires : String?
+  effects : Array[String]?
+  mount : String?
+  facing : (Double, Double, Double)?
+  normal : (Double, Double, Double)?
+  surface : String?
+  rotor : Bool?
+  counterweight : Bool?
+}
+pub fn Control::actions(Self) -> Array[@interaction.Action]
+
+#derive(@json.FromJson)
+pub struct ConveyorMotion {
+  vx : Double?
+  vz : Double?
+  heat : Double?
+  release : String?
+  stop : String?
+  drive : Drive?
+}
+
+#derive(@json.FromJson)
+pub struct Deck {
+  id : String
+  x : Double
+  y : Double
+  z : Double
+  w : Double
+  d : Double
+  rise : Double?
+  water : Bool?
+  region : String?
+}
+
+#derive(@json.FromJson)
+pub struct Drive {
+  enemy : String
+  part : Int32
+}
+
+#derive(@json.FromJson)
+pub struct Enemy {
+  id : String
+  kind : @machine.EnemyKind
+  x : Double
+  y : Double
+  z : Double
+  hp : Double
+  persistent : Bool?
+  emplacement : Bool?
+  magnetic_shield : Bool?
+  coordinated : Bool?
+  encounter : String?
+  battle : String?
+  wave : Int32?
+  startup : Double?
+  opening_crossing : Double?
+  spotter_height : Double?
+  detection_range : Double?
+  patrol : Footprint?
+  activation : Activation?
+  swim_patrol : Array[(Double, Double)]?
+  parts : Array[Double]?
+  core : Double?
+  mirror : Bool?
+  reserve_for : String?
+  reserve_at : Double?
+}
+
+#derive(@json.FromJson)
+pub struct Footprint {
+  x : Double
+  z : Double
+  w : Double
+  d : Double
+}
+
+#derive(@json.FromJson)
+pub struct Hive {
+  id : String
+  name : String
+  x : Double
+  y : Double
+  z : Double
+  heading : Double?
+  requires : String?
+}
+
+#derive(@json.FromJson)
+pub struct Level {
+  controls : Array[Control]
+  pickups : Array[Pickup]
+  hives : Array[Hive]
+  mirrors : Array[Mirror]
+  enemies : Array[Enemy]
+  arenas : Array[Arena]
+  decks : Array[Deck]
+  belts : Array[Belt]
+  heat : Array[Belt]
+  circuits : Array[Circuit]
+  segments : Map[String, Array[(Double, Int32)]]
+}
+
+#derive(@json.FromJson)
+pub struct Mirror {
+  id : String
+  x : Double
+  y : Double
+  z : Double
+  n : (Double, Double, Double)
+  size : Double
+  turnable : Bool?
+}
+
+pub struct Pickup {
+  placement : PickupPlacement
+  acquisition : @interaction.Acquisition
+}
+pub impl @json.FromJson for Pickup
+
+#derive(@json.FromJson)
+pub struct PickupPlacement {
+  id : String
+  x : Double
+  y : Double
+  z : Double
+  requires : String?
+  lift : String?
+  hidden : Bool?
+  preview : Bool?
+}
+
+pub enum Trigger {
+  Shot
+  Single(@interaction.Action)
+}
+pub impl @json.FromJson for Trigger
 
 // Type aliases
 pub type Record = Map[String, @json.Json]

@@ -1,11 +1,16 @@
 ///|
-fn generate_levels(data : Record) -> Unit {
+fn generate_levels(data : Record, level : @catalog.Level) -> Unit raise {
   fn records(
     collection : String,
     ty : String,
-    encode : (Record) -> String,
-  ) -> String {
-    array_def("authored_" + collection, ty, list(data[collection]), encode)
+    encode : (Record) -> String raise,
+  ) -> String raise {
+    array_def(
+      "authored_" + collection,
+      ty,
+      list(required(data, collection)).map(object),
+      encode,
+    )
   }
   let world =
     #|///|
@@ -18,9 +23,14 @@ fn generate_levels(data : Record) -> Unit {
     "simulation/level-world.generated.mbt",
     "// Generated from content/levels/city. Run moon run cmd/content; do not edit.\n\n" +
     [
-      records("decks", "Deck", deck),
-      records("arenas", "Arena", arena),
-      array_def("authored_solids", "Solid", list(data["barriers"]), solid),
+      array_def("authored_decks", "Deck", level.decks, deck),
+      array_def("authored_arenas", "Arena", level.arenas, arena),
+      array_def(
+        "authored_solids",
+        "Solid",
+        list(required(data, "barriers")).map(object),
+        solid,
+      ),
       records("obstacles", "Solid", solid),
       records("architecture", "Solid", solid),
       records("lifts", "Lift", lift),
@@ -30,28 +40,26 @@ fn generate_levels(data : Record) -> Unit {
   write_text(
     "simulation/level-enemies.generated.mbt",
     "// Authored enemy definitions. Runtime state is constructed by Enemy::new.\n\n" +
-    records("enemies", "EnemyDef", enemy),
+    array_def("authored_enemies", "EnemyDef", level.enemies, enemy),
   )
   write_text(
     "simulation/level-controls.generated.mbt",
     [
-      records("controls", "Control", control),
-      records("hives", "Hive", hive),
-      records("pickups", "Pickup", pickup),
-      records("mirrors", "Mirror", mirror),
+      array_def("authored_controls", "Control", level.controls, control),
+      array_def("authored_hives", "Hive", level.hives, hive),
+      array_def("authored_pickups", "Pickup", level.pickups, pickup),
+      array_def("authored_mirrors", "Mirror", level.mirrors, mirror),
     ].join("\n"),
   )
-  let circuits = list(data["circuits"])
   let signals = []
-  for row in circuits {
-    let r = object(row)
-    if field(r, "clearedBattle") is String(_) {
-      signals.push(literal(r["clearedBattle"]) + ":" + literal(r["id"]))
+  for c in level.circuits {
+    if c.cleared_battle is Some(battle) {
+      signals.push(source(battle) + ":" + source(c.id))
     }
   }
   write_text(
     "simulation/level-circuits.generated.mbt",
-    array_def("authored_circuits", "Circuit", circuits, circuit) +
+    array_def("authored_circuits", "Circuit", level.circuits, circuit) +
     "\n///|\nfn authored_battle_signals() -> Map[String, String] {\n{" +
     signals.join(",") +
     "}\n}\n",
@@ -59,18 +67,15 @@ fn generate_levels(data : Record) -> Unit {
   write_text(
     "simulation/level-motion.generated.mbt",
     [
-      records("belts", "Belt", belt),
-      records("heat", "Belt", belt),
+      array_def("authored_belts", "Belt", level.belts, belt),
+      array_def("authored_heat", "Belt", level.heat, belt),
       records("currents", "Current", current),
     ].join("\n"),
   )
   let segments = []
-  for id, rows in object(data["belt-segments"]) {
-    let pairs = list(rows).map(v => {
-      let p = list(v)
-      "(" + literal(p[0]) + "," + literal(p[1]) + ")"
-    })
-    segments.push(literal(Json::string(id)) + ":[" + pairs.join(",") + "]")
+  for id, rows in level.segments {
+    let pairs = rows.map(p => "(" + source(p.0) + "," + source(p.1) + ")")
+    segments.push(source(id) + ":[" + pairs.join(",") + "]")
   }
   write_text(
     "renderer/belt-data.generated.mbt",
@@ -86,28 +91,31 @@ fn generate_audio() -> Unit raise {
   for name, rows in object(read_json("content/sounds.json")) {
     let layers = list(rows).map(v => {
       let r = object(v)
-      let duration = num(r["duration"])
+      let duration = num(required(r, "duration"))
       let attack = Json::number(
         num(field(r, "attack", default=0.003)).min(duration * 0.3),
       )
       let hold = Json::number(
         num(field(r, "hold", default=0)).min(duration * 0.5),
       )
-      "{noise:\{field(r,"noise") is True},frequency:\{literal(field(r,"frequency",default=0))},end:\{literal(field(r,"end",default=0))},duration:\{literal(r["duration"])},gain:\{literal(r["gain"])},delay:\{literal(field(r,"delay",default=0))},attack:\{literal(attack)},hold:\{literal(hold)},wave:\{literal(field(r,"type",default="sine"))},cutoff:\{literal(field(r,"cutoff",default=0))},filter:\{literal(field(r,"filter",default="lowpass"))}}"
+      "{noise:\{field(r,"noise") is True},frequency:\{literal(field(r,"frequency",default=0))},end:\{literal(field(r,"end",default=0))},duration:\{literal(required(r,"duration"))},gain:\{literal(required(r,"gain"))},delay:\{literal(field(r,"delay",default=0))},attack:\{literal(attack)},hold:\{literal(hold)},wave:\{literal(field(r,"type",default="sine"))},cutoff:\{literal(field(r,"cutoff",default=0))},filter:\{literal(field(r,"filter",default="lowpass"))}}"
     })
     voices.push(literal(Json::string(name)) + ": [" + layers.join(",") + "]")
   }
-  let tracks = list(object(read_json("public/music/manifest.json"))["tracks"]).map(v => {
-      let r = object(v)
-      let mix = Json::string("/music/" + text(object(r["assets"])["mix"]))
-      literal(r["id"]) +
-      ": (" +
-      literal(mix) +
-      "," +
-      literal(field(r, "gain", default=1)) +
-      ")"
-    },
-  )
+  let tracks = list(
+    required(object(read_json("public/music/manifest.json")), "tracks"),
+  ).map(v => {
+    let r = object(v)
+    let mix = Json::string(
+      "/music/" + text(required(object(required(r, "assets")), "mix")),
+    )
+    literal(required(r, "id")) +
+    ": (" +
+    literal(mix) +
+    "," +
+    literal(field(r, "gain", default=1)) +
+    ")"
+  })
   write_text(
     "cmd/play/sound-data.generated.mbt",
     "// Authored sound parameters.\n///|\nlet sound_layers : Map[String,Array[Voice]] = {" +

@@ -1,4 +1,14 @@
 ///|
+#derive(@json.FromJson)
+priv struct TemplateDefinition {
+  id : String
+  label : String
+  source : String
+  collection : String
+  defaults : Json
+}
+
+///|
 extern "js" fn random_uuid() -> String = "()=>crypto.randomUUID()"
 
 ///|
@@ -112,16 +122,16 @@ fn Workspace::add_dialog(self : Workspace) -> Unit {
     ] {
     option(cat, p.0, p.1)
   }
-  if @model.editable(category(self.root)) {
-    cat.set("value", Raw::of(category(self.root)))
+  if self.selection.owner() is Some(root) && @model.editable(category(root)) {
+    cat.set("value", Raw::of(category(root)))
   }
   let menu = el("select")
   attr(menu, "aria-label", "对象模板")
   fn populate() {
     replace(menu, [])
-    for def in @archive.items(self.definitions) {
-      if str(def, "collection") == str(cat, "value") {
-        option(menu, str(def, "id"), str(def, "label"))
+    for def in self.definitions {
+      if def.collection == str(cat, "value") {
+        option(menu, def.id, def.label)
       }
     }
   }
@@ -129,8 +139,8 @@ fn Workspace::add_dialog(self : Workspace) -> Unit {
   populate()
   let axes = el("div", style="axes")
   let inputs : Map[String, Raw] = Map([])
-  let center = if exists(self.root) {
-    self.root.get("position")
+  let center = if self.selection.owner() is Some(root) {
+    root.get("position")
   } else {
     self.editor.get("controls").get("center")
   }
@@ -162,17 +172,14 @@ fn Workspace::add_dialog(self : Workspace) -> Unit {
   append(d, menu)
   append(d, axes)
   dialog_buttons(d, "添加到关卡", () => {
-    guard @archive.items(self.definitions)
-      .iter()
-      .find_first(v => str(v, "id") == str(menu, "value"))
+    guard self.definitions.iter().find_first(v => v.id == str(menu, "value"))
       is Some(def) else {
       raise Failure("找不到对象模板")
     }
     guard children(self.templates)
       .iter()
       .find_first(v => {
-        category(v) == str(def, "collection") &&
-        str(entity(v), "id") == str(def, "source")
+        category(v) == def.collection && str(entity(v), "id") == def.source
       })
       is Some(src) else {
       raise Failure("找不到模板模型")
@@ -187,9 +194,9 @@ fn Workspace::add_dialog(self : Workspace) -> Unit {
     let bundle = @model.clone_entity(
       self.templates,
       src,
-      self.new_id(str(def, "id")),
+      self.new_id(def.id),
       position,
-      defaults=def.get("defaults"),
+      defaults=Raw::from_json(def.defaults),
     )
     self.presence(bundle.get("root"), @model.array(bundle, "objects"), true)
   })
@@ -197,8 +204,9 @@ fn Workspace::add_dialog(self : Workspace) -> Unit {
 
 ///|
 fn Workspace::duplicate(self : Workspace) -> Unit raise {
-  let src = self.root
-  guard @model.editable(category(src)) else { return }
+  guard self.selection.owner() is Some(src) && @model.editable(category(src)) else {
+    return
+  }
   let id = str(entity(src), "id")
   let suffix = id.split("-").last().unwrap_or("")
   let base = if suffix.length() == 8 &&
@@ -225,8 +233,9 @@ fn Workspace::duplicate(self : Workspace) -> Unit raise {
 
 ///|
 fn Workspace::delete_dialog(self : Workspace) -> Unit {
-  let root = self.root
-  guard @model.editable(category(root)) else { return }
+  guard self.selection.owner() is Some(root) && @model.editable(category(root)) else {
+    return
+  }
   let e = entity(root)
   let id = str(e, "id")
   let d = open_dialog("删除 " + id)
@@ -242,12 +251,16 @@ fn Workspace::delete_dialog(self : Workspace) -> Unit {
       continue
     }
     let game = get(data(n), "game")
-    if @archive.keys(game)
-      .iter()
-      .any(k => {
-        let v = game.get(k)
-        v.strict_equal(Raw::of(id)) ||
-        (@archive.kind(v) == "array" && @model.index_of(v, Raw::of(id)) >= 0)
+    if exists(game) &&
+      game.to_json() is Object(record) &&
+      record
+      .values()
+      .any(value => {
+        match value {
+          String(ref_id) => id == ref_id
+          Array(items) => items.contains(Json::string(id))
+          _ => false
+        }
       }) {
       let label = category(n) + ": " + str(entity(n), "id")
       if !refs.contains(label) {
@@ -286,7 +299,7 @@ fn Workspace::delete_dialog(self : Workspace) -> Unit {
 ///|
 async fn Workspace::init_tools(self : Workspace) -> Unit {
   let templates = api("templates")
-  self.definitions = api("template-definitions")
+  self.definitions = @json.from_json(api("template-definitions").to_json())
   let loader = new_instance(self.three.get("ObjectLoader"), [])
   self.templates = promise(call(loader, "parseAsync", [templates])).wait()
   let dialog = el("dialog")

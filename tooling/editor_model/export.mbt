@@ -1,21 +1,4 @@
 ///|
-let directory : String = "content/levels/city"
-
-///|
-pub fn read_catalog() -> Raw {
-  let result = Raw::object()
-  for f in @archive.list_files(directory) {
-    if f.strip_suffix(".json") is Some(name) {
-      result.set(
-        name.to_owned(),
-        @archive.parse(@archive.read_file(directory + "/" + f)),
-      )
-    }
-  }
-  result
-}
-
-///|
 fn revision() -> String {
   let chunks = [
     for f in @archive.list_files(directory) => {
@@ -34,36 +17,27 @@ fn collidable(k : String) -> Bool {
 }
 
 ///|
-fn record_for(catalog : Raw, e : Raw) -> Raw {
-  let k = str(e, "collection")
-  let rows = array(catalog, k)
-  let index = get(e, "index")
-  if collidable(k) && exists(index) {
-    let i : Int32 = index.cast()
-    if i >= 0 &&
-      i < rows.length() &&
-      get(rows[i], "id").strict_equal(get(e, "id")) {
-      return rows[i]
-    }
-    return Raw::undefined()
+fn collision_object(k : String, r : Json) -> Raw raise {
+  guard r
+    is {
+      "id": String(id),
+      "x": Number(x, ..),
+      "y": Number(y, ..),
+      "z": Number(z, ..),
+      "w": Number(w, ..),
+      "d": Number(d, ..),
+      ..
+    } else {
+    raise Failure("Invalid collider in " + k)
   }
-  for r in rows {
-    if str(r, if k == "barriers" { "circuitKey" } else { "id" }) ==
-      str(e, "key") {
-      return r
+  let h = if k == "decks" {
+    0.25
+  } else {
+    guard r is { "h": Number(h, ..), .. } else {
+      raise Failure("Missing collider height in " + k)
     }
+    h
   }
-  Raw::undefined()
-}
-
-///|
-fn collision_object(k : String, r : Raw) -> Raw {
-  let h = if k == "decks" { 0.25 } else { number(r, "h") }
-  let w = number(r, "w")
-  let d = number(r, "d")
-  let x = number(r, "x")
-  let y = number(r, "y")
-  let z = number(r, "z")
   let matrix = matrix_value(
     @math.Matrix4::new()
     .make_scale(w, h, d)
@@ -75,8 +49,8 @@ fn collision_object(k : String, r : Raw) -> Raw {
   )
   let e = @archive.obj([
     ("collection", Raw::of(k)),
-    ("id", r.get("id")),
-    ("key", r.get("id")),
+    ("id", Raw::of(id)),
+    ("key", Raw::of(id)),
   ])
   let placement = @archive.obj([
     ("origin", Raw::from_array([x, y, z])),
@@ -90,7 +64,7 @@ fn collision_object(k : String, r : Raw) -> Raw {
   @archive.obj([
     ("uuid", Raw::of(new_uuid())),
     ("type", Raw::of("Mesh")),
-    ("name", Raw::of(k + ": " + str(r, "id"))),
+    ("name", Raw::of(k + ": " + id)),
     ("geometry", Raw::of("tankle-editor-collision-box")),
     ("material", Raw::of("tankle-editor-collision-material")),
     ("matrix", matrix),
@@ -122,70 +96,6 @@ fn collision_resources(scene : Raw) -> Unit {
 }
 
 ///|
-fn references(catalog : Raw) -> Raw {
-  let sources = if @archive.exists("simulation") {
-    [
-      for name in @archive.list_files("simulation") if name.has_suffix(".mbt") &&
-      !name.contains("generated") &&
-      !name.contains("_test") &&
-      !name.contains("_wbtest") => {
-        (name, buffer_text(@archive.read_file("simulation/" + name)))
-      }
-    ]
-  } else {
-    []
-  }
-  fn mentions(v : Raw, id : String) -> Bool {
-    match @archive.kind(v) {
-      "string" => {
-        let s : String = v.cast()
-        s == id || s.has_prefix(id + ":")
-      }
-      "array" => @archive.items(v).iter().any(child => mentions(child, id))
-      "object" =>
-        @archive.keys(v).iter().any(k => k != "id" && mentions(v.get(k), id))
-      _ => false
-    }
-  }
-  let result = Raw::object()
-  for k in ["enemies", "controls", "pickups"] {
-    for r in array(catalog, k) {
-      let id = str(r, "id")
-      let refs = Set([])
-      for lib in @archive.keys(catalog) {
-        if @archive.kind(catalog.get(lib)) != "array" {
-          continue
-        }
-        for other in array(catalog, lib) {
-          if !r.strict_equal(other) && mentions(other, id) {
-            refs.add(
-              lib +
-              ": " +
-              (if exists(get(other, "id")) {
-                str(other, "id")
-              } else {
-                "unnamed"
-              }),
-            )
-          }
-        }
-      }
-      if array(catalog, "circuits").iter().any(c => str(c, "id") == id) {
-        refs.add("circuits: " + id)
-      }
-      let query = @archive.stringify(Raw::of(id))
-      for entry in sources {
-        if entry.1.contains(query) {
-          refs.add("simulation/" + entry.0)
-        }
-      }
-      result.set(k + ":" + id, Raw::from_array(refs.iter().to_array()[:]))
-    }
-  }
-  result
-}
-
-///|
 pub extern "js" fn buffer_text(buf : Raw) -> String = "b=>b.toString('utf8')"
 
 ///|
@@ -208,7 +118,7 @@ pub fn export_project(
   colliders~ : Bool = false,
 ) -> Raw raise {
   let scene = @archive.read_scene()
-  let catalog = read_catalog()
+  let catalog = EditableCatalog::read()
   let original = scene.get("object")
   let world = transforms(original)
   let mut prefix = ""
@@ -228,7 +138,8 @@ pub fn export_project(
         collidable(lib.to_owned()) {
         let k = lib.to_owned()
         let matches = [
-          for r in array(catalog, k) if str(r, "id") == id.to_owned() => r
+          for r in catalog.rows(k) if r is { "id": String(v), .. } &&
+          v == id.to_owned() => r
         ]
         guard matches.length() < 2 else {
           raise Failure(
@@ -275,7 +186,7 @@ pub fn export_project(
   if colliders && !exists(collider) {
     collision_resources(scene)
     for k in ["decks", "architecture", "obstacles"] {
-      for i, r in array(catalog, k) {
+      for i, r in catalog.rows(k) {
         let helper = collision_object(k, r)
         entity(helper).set("index", Raw::of(i))
         roots.push(helper)
@@ -293,7 +204,7 @@ pub fn export_project(
     ("version", Raw::of(1)),
     ("fullScene", Raw::of(selection is None)),
     ("revision", Raw::of(revision())),
-    ("references", references(catalog)),
+    ("references", Raw::from_json(@json.to_json(catalog.references()))),
     ("roots", Raw::from_array(ids[:])),
   ])
   user.set("tankle", metadata)
@@ -309,28 +220,33 @@ pub fn export_project(
     }
     let e = entity(n)
     if exists(e) {
-      let r = record_for(catalog, e)
-      guard exists(r) else { raise Failure("Missing " + entity_key(e)) }
-      let game = @archive.copy(r)
-      for axis in ["x", "y", "z"] {
-        @archive.remove(game, axis)
+      let k = str(e, "collection")
+      guard catalog.find(e) is Some(slot) &&
+        catalog.rows(k)[slot] is Object(record) else {
+        raise Failure("Missing " + entity_key(e))
       }
-      data(n).set("game", game)
-      if str(e, "collection") == "controls" {
-        for c in array(catalog, "circuits") {
-          if str(c, "id") == str(e, "id") {
-            data(n).set("circuit", clone(c))
+      let game = record.filter((key, _) => {
+        key != "x" && key != "y" && key != "z"
+      })
+      data(n).set("game", Raw::from_json(Json::object(game)))
+      if k == "controls" {
+        for circuit in catalog.rows("circuits") {
+          if circuit is { "id": String(id), .. } && id == str(e, "id") {
+            data(n).set("circuit", Raw::from_json(circuit))
             break
           }
         }
       }
-      let y = if exists(get(r, "y")) {
-        r.get("y")
-      } else {
-        array(r, "stops")[0]
+      let y = match record.get("y") {
+        Some(Number(_, ..) as y) => y
+        _ =>
+          match record.get("stops") {
+            Some(Array([first, ..])) => first
+            _ => raise Failure("Missing floor on " + entity_key(e))
+          }
       }
       let place = @archive.obj([
-        ("origin", Raw::from_array([r.get("x"), y, r.get("z")])),
+        ("origin", Raw::from_json([record["x"], y, record["z"]])),
         ("matrix", matrix_value(world[uuid(n)])),
       ])
       data(n).set("placement", place)

@@ -1,59 +1,57 @@
 ///|
+// ObjectLoader may finish synchronously when all textures are packed in memory.
+extern "js" fn when_textured(
+  start : ((@core.Object3D) -> Unit) -> Unit,
+) -> @js_async.Promise[@core.Object3D] = "f=>new Promise(f)"
+
+///|
 fn parse_scene(
-  text : String,
-  buffers : @core.JsValue,
-  textures_ready : () -> Unit,
-) -> @core.Object3D {
+  tree : Json,
+  buffers : SceneBuffers,
+) -> @js_async.Promise[@core.Object3D] {
   let loader = @loaders.ObjectLoader::new()
-  let images = buffers.get("images")
+  // The override calls the default material parser after supplying packed image data.
+  let defaults = @loaders.ObjectLoader::new()
   loader.set_parse_materials_override(fn(json, textures) {
     for id, texture in textures {
-      let pixels = images.get(id)
-      if !pixels.is_undefined() && texture.image() is DataImage(image) {
-        image.data = Some(pixels.cast())
+      if buffers.images.get(id) is Some(pixels) &&
+        texture.image() is DataImage(image) {
+        image.data = Some(pixels)
       }
     }
-    @loaders.ObjectLoader::new().parse_materials(json, textures)
+    defaults.parse_materials(json, textures)
   })
-  let scene = loader.parse(try! @json.parse(text), on_load=fn(_) {
-    textures_ready()
-  })
-  let geometries = buffers.get("geometry")
-  let instances = buffers.get("instances")
-  fn restore(attribute : @core.BufferAttribute, view : @core.JsValue) {
-    if !view.is_undefined() {
-      attribute.array = view.cast()
-      attribute.count = attribute.array.length() / attribute.item_size
+  when_textured(fn(done) {
+    let scene = loader.parse(tree, on_load=done)
+    fn restore(attribute : @core.BufferAttribute, array : @core.TypedArray?) {
+      if array is Some(array) {
+        attribute.array = array
+        attribute.count = array.length() / attribute.item_size
+      }
     }
-  }
-  scene.traverse(fn(object) {
-    if object.kind is Mesh({ kind: InstancedMesh(data), .. }) {
-      let attrs = instances.get(object.uuid)
-      if !attrs.is_undefined() {
+    scene.traverse(fn(object) {
+      if object.kind is Mesh({ kind: InstancedMesh(data), .. }) &&
+        buffers.instances.get(object.uuid) is Some(attrs) {
         restore(data.instance_matrix, attrs.get("instanceMatrix"))
         if data.instance_color is Some(color) {
           restore(color, attrs.get("instanceColor"))
         }
       }
-    }
-    guard object.get_geometry() is Some(geometry) else { return }
-    let packed = geometries.get(geometry.uuid)
-    if packed.is_undefined() {
-      return
-    }
-    if geometry.index is Some(Buffer(index)) {
-      restore(index, packed.get("index"))
-    }
-    let attributes = packed
-    for name, slot in geometry.attributes {
-      if slot is Buffer(attribute) {
-        restore(attribute, attributes.get(name))
+      // Multiple meshes can reference the same geometry.
+      guard object.get_geometry() is Some(geometry) &&
+        buffers.geometry.remove_and_get(geometry.uuid) is Some(packed) else {
+        return
       }
-    }
-    // Meshes can share a geometry.
-    geometries.set(geometry.uuid, @core.JsValue::undefined())
+      if geometry.index is Some(Buffer(index)) {
+        restore(index, packed.get("index"))
+      }
+      for name, slot in geometry.attributes {
+        if slot is Buffer(attribute) {
+          restore(attribute, packed.get(name))
+        }
+      }
+    })
   })
-  scene
 }
 
 ///|

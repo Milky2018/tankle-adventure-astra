@@ -1,4 +1,5 @@
 import {
+  "milky/tankle-astra/scene_format",
   "moonbitlang/core/json",
   "moonbitlang/core/async",
   "moonbitlang/core/async/js_async",

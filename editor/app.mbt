@@ -8,20 +8,18 @@ priv struct Workspace {
   categories : Map[String, String]
   mut entities : Array[Raw]
   mut collisions : Array[Raw]
-  mut root : Raw
+  mut selection : Selection
   mut floor : Double?
-  mut part : Bool
   mut busy : Bool
   mut ready : Bool
-  mut mode : String
+  mut mode : Tab
   mut scene_dirty : Bool
   mut skills_dirty : Bool
   mut version : Int32
   mut game_bg : Raw
-  mut abilities : Raw
-  mut revision : Raw
+  abilities : AbilitySettings
   mut templates : Raw
-  mut definitions : Raw
+  mut definitions : Array[TemplateDefinition]
 }
 
 ///|
@@ -109,7 +107,10 @@ fn Workspace::refresh(self : Workspace) -> Unit {
   for k in ["copy-entity", "delete-entity"] {
     by_id(k).set(
       "disabled",
-      Raw::of(blocked || !@model.editable(category(self.root))),
+      Raw::of(
+        blocked ||
+        !(self.selection.owner() is Some(n) && @model.editable(category(n))),
+      ),
     )
   }
   let history = self.editor.get("history")
@@ -174,7 +175,7 @@ fn Workspace::apply_floor(self : Workspace) -> Unit {
       "visible",
       Raw::of(
         level &&
-        (n.strict_equal(self.root) || truth(by_id("collisions"), "checked")),
+        (self.selection.is_owner(n) || truth(by_id("collisions"), "checked")),
       ),
     )
   }
@@ -234,7 +235,7 @@ fn Workspace::render_list(self : Workspace) -> Unit {
   let container = fragment()
   for n in rows {
     let button = el("button", label=title(n))
-    attr(button, "aria-current", n.strict_equal(self.root).to_string())
+    attr(button, "aria-current", self.selection.is_owner(n).to_string())
     append(
       button,
       el(
@@ -262,8 +263,8 @@ fn Workspace::render_list(self : Workspace) -> Unit {
 
 ///|
 fn Workspace::focus(self : Workspace, overview~ : Bool = false) -> Unit {
-  let n = if exists(self.root) {
-    self.root
+  let n = if self.selection.owner() is Some(owner) {
+    owner
   } else if !self.entities.is_empty() {
     self.entities[0]
   } else {
@@ -287,8 +288,7 @@ fn Workspace::focus(self : Workspace, overview~ : Bool = false) -> Unit {
 
 ///|
 fn Workspace::select_entity(self : Workspace, n : Raw) -> Unit {
-  self.part = false
-  self.root = n
+  self.selection = Whole(n)
   follow_floor(n)
   ignore(call(self.editor, "select", [n]))
   self.apply_floor()
@@ -307,13 +307,12 @@ fn Workspace::index_entities(self : Workspace) -> Unit {
 ///|
 fn Workspace::entity_changed(self : Workspace, n : Raw) -> Unit {
   self.index_entities()
-  self.root = n
-  self.part = false
   if exists(n) {
     by_id("search").set("value", Raw::of(""))
     by_id("category").set("value", Raw::of(category(n)))
     self.select_entity(n)
   } else {
+    self.selection = Nothing
     ignore(call(self.editor, "deselect", []))
     set_text(by_id("selection-note"), "")
     self.properties()

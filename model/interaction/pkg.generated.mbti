@@ -1,0 +1,47 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "milky/tankle-astra/model/interaction"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+#derive(@debug.Debug)
+pub(all) enum Acquisition {
+  Overdrive
+  Magnet
+  MortarModule
+  Flotation
+  Phoenix
+  LaserModule
+  Circulation
+  Armor
+  Cooling
+  CannonCoil
+  MortarCharge
+  LaserFocus
+  Scope
+}
+
+#derive(Eq, @debug.Debug, @json.FromJson)
+pub(all) enum Action {
+  CannonAction
+  MortarAction
+  LaserAction
+  MagnetAction
+  Use
+  Dock
+}
+#deprecated
+pub fn Action::equal(Self, Self) -> Bool
+#deprecated
+pub fn Action::not_equal(Self, Self) -> Bool
+
+// Type aliases
+
+// Traits

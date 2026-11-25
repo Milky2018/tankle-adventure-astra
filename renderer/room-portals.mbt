@@ -91,26 +91,22 @@ fn RoomVisibility::new(scene : @core.Object3D) -> RoomVisibility {
   if data.is_undefined() {
     return result
   }
-  let rows : FixedArray[FixedArray[@core.JsValue]] = data.cast()
-  for row in rows {
-    let bounds = @m3.Box3::new(
-      min=@m3.Vector3::new(row[0].cast(), row[1].cast(), row[2].cast()),
-      max=@m3.Vector3::new(row[3].cast(), row[4].cast(), row[5].cast()),
-    )
-    let portals : FixedArray[FixedArray[Double]] = row[6].cast()
-    let edges = []
-    for p in portals {
-      edges.push({
-        dest: p[0].to_int(),
-        face: p[1].to_int(),
-        solid: p[2] != 0,
-        bounds: @m3.Box3::new(
-          min=@m3.Vector3::new(p[3], p[4], p[5]),
-          max=@m3.Vector3::new(p[6], p[7], p[8]),
-        ),
-      })
-    }
-    result.rooms.push({ bounds, edges, window: None, })
+  let baked : Array[@scene_format.Room] = @json.from_json(data.to_json()) catch {
+    _ => return result
+  }
+  fn box(bounds : @scene_format.Bounds) -> @m3.Box3 {
+    let (x, y, z) = bounds.min
+    let (u, v, w) = bounds.max
+    @m3.Box3::new(min=@m3.Vector3::new(x, y, z), max=@m3.Vector3::new(u, v, w))
+  }
+  for room in baked {
+    let edges : Array[Portal] = room.portals.map(p => {
+      dest: p.destination,
+      face: p.face,
+      solid: p.solid,
+      bounds: box(p.bounds),
+    })
+    result.rooms.push({ bounds: box(room.bounds), edges, window: None, })
   }
   let bins : Map[(Int32, Int32, Int32), SceneryBin] = Map([])
   // Keep occluded casters available to the shadow pass on a dedicated layer.

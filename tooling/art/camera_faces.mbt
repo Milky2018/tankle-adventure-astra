@@ -2,13 +2,13 @@
 pub fn camera_faces(scene : Raw, view : (Raw) -> Raw) -> Unit {
   let geometry = resource_index(array_field(scene, "geometries"))
   let materials = resource_index(array_field(scene, "materials"))
-  let faces : Map[String, Raw] = Map([])
-  fn visit(n : Raw, parent : FixedArray[Double], fixture_parent : Bool) {
+  let faces : Set[@scene_format.Bounds] = Set([])
+  fn visit(n : Raw, parent : @math.Matrix4, fixture_parent : Bool) {
     if !visible(n) || array_field(n, "animations").length() > 0 {
       return
     }
     let fixture = fixture_parent || binding(n).has_suffix("/fixture-collider")
-    let matrix = compose_transform(parent, n.get("matrix").cast())
+    let matrix = parent.clone().multiply(node_matrix(n))
     let material_ok = match materials.get(string_field(n, "material")) {
       None => true
       Some(m) => visible(m) && !truthy(m, "wireframe")
@@ -77,8 +77,7 @@ pub fn camera_faces(scene : Raw, view : (Raw) -> Raw) -> Unit {
         guard length >= spans[2] * spans[2] + spans[1] * spans[1] - 0.00001 else {
           continue
         }
-        let face = lo + hi
-        faces[face.map(x => x.to_string()).join(",")] = Raw::from_array(face[:])
+        faces.add({ min: (lo[0], lo[1], lo[2]), max: (hi[0], hi[1], hi[2]), })
       }
     }
     for c in children(n) {
@@ -86,6 +85,9 @@ pub fn camera_faces(scene : Raw, view : (Raw) -> Raw) -> Unit {
     }
   }
   let root = scene.get("object")
-  visit(root, identity(), false)
-  put_array(user_data(root), "cameraFaces", faces.values().to_array())
+  visit(root, @math.Matrix4::new(), false)
+  user_data(root).set(
+    "cameraFaces",
+    Raw::from_json(@json.to_json(faces.to_array())),
+  )
 }

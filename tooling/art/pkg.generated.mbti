@@ -3,40 +3,29 @@ package "milky/tankle-astra/tooling/art"
 
 import {
   "moonbit-community/three/core",
+  "moonbitlang/core/json",
+  "moonbitlang/core/set",
 }
 
 // Values
-pub fn bake_city(String, String, FixedArray[@core.JsValue], FixedArray[@core.JsValue]) -> Unit
+pub fn bake_city(String, String, FixtureLayout, Array[String]) -> Unit raise
 
-pub fn bake_fittings(@core.JsValue, (@core.JsValue) -> @core.JsValue, FixedArray[@core.JsValue], FixedArray[@core.JsValue]) -> Unit
-
-pub fn batch_fittings(@core.JsValue, FixedArray[@core.JsValue], FixedArray[@core.JsValue], (@core.JsValue) -> FixedArray[Double], (@core.JsValue) -> @core.BufferGeometry, ((FixedArray[@core.BufferGeometry]) -> @core.JsValue) -> Unit) -> Unit
+pub fn bake_fittings(@core.JsValue, (@core.JsValue) -> @core.JsValue, FixtureLayout) -> Unit
 
 pub fn camera_faces(@core.JsValue, (@core.JsValue) -> @core.JsValue) -> Unit
 
-pub fn compose_transform(FixedArray[Double], FixedArray[Double]) -> FixedArray[Double]
-
-pub fn depth_geometry(FixedArray[Double], FixedArray[Int32]) -> @core.BufferGeometry
-
-pub fn determinant(FixedArray[Double]) -> Double
-
 pub fn extract_repeats(@core.JsValue, (@core.JsValue) -> @core.JsValue) -> Unit
-
-pub fn geometry_center(@core.TypedArray, Int32) -> FixedArray[Double]
-
-pub fn identity() -> FixedArray[Double]
-
-pub fn instance_belt_rollers(@core.JsValue) -> Unit
-
-pub fn project(FixedArray[Double], Double, Double, Double) -> FixedArray[Double]
-
-pub fn read_geometry(@core.JsValue, @core.JsValue) -> @core.BufferGeometry
 
 pub fn room_portals(@core.JsValue, (@core.JsValue) -> @core.JsValue) -> Unit
 
 // Errors
 
 // Types and methods
+pub struct FixtureLayout {
+  walls : Map[String, (Double, Double, Double)]
+  controls : @set.Set[String]
+}
+pub fn FixtureLayout::from_catalog(@json.Json, @json.Json) -> Self raise
 
 // Type aliases
 

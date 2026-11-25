@@ -12,18 +12,6 @@ pub fn Enemy::battery_exposed(self : Enemy, index : Int32) -> Bool {
 }
 
 ///|
-pub fn EnemyKind::boss_name(self : EnemyKind) -> String {
-  match self {
-    ScrapRam => "Scrap Ram"
-    Sorter => "Sorter"
-    Overseer => "Overseer"
-    Guardian => "Optical Guardian"
-    Keeper => "Final Keeper"
-    _ => ""
-  }
-}
-
-///|
 pub fn Enemy::boss_status(self : Enemy) -> String {
   match self.definition.kind {
     ScrapRam =>

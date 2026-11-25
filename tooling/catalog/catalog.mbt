@@ -10,34 +10,34 @@ pub fn field(r : Record, key : String, default~ : Json = @json.null) -> Json {
 }
 
 ///|
-pub fn object(v : Json) -> Record {
+pub fn object(v : Json) -> Record raise {
   guard v is Object(fields) else {
-    abort("Expected authored object, got " + v.stringify())
+    raise Failure("Expected authored object, got " + v.stringify())
   }
   fields
 }
 
 ///|
-pub fn list(v : Json) -> Array[Json] {
+pub fn list(v : Json) -> Array[Json] raise {
   match v {
     Null => []
     Array(items) => items
-    _ => abort("Expected authored array, got " + v.stringify())
+    _ => raise Failure("Expected authored array, got " + v.stringify())
   }
 }
 
 ///|
-pub fn text(v : Json) -> String {
+pub fn text(v : Json) -> String raise {
   guard v is String(s) else {
-    abort("Expected authored string, got " + v.stringify())
+    raise Failure("Expected authored string, got " + v.stringify())
   }
   s
 }
 
 ///|
-pub fn num(v : Json) -> Double {
+pub fn num(v : Json) -> Double raise {
   guard v is Number(n, ..) else {
-    abort("Expected authored number, got " + v.stringify())
+    raise Failure("Expected authored number, got " + v.stringify())
   }
   n
 }
@@ -51,18 +51,8 @@ fn finite(v : Json, path : String) -> Double raise {
 }
 
 ///|
-fn one_of(v : Json, choices : Array[String]) -> Bool {
-  v is String(s) && choices.contains(s)
-}
-
-///|
 fn present(v : Json) -> Bool {
   v is String(s) && !s.is_empty()
-}
-
-///|
-fn boss(v : Json) -> Bool {
-  one_of(v, ["prototype", "overseer", "sorter", "guardian", "keeper"])
 }
 
 ///|
@@ -77,8 +67,13 @@ fn records(catalog : Record, k : String) -> Array[Record] raise {
 }
 
 ///|
-pub fn validate(catalog : Record) -> Unit raise {
-  let enemies = records(catalog, "enemies")
+pub fn decode(catalog : Record) -> Level raise {
+  // Historically an explicit null in an optional object field means it was omitted.
+  // Array entries retain their index and are still checked by the field's decoder.
+  let input = Json::object(catalog).transform(
+    @json.Replacer((_, v) => if v is Null { None } else { Some(v) }),
+  )
+  let level : Level = @json.from_json(input)
   let obstacles = records(catalog, "obstacles")
   let lifts = records(catalog, "lifts")
   for
@@ -132,34 +127,8 @@ pub fn validate(catalog : Record) -> Unit raise {
       }
       match k {
         "enemies" => {
-          let ty = field(r, "type")
-          guard boss(ty) ||
-            one_of(ty, [
-              "hunter", "dredger", "scout", "turret", "guard", "skirmisher", "sniper",
-              "artillery", "miner", "welder", "repairer", "reflector", "interceptor",
-              "bastion", "siege", "prism", "flanker",
-            ]) else {
-            raise Failure(path + ".type is unknown: " + ty.stringify())
-          }
           guard !r.contains("variant") && !r.contains("guardian") else {
             raise Failure(path + " must identify its machine with type alone")
-          }
-          if !(field(r, "openingCrossing") is Null) &&
-            finite(r["openingCrossing"], path + ".openingCrossing") < 0 {
-            raise Failure(path + ".openingCrossing cannot be negative")
-          }
-          guard finite(field(r, "hp"), path + ".hp") > 0 else {
-            raise Failure(path + ".hp must be positive")
-          }
-        }
-        "pickups" => {
-          guard one_of(field(r, "ability"), [
-              "overdrive", "magnet", "mortar", "flotation", "phoenix", "laser", "circulation",
-            ]) ||
-            one_of(field(r, "upgrade"), [
-              "armor", "cooling", "cannon", "mortar", "laser", "scope",
-            ]) else {
-            raise Failure(path + " needs a supported ability or upgrade")
           }
         }
         "lifts" => {
@@ -170,121 +139,117 @@ pub fn validate(catalog : Record) -> Unit raise {
             ignore(finite(v, path + ".stops"))
           }
         }
-        "controls" => {
-          guard one_of(field(r, "kind"), [
-            "shot", "magnet", "laser", "use", "dock",
-          ]) else {
-            raise Failure(path + ".kind is unknown")
-          }
-          match field(r, "effects") {
-            Null => ()
-            Array(a) if a.length() > 0 &&
-              a.every(v => v is String(s) && !s.trim().is_empty()) => ()
-            _ =>
-              raise Failure(path + ".effects must contain at least one signal")
-          }
-          match field(r, "weapons") {
-            Null => ()
-            Array(a) if a.every(v => {
-                one_of(v, ["cannon", "mortar", "laser", "magnet", "use", "dock"])
-              }) => ()
-            _ => raise Failure(path + ".weapons contains an unsupported action")
-          }
-        }
-        "circuits" => {
-          guard finite(field(r, "duration"), path + ".duration") >= 0 else {
-            raise Failure(path + ".duration cannot be negative")
-          }
-        }
         _ => ()
       }
     }
   }
-  let cleared = Set([])
-  for r in records(catalog, "circuits") {
-    let battle = field(r, "clearedBattle")
-    if battle is Null {
-      continue
+  let by_enemy = Map([])
+  let battles = Set([])
+  for enemy in level.enemies {
+    by_enemy[enemy.id] = enemy
+    if enemy.battle is Some(battle) {
+      battles.add(battle)
     }
-    guard enemies.any(e => field(e, "battle") == battle) else {
+    guard enemy.hp.is_finite() && enemy.hp > 0 else {
+      raise Failure("Enemy " + enemy.id + ".hp must be positive")
+    }
+    if enemy.opening_crossing is Some(crossing) &&
+      (!crossing.is_finite() || crossing < 0) {
       raise Failure(
-        "Circuit " +
-        text(r["id"]) +
-        " refers to unknown battle " +
-        battle.stringify(),
+        "Enemy " + enemy.id + ".openingCrossing must be finite and nonnegative",
       )
     }
-    let key = text(battle)
-    guard !cleared.contains(key) else {
-      raise Failure("Battle " + key + " has multiple clear signals")
+  }
+  let cleared = Set([])
+  for circuit in level.circuits {
+    guard circuit.duration.is_finite() && circuit.duration >= 0 else {
+      raise Failure(
+        "Circuit " + circuit.id + ".duration must be finite and nonnegative",
+      )
     }
-    cleared.add(key)
+    guard circuit.cleared_battle is Some(battle) else { continue }
+    guard battles.contains(battle) else {
+      raise Failure(
+        "Circuit " + circuit.id + " refers to unknown battle " + battle,
+      )
+    }
+    guard !cleared.contains(battle) else {
+      raise Failure("Battle " + battle + " has multiple clear signals")
+    }
+    cleared.add(battle)
+  }
+  let covers = Set([])
+  for obstacle in obstacles {
+    if field(obstacle, "rail") is Object(_) &&
+      field(obstacle, "id") is String(id) {
+      covers.add(id)
+    }
   }
   let assigned = Set([])
-  for a in records(catalog, "arenas") {
-    guard present(field(a, "id")) else { raise Failure("Arena needs an id") }
-    let id = text(a["id"])
-    let owner = field(a, "boss")
-    guard enemies.any(e => field(e, "id") == owner && boss(field(e, "type"))) else {
+  for arena in level.arenas {
+    guard by_enemy.get(arena.boss) is Some(enemy) && enemy.kind.is_boss() else {
+      raise Failure("Arena " + arena.id + " needs a placed boss: " + arena.boss)
+    }
+    guard !assigned.contains(arena.boss) else {
+      raise Failure("Boss " + arena.boss + " has multiple arenas")
+    }
+    assigned.add(arena.boss)
+    guard !arena.music.is_empty() else {
+      raise Failure("Arena " + arena.id + " needs music")
+    }
+    if arena.victory_effects is Some(effects) && effects.any(s => s.is_empty()) {
+      raise Failure("Arena " + arena.id + " needs valid victory signals")
+    }
+    if arena.cover is Some(cover) && !covers.contains(cover) {
       raise Failure(
-        "Arena " + id + " needs a placed boss: " + owner.stringify(),
-      )
-    }
-    guard !assigned.contains(text(owner)) else {
-      raise Failure("Boss " + text(owner) + " has multiple arenas")
-    }
-    assigned.add(text(owner))
-    guard present(field(a, "music")) else {
-      raise Failure("Arena " + id + " needs music")
-    }
-    guard finite(field(a, "w"), id + ".w") > 0 &&
-      finite(field(a, "d"), id + ".d") > 0 else {
-      raise Failure("Arena " + id + " needs a footprint")
-    }
-    match field(a, "victoryEffects") {
-      Null => ()
-      Array(v) if v.every(present) => ()
-      _ => raise Failure("Arena " + id + " needs valid victory signals")
-    }
-    let cover = field(a, "cover")
-    if !(cover is Null) &&
-      !obstacles.any(o => {
-        field(o, "id") == cover && field(o, "rail") is Object(_)
-      }) {
-      raise Failure(
-        "Arena " + id + " needs a rail-mounted cover: " + cover.stringify(),
+        "Arena " + arena.id + " needs a rail-mounted cover: " + cover,
       )
     }
   }
-  for b in records(catalog, "belts") {
-    if field(b, "drive") is Object(d) {
-      let part = field(d, "part")
-      let owner = field(d, "enemy")
-      guard part is Number(n, ..) &&
-        n >= 0 &&
-        n.trunc() == n &&
-        enemies.any(e => {
-          field(e, "id") == owner &&
-          field(e, "parts") is Array(parts) &&
-          n < parts.length().to_double()
-        }) else {
-        raise Failure("Belt " + text(b["id"]) + " needs an existing drive part")
+  for belt in level.belts {
+    if belt.motion.drive is Some(drive) {
+      guard by_enemy.get(drive.enemy) is Some(enemy) &&
+        enemy.parts is Some(parts) &&
+        drive.part >= 0 &&
+        drive.part < parts.length() else {
+        raise Failure("Belt " + belt.deck.id + " needs an existing drive part")
       }
     }
-    guard field(catalog, "belt-segments") is Object(s) &&
-      field(s, text(b["id"])) is Array(_) else {
-      raise Failure("Missing conveyor geometry metadata: " + text(b["id"]))
+    guard level.segments.contains(belt.deck.id) else {
+      raise Failure("Missing conveyor geometry metadata: " + belt.deck.id)
     }
   }
-  for p in records(catalog, "pickups") {
-    let lift = field(p, "lift")
-    if present(lift) && !lifts.any(l => field(l, "id") == lift) {
+  for control in level.controls {
+    if control.effects is Some(effects) &&
+      (effects.is_empty() || effects.any(s => s.trim().is_empty())) {
       raise Failure(
-        "Unknown lift " + text(lift) + " for pickup " + text(p["id"]),
+        "Control " + control.id + ".effects must contain at least one signal",
       )
     }
   }
-  guard records(catalog, "hives").length() > 0 else {
+  let lift_ids = Set::from_iter(
+    lifts
+    .iter()
+    .filter_map(l => {
+      match field(l, "id") {
+        String(id) => Some(id)
+        _ => None
+      }
+    }),
+  )
+  for pickup in level.pickups {
+    let p = pickup.placement
+    if p.lift is Some(lift) && !lift.is_empty() && !lift_ids.contains(lift) {
+      raise Failure("Unknown lift " + lift + " for pickup " + p.id)
+    }
+  }
+  guard !level.hives.is_empty() else {
     raise Failure("At least one repair hive is required for spawning")
   }
+  level
+}
+
+///|
+pub fn validate(catalog : Record) -> Unit raise {
+  ignore(decode(catalog))
 }

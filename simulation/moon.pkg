@@ -1,4 +1,6 @@
 import {
+  "milky/tankle-astra/model/interaction",
+  "milky/tankle-astra/model/machine",
   "moonbitlang/core/math",
   "moonbitlang/core/json",
 }

@@ -314,14 +314,14 @@ fn Machinery::update(self : Machinery, game : @sim.Game, dt : Double) -> Unit {
           0xffedbe
         } else if active {
           0x9ad4ba
-        } else if b.actions.contains(@sim.MagnetAction) {
+        } else if b.actions.contains(MagnetAction) {
           0x80bada
         } else {
           0xebae57
         },
       )
     }
-    if b.actions.contains(@sim.LaserAction) && c.back is Some(back) {
+    if b.actions.contains(LaserAction) && c.back is Some(back) {
       back.position.set_y(
         damp(back.position.y, if active { 2.6 } else { 0 }, 12, dt),
       )
@@ -374,10 +374,9 @@ fn Machinery::update(self : Machinery, game : @sim.Game, dt : Double) -> Unit {
       if b.rotor {
         moving.rotation.set(0, 0, -@math.PI / 4 + c.engaged * @math.PI / 4)
         |> ignore
-      } else if b.actions.contains(@sim.MagnetAction) {
+      } else if b.actions.contains(MagnetAction) {
         moving.position.set_y(c.engaged * 0.55) |> ignore
-      } else if b.actions.contains(@sim.LaserAction) ||
-        b.actions.contains(@sim.Use) {
+      } else if b.actions.contains(LaserAction) || b.actions.contains(Use) {
         moving.rotation.set(0, 0, c.engaged * @math.PI * 0.55) |> ignore
       } else if b.top {
         moving.position.set_y(-c.engaged * 0.4) |> ignore

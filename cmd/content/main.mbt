@@ -22,59 +22,24 @@ fn read_catalog() -> Record raise {
 }
 
 ///|
-fn validate_roles(scene : @archive.Raw, catalog : Record) -> Unit raise {
-  let geometries = Set([])
-  for g in @archive.items(scene.get("geometries")) {
-    geometries.add(@archive.str(g, "uuid"))
-  }
-  let bindings = Set([])
-  fn visit(n : @archive.Raw) -> Unit raise {
-    let id = @archive.str(n, "geometry")
-    if !id.is_empty() && !geometries.contains(id) {
-      raise Failure(
-        "Missing geometry " + id + " for " + @archive.str(n, "name"),
-      )
-    }
-    let matrix : FixedArray[Double] = @archive.items(n.get("matrix")).map(x => {
-      x.cast()
-    })
-    guard matrix.iter().all(v => v.is_finite()) else {
-      raise Failure("Invalid scene transform: " + @archive.str(n, "uuid"))
-    }
-    let binding = @archive.str(n.get("userData"), "binding")
-    if !binding.is_empty() {
-      if bindings.contains(binding) {
-        raise Failure("Duplicate scene binding: " + binding)
-      }
-      bindings.add(binding)
-    }
-    for c in @archive.items(n.get("children")) {
-      visit(c)
-    }
-  }
-  visit(scene.get("object"))
-  fn require_binding(s : String) -> Unit raise {
-    if !bindings.contains(s) {
-      raise Failure(
-        "Missing scene role: " + s + ". Add its bound art before building.",
-      )
-    }
-  }
+fn required_roles(level : @catalog.Level) -> Array[String] {
+  let roles = []
   for role in ["root", "body", "turret", "barrel"] {
-    require_binding("player/" + role)
+    roles.push("player/" + role)
   }
-  for e in list(catalog["enemies"]) {
+  for e in level.enemies {
     for role in ["root", "body", "turret"] {
-      require_binding("enemies/" + text(object(e)["id"]) + "/model/" + role)
+      roles.push("enemies/" + e.id + "/model/" + role)
     }
   }
-  for h in list(catalog["hives"]) {
-    require_binding("world/hives/" + text(object(h)["id"]) + "/root")
+  for hive in level.hives {
+    roles.push("world/hives/" + hive.id + "/root")
   }
+  roles
 }
 
 ///|
-fn bake_if_changed(records : Record) -> Unit raise {
+fn bake_if_changed(records : Record, level : @catalog.Level) -> Unit raise {
   let hashes = [@archive.digest(@archive.read_file(executable()))]
   for dir in ["content/art", "content/levels/city"] {
     for name in @archive.list_files(dir) {
@@ -99,15 +64,14 @@ fn bake_if_changed(records : Record) -> Unit raise {
     files.every(v => v is String(name) && @archive.exists(dest + "/" + name)) {
     return
   }
-  validate_roles(
-    @archive.read_json_gz("content/art/city.scene.json.gz"),
-    records,
-  )
   @art.bake_city(
     "content/art",
     dest,
-    @archive.Raw::from_json(records["barriers"]).cast(),
-    @archive.Raw::from_json(records["controls"]).cast(),
+    @art.FixtureLayout::from_catalog(
+      required(records, "barriers"),
+      required(records, "controls"),
+    ),
+    required_roles(level),
   )
   let files = [
     "folded-scene.json.gz", "folded-views.json.gz", "folded-buffers.bin.gz",
@@ -127,15 +91,18 @@ fn bake_if_changed(records : Record) -> Unit raise {
 ///|
 fn main {
   try {
+    let records = read_catalog()
+    let level = @catalog.decode(records)
     run_moon([
       "run", "--quiet", "scripts/tuning.mbtx", "--", "content/abilities.json", "simulation/tuning.generated.mbt",
     ])
-    let records = read_catalog()
-    @catalog.validate(records)
-    generate_levels(records)
+    generate_levels(records, level)
     generate_audio()
-    bake_if_changed(records)
+    bake_if_changed(records, level)
   } catch {
-    e => abort(e.to_string())
+    e => report_error(e.to_string())
   }
 }
+
+///|
+extern "js" fn report_error(message : String) -> Unit = "s=>{console.error(s);process.exitCode=1}"

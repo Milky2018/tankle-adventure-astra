@@ -42,10 +42,14 @@ fn CameraSpace::new(scene : @core.Object3D, world : @sim.World) -> CameraSpace {
   }
   let data = scene.user_data.get("cameraFaces")
   if !data.is_undefined() {
-    let rows : FixedArray[FixedArray[Double]] = data.cast()
-    for row in rows {
-      let min : @sim.Vec3 = { x: row[0], y: row[1], z: row[2], }
-      let max : @sim.Vec3 = { x: row[3], y: row[4], z: row[5], }
+    let faces : Array[@scene_format.Bounds] = @json.from_json(data.to_json()) catch {
+      _ => return space
+    }
+    for face in faces {
+      let (x, y, z) = face.min
+      let (u, v, w) = face.max
+      let min : @sim.Vec3 = { x, y, z, }
+      let max : @sim.Vec3 = { x: u, y: v, z: w, }
       for x in camera_cell(min.x)..<=camera_cell(max.x) {
         for z in camera_cell(min.z)..<=camera_cell(max.z) {
           space.faces.get_or_init((x, z), fn() { [] }).push((min, max))

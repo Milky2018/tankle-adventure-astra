@@ -6,7 +6,7 @@ test "cannon sweeps between frames and damages a target exactly once" {
   let definition = {
     ..source,
     id: "test-turret",
-    kind: @simulation.Turret,
+    kind: Turret,
     spawn: @simulation.Vec3::{ x: 500, y: 0, z: 510, },
     hp: 3,
     persistent: false,
@@ -45,7 +45,7 @@ test "refuge cylinder stops outgoing fire without damaging the enemy" {
       {
         ..source,
         id: "test-turret",
-        kind: @simulation.Turret,
+        kind: Turret,
         spawn: { x: 0, y: -8, z: 98, },
         hp: 3,
         persistent: false,
@@ -90,7 +90,7 @@ test "wrong weapon cannot activate the optical receiver" {
     game.commands.activate(
       game.progress,
       "gallery",
-      @simulation.CannonAction,
+      CannonAction,
       game.player,
       0,
     ),
@@ -99,7 +99,7 @@ test "wrong weapon cannot activate the optical receiver" {
     game.commands.activate(
       game.progress,
       "gallery",
-      @simulation.LaserAction,
+      LaserAction,
       game.player,
       0,
     ),
@@ -141,13 +141,13 @@ test "authored pickup IDs grant upgrades once and survive saving" {
   let armor = {
     ..source,
     id: "editor-armor",
-    acquisition: @simulation.Armor,
+    acquisition: Armor,
     requires: None,
   }
   let cannon = {
     ..source,
     id: "editor-cannon",
-    acquisition: @simulation.CannonCoil,
+    acquisition: CannonCoil,
     requires: None,
   }
   game.pickups.push(armor)
@@ -180,7 +180,7 @@ test "authored use controls respect proximity, prerequisites and emit their sign
     id: "editor-switch",
     position: { x: 500, y: 1.3, z: 500, },
     ground: 0,
-    actions: [@simulation.Use],
+    actions: [Use],
     requires: Some("editor-key"),
     effects: ["editor-gate"],
     circuit_key: "editor-switch",
@@ -235,7 +235,7 @@ test "first scout crosses the ramp landing before charging and resets at repair"
 ///|
 test "boss armor and attack patterns follow machine type under a new instance id" {
   let game = @simulation.Game::new()
-  for kind in [@simulation.Sorter, Overseer, Guardian, Keeper] {
+  for kind in [@simulation.EnemyKind::Sorter, Overseer, Guardian, Keeper] {
     let source = game.enemies
       .iter()
       .find_first(fn(e) { e.definition.kind == kind })
@@ -268,24 +268,31 @@ test "boss armor and attack patterns follow machine type under a new instance id
 ///|
 test "coordinated squads stagger shared charge and mortar warnings across machine types" {
   let game = @simulation.Game::new()
-  for
-    (first, second, allowed) in [
-      (@simulation.Scout, @simulation.Interceptor, false),
-      (Siege, Artillery, false),
-      (Interceptor, Artillery, true),
-      (ScrapRam, Interceptor, true),
-    ] {
+  fn can_telegraph(
+    ready_kind : @simulation.EnemyKind,
+    busy_kind : @simulation.EnemyKind,
+  ) -> Bool {
     let def = {
       ..game.enemies[0].definition,
       battle: Some("test"),
       coordinated: true,
     }
-    let ready = @simulation.Enemy::new({ ..def, kind: first, }, game.progress)
-    let busy = @simulation.Enemy::new({ ..def, kind: second, }, game.progress)
+    let ready = @simulation.Enemy::new(
+      { ..def, kind: ready_kind, },
+      game.progress,
+    )
+    let busy = @simulation.Enemy::new(
+      { ..def, kind: busy_kind, },
+      game.progress,
+    )
     busy.phase = Warn(Fire(ChargeAttack))
     busy.warning_age = 0.6
-    assert_eq(@simulation.can_telegraph(0, [ready, busy]), allowed)
+    @simulation.can_telegraph(0, [ready, busy])
   }
+  assert_false(can_telegraph(Scout, Interceptor))
+  assert_false(can_telegraph(Siege, Artillery))
+  assert_true(can_telegraph(Interceptor, Artillery))
+  assert_true(can_telegraph(ScrapRam, Interceptor))
 }
 
 ///|

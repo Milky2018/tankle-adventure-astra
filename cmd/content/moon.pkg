@@ -1,5 +1,6 @@
 import {
   "moonbitlang/core/json",
+  "moonbitlang/core/debug",
   "milky/tankle-astra/tooling/catalog",
   "milky/tankle-astra/tooling/archive",
   "milky/tankle-astra/tooling/art",

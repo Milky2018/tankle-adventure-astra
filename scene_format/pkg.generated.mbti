@@ -1,0 +1,56 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "milky/tankle-astra/scene_format"
+
+import {
+  "moonbitlang/core/json",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+#derive(Eq, Hash)
+pub(all) struct Bounds {
+  min : (Double, Double, Double)
+  max : (Double, Double, Double)
+}
+pub impl @json.FromJson for Bounds
+pub impl @json.ToJson for Bounds
+
+pub(all) struct BufferView {
+  byte_offset : Int32
+  type_name : String
+  length : Int32
+  copy : Bool
+}
+pub impl @json.FromJson for BufferView
+pub impl @json.ToJson for BufferView
+
+#derive(@json.ToJson)
+pub(all) struct PackedViews {
+  geometry : Map[String, Map[String, BufferView]]
+  images : Map[String, BufferView]
+  instances : Map[String, Map[String, BufferView]]
+}
+pub impl @json.FromJson for PackedViews
+
+pub(all) struct Portal {
+  destination : Int32
+  face : Int32
+  solid : Bool
+  bounds : Bounds
+}
+pub impl @json.FromJson for Portal
+pub impl @json.ToJson for Portal
+
+pub(all) struct Room {
+  bounds : Bounds
+  portals : Array[Portal]
+}
+pub impl @json.FromJson for Room
+pub impl @json.ToJson for Room
+
+// Type aliases
+
+// Traits

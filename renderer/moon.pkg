@@ -1,4 +1,6 @@
 import {
+  "milky/tankle-astra/scene_format",
+  "moonbitlang/core/json",
   "moonbit-community/three/core",
   "moonbit-community/three/math" @m3,
   "moonbit-community/three/geometries",

@@ -20,13 +20,55 @@ fn user_data(v : Raw) -> Raw {
 }
 
 ///|
+fn validate_roles(scene : Raw, required : Array[String]) -> Unit raise {
+  let geometries = Set([])
+  for g in @archive.items(scene.get("geometries")) {
+    geometries.add(@archive.str(g, "uuid"))
+  }
+  let bindings = Set([])
+  fn visit(n : @archive.Raw) -> Unit raise {
+    let id = @archive.str(n, "geometry")
+    if !id.is_empty() && !geometries.contains(id) {
+      raise Failure(
+        "Missing geometry " + id + " for " + @archive.str(n, "name"),
+      )
+    }
+    let matrix : FixedArray[Double] = @archive.items(n.get("matrix")).map(x => {
+      x.cast()
+    })
+    guard matrix.iter().all(v => v.is_finite()) else {
+      raise Failure("Invalid scene transform: " + @archive.str(n, "uuid"))
+    }
+    let binding = @archive.str(n.get("userData"), "binding")
+    if !binding.is_empty() {
+      if bindings.contains(binding) {
+        raise Failure("Duplicate scene binding: " + binding)
+      }
+      bindings.add(binding)
+    }
+    for c in @archive.items(n.get("children")) {
+      visit(c)
+    }
+  }
+  visit(scene.get("object"))
+  for role in required {
+    guard bindings.contains(role) else {
+      raise Failure(
+        "Missing scene role: " + role + ". Add its bound art before building.",
+      )
+    }
+  }
+}
+
+///|
 pub fn bake_city(
   source : String,
   dest : String,
-  barriers : FixedArray[Raw],
-  controls : FixedArray[Raw],
-) -> Unit {
+  fixtures : FixtureLayout,
+  required_bindings : Array[String],
+) -> Unit raise {
   let scene = @archive.read_json_gz(source + "/city.scene.json.gz")
+  validate_roles(scene, required_bindings)
   let original = @archive.gunzip(
     @archive.read_file(source + "/city.buffers.bin.gz"),
   )
@@ -63,57 +105,54 @@ pub fn bake_city(
   prepare(root)
   extract_repeats(scene, view)
   camera_faces(scene, view)
-  bake_fittings(scene, view, barriers, controls)
+  bake_fittings(scene, view, fixtures)
   room_portals(scene, view)
   let chunks = []
-  let stored = Map([])
+  let stored : Map[(String, String), @scene_format.BufferView] = Map([])
   let mut length = 0
-  fn append(b : Raw, ty : String, count : Int32) -> Raw {
-    let key = ty + ":" + @archive.digest(b)
-    if stored.get(key) is Some(existing) {
-      let d = @archive.copy(existing)
-      d.set("copy", Raw::of(true))
-      return d
+  fn store(data : @core.TypedArray) -> @scene_format.BufferView {
+    let bytes = @archive.byte_view(data.to_js_init())
+    let key = (data.type_name(), @archive.digest(bytes))
+    if stored.get(key) is Some(first) {
+      return { ..first, copy: true, }
     }
     let pad = (8 - length % 8) % 8
     chunks.push(@archive.zeros(pad))
-    chunks.push(b)
-    length += pad
-    let d = @archive.obj([
-      ("byteOffset", Raw::of(length)),
-      ("type", Raw::of(ty)),
-      ("length", Raw::of(count)),
-    ])
-    length += int_field(b, "length")
-    stored[key] = d
-    d
+    chunks.push(bytes)
+    let descriptor : @scene_format.BufferView = {
+      byte_offset: length + pad,
+      type_name: key.0,
+      length: data.length(),
+      copy: false,
+    }
+    length += pad + data.byte_length()
+    stored[key] = descriptor
+    descriptor
   }
-  fn pack_attr(a : Raw) -> Raw {
-    let ty = string_field(a, "type")
+  fn pack_attr(a : Raw) -> @scene_format.BufferView {
     let values = a.get("array")
     let data = if @archive.kind(values) == "array" {
-      @archive.typed(ty, values)
+      @archive.typed(string_field(a, "type"), values)
     } else {
       view(values)
     }
-    let descriptor = append(
-      @archive.byte_view(data),
-      ty,
-      int_field(data, "length"),
-    )
     put_array(a, "array", [])
-    descriptor
+    store(data.cast())
   }
-  let instances = Raw::object()
+  let packed : @scene_format.PackedViews = {
+    geometry: Map([]),
+    images: Map([]),
+    instances: Map([]),
+  }
   @archive.walk(root, n => {
     if string_field(n, "type") == "InstancedMesh" {
-      let attrs = Raw::object()
+      let attrs = Map([])
       for k in ["instanceMatrix", "instanceColor"] {
         if truthy(n, k) {
-          attrs.set(k, pack_attr(n.get(k)))
+          attrs[k] = pack_attr(n.get(k))
         }
       }
-      instances.set(string_field(n, "uuid"), attrs)
+      packed.instances[string_field(n, "uuid")] = attrs
     }
   })
   let libs = [
@@ -133,19 +172,18 @@ pub fn bake_city(
       )
     }
   }
-  let geometries = Raw::object()
   for g in array_field(scene, "geometries") {
     guard truthy(g, "data") else { continue }
     let data = g.get("data")
-    let result = Raw::object()
+    let result = Map([])
     let attrs = @archive.copy(data.get("attributes"))
     attrs.set("index", data.get("index"))
     for k in @archive.keys(attrs) {
       if truthy(attrs.get(k), "array") {
-        result.set(k, pack_attr(attrs.get(k)))
+        result[k] = pack_attr(attrs.get(k))
       }
     }
-    geometries.set(string_field(g, "uuid"), result)
+    packed.geometry[string_field(g, "uuid")] = result
   }
   let image_dir = dest + "/images"
   @archive.mkdir(image_dir)
@@ -168,28 +206,19 @@ pub fn bake_city(
     } else if @archive.kind(@archive.prop(url, "data")) == "array" {
       let ty = string_field(url, "type")
       let data = @archive.typed(ty, url.get("data"))
-      pixels[string_field(img, "uuid")] = append(
-        @archive.byte_view(data),
-        ty,
-        int_field(data, "length"),
-      )
+      pixels[string_field(img, "uuid")] = store(data.cast())
       put_array(url, "data", [])
     }
   }
-  let images = Raw::object()
   for t in array_field(scene, "textures") {
     if pixels.get(string_field(t, "image")) is Some(p) {
-      images.set(string_field(t, "uuid"), p)
+      packed.images[string_field(t, "uuid")] = p
     }
   }
   @archive.write_json_gz(dest + "/folded-scene.json.gz", scene)
   @archive.write_json_gz(
     dest + "/folded-views.json.gz",
-    @archive.obj([
-      ("geometry", geometries),
-      ("images", images),
-      ("instances", instances),
-    ]),
+    Raw::from_json(@json.to_json(packed)),
   )
   @archive.write_file(
     dest + "/folded-buffers.bin.gz",

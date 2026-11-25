@@ -2,6 +2,8 @@
 package "milky/tankle-astra/simulation"
 
 import {
+  "milky/tankle-astra/model/interaction",
+  "milky/tankle-astra/model/machine",
   "moonbitlang/core/json",
   "moonbitlang/core/set",
 }
@@ -80,36 +82,6 @@ pub(all) struct Abilities {
   mut circulation : Bool
 }
 pub fn Abilities::new() -> Self
-
-pub(all) enum Acquisition {
-  Overdrive
-  Magnet
-  MortarModule
-  Flotation
-  Phoenix
-  LaserModule
-  Circulation
-  Armor
-  Cooling
-  CannonCoil
-  MortarCharge
-  LaserFocus
-  Scope
-}
-
-#derive(Eq)
-pub(all) enum Action {
-  CannonAction
-  MortarAction
-  LaserAction
-  MagnetAction
-  Use
-  Dock
-}
-#deprecated
-pub fn Action::equal(Self, Self) -> Bool
-#deprecated
-pub fn Action::not_equal(Self, Self) -> Bool
 
 pub(all) struct Activation {
   position : Vec3
@@ -250,7 +222,7 @@ pub(all) struct Commands {
   circuits : Map[String, Circuit]
   starts : Map[String, Double]
 }
-pub fn Commands::activate(Self, Progress, String, Action, Player, Double) -> Bool
+pub fn Commands::activate(Self, Progress, String, @interaction.Action, Player, Double) -> Bool
 pub fn Commands::active(Self, Progress, String) -> Bool
 pub fn Commands::advance(Self, Progress, Double, Double) -> Bool
 pub fn Commands::complete(Self, Progress, String, Double, delayed? : Bool, effects? : Array[String]) -> Bool
@@ -260,7 +232,7 @@ pub(all) struct Control {
   id : String
   mut position : Vec3
   ground : Double
-  actions : Array[Action]
+  actions : Array[@interaction.Action]
   requires : String?
   effects : Array[String]
   circuit_key : String
@@ -410,7 +382,7 @@ pub fn Enemy::swims(Self) -> Bool
 
 pub(all) struct EnemyDef {
   id : String
-  kind : EnemyKind
+  kind : @machine.EnemyKind
   spawn : Vec3
   hp : Double
   persistent : Bool
@@ -433,38 +405,6 @@ pub(all) struct EnemyDef {
   reserve_for : String?
   reserve_at : Double
 }
-
-#derive(Eq)
-pub(all) enum EnemyKind {
-  Hunter
-  Dredger
-  Scout
-  Turret
-  Guard
-  Skirmisher
-  Sniper
-  Artillery
-  Miner
-  Welder
-  Repairer
-  Reflector
-  Interceptor
-  Bastion
-  Siege
-  Prism
-  Flanker
-  ScrapRam
-  Sorter
-  Overseer
-  Guardian
-  Keeper
-}
-pub fn EnemyKind::boss_name(Self) -> String
-#deprecated
-pub fn EnemyKind::equal(Self, Self) -> Bool
-pub fn EnemyKind::is_boss(Self) -> Bool
-#deprecated
-pub fn EnemyKind::not_equal(Self, Self) -> Bool
 
 pub(all) struct EnemyPart {
   mut recoil : Double
@@ -686,7 +626,7 @@ pub fn Phase::not_equal(Self, Self) -> Bool
 pub(all) struct Pickup {
   id : String
   mut position : Vec3
-  acquisition : Acquisition
+  acquisition : @interaction.Acquisition
   requires : String?
   lift : String?
   hidden : Bool
@@ -992,5 +932,10 @@ pub fn World::step_machinery(Self, Progress, Player, Double, Array[Enemy]) -> Un
 pub fn World::support(Self, Double, Double, Double, Bool) -> Support?
 
 // Type aliases
+pub using @interaction {type Acquisition}
+
+pub using @interaction {type Action}
+
+pub using @machine {type EnemyKind}
 
 // Traits

@@ -52,8 +52,6 @@ pub fn pack_scene_transfer(@core.JsValue) -> @core.JsValue
 
 pub fn pretty(@core.JsValue) -> String
 
-pub fn read_catalog() -> @core.JsValue
-
 pub fn str(@core.JsValue, String) -> String
 
 pub fn truth(@core.JsValue, String) -> Bool

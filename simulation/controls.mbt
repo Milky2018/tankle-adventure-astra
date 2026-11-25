@@ -1,17 +1,5 @@
 ///|
-#derive(Eq)
-pub(all) enum Action {
-  CannonAction
-  MortarAction
-  LaserAction
-  MagnetAction
-  Use
-  Dock
-}
-
-///|
-#deprecated
-pub extend Action with Eq::{equal, not_equal}
+pub using @interaction {type Action, type Acquisition}
 
 ///|
 pub(all) struct Control {
@@ -201,23 +189,6 @@ pub fn Commands::advance(
       self.circuits.get(id).map(fn(c) { c.duration }).unwrap_or(0)
   }
   !delivered.is_empty()
-}
-
-///|
-pub(all) enum Acquisition {
-  Overdrive
-  Magnet
-  MortarModule
-  Flotation
-  Phoenix
-  LaserModule
-  Circulation
-  Armor
-  Cooling
-  CannonCoil
-  MortarCharge
-  LaserFocus
-  Scope
 }
 
 ///|

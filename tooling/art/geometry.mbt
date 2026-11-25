@@ -1,39 +1,22 @@
 ///|
-fn matrix(values : FixedArray[Double]) -> @math.Matrix4 {
+fn node_matrix(node : Raw) -> @math.Matrix4 {
+  let values : FixedArray[Double] = node.get("matrix").cast()
   @math.Matrix4::new().from_array(Array::from_fixed_array(values))
 }
 
 ///|
-pub fn identity() -> FixedArray[Double] {
-  FixedArray::from_array(@math.Matrix4::new().elements[:])
-}
-
-///|
-pub fn compose_transform(
-  parent : FixedArray[Double],
-  child : FixedArray[Double],
-) -> FixedArray[Double] {
-  FixedArray::from_array(matrix(parent).multiply(matrix(child)).elements[:])
-}
-
-///|
-pub fn determinant(transform : FixedArray[Double]) -> Double {
-  matrix(transform).determinant()
-}
-
-///|
-pub fn project(
-  transform : FixedArray[Double],
+fn project(
+  transform : @math.Matrix4,
   x : Double,
   y : Double,
   z : Double,
 ) -> FixedArray[Double] {
-  let p = @math.Vector3::new(x, y, z).apply_matrix4(matrix(transform))
+  let p = @math.Vector3::new(x, y, z).apply_matrix4(transform)
   [p.x, p.y, p.z]
 }
 
 ///|
-pub fn geometry_center(
+fn geometry_center(
   positions : @core.TypedArray,
   size : Int32,
 ) -> FixedArray[Double] {
@@ -49,46 +32,19 @@ pub fn geometry_center(
 }
 
 ///|
-extern "js" fn keys(value : @core.JsValue) -> FixedArray[String] = "(v) => Object.keys(v)"
-
-///|
-pub fn read_geometry(
-  attributes : @core.JsValue,
-  indices : @core.JsValue,
-) -> @core.BufferGeometry {
-  let geo = @core.BufferGeometry::new()
-  for name in keys(attributes) {
-    let a = attributes.get(name)
-    geo.set_attribute(
-      name,
-      @core.BufferAttribute::new(
-        a.get("array").cast(),
-        a.get("itemSize").cast(),
-        normalized=truthy(a, "normalized"),
-      ),
-    )
-    |> ignore
-  }
-  geo.set_index(@core.BufferAttribute::new(indices.cast(), 1)) |> ignore
-  geo
-}
-
-///|
-fn merge_parts(
-  sources : FixedArray[@core.BufferGeometry],
-  matrices : FixedArray[FixedArray[Double]],
-  colors : FixedArray[Int32],
-  vertex_colors : FixedArray[Bool],
+fn FittingBake::merge_parts(
+  self : FittingBake,
+  parts : Array[Part],
 ) -> @core.BufferGeometry {
   let pieces = []
-  for i in 0..<sources.length() {
-    let g = sources[i].clone().apply_matrix4(matrix(matrices[i]))
-    let tint = @math.Color::from_hex(colors[i])
+  for part in parts {
+    let g = self.decode(part.geometry).clone().apply_matrix4(part.transform)
+    let tint = @math.Color::from_hex(part.color)
     let count = g.get_attribute("position").unwrap().count()
     let color = @core.Float32BufferAttribute::new(count * 3, 3)
     let old = g.get_attribute("color")
     for j in 0..<count {
-      if vertex_colors[i] && old is Some(c) {
+      if part.vertex_colors && old is Some(c) {
         color.set_xyz(
           j,
           c.get_x(j) * tint.r,
@@ -109,7 +65,7 @@ fn merge_parts(
 }
 
 ///|
-pub fn depth_geometry(
+fn depth_geometry(
   vertices : FixedArray[Double],
   indices : FixedArray[Int32],
 ) -> @core.BufferGeometry {

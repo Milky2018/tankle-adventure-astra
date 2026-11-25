@@ -1,11 +1,23 @@
 ///|
-fn translate(record : Raw, axis : String, delta : Double) -> Unit {
-  record.set(axis, Raw::of(number(record, axis) + delta))
+fn numeric(record : Map[String, Json], key : String) -> Double raise {
+  guard record.get(key) is Some(Number(n, ..)) else {
+    raise Failure("Expected a number for " + key)
+  }
+  n
+}
+
+///|
+fn translate(
+  record : Map[String, Json],
+  axis : String,
+  delta : Double,
+) -> Unit raise {
+  record[axis] = Json::number(numeric(record, axis) + delta)
 }
 
 ///|
 fn resize_collision(
-  r : Raw,
+  r : Map[String, Json],
   m : Array[Double],
   baseline : Array[Double],
   collection : String,
@@ -26,11 +38,18 @@ fn resize_collision(
       translate(r, "y", 0.125 * (scale[i] - 1))
       continue
     }
-    let original = number(r, name)
+    let original = numeric(r, name)
     let size = original * scale[i]
     translate(r, ["x", "y", "z"][i], (original - size) / 2)
-    r.set(name, Raw::of(size))
+    r[name] = Json::number(size)
   }
+}
+
+///|
+#derive(@json.FromJson)
+priv struct Placement {
+  origin : (Double, Double, Double)
+  matrix : Array[Double]
 }
 
 ///|
@@ -63,7 +82,7 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
     )
   }
   let scene = @archive.read_scene()
-  let catalog = read_catalog()
+  let catalog = EditableCatalog::read()
   let original = scene.get("object")
   let originals = Map([])
   let parents = Map([])
@@ -114,8 +133,11 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
         removed.add(uid)
       }
     }
-    let keep = [ for r in array(catalog, k) if str(r, "id") != id => r ]
-    catalog.set(k, Raw::from_array(keep[:]))
+    catalog.files[k] = Json::array(
+      catalog
+      .rows(k)
+      .filter(r => !(r is { "id": String(value), .. } && value == id)),
+    )
   }
   let added = []
   let seen = Set([])
@@ -157,9 +179,10 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
     if exists(old_entity) && entity_key(old_entity) != entity_key(e) {
       raise Failure("Keep stable IDs unchanged on " + name)
     }
-    let base = record_for(catalog, e)
+    let records = catalog.rows(k)
+    let slot = catalog.find(e)
     let user = data(n)
-    if !exists(base) {
+    if slot is None {
       guard full && !originals.contains(uid) else {
         raise Failure("Unknown gameplay identity " + identity)
       }
@@ -176,7 +199,11 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
       raise Failure("Missing authoring properties on " + name)
     }
     let m = world[uid].elements
-    let baseline = elements(place.get("matrix"))
+    let placement : Placement = @json.from_json(place.to_json())
+    let baseline = placement.matrix
+    guard baseline.length() == 16 else {
+      raise Failure("Expected a 4 by 4 placement matrix on " + name)
+    }
     if !truth(user, "editorOnly") {
       for i in [0, 1, 2, 4, 5, 6, 8, 9, 10] {
         guard (m[i] - baseline[i]).abs() <= 0.00001 else {
@@ -187,19 +214,24 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
         }
       }
     }
-    let delta = [ for i in [12, 13, 14] => m[i] - baseline[i] ]
-    let origin = elements(place.get("origin"))
-    let r = @archive.copy(user.get("game"))
-    for i, axis in ["x", "y", "z"] {
-      r.set(axis, Raw::of(origin[i] + delta[i]))
+    let (x, y, z) = placement.origin
+    guard user.get("game").to_json() is Object(r) else {
+      raise Failure("Invalid placement or properties on " + name)
     }
+    let dx = m[12] - baseline[12]
+    let dy = m[13] - baseline[13]
+    let dz = m[14] - baseline[14]
+    r["x"] = Json::number(x + dx)
+    r["y"] = Json::number(y + dy)
+    r["z"] = Json::number(z + dz)
     if truth(user, "editorOnly") {
       resize_collision(r, m, baseline, k)
     }
-    if exists(base) &&
+    if slot is Some(i) &&
+      records[i] is Object(base) &&
       (
-        !r.get("id").strict_equal(base.get("id")) ||
-        !r.get("circuitKey").strict_equal(base.get("circuitKey"))
+        r.get("id") != base.get("id") ||
+        r.get("circuitKey") != base.get("circuitKey")
       ) {
       raise Failure(
         "Keep stable IDs unchanged on " +
@@ -207,52 +239,56 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
         "; references are stored in saves and circuits.",
       )
     }
-    if k == "lifts" {
-      let stops = [ for v in elements(r.get("stops")) => v + delta[1] ]
-      r.set("stops", Raw::from_array(stops[:]))
-      @archive.remove(r, "y")
-    }
-    if k == "controls" && exists(get(r, "ground")) {
-      translate(r, "ground", delta[1])
-    }
-    if k == "enemies" {
-      for key in ["patrol", "activation"] {
-        let point = get(r, key)
-        if exists(point) {
-          let p = @archive.copy(point)
-          translate(p, "x", delta[0])
-          translate(p, "z", delta[2])
-          if key == "activation" {
-            translate(p, "y", delta[1])
+    match k {
+      "lifts" => {
+        let stops : Array[Double] = @json.from_json(
+          r.get_or_default("stops", @json.null),
+        )
+        r["stops"] = @json.to_json(stops.map(y => y + dy))
+        r.remove("y")
+      }
+      "controls" =>
+        if r.get("ground") is Some(Number(_, ..)) {
+          translate(r, "ground", dy)
+        }
+      "enemies" => {
+        for key in ["patrol", "activation"] {
+          if r.get(key) is Some(Object(point)) {
+            translate(point, "x", dx)
+            translate(point, "z", dz)
+            if key == "activation" {
+              translate(point, "y", dy)
+            }
           }
-          r.set(key, p)
+        }
+        if r.get("swimPatrol") is Some(Array(points)) {
+          r["swimPatrol"] = Json::array(
+            points.map(p => {
+              guard p is [Number(x, ..), Number(z, ..)] else {
+                raise Failure("Expected an X/Z swim patrol point on " + name)
+              }
+              [x + dx, z + dz]
+            }),
+          )
         }
       }
-      if exists(get(r, "swimPatrol")) {
-        let points = [
-          for pair in array(r, "swimPatrol") => {
-            let xy = elements(pair)
-            Raw::from_array([xy[0] + delta[0], xy[1] + delta[2]])
-          }
-        ]
-        r.set("swimPatrol", Raw::from_array(points[:]))
-      }
+      _ => ()
     }
-    let records = catalog.get(k)
-    if exists(base) {
-      assign_at(records, index_of(records, base), r)
+    if slot is Some(i) {
+      records[i] = Json::object(r)
     } else {
-      append(records, r)
+      records.push(Json::object(r))
       let circuit = get(user, "circuit")
+      let id = str(e, "id")
       if k == "controls" &&
         exists(circuit) &&
-        !array(catalog, "circuits")
-        .iter()
-        .any(c => str(c, "id") == str(e, "id")) {
-        guard str(circuit, "id") == str(e, "id") else {
+        !catalog
+        .rows("circuits")
+        .any(row => row is { "id": String(existing), .. } && existing == id) {
+        guard str(circuit, "id") == id else {
           raise Failure("A copied circuit must use its control's ID.")
         }
-        append(catalog.get("circuits"), clone(circuit))
+        catalog.rows("circuits").push(circuit.to_json())
       }
     }
     for prop in ["game", "placement", "circuit"] {
@@ -350,13 +386,13 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
       }
     }
   }
-  @catalog.validate(@catalog.object(@json.parse(@archive.stringify(catalog))))
+  @catalog.validate(catalog.files)
   if !dry_run {
     @archive.write_scene(@archive.select_resources(scene, original))
-    for name in @archive.keys(catalog) {
+    for name, entries in catalog.files {
       @archive.write_file(
         directory + "/" + name + ".json",
-        Raw::of(pretty(catalog.get(name)) + "\n"),
+        Raw::of(entries.stringify(indent=2, escape_slash=false) + "\n"),
       )
     }
   }

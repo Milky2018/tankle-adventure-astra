@@ -1,38 +1,5 @@
 ///|
-#derive(Eq)
-pub(all) enum EnemyKind {
-  Hunter
-  Dredger
-  Scout
-  Turret
-  Guard
-  Skirmisher
-  Sniper
-  Artillery
-  Miner
-  Welder
-  Repairer
-  Reflector
-  Interceptor
-  Bastion
-  Siege
-  Prism
-  Flanker
-  ScrapRam
-  Sorter
-  Overseer
-  Guardian
-  Keeper
-}
-
-///|
-#deprecated
-pub extend EnemyKind with Eq::{equal, not_equal}
-
-///|
-pub fn EnemyKind::is_boss(self : EnemyKind) -> Bool {
-  self is (ScrapRam | Sorter | Overseer | Guardian | Keeper)
-}
+pub using @machine {type EnemyKind}
 
 ///|
 fn EnemyKind::firing_height(self : EnemyKind) -> Double {

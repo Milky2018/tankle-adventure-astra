@@ -184,7 +184,7 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
     v.root.position.set(base.x, base.y, base.z) |> ignore
     v.body.rotation.set(
       0,
-      if e.definition.kind == @sim.Hunter {
+      if e.definition.kind == Hunter {
         e.travel_heading.unwrap_or(e.aim)
       } else {
         e.aim
@@ -231,7 +231,7 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
     if v.armor is Some(armor) && v.shield_mount is Some(mount) {
       mount.update(armor, self.scene, game, e)
     }
-    if e.definition.kind == @sim.ScrapRam && v.armor is Some(armor) {
+    if e.definition.kind == ScrapRam && v.armor is Some(armor) {
       armor.position.set_y(
         damp(
           armor.position.y,
@@ -326,22 +326,22 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
       charge.visible = alive &&
         e.phase.is_warning() &&
         (
-          e.definition.kind != @sim.ScrapRam ||
+          e.definition.kind != ScrapRam ||
           e.phase is @sim.Warn(Fire(ChargeAttack))
         ) &&
-        e.definition.kind != @sim.Sorter
+        e.definition.kind != Sorter
       charge.position.set(e.x, e.y, e.z) |> ignore
       charge.rotation.set(0, e.aim, 0) |> ignore
       charge.update_matrix_world(force=true)
     }
     if v.zone is Some(zone) {
       zone.visible = alive &&
-        e.definition.kind is (@sim.Artillery | @sim.Siege) &&
+        e.definition.kind is (Artillery | Siege) &&
         e.phase.is_warning()
       zone.position.set(e.lock.x, e.lock.y + 0.1, e.lock.z) |> ignore
       zone.update_matrix_world(force=true)
     }
-    if v.arm is Some(arm) && e.definition.kind == @sim.Sorter {
+    if v.arm is Some(arm) && e.definition.kind == Sorter {
       let (turn, extension) = e.arm_pose()
       v.turret.rotation.set(0, e.aim, 0) |> ignore
       arm.rotation.set(0, turn, 0) |> ignore
@@ -354,13 +354,13 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
           basic.set_hex(
             if !alive {
               0x302d29
-            } else if e.definition.kind is (@sim.ScrapRam | @sim.Sorter) {
+            } else if e.definition.kind is (ScrapRam | Sorter) {
               if e.drive_exposed() {
                 0xffda73
               } else {
                 0xe9964d
               }
-            } else if e.definition.kind == @sim.Guardian {
+            } else if e.definition.kind == Guardian {
               0xffc06b
             } else if e.phase.is_warning() {
               0xffda73

@@ -2,7 +2,7 @@
 priv struct PortalRoom {
   lo : Array[Int32]
   hi : Array[Int32]
-  edges : Array[Raw]
+  edges : Array[@scene_format.Portal]
 }
 
 ///|
@@ -48,11 +48,11 @@ pub fn room_portals(scene : Raw, view : (Raw) -> Raw) -> Unit {
   let walls : Map[(Int32, Int32, Int32, Int32), Int32] = Map([])
   let geometry = resource_index(array_field(scene, "geometries"))
   let materials = resource_index(array_field(scene, "materials"))
-  fn visit(n : Raw, parent : FixedArray[Double]) {
+  fn visit(n : Raw, parent : @math.Matrix4) {
     if !visible(n) || array_field(n, "animations").length() > 0 {
       return
     }
-    let matrix = compose_transform(parent, n.get("matrix").cast())
+    let matrix = parent.clone().multiply(node_matrix(n))
     if string_field(n.get("userData"), "renderRole") == "enclosure" &&
       materials.get(string_field(n, "material")) is Some(m) &&
       string_field(m.get("userData"), "renderRole") == "enclosure" &&
@@ -67,7 +67,7 @@ pub fn room_portals(scene : Raw, view : (Raw) -> Raw) -> Unit {
         m.get("opacity").is_undefined() ||
         m.get("opacity").strict_equal(Raw::of(1))
       ) &&
-      determinant(matrix) > 0 &&
+      matrix.determinant() > 0 &&
       geometry.get(string_field(n, "geometry")) is Some(g) &&
       truthy(g.get("data"), "index") {
       let d = g.get("data")
@@ -140,7 +140,7 @@ pub fn room_portals(scene : Raw, view : (Raw) -> Raw) -> Unit {
       visit(c, matrix)
     }
   }
-  visit(envelope, root.get("matrix").cast())
+  visit(envelope, node_matrix(root))
   if walls.is_empty() {
     return
   }
@@ -148,8 +148,12 @@ pub fn room_portals(scene : Raw, view : (Raw) -> Raw) -> Unit {
   fn cell(p : Array[Int32]) -> Int32 {
     p[0] + size[0] * (p[1] + size[1] * p[2])
   }
-  fn world(p : Array[Int32]) -> Array[Int32] {
-    axes.map(k => low[k] + p[k] * step)
+  fn world(p : Array[Int32]) -> (Double, Double, Double) {
+    (
+      (low[0] + p[0] * step).to_double(),
+      (low[1] + p[1] * step).to_double(),
+      (low[2] + p[2] * step).to_double(),
+    )
   }
   let rooms : Array[PortalRoom] = []
   for y in 0..<size[1] {
@@ -245,10 +249,12 @@ pub fn room_portals(scene : Raw, view : (Raw) -> Raw) -> Unit {
             max[u] += i + w
             min[v] += j
             max[v] += j + h
-            let edge = [label / 2 - 1, (a + 1) * sign, label % 2] +
-              world(min) +
-              world(max)
-            room.edges.push(Raw::from_array(edge[:]))
+            room.edges.push({
+              destination: label / 2 - 1,
+              face: (a + 1) * sign,
+              solid: label % 2 == 1,
+              bounds: { min: world(min), max: world(max), },
+            })
           }
         }
       }
@@ -299,13 +305,9 @@ pub fn room_portals(scene : Raw, view : (Raw) -> Raw) -> Unit {
       mark(n)
     }
   }
-  put_array(
-    user_data(root),
-    "portalRooms",
-    rooms.map(r => {
-      let bounds = (world(r.lo) + world(r.hi)).map(x => Raw::of(x))
-      bounds.push(Raw::from_array(r.edges[:]))
-      Raw::from_array(bounds[:])
-    }),
-  )
+  let baked : Array[@scene_format.Room] = rooms.map(r => {
+    bounds: { min: world(r.lo), max: world(r.hi), },
+    portals: r.edges,
+  })
+  user_data(root).set("portalRooms", Raw::from_json(@json.to_json(baked)))
 }

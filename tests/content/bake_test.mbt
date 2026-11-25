@@ -53,21 +53,19 @@ fn tri(binding : String, x : Double) -> Raw {
 ///|
 test "stationary fittings share a spatial draw and moving doors keep local geometry" {
   let scene = batch_scene()
-  let defs = []
+  let defs : Array[Json] = []
   let walls = []
   for i, x in [0.0, 36, 48] {
-    defs.push(
-      raw({
-        "x": @json.to_json(x - 1),
-        "y": -1,
-        "z": -1,
-        "w": 2,
-        "h": 2,
-        "d": 2,
-        "permanent": @json.to_json(i != 2),
-        "circuitKey": @json.to_json(i.to_string()),
-      }),
-    )
+    defs.push({
+      "x": @json.to_json(x - 1),
+      "y": -1,
+      "z": -1,
+      "w": 2,
+      "h": 2,
+      "d": 2,
+      "permanent": @json.to_json(i != 2),
+      "circuitKey": @json.to_json(i.to_string()),
+    })
     let wall = tri("world/walls/" + i.to_string() + "/mesh", x)
     let attachments = if i < 2 {
       [tri("world/occluders/" + (i + 1).to_string() + "/meshes/0/mesh", 0)]
@@ -81,7 +79,11 @@ test "stationary fittings share a spatial draw and moving doors keep local geome
     walls.push(wall)
   }
   set_children(scene.get("object"), walls)
-  @art.bake_fittings(scene, v => v, FixedArray::from_array(defs[:]), [])
+  @art.bake_fittings(
+    scene,
+    v => v,
+    @art.FixtureLayout::from_catalog(Json::array(defs), []),
+  )
   let materials = resources(scene, "materials")
   for wall in walls[:2] {
     assert_eq(name_at(wall, "geometry"), "tri")
@@ -257,7 +259,11 @@ test "static switch housings batch across circuits and moving controls and lamps
     roots.push(root)
   }
   set_children(s.get("object"), roots)
-  @art.bake_fittings(s, v => v, [], controls)
+  @art.bake_fittings(
+    s,
+    v => v,
+    @art.FixtureLayout::from_catalog([], Raw::of(controls).to_json()),
+  )
   let combined = rows(s, "object.children").filter(n => {
     name_at(n, "type") == "BatchedMesh"
   })
@@ -440,7 +446,7 @@ test "compiled art preserves typed pixels and independent attributes with identi
       @archive.byte_view(@archive.typed("Float32Array", raw([-4, 7, 3.5]))),
     ),
   )
-  @art.bake_city(dir, dir, [], [])
+  @art.bake_city(dir, dir, @art.FixtureLayout::from_catalog([], []), [])
   let packed = @archive.read_json_gz(dir + "/folded-scene.json.gz")
   let views = @archive.read_json_gz(dir + "/folded-views.json.gz")
   let bytes = @archive.gunzip(

@@ -38,6 +38,7 @@ For the distributable ZIP, run `moon run scripts/build.mbtx -- --offline`. The o
 - `cmd/play/`: browser session and interface policy in MoonBit.
 - `scripts/build.mbtx`: builds content, compiles the game and assembles the static site or offline archive.
 - `host/`: browser I/O, packed buffer loading and three.mbt scene deserialization.
+- `scene_format/`: the packed buffer, camera face and room portal formats shared by the asset compiler and game.
 - `content/levels/city/`: editable JSON definitions for floors, collision, enemies, controls, circuits, lifts, pickups and repair hives.
 - `scripts/tuning.mbtx`: validates weapon and drive parameters and generates their MoonBit records at build time. Run `moon run scripts/tuning.mbtx -- content/abilities.json` to check edits, or append `simulation/tuning.generated.mbt` to generate the records.
 - `content/abilities.json`: weapon damage, heat, range and movement parameters. `content/sounds.json` contains sound synthesis parameters.

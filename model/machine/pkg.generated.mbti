@@ -1,0 +1,48 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "milky/tankle-astra/model/machine"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson)
+pub(all) enum EnemyKind {
+  Hunter
+  Dredger
+  Scout
+  Turret
+  Guard
+  Skirmisher
+  Sniper
+  Artillery
+  Miner
+  Welder
+  Repairer
+  Reflector
+  Interceptor
+  Bastion
+  Siege
+  Prism
+  Flanker
+  ScrapRam
+  Sorter
+  Overseer
+  Guardian
+  Keeper
+}
+pub fn EnemyKind::boss_name(Self) -> String
+#deprecated
+pub fn EnemyKind::equal(Self, Self) -> Bool
+pub fn EnemyKind::is_boss(Self) -> Bool
+#deprecated
+pub fn EnemyKind::not_equal(Self, Self) -> Bool
+
+// Type aliases
+
+// Traits

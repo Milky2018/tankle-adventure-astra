@@ -1,16 +1,24 @@
 ///|
+#derive(@json.FromJson, ToJson)
+priv struct AbilitySettings {
+  values : Map[String, Map[String, Double]]
+  mut revision : String
+}
+
+///|
 fn on_event(n : Raw, key : String, f : Raw) -> Unit {
   ignore(call(n, "addEventListener", [Raw::of(key), f]))
 }
 
 ///|
-fn Workspace::set_mode(self : Workspace, next : String) -> Unit {
+fn Workspace::set_mode(self : Workspace, next : Tab) -> Unit {
   self.mode = next
-  for id in ["level", "skills"] {
-    by_id(id + "-workspace").set("hidden", Raw::of(next != id))
-    attr(by_id(id + "-tab"), "aria-pressed", (next == id).to_string())
+  for tab in [Level, Skills] {
+    let id = tab.id()
+    by_id(id + "-workspace").set("hidden", Raw::of(next != tab))
+    attr(by_id(id + "-tab"), "aria-pressed", (next == tab).to_string())
   }
-  if next == "level" {
+  if next is Level {
     self.dispatch("windowResize")
   }
 }
@@ -24,14 +32,16 @@ fn Workspace::skills(self : Workspace) -> Unit {
     "magnet": "磁力",
     "drive": "驾驶",
   }
-  for key in @archive.keys(self.abilities) {
+  for group, parameters in self.abilities.values {
     let section = el("section")
-    append(section, el("h2", label=names.get_or_default(key, key)))
-    fields(section, self.abilities.get(key), (path, v) => {
-      self.abilities.set(key, replace_field(self.abilities.get(key), path, v))
-      self.skills_dirty = true
-      status("技能数值有未保存修改")
-    })
+    append(section, el("h2", label=names.get_or_default(group, group)))
+    for key, value in parameters {
+      number_input(form_input(section, key, key), value, next => {
+        parameters[key] = next
+        self.skills_dirty = true
+        status("技能数值有未保存修改")
+      })
+    }
     append(by_id("skills"), section)
   }
 }
@@ -93,12 +103,9 @@ fn Workspace::save(self : Workspace, preview~ : Bool = false) -> Unit {
         if self.skills_dirty {
           let res = api(
             "abilities",
-            body=@archive.obj([
-              ("values", self.abilities),
-              ("revision", self.revision),
-            ]),
+            body=Raw::from_json(@json.to_json(self.abilities)),
           )
-          self.revision = res.get("revision")
+          self.abilities.revision = str(res, "revision")
           self.skills_dirty = false
         }
         self.version += 1
@@ -153,7 +160,10 @@ fn Workspace::events(self : Workspace) -> Unit {
             y >= h - 1 && y <= h + 6
           }
         }) &&
-        (self.part || exists(self.find_root(hit.get("object")))) => hit
+        (
+          self.selection is Part(..) ||
+          exists(self.find_root(hit.get("object")))
+        ) => hit
       ]
       Raw::from_array(visible[:])
     }),
@@ -161,11 +171,17 @@ fn Workspace::events(self : Workspace) -> Unit {
   self.signal(
     "objectSelected",
     Raw::of(fn(n : Raw) {
-      guard self.ready && exists(n) else { return }
+      guard self.ready else { return }
       let root = self.find_root(n)
-      guard exists(root) else { return }
-      self.root = root
-      if !self.part && !n.strict_equal(root) {
+      guard exists(root) else {
+        self.selection = Nothing
+        self.properties()
+        self.render_list()
+        return
+      }
+      let part = self.selection is Part(..) && !n.strict_equal(root)
+      self.selection = if part { Part(root~, object=n) } else { Whole(root) }
+      if !part && !n.strict_equal(root) {
         ignore(call(self.editor, "select", [root]))
         return
       }
@@ -177,7 +193,7 @@ fn Workspace::events(self : Workspace) -> Unit {
     "objectChanged",
     Raw::of(fn(n : Raw) {
       if self.ready {
-        if n.strict_equal(self.root) &&
+        if self.selection.is_owner(n) &&
           self.floor is Some(h) &&
           h != floor_of(n) {
           follow_floor(n)
@@ -210,8 +226,9 @@ fn Workspace::events(self : Workspace) -> Unit {
   for id in ["floor", "collisions"] {
     handler(by_id(id), "change", () => self.apply_floor())
   }
-  for id in ["level", "skills"] {
-    handler(by_id(id + "-tab"), "click", () => self.set_mode(id))
+  for tab in [Level, Skills] {
+    let id = tab.id()
+    handler(by_id(id + "-tab"), "click", () => self.set_mode(tab))
   }
   for id in ["undo", "redo"] {
     handler(by_id(id), "click", () => ignore(call(self.editor, id, [])))
@@ -257,7 +274,7 @@ fn Workspace::events(self : Workspace) -> Unit {
           )
         ) ||
         self.busy ||
-        self.mode != "level" {
+        self.mode != Level {
         return
       }
       if mod && key == "z" {
@@ -325,6 +342,7 @@ async fn start_editor() -> Unit {
   for opt in @model.array(by_id("category"), "options") {
     categories[str(opt, "value")] = str(opt, "text")
   }
+  let abilities : AbilitySettings = @json.from_json(api("abilities").to_json())
   let w : Workspace = {
     editor,
     renderer,
@@ -334,27 +352,24 @@ async fn start_editor() -> Unit {
     background: new_instance(three.get("Color"), [Raw::of(0x222d38)]),
     entities: [],
     collisions: [],
-    root: Raw::null(),
+    selection: Nothing,
     floor: Some(-8),
-    part: false,
     busy: true,
     ready: false,
-    mode: "level",
+    mode: Level,
     scene_dirty: false,
     skills_dirty: false,
     version: 0,
     game_bg: Raw::null(),
-    abilities: Raw::null(),
-    revision: Raw::null(),
+    abilities,
     templates: Raw::null(),
-    definitions: Raw::null(),
+    definitions: [],
   }
   w.dispatch("rendererCreated", args=[renderer])
   ignore(call(editor, "setViewportShading", [Raw::of("solid")]))
   w.events()
   w.refresh()
   let project = api("scene")
-  let skills = api("abilities")
   set_text(
     call(by_id("loading"), "querySelector", [Raw::of("p")]),
     "构建编辑视图…",
@@ -384,8 +399,6 @@ async fn start_editor() -> Unit {
   for h in floors {
     option(by_id("floor"), h.to_string(), "Y " + h.to_string())
   }
-  w.abilities = skills.get("values")
-  w.revision = skills.get("revision")
   w.skills()
   w.init_tools()
   w.ready = true
