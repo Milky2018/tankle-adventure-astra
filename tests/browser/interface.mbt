@@ -3,16 +3,25 @@ let save_key = "tankle-moonbit-v1"
 
 ///|
 async fn Browser::storage_id(self : Browser) -> Json {
-  let tree = self.command("Page.getFrameTree")
-  let key = self.command("Storage.getStorageKeyForFrame", params={
-    "frameId": prop(prop(prop(tree, "frameTree"), "frame"), "id"),
-  })
+  guard self.command("Page.getFrameTree")
+    is {
+      "frameTree": {
+        "frame": { "id": String(id), "securityOrigin": String(origin), .. },
+        ..
+      },
+      ..
+    } else {
+    raise Failure("Chrome returned no page frame")
+  }
+  guard self.command("Storage.getStorageKeyForFrame", params={
+      "frameId": Json::string(id),
+    })
+    is { "storageKey": String(key), .. } else {
+    raise Failure("Chrome returned no storage key")
+  }
   {
-    "securityOrigin": prop(
-      prop(prop(tree, "frameTree"), "frame"),
-      "securityOrigin",
-    ),
-    "storageKey": prop(key, "storageKey"),
+    "securityOrigin": Json::string(origin),
+    "storageKey": Json::string(key),
     "isLocalStorage": true,
   }
 }
@@ -22,9 +31,10 @@ async fn Browser::stored(self : Browser, key : String) -> String? {
   let response = self.command("DOMStorage.getDOMStorageItems", params={
     "storageId": self.storage_id(),
   })
-  let entries : Array[(String, String)] = @json.from_json(
-    prop(response, "entries"),
-  )
+  guard response is { "entries": items, .. } else {
+    raise Failure("Chrome returned no storage entries")
+  }
+  let entries : Array[(String, String)] = @json.from_json(items)
   entries.iter().find_first(e => e.0 == key).map(e => e.1)
 }
 
@@ -48,7 +58,7 @@ async fn Browser::new_game(self : Browser) -> Unit {
     self.probe(HasAttribute("#journey", "open")) is False
   })
   let saved = self.saved()
-  guard prop(saved, "flags") is Object(flags) else {
+  guard saved is { "flags": Object(flags), .. } else {
     raise Failure("Save is missing progression")
   }
   flags["relay-west"] = true
@@ -72,7 +82,8 @@ async fn Browser::new_game(self : Browser) -> Unit {
     !self.player().flag("relay-west")
   })
   ensure(
-    prop(prop(self.saved(), "flags"), "relay-west") != true,
+    self.saved() is { "flags": Object(cleared), .. } &&
+    cleared.get("relay-west") != Some(true),
     "Old save survived restart",
   )
   self.goto("?test")
@@ -90,6 +101,15 @@ async fn Browser::interface_check(self : Browser) -> Unit {
   self.goto("?test&view=third")
   self.click("#journey-continue")
   self.until("interaction prompt", () => self.visible("#interaction"))
+  let current_hp = self.player().hp.ceil().to_int()
+  ensure(
+    self.probe(Attribute("#hp", "aria-valuenow")) ==
+    Json::string(current_hp.to_string()) &&
+    self.probe(ElementCount("#hp i:not(.empty)")) is Number(n, ..) &&
+    n > 0 &&
+    self.probe(Attribute("#fire-key [role=img]", "data-button")) == "Mouse0",
+    "HUD did not display the current hull or mouse binding",
+  )
   self.press("Tab")
   ensure(self.visible("#region"), "Map did not open")
   let layers : Int32 = @json.from_json(
@@ -123,7 +143,7 @@ async fn Browser::interface_check(self : Browser) -> Unit {
   }
   let prefs = @json.parse(settings)
   ensure(
-    prop(prop(prefs, "camera"), "render_distance") == 80,
+    prefs is { "camera": { "render_distance": 80, .. }, .. },
     "Render distance was not saved",
   )
   self.shot("camera-preview")
@@ -153,4 +173,29 @@ async fn Browser::interface_check(self : Browser) -> Unit {
   let t = self.player().time
   @async.sleep(300)
   ensure(self.player().time == t, "Paused simulation advanced")
+  guard self.stored("tankle-moonbit-settings-v1") is Some(raw) else {
+    raise Failure("Settings missing after resetting bindings")
+  }
+  let settings = @json.parse(raw)
+  guard settings is { "bindings": Object(bindings), .. } else {
+    raise Failure("Saved bindings missing")
+  }
+  let label = "<em>custom fire</em>"
+  bindings["fire"] = Json::string(label)
+  ignore(
+    self.command("DOMStorage.setDOMStorageItem", params={
+      "storageId": self.storage_id(),
+      "key": "tankle-moonbit-settings-v1",
+      "value": settings.stringify(),
+    }),
+  )
+  self.goto("?test")
+  self.click("#journey-continue")
+  self.press("Escape")
+  ensure(
+    self.probe(TextContent("#binding-fire")) == Json::string(label) &&
+    self.probe(TextContent("#fire-key")) == Json::string(label) &&
+    self.probe(ElementCount("#binding-fire *, #fire-key *")) == 0,
+    "A saved binding label was interpreted as markup",
+  )
 }

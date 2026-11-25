@@ -1,6 +1,8 @@
 import {
   "milky/tankle-astra/scene_format",
+  "milky/tankle-astra/scene_format/loader",
   "moonbitlang/core/json",
+  "moonbitlang/core/debug",
   "moonbitlang/core/math",
   "tiye/dom-ffi" @dom,
   "moonbitlang/core/async",
@@ -8,7 +10,6 @@ import {
   "moonbit-community/three/core",
   "moonbit-community/three/audio",
   "moonbit-community/three/math" @three_math,
-  "moonbit-community/three/loaders",
   "moonbit-community/three/renderers/webgl",
 }
 

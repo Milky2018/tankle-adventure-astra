@@ -63,27 +63,6 @@ extern "js" fn InputChunks::next(
   #| it=>it.next()
 
 ///|
-#external
-priv type Utf8Decoder
-
-///|
-extern "js" fn Utf8Decoder::new() -> Utf8Decoder =
-  #| ()=>new TextDecoder("utf-8",{fatal:true,ignoreBOM:true})
-
-///|
-extern "js" fn Utf8Decoder::decode(
-  self : Utf8Decoder,
-  bytes : Bytes,
-) -> @js_async.Promise[String] =
-  #| async (decoder,bytes)=>decoder.decode(bytes,{stream:true})
-
-///|
-extern "js" fn Utf8Decoder::finish(
-  self : Utf8Decoder,
-) -> @js_async.Promise[String] =
-  #| async decoder=>decoder.decode()
-
-///|
 extern "js" fn stdin() -> InputStream = "()=>process.stdin"
 
 ///|
@@ -107,16 +86,26 @@ extern "js" fn Response::finish(
   #| (res,status,body)=>{res.writeHead(status);res.end(body)}
 
 ///|
-extern "js" fn moon_process(
+priv struct ProcessResult {
+  output : Bytes
+  stderr : String
+  failure : String
+}
+
+///|
+/// Keep the HTTP request readable if a failing child closes stdin early.
+/// stream.pipeline would destroy the IncomingMessage and its response socket.
+extern "js" fn exec_stream(
+  command : String,
   root : String,
   args : FixedArray[String],
   input : InputStream,
   max_output : Int32,
-) -> @js_async.Promise[Bytes] =
-  #| (cwd,args,input,maxBuffer)=>new Promise((resolve,reject)=>{
-  #|   const child=process.getBuiltinModule("node:child_process").execFile("moon",args,{cwd,encoding:"buffer",maxBuffer},(e,out,err)=>{
-  #|     input.removeListener("aborted",stop);input.removeListener("error",stop);
-  #|     if(e)reject(new Error(err?.toString().trim()||e.message));else resolve(out);
+) -> @js_async.Promise[ProcessResult] =
+  #| (command,cwd,args,input,maxBuffer)=>new Promise(resolve=>{
+  #|   const child=process.getBuiltinModule("node:child_process").execFile(command,args,{cwd,encoding:"buffer",maxBuffer},(error,output,stderr)=>{
+  #|     input.off("aborted",stop);input.off("error",stop);
+  #|     resolve({output,stderr:stderr.toString(),failure:error?.message??""});
   #|   });
   #|   function stop(){input.unpipe(child.stdin);child.stdin.end()}
   #|   input.once("aborted",stop);input.once("error",stop);
@@ -125,5 +114,58 @@ extern "js" fn moon_process(
   #| })
 
 ///|
+async fn moon_process(
+  root : String,
+  args : FixedArray[String],
+  input : InputStream,
+  max_output : Int32,
+) -> Bytes {
+  let result = exec_stream("moon", root, args, input, max_output).wait()
+  if !result.failure.is_empty() {
+    let detail = result.stderr.trim()
+    raise Failure(
+      if detail.is_empty() {
+        result.failure
+      } else {
+        detail.to_owned()
+      },
+    )
+  }
+  result.output
+}
+
+///|
 extern "js" fn read_file(path : String) -> @js_async.Promise[Bytes] =
   #| p=>process.getBuiltinModule("node:fs/promises").readFile(p)
+
+///|
+priv struct WorkerOutput(@io.BinaryWriterController)
+
+///|
+impl @io.BinaryWriterImpl for WorkerOutput with fn name(_) {
+  "editor worker stdout"
+}
+
+///|
+impl @io.BinaryWriterImpl for WorkerOutput with fn get_controller(self) {
+  self.0
+}
+
+///|
+impl @io.BinaryWriterImpl for WorkerOutput with fn raw_write_impl(
+  _,
+  bytes,
+  offset~,
+  len~,
+) {
+  stdout(bytes[offset:offset + len].to_owned()).wait()
+  len
+}
+
+///|
+impl @io.BinaryWriterImpl for WorkerOutput with fn flush_partial_data(_) {
+  ()
+}
+
+///|
+impl @io.BinaryWriter for WorkerOutput

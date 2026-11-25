@@ -1,9 +1,11 @@
 import {
   "milky/tankle-astra/tooling/archive",
   "milky/tankle-astra/scene_format",
+  "milky/tankle-astra/scene_format/loader",
   "milky/tankle-astra/tooling/catalog",
   "moonbit-community/three/core",
   "moonbit-community/three/math",
+  "moonbit-community/three/renderers/webgl",
   "moonbitlang/core/json",
   "moonbitlang/core/encoding/base64",
   "moonbitlang/core/encoding/utf8",

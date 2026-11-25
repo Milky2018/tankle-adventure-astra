@@ -165,21 +165,13 @@ h3 {
   margin: 5px 0 12px;
 }
 #viewport {
-  position: fixed !important;
-  top: 105px !important;
-  left: 266px !important;
-  right: 290px !important;
-  bottom: 28px !important;
-}
-#viewport .Panel {
-  background: transparent;
-}
-#viewport .Text,
-#viewport .Select {
-  color: #dce7ef;
-}
-#viewport canvas {
+  position: fixed;
+  top: 105px;
+  left: 266px;
+  width: calc(100% - 556px);
+  height: calc(100% - 133px);
   outline: none;
+  touch-action: none;
 }
 #view-tools {
   position: fixed;
@@ -283,12 +275,6 @@ summary {
   }
 }
 
-#viewport select.Select {
-  width: auto;
-  background: #26313e;
-  color: #dce7ef;
-  text-transform: none;
-}
 .entity-actions {
   display: flex;
   gap: 6px;
@@ -330,3 +316,13 @@ dialog li {
   overflow-wrap: anywhere;
   padding: 3px 0;
 }
+
+#viewport canvas { display: block; width: 100%; height: 100%; outline: none; }
+.viewport-display { position: absolute; top: 10px; right: 12px; display: flex; gap: 6px; }
+.viewport-display select { width: auto; }
+.view-compass { position: absolute; top: 50px; right: 10px; width: 90px; height: 90px; pointer-events: none; }
+.view-compass button { position: absolute; transform: translate(-50%, -50%); pointer-events: auto; padding: 3px; min-width: 23px; border-radius: 50%; font-size: 10px; }
+.view-compass button:nth-child(-n+2) { color: #ffa3a1; }
+.view-compass button:nth-child(n+3):nth-child(-n+4) { color: #a6e4b4; }
+.view-compass button:nth-child(n+5) { color: #a9ceff; }
+.view-stats { position: absolute; left: 9px; bottom: 9px; background: #17212dd9; color: #c1d1de; border-radius: 4px; padding: 3px 7px; pointer-events: none; }

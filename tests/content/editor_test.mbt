@@ -1,141 +1,70 @@
 ///|
-extern "js" fn load_three_core(repo : String) -> ThreeEditor =
-  #| root => process.getBuiltinModule("module").createRequire(root + "/index.js")(root + "/.editor/three-r185/build/three.core.js")
-
-///|
-extern "js" fn run_program(
-  command : String,
-  args : FixedArray[String],
-  repo : String,
-) -> Unit =
-  #| (command,args,cwd) => process.getBuiltinModule("child_process").execFileSync(command,args,{cwd,stdio:"inherit"})
-
-///|
-fn three_core(repo : String) -> ThreeEditor {
-  if !@fs.path_exists(repo + "/.editor/three-r185/build/three.core.js") {
-    run_program(
-      "moon",
-      ["run", "--quiet", "cmd/editor", "--", "prepare-core"],
-      repo,
-    )
-  }
-  load_three_core(repo)
+fn parse_scene(scene : Raw) -> @core.Object3D {
+  @loaders.ObjectLoader::new().parse(scene.to_json())
 }
 
 ///|
-// Integration tests use the exact upstream ObjectLoader and serializer used by the editor.
-#external
-priv type ThreeEditor
-
-///|
-extern "js" fn ThreeEditor::scene(self : ThreeEditor) -> Raw = "t=>new t.Scene()"
-
-///|
-extern "js" fn ThreeEditor::group(self : ThreeEditor) -> Raw = "t=>new t.Group()"
-
-///|
-extern "js" fn ThreeEditor::box(self : ThreeEditor) -> Raw = "t=>new t.BoxGeometry()"
-
-///|
-extern "js" fn ThreeEditor::material(self : ThreeEditor) -> Raw = "t=>new t.MeshBasicMaterial()"
-
-///|
-extern "js" fn ThreeEditor::mesh(
-  self : ThreeEditor,
-  geometry : Raw,
-  material : Raw,
-) -> Raw = "(t,g,m)=>new t.Mesh(g,m)"
-
-///|
-extern "js" fn ThreeEditor::batch(
-  self : ThreeEditor,
-  slots : Int32,
-  vertices : Int32,
-  indices : Int32,
-  material : Raw,
-) -> Raw =
-  #| (t,s,v,i,m)=>new t.BatchedMesh(s,v,i,m)
-
-///|
-extern "js" fn add_geometry(batch : Raw, geometry : Raw) -> Int32 = "(b,g)=>b.addGeometry(g)"
-
-///|
-extern "js" fn add_instance(batch : Raw, index : Int32) -> Unit = "(b,i)=>{b.addInstance(i)}"
-
-///|
-extern "js" fn add_objects(parent : Raw, children : FixedArray[Raw]) -> Unit = "(p,cs)=>{p.add(...cs)}"
-
-///|
-extern "js" fn remove_objects(parent : Raw, children : FixedArray[Raw]) -> Unit = "(p,cs)=>{p.remove(...cs)}"
-
-///|
-extern "js" fn position(
-  object : Raw,
-  x : Double,
-  y : Double,
-  z : Double,
-) -> Unit = "(o,x,y,z)=>{o.position.set(x,y,z)}"
-
-///|
-extern "js" fn update_world(scene : Raw) -> Unit = "s=>s.updateMatrixWorld(true)"
-
-///|
-extern "js" fn three_json(object : Raw) -> Raw = "o=>o.toJSON()"
-
-///|
-extern "js" fn ThreeEditor::parse(self : ThreeEditor, scene : Raw) -> Raw =
-  #| (t,s)=>new t.ObjectLoader().parse(s)
-
-///|
-fn load_export(three : ThreeEditor, project : Raw) -> Raw {
-  three.parse(project.get("scene"))
+fn load_export(project : Raw) -> @core.Object3D {
+  parse_scene(project.get("scene"))
 }
 
 ///|
-fn make_fixture(repo : String, dir : String, three : ThreeEditor) -> Unit raise {
+fn open_fixture_project(project : Raw) -> @model.LiveProject {
+  @model.LiveProject::attach(project, load_export(project))
+}
+
+///|
+fn three_json(node : @core.Object3D) -> Raw {
+  Raw::from_json(node.to_json())
+}
+
+///|
+fn[T] in_directory(dir : String, f : () -> T raise) -> T raise {
+  let previous = cwd()
+  @node.chdir(dir)
+  defer @node.chdir(previous)
+  f()
+}
+
+///|
+fn make_fixture(repo : String, dir : String) -> Unit raise {
   @fs.create_dir(dir + "/content/art")
   copy_fixture(repo + "/content/levels", dir + "/content/levels")
-  chdir(dir)
-  let scene = three.scene()
-  let root = three.group()
-  let e = record("enemies", "prototype")
-  position(root, quantity(e, "x"), quantity(e, "y"), quantity(e, "z"))
-  root.set("name", Raw::of("Prototype"))
-  root.set(
-    "userData",
-    raw({
-      "binding": "enemies/prototype/model/root",
-      "entity": {
-        "collection": "enemies",
-        "id": "prototype",
-        "key": "prototype",
-      },
-    }),
-  )
-  for role in ["body", "turret"] {
-    let part = three.mesh(three.box(), three.material())
-    part.set("name", Raw::of(role))
-    part
-    .get("userData")
-    .set("binding", Raw::of("enemies/prototype/model/" + role))
-    add_objects(root, [part])
-  }
-  add_objects(scene, [root])
-  update_world(scene)
-  @archive.write_scene(three_json(scene))
+  in_directory(dir, () => {
+    let scene = @core.Scene::new()
+    let root = @core.Group::new()
+    let e = record("enemies", "prototype")
+    ignore(
+      root.position.set(quantity(e, "x"), quantity(e, "y"), quantity(e, "z")),
+    )
+    root.name = "Prototype"
+    root.user_data.set("binding", Raw::of("enemies/prototype/model/root"))
+    root.user_data.set(
+      "entity",
+      raw({ "collection": "enemies", "id": "prototype", "key": "prototype" }),
+    )
+    for role in ["body", "turret"] {
+      let part = @core.Mesh::new(
+        geometry=@geometries.BoxGeometry::new(),
+        material=Single(@core.MeshBasicMaterial::new()),
+      )
+      part.name = role
+      part.user_data.set("binding", Raw::of("enemies/prototype/model/" + role))
+      ignore(root.add(part))
+    }
+    ignore(scene.add(root))
+    scene.update_matrix_world(force=true)
+    @archive.write_scene(three_json(scene))
+  })
 }
 
 ///|
-fn fixture(body : (String, ThreeEditor) -> Unit raise) -> Unit raise {
+fn fixture(body : (String) -> Unit raise) -> Unit raise {
   let repo = cwd()
-  let three = three_core(repo)
   let dir = temp_dir()
-  defer {
-    chdir(repo)
-    @fs.remove_dir(dir)
-  }
-  make_fixture(repo, dir, three)
-  body(repo, three)
+  defer @fs.remove_dir(dir)
+  make_fixture(repo, dir)
+  in_directory(dir, () => body(repo))
 }
 
 ///|
@@ -157,34 +86,115 @@ fn has_helpers(scene : Raw) -> Bool {
 }
 
 ///|
-test "batched architecture survives the editor loader and save serialization" {
-  fixture((_, three) => {
-    let scene = three.scene()
-    let batch = three.batch(1, 96, 36, three.material())
-    add_instance(batch, add_geometry(batch, three.box()))
-    add_objects(scene, [batch])
+async test "batched architecture survives the editor loader and save serialization" {
+  let sandbox = temp_dir()
+  defer @fs.remove_dir(sandbox)
+  make_fixture(cwd(), sandbox)
+  let batch = @core.BatchedMesh::new(
+    20,
+    96,
+    max_index_count=288,
+    material=Single(@core.MeshBasicMaterial::new()),
+  )
+  let instance = batch.add_instance(
+    batch.add_geometry(@geometries.BoxGeometry::new()),
+  )
+  let placement = @math.Matrix4::new().make_translation(3, -4, 5)
+  ignore(batch.set_matrix_at(instance, placement))
+  let project = in_directory(sandbox, () => {
+    let scene = @core.Scene::new()
+    ignore(scene.add(batch))
     @archive.write_scene(three_json(scene))
-    fn positions(project : Raw) -> Raw {
-      @model.array(project.get("scene"), "geometries")[0]
-      .get("data")
-      .get("attributes")
-      .get("position")
-      .get("array")
+    @model.export_project()
+  })
+  fn positions(project : Raw) -> Raw {
+    @model.array(project.get("scene"), "geometries")[0]
+    .get("data")
+    .get("attributes")
+    .get("position")
+    .get("array")
+  }
+  let expected = positions(project).to_json()
+  let wire = @model.pack_scene_transfer(project)
+  assert_true(@archive.is_string(positions(wire)))
+  let live = @model.LiveProject::open(wire)
+  // Inspect the buffers used for drawing; serializing may reuse an original record.
+  let loaded = live.scene.children[0]
+  let source = batch.get_geometry().unwrap()
+  let decoded = loaded.get_geometry().unwrap()
+  fn check_buffer(
+    want : @core.GeometryAttribute,
+    actual : @core.GeometryAttribute?,
+  ) -> Unit raise {
+    guard want is Buffer(want) && actual is Some(Buffer(got)) else {
+      fail("Missing batch buffer")
     }
-    let project = @model.export_project()
-    let expected = positions(project).to_json()
-    let wire = @model.pack_scene_transfer(project)
-    assert_true(@archive.is_string(positions(wire)))
-    let received = @model.unpack_scene_transfer(wire)
-    project.set("scene", three_json(load_export(three, received)))
-    ignore(@model.import_project(project))
+    assert_eq(got.count, want.count)
+    assert_eq(got.array.to_array(), want.array.to_array())
+  }
+  for name, attr in source.attributes {
+    check_buffer(attr, decoded.get_attribute(name))
+  }
+  check_buffer(source.get_index().unwrap(), decoded.get_index())
+  assert_true(
+    loaded.get_matrix_at(instance, @math.Matrix4::new()).equals(placement),
+  )
+  let saved = @model.unpack_scene_transfer(live.serialize())
+  expect_json(positions(saved), expected)
+  in_directory(sandbox, () => {
+    ignore(@model.import_project(saved))
     expect_json(positions(@model.export_project()), expected)
   })
 }
 
 ///|
+test "extruded meshes keep their shape through an editor save" {
+  fixture(_ => {
+    // A selected save must keep the packed geometry of unrelated scenery.
+    let original = parse_scene(@archive.read_scene())
+    let scenery = @core.BatchedMesh::new(
+      1,
+      24,
+      max_index_count=36,
+      material=Single(@core.MeshBasicMaterial::new()),
+    )
+    ignore(
+      scenery.add_instance(scenery.add_geometry(@geometries.BoxGeometry::new())),
+    )
+    ignore(original.add(scenery))
+    let source = three_json(original)
+    let id = @model.str(three_json(scenery).get("object"), "geometry")
+    let unselected = resources(source, "geometries")[id].get("data").to_json()
+    @archive.write_scene(source)
+    let project = selected()
+    assert_false(resources(project.get("scene"), "geometries").contains(id))
+    let live = open_fixture_project(project)
+    let scene = live.scene
+    let profile = @extras.Shape::new(points=[
+      @math.Vector2::new(0, 0),
+      @math.Vector2::new(1, 0),
+      @math.Vector2::new(0, 1),
+    ])
+    let mesh = @core.Mesh::new(
+      geometry=@geometries.ExtrudeGeometry::new(shapes=[profile], depth=2),
+      material=Single(@core.MeshBasicMaterial::new()),
+    )
+    ignore(scene.children[0].add(mesh))
+    let edited = @model.unpack_scene_transfer(live.serialize())
+    let shape = rows(edited.get("scene"), "shapes")[0].to_json()
+    ignore(@model.import_project(edited))
+    let saved = three_json(load_export(selected()))
+    expect_json(rows(saved, "shapes")[0], shape)
+    expect_json(
+      resources(@archive.read_scene(), "geometries")[id].get("data"),
+      unselected,
+    )
+  })
+}
+
+///|
 test "editor translation and gameplay data are independent of display names" {
-  fixture((_, _) => {
+  fixture(_ => {
     let before = record("enemies", "prototype")
     let project = selected()
     let root = @model.children(project_world(project))[0]
@@ -207,8 +217,21 @@ test "editor translation and gameplay data are independent of display names" {
 }
 
 ///|
+test "an incomplete child transform rejects the entire edit before writing" {
+  fixture(_ => {
+    let project = selected()
+    let root = @model.children(project_world(project))[0]
+    let before = record("enemies", "prototype")
+    shift_x(root, 2)
+    @model.children(root)[0].set("matrix", raw([1, 0, 0]))
+    raises_like("4 by 4 transform", () => ignore(@model.import_project(project)))
+    expect_json(record("enemies", "prototype"), before.to_json())
+  })
+}
+
+///|
 test "stale exports and scripts are rejected before saving" {
-  fixture((_, _) => {
+  fixture(_ => {
     let project = selected()
     project
     .get("scripts")
@@ -227,7 +250,7 @@ test "stale exports and scripts are rejected before saving" {
 
 ///|
 test "missing animation roles and duplicate bindings fail before saving" {
-  fixture((_, _) => {
+  fixture(_ => {
     let project = selected()
     let root = @model.children(project_world(project))[0]
     let parts = rows(root, "children")
@@ -246,7 +269,7 @@ test "missing animation roles and duplicate bindings fail before saving" {
 
 ///|
 test "resizing editor colliders changes physics dimensions and excludes helper meshes" {
-  fixture((_, _) => {
+  fixture(_ => {
     let id = "press-working-floor"
     let before = record("decks", id)
     let project = @model.export_project(selection="decks:" + id)
@@ -267,7 +290,7 @@ test "resizing editor colliders changes physics dimensions and excludes helper m
 
 ///|
 test "exported roots cannot be nested into a duplicate hierarchy" {
-  fixture((_, _) => {
+  fixture(_ => {
     let project = selected()
     let world = project_world(project)
     let roots = rows(world, "children")
@@ -282,7 +305,7 @@ test "exported roots cannot be nested into a duplicate hierarchy" {
 
 ///|
 test "scene settings round trip and preview helpers stay outside runtime art" {
-  fixture((_, _) => {
+  fixture(_ => {
     let project = @model.export_project()
     let root = project_world(project)
     root.set("background", Raw::of(0x123456))
@@ -303,7 +326,7 @@ test "scene settings round trip and preview helpers stay outside runtime art" {
 
 ///|
 test "full-level collider export distinguishes repeated deck IDs" {
-  fixture((_, _) => {
+  fixture(_ => {
     let before = @archive.items(records("decks"))
     let seen = Map([])
     let mut repeat = -1
@@ -334,7 +357,7 @@ test "full-level collider export distinguishes repeated deck IDs" {
 
 ///|
 test "the shipped city and all colliders round trip without changing gameplay definitions" {
-  fixture((repo, _) => {
+  fixture(repo => {
     copy_fixture(repo + "/content/art", "content/art")
     let names = [
       "decks", "barriers", "obstacles", "architecture", "lifts", "enemies", "controls",
@@ -350,7 +373,7 @@ test "the shipped city and all colliders round trip without changing gameplay de
 
 ///|
 test "consecutive saves and undo retain absolute placement and reject stale tabs" {
-  fixture((_, _) => {
+  fixture(_ => {
     let before = records("enemies")
     let original = record("enemies", "prototype")
     let project = selected()
@@ -385,10 +408,11 @@ fn count_records(k : String, id : String) -> Int32 raise {
 }
 
 ///|
-fn save_live(project : Raw, scene : Raw) -> Unit raise {
-  project.set("scene", three_json(scene))
-  let result = @model.import_project(project)
-  let meta = @model.get(@model.data(scene), "tankle")
+fn save_live(live : @model.LiveProject) -> Unit raise {
+  let result = @model.import_project(
+    @model.unpack_scene_transfer(live.serialize()),
+  )
+  let meta = @model.get(live.scene.user_data, "tankle")
   meta.set("revision", result.get("revision"))
   meta.set("roots", result.get("rootIds"))
   meta.set("deleted", raw([]))
@@ -396,23 +420,34 @@ fn save_live(project : Raw, scene : Raw) -> Unit raise {
 
 ///|
 test "new enemies clone all animation roles and resources and can be saved, removed and restored" {
-  fixture((_, three) => {
-    let original = load_export(three, @model.export_project())
-    let source = @model.children(original)[0]
-    let fx = three.mesh(three.box(), three.material())
-    fx.get("userData").set("binding", Raw::of("enemies/prototype/warning"))
-    add_objects(original, [fx])
-    @archive.walk(source, n => {
+  fixture(_ => {
+    let original = load_export(@model.export_project())
+    let source = original.children[0]
+    let geometry = @geometries.BoxGeometry::new()
+    let shared = @core.MeshBasicMaterial::new()
+    let art = @core.Mesh::new(geometry~, material=Single(shared))
+    art.name = "Shared detail"
+    ignore(source.add(art))
+    let fx = @core.Mesh::new(
+      geometry~,
+      material=Multiple([shared, @core.MeshBasicMaterial::new(), shared]),
+    )
+    fx.user_data.set("binding", Raw::of("enemies/prototype/warning"))
+    ignore(original.add(fx))
+    source.traverse(n => {
       for k in ["game", "placement"] {
-        @archive.remove(n.get("userData"), k)
+        @archive.remove(n.user_data, k)
       }
     })
     @archive.write_scene(three_json(original))
     let project = @model.export_project()
-    let loaded = load_export(three, project)
-    let root = rows(loaded, "children")
+    let live = open_fixture_project(project)
+    let loaded = live.scene
+    let root = loaded.children
       .iter()
-      .find_first(n => @model.str(@model.entity(n), "id") == "prototype")
+      .find_first(n => {
+        @model.str(n.user_data.get("entity"), "id") == "prototype"
+      })
       .unwrap()
     let bundle = @model.clone_entity(
       loaded,
@@ -422,66 +457,83 @@ test "new enemies clone all animation roles and resources and can be saved, remo
     )
     let parts = bundle.objects
     assert_eq(parts.length(), 2)
+    let cloned_detail = bundle.root.children
+      .iter()
+      .find_first(n => n.name == "Shared detail")
+      .unwrap()
+    let detail = three_json(cloned_detail).get("object")
+    let original_detail = three_json(art).get("object")
+    let warning_node = parts
+      .iter()
+      .find_first(n => {
+        @model.str(n.user_data, "binding") == "enemies/editor-enemy/warning"
+      })
+      .unwrap()
+    let warning = three_json(warning_node).get("object")
     for key in ["geometry", "material"] {
-      assert_false(
-        @model.children(bundle.root)[0]
-        .get(key)
-        .strict_equal(@model.children(root)[0].get(key)),
-      )
+      assert_not_eq(@model.str(detail, key), @model.str(original_detail, key))
     }
-    add_objects(loaded, parts)
-    save_live(project, loaded)
-    save_live(project, loaded)
+    assert_eq(@model.str(detail, "geometry"), @model.str(warning, "geometry"))
+    let materials = @archive.items(warning.get("material"))
+    assert_eq(materials.length(), 3)
+    assert_true(materials[0].strict_equal(detail.get("material")))
+    assert_true(materials[0].strict_equal(materials[2]))
+    assert_false(materials[0].strict_equal(materials[1]))
+    ignore(loaded.add_all(parts))
+    save_live(live)
+    save_live(live)
     assert_eq(count_records("enemies", "editor-enemy"), 1)
     assert_eq(
       quantity(record("enemies", "editor-enemy"), "x"),
       quantity(record("enemies", "prototype"), "x") + 3,
     )
-    remove_objects(loaded, @model.entity_bundle(loaded, bundle.root).objects)
-    @model.get(@model.data(loaded), "tankle").set(
+    ignore(loaded.remove_all(@model.entity_bundle(loaded, bundle.root).objects))
+    @model.get(loaded.user_data, "tankle").set(
       "deleted",
-      Raw::from_array([@model.entity(bundle.root)]),
+      Raw::from_array([bundle.root.user_data.get("entity")]),
     )
-    save_live(project, loaded)
+    save_live(live)
     assert_eq(count_records("enemies", "editor-enemy"), 0)
-    let remaining = load_export(three, @model.export_project())
+    let remaining = load_export(@model.export_project())
     assert_false(
-      rows(remaining, "children")
+      remaining.children
       .iter()
-      .any(n => @model.binding(n).has_prefix("enemies/editor-enemy/")),
+      .any(n => {
+        @model.str(n.user_data, "binding").has_prefix("enemies/editor-enemy/")
+      }),
     )
-    add_objects(loaded, parts)
-    save_live(project, loaded)
+    ignore(loaded.add_all(parts))
+    save_live(live)
     assert_eq(count_records("enemies", "editor-enemy"), 1)
   })
 }
 
 ///|
 test "duplicate identities, missing roles and incomplete entity deletion fail before writing" {
-  fixture((_, three) => {
+  fixture(_ => {
     let project = @model.export_project()
-    let scene = load_export(three, project)
-    let root = @model.children(scene)[0]
+    let scene = load_export(project)
+    let root = scene.children[0]
     fn clone_as(id : String) -> @model.EntityBundle raise {
       @model.clone_entity(scene, root, id)
     }
     let dup = clone_as("prototype").objects
-    add_objects(scene, dup)
+    ignore(scene.add_all(dup))
     project.set("scene", three_json(scene))
     raises_like("Duplicate", () => ignore(@model.import_project(project)))
-    remove_objects(scene, dup)
+    ignore(scene.remove_all(dup))
     let invalid = clone_as("new-enemy")
     let bundle = invalid.objects
-    remove_objects(invalid.root, [@model.children(invalid.root)[1]])
-    add_objects(scene, bundle)
+    ignore(invalid.root.remove(invalid.root.children[1]))
+    ignore(scene.add_all(bundle))
     project.set("scene", three_json(scene))
     raises_like("Missing scene role", () => {
       ignore(@model.import_project(project))
     })
-    remove_objects(scene, bundle)
-    @model.get(@model.data(scene), "tankle").set(
+    ignore(scene.remove_all(bundle))
+    @model.get(scene.user_data, "tankle").set(
       "deleted",
-      Raw::from_array([@model.entity(root)]),
+      Raw::from_array([root.user_data.get("entity")]),
     )
     project.set("scene", three_json(scene))
     raises_like("Delete the complete entity", () => {
@@ -492,29 +544,70 @@ test "duplicate identities, missing roles and incomplete entity deletion fail be
 }
 
 ///|
-// Node lacks HTMLImageElement. Preserve URLs through upstream ImageLoader and ImageUtils.
-extern "js" fn intercept_images(
-  three : ThreeEditor,
-  seen : (String) -> Unit,
-) -> () -> Unit =
-  #| (three,seen)=>{
-  #|   const previousImage=globalThis.HTMLImageElement, previousLoad=three.ImageLoader.prototype.load;
-  #|   class Image { constructor(url){this.src=url} }
-  #|   globalThis.HTMLImageElement=Image;
-  #|   three.ImageLoader.prototype.load=(url,loaded)=>{
-  #|     seen(url);const image=new Image(url);queueMicrotask(()=>loaded?.(image));return image;
-  #|   };
-  #|   return ()=>{
-  #|     three.ImageLoader.prototype.load=previousLoad;
-  #|     if(previousImage===undefined)delete globalThis.HTMLImageElement;else globalThis.HTMLImageElement=previousImage;
-  #|   };
+extern "js" fn global_object() -> Raw = "()=>globalThis"
+
+///|
+extern "js" fn image_class() -> Raw =
+  #| ()=>class extends EventTarget {
+  #|   get src(){return this.url}
+  #|   set src(url){this.url=url;queueMicrotask(()=>this.dispatchEvent(new Event("load")))}
   #| }
 
 ///|
+extern "js" fn new_image(image_class : Raw) -> Raw = "C=>new C()"
+
+///|
+// Supply only the DOM image element that three.mbt requests when running on Node.
+fn install_image_document() -> () -> Unit {
+  let global = global_object()
+  let previous = [
+    ("document", global.get("document")),
+    ("HTMLImageElement", global.get("HTMLImageElement")),
+  ]
+  let image = image_class()
+  let doc = Raw::object()
+  doc.set(
+    "createElementNS",
+    Raw::of(fn(_ns : String, _tag : String) { new_image(image) }),
+  )
+  global.set("document", doc)
+  global.set("HTMLImageElement", image)
+  () => {
+    for (key, value) in previous {
+      if value.is_undefined() {
+        @archive.remove(global, key)
+      } else {
+        global.set(key, value)
+      }
+    }
+  }
+}
+
+///|
+fn image_urls(scene : Raw) -> Set[String] {
+  let urls = Set([])
+  fn record(url : Raw) {
+    if @archive.is_string(url) {
+      urls.add(url.cast())
+    }
+  }
+  for image in @model.array(scene, "images") {
+    let url = image.get("url")
+    if @archive.is_array(url) {
+      for face in @archive.items(url) {
+        record(face)
+      }
+    } else {
+      record(url)
+    }
+  }
+  urls
+}
+
+///|
 test "standalone templates can add machines, pickups and switches after the city source was removed" {
-  fixture((repo, three) => {
-    let embedded = Set([])
-    let restore = intercept_images(three, url => embedded.add(url))
+  fixture(repo => {
+    let restore = install_image_document()
     defer restore()
     let defs = @archive.items(
       read_json(repo + "/content/editor/templates.json"),
@@ -532,25 +625,30 @@ test "standalone templates can add machines, pickups and switches after the city
       @archive.items(records("enemies")).iter().map(e => @model.str(e, "type")),
     )
     assert_true(wanted == machine_types)
-    let palette = three.parse(
-      @archive.read_json_gz(repo + "/content/editor/templates.scene.json.gz"),
+    let palette_scene = @archive.read_json_gz(
+      repo + "/content/editor/templates.scene.json.gz",
     )
+    let embedded = image_urls(palette_scene)
+    assert_false(embedded.is_empty())
+    let palette = open_fixture_project(@archive.obj([("scene", palette_scene)])).scene
     let project = @model.export_project()
-    let loaded = load_export(three, project)
+    let live = open_fixture_project(project)
+    let loaded = live.scene
     for d in defs {
       let collection = @model.str(d, "collection")
-      let roots = rows(palette, "children").filter(o => {
-        @model.str(@model.entity(o), "collection") == collection
-      })
-      let src = roots
+      let roots = palette.children
         .iter()
+        .filter(o => {
+          @model.str(o.user_data.get("entity"), "collection") == collection
+        })
+      let src = roots
         .find_first(n => {
-          @model.str(@model.entity(n), "id") == @model.str(d, "source")
+          @model.str(n.user_data.get("entity"), "id") == @model.str(d, "source")
         })
         .unwrap()
       if collection == "enemies" {
         assert_eq(
-          @model.str(@model.get(@model.data(src), "game"), "type"),
+          @model.str(@model.get(src.user_data, "game"), "type"),
           @model.str(d.get("defaults"), "type"),
         )
       }
@@ -559,12 +657,13 @@ test "standalone templates can add machines, pickups and switches after the city
         src,
         "new-" + @model.str(d, "id"),
         offset=@model.creation_offset(src, 3, -8, 86),
-        defaults=d.get("defaults"),
+        defaults=d.get("defaults").to_json(),
       )
-      add_objects(loaded, bundle.objects)
+      ignore(loaded.add_all(bundle.objects))
     }
-    project.set("scene", three_json(loaded))
-    ignore(@model.import_project(project))
+    ignore(
+      @model.import_project(@model.unpack_scene_transfer(live.serialize())),
+    )
     let control = record("controls", "new-control-shot")
     assert_eq(quantity(control, "ground"), -8)
     expect_json(control.get("effects"), ["new-control-shot"])
@@ -580,9 +679,7 @@ test "standalone templates can add machines, pickups and switches after the city
       )
     }
     let current = @model.export_project()
-    let saved = Set::from_iter(
-      rows(current.get("scene"), "images").iter().map(i => @model.str(i, "url")),
-    )
+    let saved = image_urls(current.get("scene"))
     for url in embedded {
       assert_true(
         url.has_prefix("data:image/jpeg;base64,") ||
@@ -590,14 +687,14 @@ test "standalone templates can add machines, pickups and switches after the city
       )
       assert_true(saved.contains(url))
     }
-    let scene = load_export(three, current)
-    let root = rows(scene, "children")
+    let scene = load_export(current)
+    let root = scene.children
       .iter()
-      .find_first(n => @model.str(@model.entity(n), "id") == "new-control-shot")
+      .find_first(n => {
+        @model.str(n.user_data.get("entity"), "id") == "new-control-shot"
+      })
       .unwrap()
-    root
-    .get("userData")
-    .set(
+    root.user_data.set(
       "circuit",
       raw({
         "id": "new-control-shot",
@@ -608,7 +705,7 @@ test "standalone templates can add machines, pickups and switches after the city
       }),
     )
     let copy = @model.clone_entity(scene, root, "copied-control")
-    add_objects(scene, copy.objects)
+    ignore(scene.add_all(copy.objects))
     current.set("scene", three_json(scene))
     ignore(@model.import_project(current))
     expect_json(record("controls", "copied-control").get("effects"), [
@@ -642,5 +739,27 @@ test "standalone templates can add machines, pickups and switches after the city
     assert_eq(count_records("controls", "copied-control"), 0)
     assert_eq(count_records("pickups", "new-pickup-upgrade-scope"), 0)
     assert_eq(count_records("circuits", "copied-control"), 1)
+  })
+}
+
+///|
+test "reopening the editor rolls back an interrupted city save before loading the catalogue" {
+  fixture(_ => {
+    let path = "content/levels/city/enemies.json"
+    let original = @fs.read_file_to_bytes(path)
+    let missing = "content/levels/city/unfinished.json"
+    let stage = "content/.city-save-2147483647-" + "0".repeat(64)
+    @fs.create_dir(stage)
+    @fs.write_bytes_to_file(stage + "/old-0", original)
+    @fs.write_string_to_file(
+      stage + "/journal.json",
+      @json.to_json([(path, true), (missing, false)]).stringify(),
+    )
+    @fs.write_string_to_file(path, "[]")
+    @fs.write_string_to_file(missing, "[]")
+    ignore(selected())
+    assert_eq(@fs.read_file_to_bytes(path), original)
+    assert_false(@fs.path_exists(missing))
+    assert_false(@fs.path_exists(stage))
   })
 }

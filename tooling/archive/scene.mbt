@@ -50,66 +50,113 @@ pub fn validate_views(scene : Raw, buffer : Bytes) -> Unit raise {
 }
 
 ///|
+pub fn read_packed_scene() -> Raw raise {
+  read_json_gz("content/art/city.scene.json.gz")
+}
+
+///|
 pub fn read_scene(
   decode~ : (@core.TypedArray) -> Raw = array_copy,
 ) -> Raw raise {
-  let scene = read_json_gz("content/art/city.scene.json.gz")
-  let bytes = decompress(
-    @fs.read_file_to_bytes("content/art/city.buffers.bin.gz"),
-  )
-  attributes(scene, a => {
-    let desc = a.get("array")
-    if is_record(desc) {
-      check_descriptor(desc, bytes)
-      a.set("array", decode(view(bytes, desc)))
-    }
-  })
+  let scene = read_packed_scene()
+  hydrate_scene(scene, decode~)
   scene
 }
 
 ///|
-pub fn write_scene(scene : Raw) -> Unit raise {
+fn packed_scene(scene : Raw) -> Map[String, Bytes] raise {
   let data = @buffer.Buffer()
-  let mut offset = 0
-  attributes(scene, a => {
-    let values = a.get("array")
-    if is_array(values) {
-      let ty = str(a, "type")
-      let b = byte_view(typed(ty, values))
-      a.set(
-        "array",
-        obj([
-          ("byteOffset", Raw::of(offset)),
-          ("length", values.get("length")),
-          ("type", Raw::of(ty)),
-        ]),
-      )
-      data.write_bytes(b)
-      offset += b.length()
-      let padding = (8 - offset % 8) % 8
-      if padding > 0 {
-        data.write_bytes(Bytes::make(padding, 0))
-        offset += padding
-      }
-    }
+  let mut original : Bytes? = None
+  let attributes_to_pack = []
+  attributes(scene, attribute => {
+    attributes_to_pack.push((attribute, attribute.get("array")))
   })
-  @fs.write_bytes_to_file(
-    "content/art/city.buffers.bin.gz",
-    compress(data.to_bytes()),
-  )
-  write_json_gz("content/art/city.scene.json.gz", scene)
+  defer (for (attribute, values) in attributes_to_pack {
+    attribute.set("array", values)
+  })
+  for (attribute, values) in attributes_to_pack {
+    let ty = str(attribute, "type")
+    guard @scene_format.element_width(ty) is Some(_) else {
+      raise Failure("Unsupported scene attribute type: " + ty)
+    }
+    let array : @core.TypedArray = if @dom.JsObscure::is_typed_array(
+        values.cast(),
+      ) {
+      let array : @core.TypedArray = values.cast()
+      guard array.type_name() == ty else {
+        raise Failure("Scene attribute type mismatch: " + ty)
+      }
+      array
+    } else if is_array(values) {
+      typed(ty, values)
+    } else if is_record(values) {
+      let bytes = match original {
+        Some(bytes) => bytes
+        None => {
+          let bytes = decompress(
+            @fs.read_file_to_bytes("content/art/city.buffers.bin.gz"),
+          )
+          original = Some(bytes)
+          bytes
+        }
+      }
+      guard str(values, "type") == ty else {
+        raise Failure("Packed scene attribute type mismatch: " + ty)
+      }
+      check_descriptor(values, bytes)
+      view(bytes, values)
+    } else {
+      raise Failure("Missing scene attribute array: " + ty)
+    }
+    let offset = data.length()
+    data.write_bytes(byte_view(array))
+    attribute.set(
+      "array",
+      obj([
+        ("byteOffset", Raw::of(offset)),
+        ("length", Raw::of(array.length())),
+        ("type", Raw::of(ty)),
+      ]),
+    )
+    let padding = (8 - data.length() % 8) % 8
+    if padding > 0 {
+      data.write_bytes(Bytes::make(padding, 0))
+    }
+  }
+  {
+    "content/art/city.buffers.bin.gz": compress(data.to_bytes()),
+    "content/art/city.scene.json.gz": compress(@utf8.encode(stringify(scene))),
+  }
 }
+
+///|
+pub fn write_scene(
+  scene : Raw,
+  files~ : Map[String, Bytes] = {},
+  check_current~ : () -> Unit raise = () => (),
+) -> Unit raise {
+  let output = packed_scene(scene)
+  for path, bytes in files {
+    output[path] = bytes
+  }
+  publish_content(output, check_current~)
+}
+
+///|
+pub let resource_libraries : ReadOnlyArray[String] = [
+  "geometries", "materials", "textures", "images", "shapes", "animations", "skeletons",
+  "nodes",
+]
 
 ///|
 // Follow UUID references through material, texture and geometry libraries.
 pub fn reachable(
   scene : Raw,
   root : Raw,
-  libraries : Array[String],
   retain_clips~ : Bool = false,
 ) -> Set[String] {
   let index = Map([])
-  for k in libraries {
+  for k in resource_libraries {
     for entry in items(scene.get(k)) {
       index[str(entry, "uuid")] = entry
     }
@@ -126,7 +173,7 @@ pub fn reachable(
       for item in items(v) {
         collect(item)
       }
-    } else if is_record(v) {
+    } else if !@dom.JsObscure::is_typed_array(v.cast()) && is_record(v) {
       for key in keys(v) {
         collect(v.get(key))
       }
@@ -142,13 +189,17 @@ pub fn reachable(
 }
 
 ///|
-pub fn select_resources(scene : Raw, root : Raw) -> Raw {
-  let libraries = [
-    "geometries", "materials", "textures", "images", "animations", "skeletons",
-  ]
-  let used = reachable(scene, root, libraries)
+pub fn select_resources(
+  scene : Raw,
+  root : Raw,
+  retain_clips~ : Bool = false,
+) -> Raw {
+  let used = reachable(scene, root, retain_clips~)
   let result = obj([("metadata", scene.get("metadata")), ("object", root)])
-  for k in libraries {
+  for k in resource_libraries {
+    if scene.get(k).is_undefined() {
+      continue
+    }
     let chosen = []
     for item in items(scene.get(k)) {
       if used.contains(str(item, "uuid")) {

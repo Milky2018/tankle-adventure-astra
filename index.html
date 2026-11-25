@@ -49,8 +49,29 @@
     <div id="region" hidden><canvas id="region-map"></canvas><nav id="map-layers" aria-label="Discovered floors"></nav><button id="close-map" class="icon-button close-map" aria-label="Close map">×</button></div>
     <div id="settings" class="overlay" hidden>
       <section class="panel"><div class="eyebrow">TANKLE ADVENTURE ASTRA</div><h1>Settings</h1><p class="subtitle">An abandoned machine. A path beyond the furnace.</p>
-        <div class="settings-grid"><div class="options"><label>Master volume<input id="volume" type="range" min="0" max="1" step="0.05" value="0.55"/></label><label>Music<input id="music" type="checkbox" checked/></label><label>Sound effects<input id="sfx" type="checkbox" checked/></label><label>Graphics quality<select id="quality"><option value="high">High</option><option value="low">Low</option></select></label><label>Fullscreen<button id="fullscreen">Toggle</button></label><button id="journey-button" class="secondary">Journey menu</button><button id="reset-bindings" class="secondary">Reset bindings</button></div><div><h2>Key bindings</h2><div id="bindings"></div><p class="binding-note">Select a binding, then press a key or mouse button to replace it.</p></div></div>
-        <details id="camera-adjust"><summary>Adjust camera</summary><div id="camera-options" class="options"></div><button id="reset-camera">Reset camera</button></details>
+        <div class="settings-grid"><div class="options"><label>Master volume<input id="volume" type="range" min="0" max="1" step="0.05" value="0.55"/></label><label>Music<input id="music" type="checkbox" checked/></label><label>Sound effects<input id="sfx" type="checkbox" checked/></label><label>Graphics quality<select id="quality"><option value="high">High</option><option value="low">Low</option></select></label><label>Fullscreen<button id="fullscreen">Toggle</button></label><button id="journey-button" class="secondary">Journey menu</button><button id="reset-bindings" class="secondary">Reset bindings</button></div><div><h2>Key bindings</h2><div id="bindings">
+          <div class="binding-row"><span>Forward</span><button id="binding-up"></button></div>
+          <div class="binding-row"><span>Backward</span><button id="binding-down"></button></div>
+          <div class="binding-row"><span>Left</span><button id="binding-left"></button></div>
+          <div class="binding-row"><span>Right</span><button id="binding-right"></button></div>
+          <div class="binding-row"><span>Fire</span><button id="binding-fire"></button></div>
+          <div class="binding-row"><span>Magnet</span><button id="binding-magnet"></button></div>
+          <div class="binding-row"><span>Overdrive</span><button id="binding-boost"></button></div>
+          <div class="binding-row"><span>Weapon</span><button id="binding-weapon"></button></div>
+          <div class="binding-row"><span>Flotation</span><button id="binding-float"></button></div>
+          <div class="binding-row"><span>Interact</span><button id="binding-interact"></button></div>
+          <div class="binding-row"><span>Map</span><button id="binding-map"></button></div>
+          <div class="binding-row"><span>Pause</span><button id="binding-pause"></button></div>
+          <div class="binding-row"><span>Skip</span><button id="binding-skip"></button></div>
+        </div><p class="binding-note">Select a binding, then press a key or mouse button to replace it.</p></div></div>
+        <details id="camera-adjust"><summary>Adjust camera</summary><div id="camera-options" class="options">
+          <label>Pitch<input id="camera-pitch" type="range" min="-30" max="54" step="0.1"></label>
+          <label>Follow distance<input id="camera-distance" type="range" min="6" max="20" step="0.5"></label>
+          <label>Camera height<input id="camera-height" type="range" min="0" max="5" step="0.1"></label>
+          <label>Shoulder offset<input id="camera-shoulder" type="range" min="-3" max="3" step="0.1"></label>
+          <label>Mouse sensitivity<input id="camera-sensitivity" type="range" min="1" max="10" step="0.1"></label>
+          <label>Render distance<input id="camera-render-distance" type="range" min="40" max="400" step="1"></label>
+        </div><button id="reset-camera">Reset camera</button></details>
         <div class="panel-footer"><button id="new-game" class="secondary">Restart</button><button id="resume" class="primary">Resume <span>↗</span></button></div>
       </section>
     </div>

@@ -27,14 +27,32 @@ pub fn digest(bytes : Bytes) -> String {
 }
 
 ///|
-pub extern "js" fn byte_view(data : @core.TypedArray) -> Bytes = "a=>new Uint8Array(a.buffer,a.byteOffset,a.byteLength)"
+pub fn byte_view(data : @core.TypedArray) -> Bytes {
+  @core.TypedArray::view_by_name(
+    "Uint8Array",
+    data.buffer(),
+    byte_offset=data.byte_offset(),
+    length=data.byte_length(),
+  )
+  .to_js_init()
+  .cast()
+}
 
 ///|
-pub extern "js" fn keys(value : Raw) -> FixedArray[String] = "v=>Object.keys(v??{})"
+extern "js" fn own_keys(value : Raw) -> FixedArray[String] = "Object.keys"
+
+///|
+pub fn keys(value : Raw) -> FixedArray[String] {
+  if @dom.JsObscure::is_nullish(value.cast()) {
+    []
+  } else {
+    own_keys(value)
+  }
+}
 
 ///|
 pub fn items(value : Raw) -> FixedArray[Raw] {
-  if value.is_undefined() || value.is_null() {
+  if @dom.JsObscure::is_nullish(value.cast()) {
     []
   } else {
     value.cast()
@@ -42,16 +60,24 @@ pub fn items(value : Raw) -> FixedArray[Raw] {
 }
 
 ///|
-pub extern "js" fn is_array(value : Raw) -> Bool = "Array.isArray"
+pub fn is_array(value : Raw) -> Bool {
+  @dom.JsObscure::is_array(value.cast())
+}
 
 ///|
-pub extern "js" fn is_string(value : Raw) -> Bool = "v=>typeof v==='string'"
+pub fn is_string(value : Raw) -> Bool {
+  @dom.JsObscure::is_string(value.cast())
+}
 
 ///|
-pub extern "js" fn is_number(value : Raw) -> Bool = "v=>typeof v==='number'"
+pub fn is_number(value : Raw) -> Bool {
+  @dom.JsObscure::is_number(value.cast())
+}
 
 ///|
-extern "js" fn is_record(value : Raw) -> Bool = "v=>v!==null && typeof v==='object' && !Array.isArray(v)"
+fn is_record(value : Raw) -> Bool {
+  @dom.JsObscure::is_object(value.cast()) && !is_array(value)
+}
 
 ///|
 pub extern "js" fn append(array : Raw, value : Raw) -> Unit = "(a,v)=>a.push(v)"
@@ -60,15 +86,17 @@ pub extern "js" fn append(array : Raw, value : Raw) -> Unit = "(a,v)=>a.push(v)"
 pub extern "js" fn copy(value : Raw) -> Raw = "v=>({...v})"
 
 ///|
-pub extern "js" fn remove(value : Raw, key : String) -> Unit = "(v,k)=>{delete v[k]}"
+pub fn remove(value : Raw, key : String) -> Unit {
+  ignore(@dom.JsObjectObscure::delete(value.cast(), key))
+}
 
 ///|
-pub extern "js" fn array_copy(value : @core.TypedArray) -> Raw = "a=>Array.from(a)"
+pub extern "js" fn array_copy(value : @core.TypedArray) -> Raw = "Array.from"
 
 ///|
 pub fn str(value : Raw, key : String) -> String {
   let field = prop(value, key)
-  if field.is_null() || field.is_undefined() {
+  if @dom.JsObscure::is_nullish(field.cast()) {
     ""
   } else {
     field.cast()
@@ -77,7 +105,7 @@ pub fn str(value : Raw, key : String) -> String {
 
 ///|
 pub fn prop(value : Raw, key : String) -> Raw {
-  if value.is_undefined() || value.is_null() {
+  if @dom.JsObscure::is_nullish(value.cast()) {
     Raw::undefined()
   } else {
     value.get(key)
@@ -143,7 +171,7 @@ pub fn view(buffer : Bytes, descriptor : Raw) -> @core.TypedArray {
 
 ///|
 pub fn read_json_gz(path : String) -> Raw raise {
-  parse(@utf8.decode_lossy(decompress(@fs.read_file_to_bytes(path))))
+  parse(@utf8.decode(decompress(@fs.read_file_to_bytes(path)), ignore_bom=true))
 }
 
 ///|

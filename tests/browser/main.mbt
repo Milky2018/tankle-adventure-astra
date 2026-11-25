@@ -1,12 +1,11 @@
 ///|
-async fn main {
+async fn run() -> Bool {
   let choice = @env.args().get(2).unwrap_or("all")
-  run_moon(["build", "tests/browser/probe", "--release"])
+  @node.run_moon(["build", "tests/browser/probe", "--release"])
   let executable = chrome_path()
   @fs.create_dir("output/browser")
-  let profile = make_temp(
-    (@path.Path(system_tmpdir()) / "tankle-browser-").to_string(),
-  )
+  let profile = @node.temp_dir("tankle-browser-")
+  defer @async.protect_from_cancel(() => remove_chrome_profile(profile))
   let proc = launch(executable, [
     "--remote-debugging-pipe",
     "--headless=new",
@@ -17,7 +16,8 @@ async fn main {
     "--disable-renderer-backgrounding",
     "--window-size=1280,720",
     "about:blank",
-  ])
+  ]).wait()
+  defer @async.protect_from_cancel(() => kill(proc).wait())
   let base = @env.get_env_var("TANKLE_URL").unwrap_or("http://127.0.0.1:5175")
   let b : Browser = {
     proc,
@@ -75,9 +75,18 @@ async fn main {
       false
     }
   }
-  kill(proc).wait()
-  remove_chrome_profile(profile)
-  if !success {
+  success
+}
+
+///|
+async fn main {
+  let ok = run() catch {
+    err => {
+      eprintln("Browser check failed: " + err.to_string())
+      false
+    }
+  }
+  if !ok {
     @env.exit(1)
   }
 }

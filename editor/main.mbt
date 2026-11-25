@@ -6,6 +6,25 @@ priv struct AbilitySettings {
 }
 
 ///|
+#derive(@json.FromJson(rename_fields="camelCase"))
+priv struct SavedScene {
+  revision : String
+  root_ids : Array[String]
+}
+
+///|
+#derive(@json.FromJson)
+priv struct SavedAbilities {
+  revision : String
+}
+
+///|
+#derive(@json.FromJson)
+priv struct Preview {
+  url : String
+}
+
+///|
 fn Workspace::set_mode(self : Workspace, next : Tab) -> Unit {
   self.mode = next
   for tab in [Level, Skills] {
@@ -65,49 +84,40 @@ fn Workspace::save(self : Workspace, preview~ : Bool = false) -> Unit {
       try {
         frame().wait()
         if self.scene_dirty {
-          for n in self.collisions {
-            n.set_visible(true)
-          }
           let project = {
-            defer {
-              self.scene().set_background(self.background)
-              self.apply_floor()
+            defer self.apply_floor()
+            for n in self.collisions {
+              n.visible = true
             }
-            self.scene().set_background(self.game_bg)
-            self.scene().update_world()
-            self.editor.serialize().wait()
+            self.project.serialize()
           }
-          project.set(
-            "history",
-            @archive.obj([
-              ("undos", Raw::from_json([])),
-              ("redos", Raw::from_json([])),
-            ]),
+          let res : SavedScene = request_json(
+            "scene",
+            body=@archive.stringify(@model.pack_scene_transfer(project)),
           )
-          let res = api("scene", body=@model.pack_scene_transfer(project))
-          let meta = self.scene().data().get("tankle")
-          meta.set("revision", res.get("revision"))
-          meta.set("roots", res.get("rootIds"))
+          let meta = self.scene().user_data.get("tankle")
+          meta.set("revision", Raw::of(res.revision))
+          meta.set("roots", Raw::from_array(res.root_ids[:]))
           meta.set("deleted", Raw::from_json([]))
           self.scene_dirty = false
         }
         if self.skills_dirty {
-          let res = api(
+          let res : SavedAbilities = request_json(
             "abilities",
-            body=Raw::from_json(@json.to_json(self.abilities)),
+            body=@json.to_json(self.abilities).stringify(),
           )
-          self.abilities.revision = str(res, "revision")
+          self.abilities.revision = res.revision
           self.skills_dirty = false
         }
         self.version += 1
         status("已保存到项目")
         if preview {
           status("已保存，正在构建试玩…")
-          let res = api("build", body=Raw::object())
+          let res : Preview = request_json("build", body="{}")
           if tab is Some(window) {
             window
             .location()
-            .assign(str(res, "url") + "&editor=" + self.version.to_string())
+            .assign(res.url + "&editor=" + self.version.to_string())
           }
           status("已保存，游戏已在试玩标签页打开")
         }
@@ -129,32 +139,25 @@ fn Workspace::events(self : Workspace) -> Unit {
   @dom.window()
   .reinterpret_as_event_target()
   .add_event_listener("resize", _ => self.editor.resized())
-  self.editor.filter_picks(hit => {
-    let in_floor = match self.floor {
-      None => true
-      Some(h) => hit.y() >= h - 1 && hit.y() <= h + 6
-    }
-    in_floor &&
-    (self.selection is Part(..) || self.find_root(hit.object()) is Some(_))
-  })
-  self.editor.on_select(n => {
+  self.editor.pickable = n => self.find_root(n) is Some(_)
+  self.editor.selection_changed = selected => {
     guard self.ready else { return }
-    guard self.find_root(n) is Some(root) else {
+    guard selected is Some(n) && self.find_root(n) is Some(root) else {
       self.selection = Nothing
       self.properties()
       self.render_list()
       return
     }
-    let part = self.selection is Part(..) && !n.same(root)
+    let part = self.selection is Part(..) && n.id != root.id
     self.selection = if part { Part(root~, object=n) } else { Whole(root) }
-    if !part && !n.same(root) {
+    if !part && n.id != root.id {
       self.editor.select(root)
       return
     }
     self.properties()
     self.render_list()
-  })
-  self.editor.on_object_change(n => {
+  }
+  self.editor.object_changed = n => {
     if self.ready {
       if self.selection.is_owner(n) && self.floor is Some(h) && h != floor_of(n) {
         follow_floor(n)
@@ -164,14 +167,8 @@ fn Workspace::events(self : Workspace) -> Unit {
       self.render_list()
       self.dirty()
     }
-  })
-  self.editor.on_material_change(() => {
-    if self.ready {
-      self.properties()
-      self.dirty()
-    }
-  })
-  self.editor.on_history_change(() => self.refresh())
+  }
+  self.editor.history_changed = () => self.refresh()
   handler(by_id("search"), "input", () => self.render_list())
   handler(by_id("category"), "change", () => {
     if by_id("category").reinterpret_as_html_select_element().value()
@@ -195,8 +192,7 @@ fn Workspace::events(self : Workspace) -> Unit {
     if self.entities
       .iter()
       .find_first(n => {
-        n.uuid() ==
-        by_id("landmark").reinterpret_as_html_select_element().value()
+        n.uuid == by_id("landmark").reinterpret_as_html_select_element().value()
       })
       is Some(n) {
       self.select_entity(n)
@@ -209,7 +205,10 @@ fn Workspace::events(self : Workspace) -> Unit {
       prevent_unload(e)
     }
   })
-  on_keydown(e => {
+  @dom.window()
+  .reinterpret_as_event_target()
+  .add_event_listener("keydown", event => {
+    let e = as_keyboard_event(event)
     let mod = e.meta_key() || e.ctrl_key()
     let key = e.key().to_lower()
     if mod && key == "s" {
@@ -238,33 +237,34 @@ fn Workspace::events(self : Workspace) -> Unit {
 
 ///|
 async fn start_editor() -> Unit {
-  let three = import_three().wait()
-  let editor = open_editor().wait()
-  editor.set_history_storage(false)
-  let viewport = create_viewport(editor).wait()
+  let viewport = el("div")
+  viewport.set_attribute("id", "viewport")
+  let canvas = el("canvas")
+  canvas.set_attribute("aria-label", "城市编辑视图")
+  canvas.set_attribute("tabindex", "0")
+  append(viewport, canvas)
   append(by_id("level-workspace"), viewport)
-  if viewport.query_selector("option[value='realistic']") is Some(option) {
-    option.reinterpret_as_node().remove()
-  }
-  let renderer = three.renderer()
-  let commands = import_commands().wait()
-  let command_class = import_command_class().wait()
+  let source = get_scene("scene")
+  set_text(
+    by_id("loading").query_selector("p").unwrap(),
+    "构建编辑视图…",
+  )
+  let project = @model.LiveProject::open(source)
+  let editor = Editor::new(canvas, project.scene)
+  editor.viewport_controls(viewport)
   let categories = Map([])
   for opt in by_id("category").query_selector_all("option") {
     if opt.get_attribute("value") is Some(value) {
       categories[value] = opt.text_content()
     }
   }
-  let abilities : AbilitySettings = @json.from_json(api("abilities").to_json())
+  let abilities : AbilitySettings = request_json("abilities")
   let w : Workspace = {
     editor,
-    renderer,
-    three,
-    commands,
-    command_class,
+    project,
     categories,
-    background: three.background_color(0x222d38),
     entities: [],
+    entity_ids: Set([]),
     collisions: [],
     selection: Nothing,
     floor: Some(-8),
@@ -274,24 +274,12 @@ async fn start_editor() -> Unit {
     scene_dirty: false,
     skills_dirty: false,
     version: 0,
-    game_bg: editor.scene().background(),
     abilities,
     templates: None,
     definitions: [],
   }
-  editor.renderer_created(renderer)
-  editor.set_shading("solid")
   w.events()
   w.refresh()
-  let project = api("scene")
-  set_text(
-    by_id("loading").query_selector("p").unwrap(),
-    "构建编辑视图…",
-  )
-  editor.load_project(@model.unpack_scene_transfer(project)).wait()
-  w.game_bg = w.scene().background()
-  w.scene().set_background(w.background)
-  editor.show_helpers(false, false, false, false)
   w.index_entities()
   let floors : Array[Double] = []
   for n in w.entities {
@@ -300,7 +288,7 @@ async fn start_editor() -> Unit {
       floors.push(h)
     }
     if category(n) == "hives" {
-      option(by_id("landmark"), n.uuid(), title(n))
+      option(by_id("landmark"), n.uuid, title(n))
     }
   }
   floors.sort_by((a, b) => b.compare(a))
@@ -316,7 +304,7 @@ async fn start_editor() -> Unit {
       w.entities
       .iter()
       .find_first(n => {
-        category(n) == "hives" && str(n.entity(), "id") == "awakening"
+        category(n) == "hives" && str(entity(n), "id") == "awakening"
       })
       .unwrap_or(w.entities[0]),
     )

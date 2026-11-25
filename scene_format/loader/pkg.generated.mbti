@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "milky/tankle-astra/scene_format/loader"
+
+import {
+  "moonbit-community/three/core",
+  "moonbitlang/core/json",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) struct Buffers {
+  geometry : Map[String, Map[String, @core.TypedArray]]
+  images : Map[String, @core.TypedArray]
+  instances : Map[String, Map[String, @core.TypedArray]]
+}
+pub async fn Buffers::parse(Self, @json.Json, on_parsed? : () -> Unit) -> @core.Object3D
+
+// Type aliases
+
+// Traits

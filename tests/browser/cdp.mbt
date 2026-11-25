@@ -5,16 +5,14 @@
 type Chrome
 
 ///|
-#module("node:os")
-extern "js" fn system_tmpdir() -> String = "tmpdir"
-
-///|
-#module("node:fs")
-extern "js" fn make_temp(prefix : String) -> String = "mkdtempSync"
-
-///|
-extern "js" fn launch(executable : String, args : FixedArray[String]) -> Chrome =
-  #| (path,args) => process.getBuiltinModule("child_process").spawn(path,args,{stdio:["ignore","ignore","ignore","pipe","pipe"]})
+extern "js" fn launch(
+  executable : String,
+  args : FixedArray[String],
+) -> @js_async.Promise[Chrome] =
+  #| (path,args)=>new Promise((ok,fail)=>{
+  #|   const child=process.getBuiltinModule("child_process").spawn(path,args,{stdio:["ignore","ignore","ignore","pipe","pipe"]});
+  #|   child.once("error",fail);child.once("spawn",()=>ok(child));
+  #| })
 
 ///|
 extern "js" fn kill(proc : Chrome) -> @js_async.Promise[Unit] =
@@ -25,8 +23,11 @@ extern "js" fn debugger_output(proc : Chrome) -> @js_async.JsReadableStream =
   #| p=>process.getBuiltinModule("stream").Readable.toWeb(p.stdio[4])
 
 ///|
-extern "js" fn write_pipe(proc : Chrome, json : String) -> Unit =
-  #| (p,msg)=>p.stdio[3].write(msg+"\0")
+extern "js" fn write_pipe(
+  proc : Chrome,
+  data : String,
+) -> @js_async.Promise[Unit] =
+  #| (p,msg)=>new Promise((ok,fail)=>p.stdio[3].write(msg,e=>e?fail(e):ok()))
 
 ///|
 priv struct Browser {
@@ -40,14 +41,6 @@ priv struct Browser {
   mut firing : Bool
   mut width : Int32
   mut height : Int32
-}
-
-///|
-fn prop(v : Json, key : String) -> Json {
-  match v {
-    Object(fields) => fields.get(key).unwrap_or(@json.null)
-    _ => @json.null
-  }
 }
 
 ///|
@@ -74,55 +67,67 @@ async fn Browser::command(
   if target {
     msg["sessionId"] = Json::string(self.session)
   }
-  write_pipe(self.proc, Json::object(msg).stringify())
-  for ;; {
-    guard @async.with_timeout(
-        30000,
-        () => self.stream.read_until(b"\x00"),
-        error=Failure("Chrome stopped responding to " + verb),
-      )
-      is Some(bytes) else {
-      raise Failure("Chrome closed its DevTools pipe")
-    }
-    let m = @json.parse(@utf8.decode(bytes))
-    if prop(m, "id") == Json::number(self.id.to_double()) {
-      guard prop(m, "error") is Null else {
-        raise Failure(verb + ": " + prop(m, "error").stringify())
-      }
-      return prop(m, "result")
-    }
-    match prop(m, "method") {
-      String("Runtime.executionContextsCleared") => self.probe_id = ""
-      String("Runtime.exceptionThrown") =>
-        self.errors.push(
-          prop(prop(m, "params"), "exceptionDetails").stringify(),
-        )
-      String("Network.responseReceived") => {
-        let response = prop(prop(m, "params"), "response")
-        if prop(response, "status") is Number(n, ..) && n >= 400 {
-          self.errors.push(
-            "HTTP " + n.to_string() + " " + text(prop(response, "url")),
-          )
+  @async.with_timeout(
+    30000,
+    () => {
+      write_pipe(self.proc, Json::object(msg).stringify() + "\u0000").wait()
+      for ;; {
+        guard self.stream.read_until(b"\x00") is Some(bytes) else {
+          raise Failure("Chrome closed its DevTools pipe")
+        }
+        match @json.parse(@utf8.decode(bytes)) {
+          { "id": Number(id, ..), .. } as reply if id == self.id.to_double() =>
+            match reply {
+              { "error": detail, .. } =>
+                raise Failure(verb + ": " + detail.stringify())
+              { "result": result, .. } => break result
+              _ => raise Failure(verb + ": missing CDP result")
+            }
+          { "method": "Runtime.executionContextsCleared", .. } =>
+            self.probe_id = ""
+          {
+            "method": "Runtime.exceptionThrown",
+            "params": { "exceptionDetails": detail, .. },
+            ..
+          } => self.errors.push(detail.stringify())
+          {
+            "method": "Network.responseReceived",
+            "params": {
+              "response": {
+                "status": Number(status, ..),
+                "url": String(url),
+                ..
+              },
+              ..
+            },
+            ..
+          } if status >= 400 =>
+            self.errors.push("HTTP " + status.to_string() + " " + url)
+          _ => ()
         }
       }
-      _ => ()
-    }
-  }
+    },
+    error=Failure("Chrome stopped responding to " + verb),
+  )
 }
 
 ///|
 async fn Browser::attach(self : Browser) -> Unit {
-  let targets = self.command("Target.getTargets", target=false)
-  guard prop(targets, "targetInfos") is Array(ts) &&
-    ts.iter().find_first(t => prop(t, "type") == "page") is Some(tab) else {
+  guard self.command("Target.getTargets", target=false)
+    is { "targetInfos": Array(targets), .. } &&
+    targets.iter().find_first(t => t is { "type": "page", .. })
+    is Some({ "targetId": String(tab), .. }) else {
     raise Failure("No page in isolated Chrome")
   }
   let result = self.command(
     "Target.attachToTarget",
-    params={ "targetId": prop(tab, "targetId"), "flatten": true },
+    params={ "targetId": Json::string(tab), "flatten": true },
     target=false,
   )
-  self.session = text(prop(result, "sessionId"))
+  guard result is { "sessionId": String(session), .. } else {
+    raise Failure("Chrome did not supply a session ID")
+  }
+  self.session = session
   for verb in ["Page.enable", "Runtime.enable", "Network.enable"] {
     ignore(self.command(verb))
   }
@@ -156,7 +161,7 @@ async fn Browser::probe(self : Browser, request : @protocol.Request) -> Json {
     let remote = self.command("Runtime.evaluate", params={
       "expression": "globalThis.__tankleProbe",
     })
-    guard prop(prop(remote, "result"), "objectId") is String(id) else {
+    guard remote is { "result": { "objectId": String(id), .. }, .. } else {
       return @json.null
     }
     self.probe_id = id
@@ -178,12 +183,13 @@ async fn Browser::probe(self : Browser, request : @protocol.Request) -> Json {
     }
     err => raise err
   }
-  guard prop(r, "exceptionDetails") is Null else {
-    raise Failure(
-      payload.stringify() + ": " + prop(r, "exceptionDetails").stringify(),
-    )
+  match r {
+    { "exceptionDetails": detail, .. } =>
+      raise Failure(payload.stringify() + ": " + detail.stringify())
+    { "result": { "value": value, .. }, .. } => value
+    { "result": { "type": "undefined", .. }, .. } => @json.null
+    _ => raise Failure("Invalid browser probe result: " + r.stringify())
   }
-  prop(prop(r, "result"), "value")
 }
 
 ///|
@@ -223,9 +229,12 @@ async fn Browser::goto(self : Browser, suffix : String) -> Unit {
 ///|
 async fn Browser::shot(self : Browser, name : String) -> Unit {
   let r = self.command("Page.captureScreenshot", params={ "format": "png" })
+  guard r is { "data": String(encoded), .. } else {
+    raise Failure("Chrome returned no screenshot data")
+  }
   @fs.write_bytes_to_file(
     "output/browser/" + name + ".png",
-    @base64.decode(text(prop(r, "data"))),
+    @base64.decode(encoded),
   )
 }
 

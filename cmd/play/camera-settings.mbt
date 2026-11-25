@@ -37,27 +37,29 @@ fn Session::apply_camera(self : Session) -> Unit {
 }
 
 ///|
-fn Session::mount_camera(self : Session) -> Unit {
+fn Session::show_camera(self : Session) -> Unit {
   let c = self.settings.camera
-  let fields = [
-    ("pitch", "Pitch", -30.0, 54.0, 0.1, c.pitch),
-    ("distance", "Follow distance", 6.0, 20.0, 0.5, c.distance),
-    ("height", "Camera height", 0.0, 5.0, 0.1, c.height),
-    ("shoulder", "Shoulder offset", -3.0, 3.0, 0.1, c.shoulder),
-    ("sensitivity", "Mouse sensitivity", 1.0, 10.0, 0.1, c.sensitivity),
-    ("render-distance", "Render distance", 40.0, 400.0, 1.0, c.render_distance),
-  ]
-  let mut markup = ""
-  for (id, label, min, max, step, value) in fields {
-    markup += "<label>" +
-      label +
-      "<input id=\"camera-" +
-      id +
-      "\" type=\"range\" min=\"\{min}\" max=\"\{max}\" step=\"\{step}\" value=\"\{value}\"/></label>"
+  for
+    (id, value) in [
+      ("pitch", c.pitch),
+      ("distance", c.distance),
+      ("height", c.height),
+      ("shoulder", c.shoulder),
+      ("sensitivity", c.sensitivity),
+      ("render-distance", c.render_distance),
+    ] {
+    @host.set_value("camera-" + id, value.to_string())
   }
-  @host.html("camera-options", markup)
   self.apply_camera()
-  for (id, _, _, _, _, _) in fields {
+}
+
+///|
+fn Session::mount_camera(self : Session) -> Unit {
+  self.show_camera()
+  for
+    id in [
+      "pitch", "distance", "height", "shoulder", "sensitivity", "render-distance",
+    ] {
     @host.on_change("camera-" + id, fn() {
       self.settings.camera = {
         pitch: @host.setting_number("camera-pitch"),

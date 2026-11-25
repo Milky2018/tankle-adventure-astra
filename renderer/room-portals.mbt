@@ -76,7 +76,10 @@ priv struct RoomVisibility {
 }
 
 ///|
-fn RoomVisibility::new(scene : @core.Object3D) -> RoomVisibility {
+fn RoomVisibility::new(
+  scene : @core.Object3D,
+  enabled~ : Bool,
+) -> RoomVisibility {
   let result : RoomVisibility = {
     rooms: [],
     bins: [],
@@ -84,16 +87,14 @@ fn RoomVisibility::new(scene : @core.Object3D) -> RoomVisibility {
     shadow_layers: [],
     projection: @m3.Matrix4::new(),
   }
-  if @host.query("portals") == "off" {
+  if !enabled {
     return result
   }
-  let data = scene.user_data.get("portalRooms")
-  if data.is_undefined() {
-    return result
-  }
-  let baked : Array[@scene_format.Room] = @json.from_json(data.to_json()) catch {
-    _ => return result
-  }
+  let rooms : Array[@scene_format.Room]? = scene_field(
+    scene.user_data,
+    "portalRooms",
+  )
+  guard rooms is Some(baked) else { return result }
   fn box(bounds : @scene_format.Bounds) -> @m3.Box3 {
     let (x, y, z) = bounds.min
     let (u, v, w) = bounds.max
@@ -145,7 +146,7 @@ fn RoomVisibility::new(scene : @core.Object3D) -> RoomVisibility {
         box.clone().apply_matrix4(node.matrix_world)
       }
       InstancedMesh(_) | BatchedMesh(_) => {
-        if node.user_data.get("portalStatic").is_undefined() {
+        if scene_field(node.user_data, "portalStatic") != Some(true) {
           return
         }
         @core.box3_set_from_object(@m3.Box3::new(), node)

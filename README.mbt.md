@@ -42,7 +42,7 @@ For the distributable ZIP, run `moon run scripts/build.mbtx -- --offline`. The o
 - `content/levels/city/`: editable JSON definitions for floors, collision, enemies, controls, circuits, lifts, pickups and repair hives.
 - `scripts/tuning.mbtx`: validates weapon and drive parameters and generates their MoonBit records at build time. Run `moon run scripts/tuning.mbtx -- content/abilities.json` to check edits, or append `simulation/tuning.generated.mbt` to generate the records.
 - `content/abilities.json`: weapon damage, heat, range and movement parameters. `content/sounds.json` contains sound synthesis parameters.
-- `content/art/`: packed Three.js scene resources. Use the official editor workflow below to edit them.
+- `content/art/`: packed Three.js scene resources. Use the local editor for placement or export a project for detailed model editing.
 - `editor/` and `cmd/editor/`: MoonBit authoring UI and loopback service for loading, saving and previewing the project. `tooling/editor_model/` handles editable entities and project import/export.
 - `cmd/content/`, `tooling/catalog/`, `tooling/archive/` and `tooling/art/`: validate level definitions, generate MoonBit data and bake city geometry. Generated MoonBit files and packed assets in `public/generated/` are build outputs.
 
@@ -50,7 +50,7 @@ The browser session reads input and resolves the camera aim. `Game::advance_comb
 
 `arenas.json` binds each encounter to a placed boss, its music, optional rail cover and victory signals. Conveyor drive links in `belts.json` identify the machine and part that power the belt. The simulation and renderer use the same running velocity for movement and animation.
 
-The game and city geometry compiler use three.mbt. The optional visual editor uses the pinned upstream Three.js editor and its browser modules.
+The game, city geometry compiler and local visual editor all use three.mbt from Mooncakes.
 
 ## Checks
 
@@ -64,7 +64,7 @@ moon fmt
 
 Run `moon run cmd/content` first on a fresh checkout or after editing content to prepare the generated files. The web build also runs this step.
 
-The MoonBit tests in `tests/content/` exercise the compiler, packaged assets and editor. To run just this suite, use `moon test tests/content`. The model import/export checks load the pinned upstream Three.js object loader. Its first use needs network access.
+The MoonBit tests in `tests/content/` exercise the compiler, packaged assets and editor. To run just this suite, use `moon test tests/content`. The model import/export checks use the three.mbt object loader.
 
 Browser checks in `tests/browser/` send keyboard and mouse input to Chrome through its DevTools pipe. The `?test` query exposes read-only game diagnostics.
 
@@ -76,7 +76,7 @@ Start the local project editor:
 moon run cmd/editor
 ```
 
-Open <http://127.0.0.1:5176/>. It uses the official Three.js editor viewport and undo commands, with project-specific navigation and forms. The editor caches pinned upstream browser resources under `.editor/`. The first use of an editor extension may need network access. Game builds and offline archives are independent of these downloads.
+Open <http://127.0.0.1:5176/>. The local viewport uses three.mbt for rendering, picking and transform handles. It is built with the editor and served locally.
 
 - **关卡与角色**: search enemies, controls, pickups, checkpoints and player parts; select an object to focus its floor. Edit position and gameplay properties, or choose a model part to change its transform and color.
 - **技能数值**: edit weapon and movement parameters in forms.

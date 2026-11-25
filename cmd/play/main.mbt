@@ -2,7 +2,7 @@
 struct Session {
   settings : Settings
   sound : Sound
-  mut rebinding : String?
+  mut rebinding : Action?
   mut menu_open : Bool
   mut has_journey : Bool
   hud : Hud
@@ -31,10 +31,10 @@ fn Session::advance(self : Session, milliseconds : Double) -> Unit {
     let p = self.game.player
     self.game.advance_world(dt)
     self.view.update_machinery(self.game, dt)
-    let horizontal = (if self.held("right") { 1.0 } else { 0.0 }) -
-      (if self.held("left") { 1.0 } else { 0.0 })
-    let vertical = (if self.held("down") { 1.0 } else { 0.0 }) -
-      (if self.held("up") { 1.0 } else { 0.0 })
+    let horizontal = (if self.held(Right) { 1.0 } else { 0.0 }) -
+      (if self.held(Left) { 1.0 } else { 0.0 })
+    let vertical = (if self.held(Backward) { 1.0 } else { 0.0 }) -
+      (if self.held(Forward) { 1.0 } else { 0.0 })
     let magnitude = (horizontal * horizontal + vertical * vertical).sqrt()
     let movement = if magnitude > 0 {
       @sim.Vec2::{
@@ -52,8 +52,8 @@ fn Session::advance(self : Session, milliseconds : Double) -> Unit {
     } else {
       @sim.Vec2::{ x: 0, z: 0, }
     }
-    self.game.dock(self.held("interact"), magnitude > 0, dt)
-    self.game.move_player(movement, self.held("boost"), dt)
+    self.game.dock(self.held(Interact), magnitude > 0, dt)
+    self.game.move_player(movement, self.held(Boost), dt)
     self.view.position_player(p, self.game.world, dt)
     let aim = if p.hp > 0 && self.game.death_at is None {
       let target = self.view.aim(self.game, self.queries)
@@ -68,8 +68,8 @@ fn Session::advance(self : Session, milliseconds : Double) -> Unit {
       self.queries,
       self.view.weapon_origin(),
       aim,
-      firing=self.held("fire"),
-      magnet=self.held("magnet"),
+      firing=self.held(Fire),
+      magnet=self.held(Magnet),
       dt~,
     )
     self.view.present(self.game, self.queries, aim, dt)

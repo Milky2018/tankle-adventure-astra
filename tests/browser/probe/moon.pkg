@@ -1,4 +1,5 @@
 import {
+  "milky/tankle-astra/host",
   "moonbitlang/core/json",
   "milky/tankle-astra/tests/browser/protocol",
   "moonbit-community/three/core",

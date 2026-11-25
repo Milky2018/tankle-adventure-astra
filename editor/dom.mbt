@@ -23,7 +23,7 @@ fn preview_window() -> @dom.Window? {
 }
 
 ///|
-extern "js" fn on_keydown(f : (@dom.KeyboardEvent) -> Unit) -> Unit = "f=>window.addEventListener('keydown',f)"
+fn as_keyboard_event(e : @dom.Event) -> @dom.KeyboardEvent = "%identity"
 
 ///|
 extern "js" fn keyboard_target_matches(
@@ -67,7 +67,9 @@ extern "js" fn ApiResponse::json(self : ApiResponse) -> @js_async.Promise[Raw] =
 extern "js" fn ApiResponse::ok(self : ApiResponse) -> Bool = "r=>r.ok"
 
 ///|
-extern "js" fn round4(n : Double) -> Double = "v=>Number(v.toFixed(4))"
+fn round4(n : Double) -> Double {
+  try! @string.parse_double(@scene_format.format_coordinate(n))
+}
 
 ///|
 fn el(tag : String, label? : String, style? : String) -> Element {
@@ -119,15 +121,40 @@ fn status(message : String, error~ : Bool = false) -> Unit {
 }
 
 ///|
-async fn api(path : String, body? : Raw) -> Raw {
+async fn request(path : String, body? : String) -> ApiResponse {
   let url = "/api/" + path
   let response = match body {
-    Some(value) => fetch_post(url, @archive.stringify(value)).wait()
+    Some(text) => fetch_post(url, text).wait()
     None => fetch_get(url).wait()
   }
-  let result = response.json().wait()
-  guard response.ok() else { raise Failure(str(result, "error")) }
-  result
+  guard response.ok() else {
+    let detail = @json.parse(response.text().wait())
+    raise Failure(
+      if detail is { "error": String(message), .. } {
+        message
+      } else {
+        "Editor request failed"
+      },
+    )
+  }
+  response
+}
+
+///|
+/// Keep packed geometry in its transfer representation until the scene loader
+/// can decode each attribute directly into a typed array.
+async fn get_scene(path : String) -> Raw {
+  request(path).json().wait()
+}
+
+///|
+extern "js" fn ApiResponse::text(
+  self : ApiResponse,
+) -> @js_async.Promise[String] = "r=>r.text()"
+
+///|
+async fn[T : @json.FromJson] request_json(path : String, body? : String) -> T {
+  @json.from_json(@json.parse(request(path, body?).text().wait()))
 }
 
 ///|

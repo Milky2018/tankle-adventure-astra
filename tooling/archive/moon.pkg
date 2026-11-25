@@ -1,10 +1,15 @@
 import {
+  "tiye/dom-ffi" @dom,
+  "milky/tankle-astra/tooling/node",
+  "moonbitlang/core/env",
+  "moonbitlang/core/string",
   "moonbit-community/three/core",
   "milky/tankle-astra/scene_format",
   "moonbitlang/core/compress/gzip" @compression,
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/buffer",
   "moonbitlang/core/json",
+  "moonbitlang/core/int",
   "moonbitlang/x/crypto",
   "moonbitlang/x/fs",
 }

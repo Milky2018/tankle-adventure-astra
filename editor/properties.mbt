@@ -13,19 +13,19 @@ fn Workspace::transform_fields(
   field : TransformField,
   title? : String,
 ) -> Unit {
-  let (key, heading, value) = match field {
-    Position => ("position", "位置", object.position())
-    Rotation => ("rotation", "旋转（弧度）", object.rotation())
-    Scale => ("scale", "缩放", object.scale())
+  let (key, heading, values) = match field {
+    Position => ("position", "位置", object.position)
+    Rotation =>
+      (
+        "rotation",
+        "旋转（弧度）",
+        @math.Vector3::new(0, 0, 0).set_from_euler(object.rotation),
+      )
+    Scale => ("scale", "缩放", object.scale)
   }
   append(panel, el("h3", label=title.unwrap_or(heading)))
   let row = el("div", style="axes")
-  for
-    (axis, current, set_component) in [
-      ("x", value.x(), Coordinates::set_x),
-      ("y", value.y(), Coordinates::set_y),
-      ("z", value.z(), Coordinates::set_z),
-    ] {
+  for i, (axis, current) in [("x", values.x), ("y", values.y), ("z", values.z)] {
     let label = el("label", label=axis.to_upper())
     let input = el("input")
     input.set_attribute("aria-label", key + "." + axis)
@@ -33,14 +33,19 @@ fn Workspace::transform_fields(
       input,
       round4(current),
       next => {
-        let updated = value.clone()
-        set_component(updated, next)
-        let cmd = match field {
-          Position => self.commands.position(self.editor, object, updated)
-          Rotation => self.commands.rotation(self.editor, object, updated)
-          Scale => self.commands.scale(self.editor, object, updated)
+        let old = Transform::read(object)
+        let updated = Transform::read(object)
+        match field {
+          Position => ignore(updated.position.set_component(i, next))
+          Scale => ignore(updated.scale.set_component(i, next))
+          Rotation =>
+            match i {
+              0 => updated.rotation.set_x(next)
+              1 => updated.rotation.set_y(next)
+              _ => updated.rotation.set_z(next)
+            }
         }
-        self.editor.execute(cmd)
+        self.editor.edit_transform(object, old, updated)
       },
       step="0.1",
     )
@@ -66,7 +71,7 @@ fn part_label(n : SceneNode, index : Int32) -> String {
     "arms": "机械臂",
     "pivot": "转轴",
   }
-  let role = n.binding()
+  let role = binding(n)
   if !role.is_empty() &&
     !role.has_prefix("world/occluders/") &&
     !role.contains("/art/") {
@@ -81,7 +86,7 @@ fn part_label(n : SceneNode, index : Int32) -> String {
       .map(s => names.get_or_default(s, s))
       .join(" / ")
   }
-  let name = n.name()
+  let name = n.name
   if !name.is_empty() && !name.contains("/") {
     return name
   }
@@ -122,21 +127,23 @@ fn Workspace::properties(self : Workspace) -> Unit {
   let menu = el("select")
   menu.set_attribute("aria-label", "编辑目标")
   let mut index = 0
-  root.visit(n => {
-    let label = if n.same(root) {
+  root.traverse(n => {
+    let label = if n.id == root.id {
       "整个对象（游戏位置与属性）"
     } else {
       index += 1
       "零件 · " + part_label(n, index)
     }
-    option(menu, n.uuid(), label)
+    option(menu, n.uuid, label)
   })
   let select = menu.reinterpret_as_html_select_element()
-  select.set_value(obj.uuid())
+  select.set_value(obj.uuid)
   handler(menu, "change", () => {
-    let selected = root.by_uuid(select.value())
-    guard selected.present() else { return }
-    self.selection = if selected.same(root) {
+    guard root.get_object_by_property("uuid", Json::string(select.value()))
+      is Some(selected) else {
+      return
+    }
+    self.selection = if selected.id == root.id {
       Whole(root)
     } else {
       Part(root~, object=selected)
@@ -167,18 +174,26 @@ fn Workspace::properties(self : Workspace) -> Unit {
       append(modes, b)
     }
     append(panel, modes)
-    let mat = obj.material()
-    if mat.colored() {
+    if obj.kind is Mesh(mesh) &&
+      mesh.material is Single(mat) &&
+      mat.color is Some(color) {
       let label = el("label", label="零件颜色")
       let input = el("input")
       input.set_attribute("type", "color")
       let control = input.reinterpret_as_html_input_element()
-      let hex = mat.color().hex()
+      let hex = color.get_hex_string()
       control.set_value("#" + hex)
       handler(input, "change", () => {
-        let cloned = mat.clone()
-        cloned.color().set(control.value())
-        self.editor.execute(self.commands.material(self.editor, obj, cloned))
+        let cloned = @model.copy_material(mat)
+        ignore(cloned.color.unwrap().set_style(control.value()))
+        fn assign(m : @core.Material) {
+          mesh.material = Single(m)
+          (self.editor.object_changed)(obj)
+        }
+        self.editor.execute({
+          apply: () => assign(cloned),
+          revert: () => assign(mat),
+        })
       })
       append(label, input)
       append(panel, label)
@@ -193,7 +208,7 @@ fn Workspace::properties(self : Workspace) -> Unit {
     )
   } else {
     self.editor.transform_mode("translate")
-    let collision = truth(root.data(), "editorOnly")
+    let collision = truth(root.user_data, "editorOnly")
     if collision {
       self.transform_fields(panel, root, Scale, title="碰撞尺寸倍率")
       append(
@@ -205,7 +220,7 @@ fn Workspace::properties(self : Workspace) -> Unit {
         ),
       )
     }
-    let game = get(root.data(), "game")
+    let game = get(root.user_data, "game")
     if exists(game) && game.to_json() is Object(record) {
       let values = record.copy()
       if category(root) is ("controls" | "pickups") &&
@@ -213,7 +228,7 @@ fn Workspace::properties(self : Workspace) -> Unit {
         values["requires"] = ""
       }
       if category(root) == "controls" && !values.contains("effects") {
-        values["effects"] = [Json::string(str(root.entity(), "id"))]
+        values["effects"] = [Json::string(str(entity(root), "id"))]
       }
       for k in ["id", "circuitKey"] {
         values.remove(k)
@@ -225,16 +240,21 @@ fn Workspace::properties(self : Workspace) -> Unit {
       }
       append(panel, el("h3", label="游戏属性"))
       fields(panel, Json::object(values), (path, next) => {
-        let d = @archive.copy(root.data())
+        let d = @archive.copy(root.user_data)
         d.set(
           "game",
           Raw::from_json(replace_field(d.get("game").to_json(), path, next)),
         )
-        self.editor.execute(self.commands.user_data(self.editor, root, d))
+        let old = root.user_data
+        fn set(data : Raw) {
+          root.user_data = data
+          (self.editor.object_changed)(root)
+        }
+        self.editor.execute({ apply: () => set(d), revert: () => set(old), })
       })
     }
   }
-  let id = get(root.entity(), "id")
+  let id = get(entity(root), "id")
   set_text(
     by_id("selection-note"),
     if exists(id) {

@@ -1,11 +1,4 @@
 ///|
-extern "js" fn run_moon(args : FixedArray[String]) -> Unit = "args => process.getBuiltinModule('child_process').execFileSync('moon',args,{stdio:'inherit'})"
-
-///|
-#module("node:fs")
-extern "js" fn rename_file(source : String, destination : String) -> Unit = "renameSync"
-
-///|
 fn required_roles(level : @catalog.Level) -> Array[String] {
   let roles = []
   for role in ["root", "body", "turret", "barrel"] {
@@ -30,23 +23,18 @@ priv struct ArtCache {
 }
 
 ///|
-fn sha256(data : Bytes) -> String {
-  @crypto.bytes_to_hex_string(@crypto.sha256(data))
-}
-
-///|
 fn bake_if_changed(level : @catalog.Level) -> Unit raise {
   // On Node the first two arguments identify the runtime and the compiled script.
-  let hashes = [sha256(@fs.read_file_to_bytes(@env.args()[1]))]
+  let hashes = [@archive.digest(@fs.read_file_to_bytes(@env.args()[1]))]
   for dir in ["content/art", "content/levels/city"] {
     let names = @fs.read_dir(dir).to_owned()
     names.sort_by(String::lexical_compare)
     for name in names {
       hashes.push(name)
-      hashes.push(sha256(@fs.read_file_to_bytes(dir + "/" + name)))
+      hashes.push(@archive.digest(@fs.read_file_to_bytes(dir + "/" + name)))
     }
   }
-  let digest = sha256(@utf8.encode(hashes.join("\n")))
+  let digest = @archive.digest(@utf8.encode(hashes.join("\n")))
   let dest = "public/generated/art"
   let stamp = "_build/city-art-cache.json"
   let cached : ArtCache? = Some(@json.from_json(read_json(stamp))) catch {
@@ -78,14 +66,15 @@ fn bake_if_changed(level : @catalog.Level) -> Unit raise {
   }
   let tmp = stamp + "." + @hex.encode(random)
   @fs.write_string_to_file(tmp, @json.to_json(entry).stringify())
-  rename_file(tmp, stamp)
+  @node.rename(tmp, stamp)
 }
 
 ///|
 fn main {
   try {
+    @archive.recover_city_save()
     let level = @catalog.decode(@catalog.read_directory("content/levels/city"))
-    run_moon([
+    @node.run_moon([
       "run", "--quiet", "scripts/tuning.mbtx", "--", "content/abilities.json", "simulation/tuning.generated.mbt",
     ])
     generate_levels(level)

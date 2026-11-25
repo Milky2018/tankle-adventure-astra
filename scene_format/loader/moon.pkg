@@ -1,0 +1,6 @@
+import {
+  "moonbit-community/three/core",
+  "moonbit-community/three/loaders",
+}
+
+supported_targets = "js"

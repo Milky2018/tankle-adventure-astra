@@ -4,6 +4,7 @@ package "milky/tankle-astra/tooling/editor_model"
 import {
   "moonbit-community/three/core",
   "moonbit-community/three/math",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -17,9 +18,11 @@ pub fn children(@core.JsValue) -> FixedArray[@core.JsValue]
 
 pub fn clone(@core.JsValue) -> @core.JsValue
 
-pub fn clone_entity(@core.JsValue, @core.JsValue, String, offset? : @math.Vector3, defaults? : @core.JsValue) -> EntityBundle raise
+pub fn clone_entity(@core.Object3D, @core.Object3D, String, offset? : @math.Vector3, defaults? : @json.Json) -> EntityBundle raise
 
-pub fn creation_offset(@core.JsValue, Double, Double, Double) -> @math.Vector3
+pub fn copy_material(@core.Material) -> @core.Material
+
+pub fn creation_offset(@core.Object3D, Double, Double, Double) -> @math.Vector3 raise
 
 pub fn data(@core.JsValue) -> @core.JsValue
 
@@ -27,7 +30,7 @@ pub fn editable(String) -> Bool
 
 pub fn entity(@core.JsValue) -> @core.JsValue
 
-pub fn entity_bundle(@core.JsValue, @core.JsValue) -> EntityBundle
+pub fn entity_bundle(@core.Object3D, @core.Object3D) -> EntityBundle
 
 pub fn entity_key(@core.JsValue) -> String
 
@@ -35,19 +38,21 @@ pub fn exists(@core.JsValue) -> Bool
 
 pub fn export_project(selection? : String, colliders? : Bool, transfer? : Bool) -> @core.JsValue raise
 
+pub fn export_templates(Array[TemplateDefinition]) -> @core.JsValue raise
+
 pub fn get(@core.JsValue, String) -> @core.JsValue
 
 pub fn import_project(@core.JsValue, dry_run? : Bool) -> @core.JsValue raise
 
-pub fn pack_scene_transfer(@core.JsValue) -> @core.JsValue
+pub async fn load_scene(@core.JsValue) -> @core.Object3D
 
-pub fn pretty(@core.JsValue) -> String
+pub fn pack_scene_transfer(@core.JsValue) -> @core.JsValue
 
 pub fn str(@core.JsValue, String) -> String
 
 pub fn truth(@core.JsValue, String) -> Bool
 
-pub fn unpack_scene_transfer(@core.JsValue) -> @core.JsValue raise
+pub fn unpack_scene_transfer(@core.JsValue, native_views? : Bool) -> @core.JsValue raise
 
 pub fn uuid(@core.JsValue) -> String
 
@@ -55,8 +60,26 @@ pub fn uuid(@core.JsValue) -> String
 
 // Types and methods
 pub struct EntityBundle {
-  root : @core.JsValue
-  objects : FixedArray[@core.JsValue]
+  root : @core.Object3D
+  objects : Array[@core.Object3D]
+}
+
+pub struct LiveProject {
+  scene : @core.Object3D
+  // private fields
+}
+pub fn LiveProject::attach(@core.JsValue, @core.Object3D) -> Self
+pub async fn LiveProject::from_scene(@core.JsValue) -> Self
+pub async fn LiveProject::open(@core.JsValue) -> Self
+pub fn LiveProject::serialize(Self) -> @core.JsValue
+
+#derive(@json.FromJson)
+pub struct TemplateDefinition {
+  id : String
+  label : String
+  source : String
+  collection : String
+  defaults : @json.Json
 }
 
 // Type aliases

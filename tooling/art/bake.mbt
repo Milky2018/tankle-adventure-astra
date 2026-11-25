@@ -153,11 +153,8 @@ pub fn bake_city(
       packed.instances[str(n, "uuid")] = attrs
     }
   })
-  let libs = [
-    "geometries", "materials", "textures", "images", "shapes", "animations", "skeletons",
-  ]
-  let used = @archive.reachable(scene, root, libs, retain_clips=true)
-  for k in libs {
+  let used = @archive.reachable(scene, root, retain_clips=true)
+  for k in @archive.resource_libraries {
     if !scene.get(k).is_undefined() {
       put_array(
         scene,

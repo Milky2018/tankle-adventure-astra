@@ -106,7 +106,10 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     progress: game.progress,
     camera_space: CameraSpace::new(scene, game.world),
     cutaway: Cutaway::new(scene, currents=game.currents, player=player_visual),
-    room_visibility: RoomVisibility::new(scene),
+    room_visibility: RoomVisibility::new(
+      scene,
+      enabled=@host.query("portals") != "off",
+    ),
     projectiles: Projectiles::new(),
     enemies,
     ending: @core.PerspectiveCamera::new(fov=55, aspect=1, near=0.15, far=290),

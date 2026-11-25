@@ -8,6 +8,8 @@ import {
 // Values
 pub fn element_width(String) -> Int32?
 
+pub fn format_coordinate(Double) -> String
+
 // Errors
 
 // Types and methods

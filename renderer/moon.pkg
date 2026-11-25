@@ -1,6 +1,7 @@
 import {
   "milky/tankle-astra/scene_format",
   "moonbitlang/core/json",
+  "moonbitlang/core/debug",
   "moonbit-community/three/core",
   "moonbit-community/three/math" @m3,
   "moonbit-community/three/geometries",
@@ -11,3 +12,5 @@ import {
 }
 
 supported_targets = "js"
+
+formatter(ignore: [ "belt-data.generated.mbt" ])

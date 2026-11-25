@@ -9,6 +9,3 @@ output/
 # Generated from editable content.
 *.generated.mbt
 public/generated/
-
-# Pinned upstream editor source cache.
-.editor/

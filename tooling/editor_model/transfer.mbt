@@ -74,7 +74,10 @@ pub fn pack_scene_transfer(project : Raw) -> Raw {
 }
 
 ///|
-pub fn unpack_scene_transfer(project : Raw) -> Raw raise {
+pub fn unpack_scene_transfer(
+  project : Raw,
+  native_views~ : Bool = false,
+) -> Raw raise {
   attributes(project, (a, k) => {
     let v = get(a, k)
     if @archive.is_string(v) {
@@ -87,11 +90,21 @@ pub fn unpack_scene_transfer(project : Raw) -> Raw raise {
       guard bytes.length() % width == 0 else {
         raise Failure("Truncated scene attribute of type " + t)
       }
+      let data = @archive.typed_view(
+        bytes,
+        t,
+        offset=0,
+        length=bytes.length() / width,
+      )
+      // Geometry is written straight to the binary archive on the server.
+      // Inline image pixels and upstream ObjectLoader input require JSON arrays.
       a.set(
         k,
-        @archive.array_copy(
-          @archive.typed_view(bytes, t, offset=0, length=bytes.length() / width),
-        ),
+        if native_views && k == "array" {
+          Raw::of(data)
+        } else {
+          @archive.array_copy(data)
+        },
       )
     }
   })

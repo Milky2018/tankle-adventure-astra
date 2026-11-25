@@ -1,13 +1,10 @@
 ///|
 priv struct Workspace {
   editor : Editor
-  renderer : ThreeRenderer
-  three : Three
-  commands : Commands
-  command_class : CommandClass
-  background : Background
+  project : @model.LiveProject
   categories : Map[String, String]
   mut entities : Array[SceneNode]
+  mut entity_ids : Set[String]
   mut collisions : Array[SceneNode]
   mut selection : Selection
   mut floor : Double?
@@ -17,15 +14,14 @@ priv struct Workspace {
   mut scene_dirty : Bool
   mut skills_dirty : Bool
   mut version : Int32
-  mut game_bg : Background
   abilities : AbilitySettings
   mut templates : SceneNode?
-  mut definitions : Array[TemplateDefinition]
+  mut definitions : Array[@model.TemplateDefinition]
 }
 
 ///|
 fn category(n : SceneNode) -> String {
-  let c = str(n.entity(), "collection")
+  let c = str(entity(n), "collection")
   if c.is_empty() {
     "player"
   } else {
@@ -35,11 +31,11 @@ fn category(n : SceneNode) -> String {
 
 ///|
 fn title(n : SceneNode) -> String {
-  let name = get(get(n.data(), "game"), "name")
+  let name = get(get(n.user_data, "game"), "name")
   if exists(name) {
     return name.cast()
   }
-  let id = get(n.entity(), "id")
+  let id = get(entity(n), "id")
   if exists(id) {
     id.cast()
   } else {
@@ -49,8 +45,8 @@ fn title(n : SceneNode) -> String {
 
 ///|
 fn floor_of(n : SceneNode) -> Double {
-  let pos = n.position().y()
-  let p = get(n.data(), "placement")
+  let pos = n.position.y
+  let p = get(n.user_data, "placement")
   let h = if exists(p) {
     let o : FixedArray[Double] = p.get("origin").cast()
     let m : FixedArray[Double] = p.get("matrix").cast()
@@ -63,7 +59,7 @@ fn floor_of(n : SceneNode) -> Double {
 
 ///|
 fn Workspace::scene(self : Workspace) -> SceneNode {
-  self.editor.scene()
+  self.project.scene
 }
 
 ///|
@@ -84,10 +80,10 @@ fn Workspace::refresh(self : Workspace) -> Unit {
   }
   by_id("undo")
   .reinterpret_as_html_button_element()
-  .set_disabled(self.busy || !self.editor.can_undo())
+  .set_disabled(self.busy || self.editor.undos.is_empty())
   by_id("redo")
   .reinterpret_as_html_button_element()
-  .set_disabled(self.busy || !self.editor.can_redo())
+  .set_disabled(self.busy || self.editor.redos.is_empty())
 }
 
 ///|
@@ -121,36 +117,30 @@ fn Workspace::apply_floor(self : Workspace) -> Unit {
       _ => None
     }
   }
-  let planes : FixedArray[Plane] = match self.floor {
-    Some(h) => [self.three.plane(-1, h + 6), self.three.plane(1, 1 - h)]
-    None => []
-  }
-  self.renderer.clip(planes)
+  self.editor.clip_floor(self.floor)
   for n in self.collisions {
     let level = match self.floor {
       None => true
       Some(h) => h == floor_of(n)
     }
-    n.set_visible(
-      level &&
+    n.visible = level &&
       (
         self.selection.is_owner(n) ||
         by_id("collisions").reinterpret_as_html_input_element().checked()
-      ),
-    )
+      )
   }
-  self.editor.camera_changed()
+  self.editor.redraw()
   self.render_list()
 }
 
 ///|
 fn Workspace::find_root(self : Workspace, n : SceneNode) -> SceneNode? {
-  let mut obj = n
-  while obj.present() && !obj.same(self.scene()) {
-    if self.entities.any(e => e.same(obj)) {
+  let mut current = Some(n)
+  while current is Some(obj) && obj.id != self.scene().id {
+    if self.entity_ids.contains(obj.uuid) {
       return Some(obj)
     }
-    obj = obj.parent()
+    current = obj.parent
   }
   None
 }
@@ -166,9 +156,9 @@ fn Workspace::render_list(self : Workspace) -> Unit {
   let group = by_id("category").reinterpret_as_html_select_element().value()
   let rows = self.entities.filter(n => {
     let kind = category(n)
-    let game = get(n.data(), "game")
+    let game = get(n.user_data, "game")
     let inside = if group == "gameplay" {
-      !truth(n.data(), "editorOnly")
+      !truth(n.user_data, "editorOnly")
     } else {
       kind == group
     }
@@ -179,7 +169,7 @@ fn Workspace::render_list(self : Workspace) -> Unit {
         None => true
       }
     } else {
-      [title(n), n.name(), kind, str(game, "type"), str(game, "encounter")]
+      [title(n), n.name, kind, str(game, "type"), str(game, "encounter")]
       .join(" ")
       .to_lower()
       .contains(query)
@@ -228,18 +218,8 @@ fn Workspace::focus(self : Workspace, overview~ : Bool = false) -> Unit {
   } else {
     return
   }
-  let center = n.world_position()
-  self.editor.center().set(center.x(), center.y(), center.z())
-  let (dx, dy, dz) = if overview {
-    (0.0, 65.0, 0.01)
-  } else {
-    (16.0, 21.0, 24.0)
-  }
-  self.editor
-  .camera_position()
-  .set(center.x() + dx, center.y() + dy, center.z() + dz)
-  self.editor.look_at(center)
-  self.editor.camera_changed()
+  let center = n.get_world_position(@math.Vector3::new(0, 0, 0))
+  self.editor.focus(center, overview~)
 }
 
 ///|
@@ -254,10 +234,11 @@ fn Workspace::select_entity(self : Workspace, n : SceneNode) -> Unit {
 ///|
 fn Workspace::index_entities(self : Workspace) -> Unit {
   self.entities = [
-    for n in self.scene().children() if exists(n.entity()) ||
-    n.binding() == "player/root" => n
+    for n in self.scene().children if exists(entity(n)) ||
+    binding(n) == "player/root" => n
   ]
-  self.collisions = self.entities.filter(n => truth(n.data(), "editorOnly"))
+  self.entity_ids = Set::from_iter(self.entities.iter().map(n => n.uuid))
+  self.collisions = self.entities.filter(n => truth(n.user_data, "editorOnly"))
 }
 
 ///|

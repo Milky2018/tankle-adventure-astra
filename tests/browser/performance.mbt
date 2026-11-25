@@ -1,8 +1,4 @@
 ///|
-extern "js" fn run_moon(args : FixedArray[String]) -> Unit =
-  #| args=>process.getBuiltinModule("child_process").execFileSync("moon",args,{stdio:"inherit"})
-
-///|
 async fn Browser::performance(self : Browser) -> Unit {
   self.goto("?chapter=folded&test")
   let startup = self.probe(StartupTiming)

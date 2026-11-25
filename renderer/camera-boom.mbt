@@ -40,11 +40,11 @@ fn CameraSpace::new(scene : @core.Object3D, world : @sim.World) -> CameraSpace {
       }
     }
   }
-  let data = scene.user_data.get("cameraFaces")
-  if !data.is_undefined() {
-    let faces : Array[@scene_format.Bounds] = @json.from_json(data.to_json()) catch {
-      _ => return space
-    }
+  let faces : Array[@scene_format.Bounds]? = scene_field(
+    scene.user_data,
+    "cameraFaces",
+  )
+  if faces is Some(faces) {
     for face in faces {
       let (x, y, z) = face.min
       let (u, v, w) = face.max

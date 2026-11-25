@@ -1,19 +1,11 @@
 ///|
-#derive(@json.FromJson)
-priv struct TemplateDefinition {
-  id : String
-  label : String
-  source : String
-  collection : String
-  defaults : Json
-}
-
-///|
 fn Workspace::new_id(self : Workspace, base : String) -> String {
   let prefix = base[:base.length().min(86)].to_owned()
   for ;; {
     let id = prefix + "-" + @math.generate_uuid()[:8].to_owned()
-    if !self.scene().children().iter().any(o => str(o.entity(), "id") == id) {
+    if !self.scene().children
+      .iter()
+      .any(o => str(o.user_data.get("entity"), "id") == id) {
       break id
     }
   }
@@ -26,12 +18,18 @@ fn Workspace::edit_entity(
   add~ : Bool,
 ) -> Unit {
   let world = self.scene()
-  let meta = world.data().get("tankle")
-  let root = SceneNode::from_raw(bundle.root)
-  let identity = root.entity()
-  let members = bundle.objects.map(raw => {
-    let n = SceneNode::from_raw(raw)
-    (n, world.index_of(n))
+  let meta = world.user_data.get("tankle")
+  let root = bundle.root
+  let identity = root.user_data.get("entity")
+  let members = bundle.objects.map(n => {
+    let index = for i, child in world.children {
+      if n.id == child.id {
+        break i
+      }
+    } nobreak {
+      -1
+    }
+    (n, index)
   })
   fn apply(add : Bool) {
     let deleted = [
@@ -42,30 +40,20 @@ fn Workspace::edit_entity(
       deleted.push(@model.clone(identity))
     }
     meta.set("deleted", Raw::from_array(deleted[:]))
-    self.editor.enable_graph_updates(false)
-    {
-      defer self.editor.enable_graph_updates(true)
-      for (n, index) in members {
-        if add {
-          if index < 0 {
-            self.editor.append_object(n, world)
-          } else {
-            self.editor.insert_object(n, world, index)
-          }
-        } else {
-          self.editor.remove_object(n)
+    for (n, index) in members {
+      if add {
+        ignore(world.add(n))
+        if index >= 0 && index < world.children.length() - 1 {
+          ignore(world.children.pop())
+          world.children.insert(index, n)
         }
+      } else {
+        ignore(n.remove_from_parent())
       }
     }
-    self.editor.graph_changed()
     self.entity_changed(if add { Some(root) } else { None })
   }
-  let name = if add { "添加对象" } else { "删除对象" }
-  self.editor.execute(
-    self.command_class.presence(self.editor, name, () => apply(add), () => {
-      apply(!add)
-    }),
-  )
+  self.editor.execute({ apply: () => apply(add), revert: () => apply(!add), })
 }
 
 ///|
@@ -132,15 +120,15 @@ fn Workspace::add_dialog(self : Workspace) -> Unit {
   let axes = el("div", style="axes")
   let inputs : Map[String, HtmlInputElement] = Map([])
   let center = if self.selection.owner() is Some(root) {
-    root.position()
+    root.position
   } else {
-    self.editor.center()
+    self.editor.orbit.target
   }
   for
     p in [
-      ("x", "X", center.x() + 3),
+      ("x", "X", center.x + 3),
       ("y", "地面 Y", self.floor.unwrap_or(0)),
-      ("z", "Z", center.z()),
+      ("z", "Z", center.z),
     ] {
     let label = el("label", label=p.1)
     let n = el("input")
@@ -172,11 +160,11 @@ fn Workspace::add_dialog(self : Workspace) -> Unit {
     guard self.templates is Some(templates) else {
       raise Failure("找不到模板模型")
     }
-    guard templates
-      .children()
+    guard templates.children
       .iter()
       .find_first(v => {
-        category(v) == def.collection && str(v.entity(), "id") == def.source
+        category(v) == def.collection &&
+        str(v.user_data.get("entity"), "id") == def.source
       })
       is Some(src) else {
       raise Failure("找不到模板模型")
@@ -187,13 +175,13 @@ fn Workspace::add_dialog(self : Workspace) -> Unit {
     guard x.is_finite() && y.is_finite() && z.is_finite() else {
       raise Failure("请输入有效的位置坐标")
     }
-    let offset = @model.creation_offset(src.raw(), x, y, z)
+    let offset = @model.creation_offset(src, x, y, z)
     let bundle = @model.clone_entity(
-      templates.raw(),
-      src.raw(),
+      templates,
+      src,
       self.new_id(def.id),
       offset~,
-      defaults=Raw::from_json(def.defaults),
+      defaults=def.defaults,
     )
     self.edit_entity(bundle, add=true)
   })
@@ -204,7 +192,7 @@ fn Workspace::duplicate(self : Workspace) -> Unit raise {
   guard self.selection.owner() is Some(src) && @model.editable(category(src)) else {
     return
   }
-  let id = str(src.entity(), "id")
+  let id = str(src.user_data.get("entity"), "id")
   let suffix = id.split("-").last().unwrap_or("")
   let base = if suffix.length() == 8 &&
     suffix.iter().all(c => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) &&
@@ -214,8 +202,8 @@ fn Workspace::duplicate(self : Workspace) -> Unit raise {
     id
   }
   let bundle = @model.clone_entity(
-    self.scene().raw(),
-    src.raw(),
+    self.scene(),
+    src,
     self.new_id(base + "-copy"),
     offset=@math.Vector3::new(3, 0, 0),
   )
@@ -230,21 +218,21 @@ fn Workspace::delete_dialog(self : Workspace) -> Unit {
   guard self.selection.owner() is Some(root) && @model.editable(category(root)) else {
     return
   }
-  let e = root.entity()
+  let e = root.user_data.get("entity")
   let id = str(e, "id")
   let d = open_dialog("删除 " + id)
   let refs : Array[String] = [
     for
       r in @model.array(
-        get(self.scene().data().get("tankle"), "references"),
+        get(self.scene().user_data.get("tankle"), "references"),
         @model.entity_key(e),
       ) => r.cast()
   ]
-  for n in self.scene().children() {
-    if n.same(root) || !exists(n.entity()) {
+  for n in self.scene().children {
+    if n.id == root.id || !exists(n.user_data.get("entity")) {
       continue
     }
-    let game = get(n.data(), "game")
+    let game = get(n.user_data, "game")
     if exists(game) &&
       game.to_json() is Object(record) &&
       record
@@ -256,7 +244,7 @@ fn Workspace::delete_dialog(self : Workspace) -> Unit {
           _ => false
         }
       }) {
-      let label = category(n) + ": " + str(n.entity(), "id")
+      let label = category(n) + ": " + str(n.user_data.get("entity"), "id")
       if !refs.contains(label) {
         refs.push(label)
       }
@@ -286,18 +274,15 @@ fn Workspace::delete_dialog(self : Workspace) -> Unit {
     append(d, list)
   }
   dialog_buttons(d, "删除对象", () => {
-    self.edit_entity(
-      @model.entity_bundle(self.scene().raw(), root.raw()),
-      add=false,
-    )
+    self.edit_entity(@model.entity_bundle(self.scene(), root), add=false)
   })
 }
 
 ///|
 async fn Workspace::init_tools(self : Workspace) -> Unit {
-  let templates = api("templates")
-  self.definitions = @json.from_json(api("template-definitions").to_json())
-  self.templates = Some(self.three.parse_object(templates).wait())
+  let templates = get_scene("templates")
+  self.definitions = request_json("template-definitions")
+  self.templates = Some(@model.LiveProject::from_scene(templates).scene)
   let dialog = el("dialog")
   dialog.set_attribute("id", "entity-dialog")
   append(@dom.window().document().body().unwrap(), dialog)

@@ -2,11 +2,11 @@
 #derive(FromJson(fields(wave(rename="type"))))
 priv struct SoundLayer {
   noise : Bool?
-  wave : String?
+  wave : @host.Waveform?
   frequency : Double?
   end : Double?
   cutoff : Double?
-  filter : String?
+  filter : @host.FilterKind?
   gain : Double
   duration : Double
   delay : Double?
@@ -19,12 +19,12 @@ fn SoundLayer::voice_source(self : SoundLayer) -> String {
   let voice = if self.noise == Some(true) {
     "Noise"
   } else {
-    "Tone(wave=\{source(self.wave.unwrap_or("sine"))},from_hz=\{source(self.frequency.unwrap_or(0))},to_hz=\{source(self.end.unwrap_or(0))})"
+    "Tone(wave=\{@debug.to_string(self.wave.unwrap_or(Sine))},from_hz=\{source(self.frequency.unwrap_or(0))},to_hz=\{source(self.end.unwrap_or(0))})"
   }
   let filter = match self.cutoff {
     None | Some(0) => "None"
     Some(hz) =>
-      "Some((\{source(self.filter.unwrap_or("lowpass"))},\{source(hz)}))"
+      "Some((\{@debug.to_string(self.filter.unwrap_or(Lowpass))},\{source(hz)}))"
   }
   let attack = self.attack.unwrap_or(0.003).min(self.duration * 0.3)
   let hold = self.hold.unwrap_or(0).min(self.duration * 0.5)

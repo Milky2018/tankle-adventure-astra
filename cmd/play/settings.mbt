@@ -1,49 +1,38 @@
 ///|
+#derive(ToJson(rename_cases="lowercase"), FromJson(rename_cases="lowercase"))
+priv enum GraphicsQuality {
+  High
+  Low
+}
+
+///|
 #derive(@json.ToJson, @json.FromJson)
 priv struct Settings {
   mut camera : CameraSettings
-  bindings : Map[String, String]
+  mut bindings : Bindings
   mut volume : Double
   mut music : Bool
   mut sfx : Bool
-  mut quality : String
+  mut quality : GraphicsQuality
 }
 
 ///|
 fn Settings::new() -> Settings {
   {
     camera: CameraSettings::new(),
-    bindings: {
-      "up": "KeyW",
-      "down": "KeyS",
-      "left": "KeyA",
-      "right": "KeyD",
-      "fire": "Mouse0",
-      "magnet": "Mouse2",
-      "boost": "ShiftLeft",
-      "weapon": "KeyQ",
-      "float": "KeyF",
-      "interact": "KeyE",
-      "map": "Tab",
-      "pause": "Escape",
-      "skip": "Space",
-    },
+    bindings: Bindings::defaults(),
     volume: 0.55,
     music: true,
     sfx: true,
-    quality: "high",
+    quality: High,
   }
 }
 
 ///|
 fn Settings::load() -> Settings {
-  let settings : Settings = @json.from_json(
-    @json.parse(@host.read_preferences()),
-  ) catch {
+  @json.from_json(@json.parse(@host.read_preferences())) catch {
     _ => Settings::new()
   }
-  settings.bindings.remove("camera")
-  settings
 }
 
 ///|
@@ -52,8 +41,8 @@ fn Settings::save(self : Settings) -> Unit {
 }
 
 ///|
-fn Session::held(self : Session, action : String) -> Bool {
-  self.settings.bindings.get(action) is Some(key) && self.keys.contains(key)
+fn Session::held(self : Session, action : Action) -> Bool {
+  self.keys.contains(self.settings.bindings.0[action])
 }
 
 ///|
@@ -71,9 +60,9 @@ fn Session::pause(self : Session, paused : Bool) -> Unit {
 fn Settings::show_binding(
   self : Settings,
   id : String,
-  action : String,
+  action : Action,
 ) -> Unit {
-  let key = self.bindings.get(action).unwrap_or("—")
+  let key = self.bindings.0[action]
   let button = match key {
     "Mouse0" => Some("Left mouse button")
     "Mouse1" => Some("Middle mouse button")
@@ -81,10 +70,12 @@ fn Settings::show_binding(
     _ => None
   }
   if button is Some(label) {
-    @host.html(
-      id,
-      "<span class=\"mouse-key\" data-button=\"\{key}\" role=\"img\" aria-label=\"\{label}\"></span>",
-    )
+    @host.text(id, "")
+    let icon = append_element(@host.element(id), "span")
+    icon.set_attribute("class", "mouse-key")
+    icon.set_attribute("data-button", key)
+    icon.set_attribute("role", "img")
+    icon.set_attribute("aria-label", label)
   } else {
     @host.text(
       id,
@@ -95,47 +86,15 @@ fn Settings::show_binding(
 
 ///|
 fn Session::bindings(self : Session) -> Unit {
-  let mut markup = ""
-  for
-    (action, label) in [
-      ("up", "Forward"),
-      ("down", "Backward"),
-      ("left", "Left"),
-      ("right", "Right"),
-      ("fire", "Fire"),
-      ("magnet", "Magnet"),
-      ("boost", "Overdrive"),
-      ("weapon", "Weapon"),
-      ("float", "Flotation"),
-      ("interact", "Interact"),
-      ("map", "Map"),
-      ("pause", "Pause"),
-      ("skip", "Skip"),
-    ] {
-    markup += "<div class=\"binding-row\"><span>" +
-      label +
-      "</span><button id=\"binding-" +
-      action +
-      "\">" +
-      self.settings.bindings.get(action).unwrap_or("Unbound") +
-      "</button></div>"
-  }
-  for
-    action in [
-      "up", "left", "down", "right", "map", "interact", "fire", "weapon", "magnet",
-      "float",
-    ] {
-    self.settings.show_binding(action + "-key", action)
+  for (action, id, _) in controls {
+    @host.text("binding-" + id, self.settings.bindings.0[action])
+    match action {
+      Boost | Pause | Skip => ()
+      _ => self.settings.show_binding(id + "-key", action)
+    }
   }
   if self.hud.acquired_action is Some(action) {
     self.settings.show_binding("acquired-key", action)
-  }
-  @host.html("bindings", markup)
-  for action in self.settings.bindings.keys() {
-    @host.on_click("binding-" + action, fn() {
-      self.rebinding = Some(action)
-      @host.text("binding-" + action, "Press a key…")
-    })
   }
 }
 
@@ -153,28 +112,28 @@ fn Session::input(
   self.sound.start()
   if self.rebinding is Some(action) {
     if !repeat {
-      self.settings.bindings[action] = key
+      self.settings.bindings.0[action] = key
       self.rebinding = None
       self.settings.save()
       self.bindings()
     }
     return
   }
-  fn is_action(action : String) -> Bool {
-    self.settings.bindings.get(action) == Some(key)
+  fn is_action(action : Action) -> Bool {
+    self.settings.bindings.0[action] == key
   }
   if self.menu_open {
     return
   }
   if self.game.ending_at is Some(_) {
-    if (is_action("pause") || is_action("skip")) &&
+    if (is_action(Pause) || is_action(Skip)) &&
       self.game.player.ending_time >= 0.75 {
       self.game.ending_at = Some(self.game.time - 26)
       self.game.player.ending_time = 26
     }
     return
   }
-  if is_action("pause") && !repeat {
+  if is_action(Pause) && !repeat {
     if self.map_open {
       self.map_open = false
       @host.hidden("region", true)
@@ -186,7 +145,7 @@ fn Session::input(
   if self.paused || self.menu_open {
     return
   }
-  if is_action("map") && !repeat {
+  if is_action(MapScreen) && !repeat {
     self.map_open = !self.map_open
     self.hud.layer = None
     @host.hidden("region", !self.map_open)
@@ -203,17 +162,17 @@ fn Session::input(
   }
   let p = self.game.player
   if self.game.death_at is Some(_) {
-    if is_action("skip") {
+    if is_action(Skip) {
       self.game.respawn()
     }
     return
   }
-  if is_action("interact") {
+  if is_action(Interact) {
     if self.game.interact() {
       @host.write_save(self.game.save())
     }
   }
-  if is_action("weapon") {
+  if is_action(Weapon) {
     p.weapon = match p.weapon {
       @sim.Cannon =>
         if p.abilities.mortar {
@@ -227,7 +186,7 @@ fn Session::input(
       @sim.Laser => @sim.Cannon
     }
   }
-  if is_action("float") {
+  if is_action(Flotation) {
     if p.toggle_flotation(fn(x, z) {
         self.game.world.support(x, z, p.y, false) is Some(_)
       }) {
@@ -237,52 +196,66 @@ fn Session::input(
 }
 
 ///|
+fn Session::apply_quality(self : Session) -> Unit {
+  let shadows = self.settings.quality is High
+  self.view.renderer.set_pixel_ratio(
+    if shadows {
+      @host.pixel_ratio()
+    } else {
+      1
+    },
+  )
+  self.view.renderer.shadow_map.enabled = shadows
+  self.view.resize()
+  self.redraw = true
+}
+
+///|
 fn Session::mount_settings(self : Session) -> Unit {
   self.bindings()
+  for (action, id, _) in controls {
+    @host.on_click("binding-" + id, fn() {
+      self.rebinding = Some(action)
+      @host.text("binding-" + id, "Press a key…")
+    })
+  }
   self.mount_camera()
   @host.on_click("reset-camera", fn() {
     self.settings.camera = CameraSettings::new()
-    self.mount_camera()
+    self.show_camera()
     self.settings.save()
   })
-  self.view.renderer.set_pixel_ratio(
-    if self.settings.quality == "low" {
-      1
+  self.apply_quality()
+  @host.set_value("volume", "\{self.settings.volume}")
+  @host.set_value(
+    "quality",
+    if self.settings.quality is High {
+      "high"
     } else {
-      @host.pixel_ratio()
+      "low"
     },
   )
-  self.view.renderer.shadow_map.enabled = self.settings.quality != "low"
-  self.view.resize()
-  @host.set_value("volume", "\{self.settings.volume}")
-  @host.set_value("quality", self.settings.quality)
   @host.set_checked("music", self.settings.music)
   @host.set_checked("sfx", self.settings.sfx)
-  for id in ["volume", "music", "sfx", "quality"] {
+  for id in ["volume", "music", "sfx"] {
     @host.on_change(id, fn() {
       self.settings.volume = @host.setting_number("volume")
       self.settings.music = @host.setting_checked("music")
       self.settings.sfx = @host.setting_checked("sfx")
-      self.settings.quality = @host.setting_value("quality")
-      self.view.renderer.set_pixel_ratio(
-        if self.settings.quality == "low" {
-          1
-        } else {
-          @host.pixel_ratio()
-        },
-      )
-      self.view.renderer.shadow_map.enabled = self.settings.quality != "low"
-      self.view.resize()
-      self.redraw = true
       self.settings.save()
     })
   }
-  @host.on_click("reset-bindings", fn() {
-    let defaults = Settings::new()
-    self.settings.bindings.clear()
-    for k, v in defaults.bindings {
-      self.settings.bindings[k] = v
+  @host.on_change("quality", fn() {
+    self.settings.quality = if @host.setting_value("quality") == "low" {
+      Low
+    } else {
+      High
     }
+    self.apply_quality()
+    self.settings.save()
+  })
+  @host.on_click("reset-bindings", fn() {
+    self.settings.bindings = Bindings::defaults()
     self.rebinding = None
     self.settings.save()
     self.bindings()

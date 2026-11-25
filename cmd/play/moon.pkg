@@ -2,6 +2,7 @@ import {
   "milky/tankle-astra/simulation" @sim,
   "milky/tankle-astra/renderer" @view,
   "milky/tankle-astra/host",
+  "tiye/dom-ffi" @dom,
   "moonbitlang/core/math",
   "moonbitlang/core/json",
 }
@@ -13,3 +14,5 @@ supported_targets = "js"
 options(
   link: { "js": { "format": "esm" } },
 )
+
+formatter(ignore: [ "sound-data.generated.mbt" ])

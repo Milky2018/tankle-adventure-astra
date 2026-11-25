@@ -9,11 +9,14 @@ extern "js" fn fetch(url : String) -> @js_async.Promise[Response] = "fetch"
 extern "js" fn Response::status(self : Response) -> Int32 = "r=>r.status"
 
 ///|
-extern "js" fn Response::content_encoding(self : Response) -> String =
-  #| r=>r.headers.get('Content-Encoding')??''
+extern "js" fn Response::has_encoding(self : Response) -> Bool = "r=>r.headers.has('Content-Encoding')"
 
 ///|
-extern "js" fn Response::decompress(self : Response) -> Response =
+extern "js" fn Response::content_encoding(self : Response) -> String =
+  #| r=>r.headers.get('Content-Encoding')
+
+///|
+extern "js" fn Response::gunzip(self : Response) -> Response =
   #| r=>new Response(r.body.pipeThrough(new DecompressionStream('gzip')))
 
 ///|
@@ -36,25 +39,22 @@ async fn asset(path : String) -> Response {
   }
   // Fetch removes HTTP Content-Encoding. Static hosts can instead serve the
   // gzip file as ordinary bytes, which must be decompressed while streaming.
-  if response.content_encoding().to_lower() == "gzip" {
+  if response.has_encoding() &&
+    response
+    .content_encoding()
+    .split(",")
+    .any(c => c.trim().to_lower() == "gzip") {
     response
   } else {
-    response.decompress()
+    response.gunzip()
   }
-}
-
-///|
-priv struct SceneBuffers {
-  geometry : Map[String, Map[String, @core.TypedArray]]
-  images : Map[String, @core.TypedArray]
-  instances : Map[String, Map[String, @core.TypedArray]]
 }
 
 ///|
 fn scene_buffers(
   views : @scene_format.PackedViews,
   buffer : @core.ArrayBuffer,
-) -> SceneBuffers raise {
+) -> @loader.Buffers raise {
   let bytes = buffer.byte_length()
   fn open_view(
     id : String,
@@ -106,7 +106,9 @@ pub async fn load_scene(url : String) -> @core.Object3D {
     mark("art-decoded")
     let buffers = scene_buffers(views, buffer)
     mark("art-parse-start")
-    result = Some(parse_scene(@json.parse(scene_text), buffers))
+    result = Some(
+      buffers.parse(@json.parse(scene_text), on_parsed=() => mark("art-parsed")),
+    )
   })
   result.unwrap()
 }

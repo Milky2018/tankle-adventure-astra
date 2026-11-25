@@ -1,6 +1,7 @@
 supported_targets = "js"
 
 import {
+  "milky/tankle-astra/tooling/node",
   "milky/tankle-astra/tooling/archive",
   "milky/tankle-astra/scene_format",
   "milky/tankle-astra/tooling/catalog",
@@ -8,6 +9,9 @@ import {
   "milky/tankle-astra/tooling/editor_model" @model,
   "moonbit-community/three/core",
   "moonbit-community/three/math",
+  "moonbit-community/three/geometries",
+  "moonbit-community/three/loaders",
+  "moonbit-community/three/extras",
   "moonbitlang/core/json",
   "moonbitlang/core/double",
   "moonbitlang/x/fs",

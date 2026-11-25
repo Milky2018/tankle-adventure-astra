@@ -6,3 +6,14 @@ import {
 }
 
 supported_targets = "js"
+
+formatter(
+  ignore: [
+    "level-circuits.generated.mbt",
+    "level-controls.generated.mbt",
+    "level-enemies.generated.mbt",
+    "level-motion.generated.mbt",
+    "level-world.generated.mbt",
+    "tuning.generated.mbt",
+  ],
+)

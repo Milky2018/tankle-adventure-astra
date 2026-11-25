@@ -79,16 +79,8 @@ fn expect_json(actual : Raw, expected : Json) -> Unit raise {
 }
 
 ///|
-#module("node:os")
-extern "js" fn system_tmpdir() -> String = "tmpdir"
-
-///|
-#module("node:fs")
-extern "js" fn make_temp(prefix : String) -> String = "mkdtempSync"
-
-///|
-fn temp_dir() -> String {
-  make_temp((@path.Path(system_tmpdir()) / "tankle-authoring-").to_string())
+fn temp_dir() -> String raise {
+  @node.temp_dir("tankle-authoring-")
 }
 
 ///|
@@ -113,10 +105,6 @@ fn cwd() -> String raise {
   }
   path
 }
-
-///|
-#module("node:process")
-extern "js" fn chdir(path : String) -> Unit = "chdir"
 
 ///|
 fn set_children(node : Raw, children : Array[Raw]) -> Unit {

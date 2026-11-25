@@ -96,24 +96,35 @@ fn Cutaway::new(
 }
 
 ///|
+#derive(FromJson(rename_fields="camelCase"))
+priv struct ReflectionProbe {
+  probe_center : (Double, Double, Double)
+  probe_min : (Double, Double, Double)
+  probe_max : (Double, Double, Double)
+  wetness : Double
+}
+
+///|
 fn Cutaway::apply(
   self : Cutaway,
   material : @core.Material,
   hull_fill : @core.Uniform?,
 ) -> Unit {
-  let role = metadata_string(material.user_data, "renderRole")
-  let finish = metadata_string(material.user_data, "surfaceFinish")
+  let role : String = scene_field(material.user_data, "renderRole").unwrap_or(
+    "",
+  )
+  let finish = surface_finish(material)
   let finish_uv = match finish {
-    "paving" =>
+    Some(Paving) =>
       (
         #| vMapUv = (mapTransform * vec3(apertureWorld.xz, 1.0)).xy;
         #| vAoMapUv = (aoMapTransform * vec3(apertureWorld.xz,1.0)).xy;
       )
-    "apron" =>
+    Some(Apron) =>
       (
         #| vMapUv = (mapTransform * vec3(apertureWorld.xz*.30,1.0)).xy;
       )
-    "masonry" | "ironwork" =>
+    Some(Masonry) | Some(Ironwork) =>
       (
         #| vec3 face = normal;
         #| #ifdef USE_BATCHING
@@ -125,31 +136,35 @@ fn Cutaway::apply(
       )
     _ => ""
   }
-  let relief_uv = if finish == "paving" ||
-    finish == "masonry" ||
-    finish == "ironwork" {
+  let relief_uv = if finish is Some(Paving | Masonry | Ironwork) {
     "\n#ifdef USE_NORMALMAP\n vNormalMapUv = vMapUv;\n#endif\n"
   } else {
     ""
   }
-  let probe = !material.user_data.get("probeCenter").is_undefined() &&
-    material.emissive_map is Some(_)
+  let reflection : ReflectionProbe? = if material.emissive_map is Some(_) {
+    Some(@json.from_json(material.user_data.to_json())) catch {
+      _ => None
+    }
+  } else {
+    None
+  }
+  let probe = reflection is Some(_)
   let map_fragment = match finish {
-    "vapor" => steam_alpha
+    Some(Vapor) => steam_alpha
     _ => "#include <map_fragment>"
   }
   let reflected = if !probe {
     ""
-  } else if finish == "opticalMirror" {
+  } else if finish is Some(OpticalMirror) {
     mirror_reflection
-  } else if finish == "canal" {
+  } else if finish is Some(Canal) {
     canal_reflection
   } else {
     wet_floor
   }
   // The atlas packs one plan of window light per eight-metre storey. Ramps
   // blend adjacent plans while the material continues to receive live shadows.
-  let lighting = if finish == "paving" {
+  let lighting = if finish is Some(Paving) {
     (
       #| float level = clamp((apertureWorld.y+56.0)/8.0,0.0,12.0);
       #| float lower = floor(level), upper = min(lower+1.0,12.0);
@@ -170,7 +185,8 @@ fn Cutaway::apply(
   } else {
     "#include <aomap_fragment>"
   }
-  let contact = if role == "floor" || role == "belt" {
+  let terrain = role is ("floor" | "belt")
+  let contact = if terrain {
     (
       #| vec2 groundDelta = apertureWorld.xz - aperturePlayer.xz;
       #| vec2 localHull = vec2(dot(groundDelta,vec2(cos(hullHeading),-sin(hullHeading))),dot(groundDelta,vec2(sin(hullHeading),cos(hullHeading))));
@@ -181,7 +197,6 @@ fn Cutaway::apply(
   } else {
     ""
   }
-  let terrain = role == "floor" || role == "belt"
   let aperture =
     #| if (apertureEnabled > 0.0) {
     #| vec3 delta = apertureWorld-aperturePlayer-vec3(0.0,1.3,0.0);
@@ -198,7 +213,7 @@ fn Cutaway::apply(
     #| float eyeCut = (1.-smoothstep(.32,.62,silhouette))*step(.05,along)*step(along,sightLength);
   let fragment = if hull_fill is Some(_) {
     hull_fill_fragment
-  } else if finish == "enemyEnamel" {
+  } else if finish is Some(EnemyEnamel) {
     // Preserve the moulded relief in shadow. Blue induction strips keep their
     // local colour even when the hull is lit only by the workshop skylights.
     (
@@ -208,7 +223,7 @@ fn Cutaway::apply(
       #| outgoingLight += diffuseColor.rgb*.42 + vColor.rgb*diffuse*(.12+induction*.64);
       #| #include <opaque_fragment>
     )
-  } else if finish == "glass" {
+  } else if finish is Some(Glass) {
     (
       #| float edge = 1.0-abs(dot(normal,normalize(vViewPosition)));
       #| diffuseColor.a = min(.67, diffuseColor.a + .42*edge*edge);
@@ -238,26 +253,20 @@ fn Cutaway::apply(
   }
   material.on_before_compile = Some(fn(shader, _renderer) {
     let uniforms = shader.uniforms
-    if probe {
-      for key in ["probeCenter", "probeMin", "probeMax"] {
-        let p = material.user_data.get(key)
-        uniforms[key] = @core.Uniform::new(
-          Vector3(
-            @m3.Vector3::new(
-              p.get("0").cast(),
-              p.get("1").cast(),
-              p.get("2").cast(),
-            ),
-          ),
-        )
+    if reflection is Some(r) {
+      for
+        (name, (x, y, z)) in [
+          ("probeCenter", r.probe_center),
+          ("probeMin", r.probe_min),
+          ("probeMax", r.probe_max),
+        ] {
+        uniforms[name] = @core.Uniform::new(Vector3(@m3.Vector3::new(x, y, z)))
       }
-      uniforms["wetness"] = @core.Uniform::new(
-        Number(material.user_data.get("wetness").cast()),
-      )
+      uniforms["wetness"] = @core.Uniform::new(Number(r.wetness))
     }
     uniforms["waterTime"] = self.water_time
     let mut water_source = ""
-    if finish == "canal" && probe {
+    if finish is Some(Canal) && probe {
       uniforms["wakeSpeed"] = self.wake_speed
       let mut regions = ""
       water_source = "uniform float wakeSpeed;\n"
@@ -292,7 +301,7 @@ fn Cutaway::apply(
       uniforms["bounds\{i}"] = @core.Uniform::new(Vector4(self.bounds[i]))
       uniforms["plane\{i}"] = @core.Uniform::new(Vector4(self.planes[i]))
     }
-    let extra_varying = if finish == "vapor" {
+    let extra_varying = if finish is Some(Vapor) {
       "\nvarying vec2 plumeUv;"
     } else {
       ""
@@ -300,7 +309,7 @@ fn Cutaway::apply(
     let extra_fragment = if hull_fill is Some(strength) {
       uniforms["hullFill"] = strength
       "uniform float hullFill;"
-    } else if finish == "vapor" {
+    } else if finish is Some(Vapor) {
       steam_fragment
     } else {
       ""
@@ -316,7 +325,7 @@ fn Cutaway::apply(
           "\n" +
           finish_uv +
           relief_uv +
-          (if finish == "vapor" { "\nplumeUv = uv;" } else { "" }),
+          (if finish is Some(Vapor) { "\nplumeUv = uv;" } else { "" }),
       )
     shader.fragment_shader = shader.fragment_shader
       .replace(
@@ -360,9 +369,8 @@ fn Cutaway::apply(
         ),
       )
   })
-  material.custom_program_cache_key = Some(fn() {
-    "typed-cutaway-\{role}-\{finish}-\{probe}-\{hull_fill is Some(_)}"
-  })
+  let key = "typed-cutaway-\{role}-\{@debug.to_string(finish)}-\{probe}-\{hull_fill is Some(_)}"
+  material.custom_program_cache_key = Some(() => key)
 }
 
 ///|

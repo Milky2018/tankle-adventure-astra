@@ -1,16 +1,38 @@
 ///|
-fn metadata_string(data : @core.JsValue, key : String) -> String {
+/// Artist-authored Three.js userData is an open JSON object.
+fn[T : @json.FromJson] scene_field(data : @core.JsValue, key : String) -> T? {
   let value = data.get(key)
-  if value.is_undefined() {
-    ""
+  if value.is_undefined() || value.is_null() {
+    None
   } else {
-    value.cast()
+    Some(@json.from_json(value.to_json())) catch {
+      _ => None
+    }
   }
 }
 
 ///|
 fn scene_binding(object : @core.Object3D) -> String {
-  metadata_string(object.user_data, "binding")
+  scene_field(object.user_data, "binding").unwrap_or("")
+}
+
+///|
+#derive(Debug, FromJson(rename_cases="camelCase"))
+priv enum SurfaceFinish {
+  Paving
+  Apron
+  Masonry
+  Ironwork
+  Canal
+  Vapor
+  OpticalMirror
+  EnemyEnamel
+  Glass
+}
+
+///|
+fn surface_finish(material : @core.Material) -> SurfaceFinish? {
+  scene_field(material.user_data, "surfaceFinish")
 }
 
 ///|

@@ -24,6 +24,8 @@ pub fn decompress(BytesView, max_output_bytes? : Int32, cancelled? : () -> Bool)
 
 pub fn digest(Bytes) -> String
 
+pub fn hydrate_scene(@core.JsValue, decode? : (@core.TypedArray) -> @core.JsValue) -> Unit raise
+
 pub fn is_array(@core.JsValue) -> Bool
 
 pub fn is_number(@core.JsValue) -> Bool
@@ -40,15 +42,23 @@ pub fn parse(String) -> @core.JsValue raise
 
 pub fn prop(@core.JsValue, String) -> @core.JsValue
 
-pub fn reachable(@core.JsValue, @core.JsValue, Array[String], retain_clips? : Bool) -> @set.Set[String]
+pub fn publish_content(Map[String, Bytes], check_current~ : () -> Unit raise) -> Unit raise
+
+pub fn reachable(@core.JsValue, @core.JsValue, retain_clips? : Bool) -> @set.Set[String]
 
 pub fn read_json_gz(String) -> @core.JsValue raise
 
+pub fn read_packed_scene() -> @core.JsValue raise
+
 pub fn read_scene(decode? : (@core.TypedArray) -> @core.JsValue) -> @core.JsValue raise
+
+pub fn recover_city_save() -> Unit raise
 
 pub fn remove(@core.JsValue, String) -> Unit
 
-pub fn select_resources(@core.JsValue, @core.JsValue) -> @core.JsValue
+pub let resource_libraries : ReadOnlyArray[String]
+
+pub fn select_resources(@core.JsValue, @core.JsValue, retain_clips? : Bool) -> @core.JsValue
 
 pub fn str(@core.JsValue, String) -> String
 
@@ -66,7 +76,7 @@ pub fn walk(@core.JsValue, (@core.JsValue) -> Unit raise?) -> Unit raise?
 
 pub fn write_json_gz(String, @core.JsValue) -> Unit raise
 
-pub fn write_scene(@core.JsValue) -> Unit raise
+pub fn write_scene(@core.JsValue, files? : Map[String, Bytes], check_current? : () -> Unit raise) -> Unit raise
 
 // Errors
 

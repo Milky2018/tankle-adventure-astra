@@ -116,13 +116,13 @@ fn Sound::update(
     }
     let hz = 52.0 + speed * 2.3
     audio.play_voice({
-      source: Tone(wave="triangle", from_hz=hz, to_hz=hz),
+      source: Tone(wave=Triangle, from_hz=hz, to_hz=hz),
       duration: 0.2,
       gain: 0.025,
       delay: 0,
       attack: 0.035,
       hold: 0.05,
-      filter: Some(("lowpass", 900)),
+      filter: Some((Lowpass, 900)),
     })
   }
 }

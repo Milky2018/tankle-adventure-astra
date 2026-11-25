@@ -5,7 +5,7 @@ import {
   "moonbitlang/core/math",
   "moonbitlang/core/env",
   "moonbitlang/x/fs",
-  "moonbitlang/core/path",
+  "milky/tankle-astra/tooling/node",
   "moonbitlang/core/encoding/base64",
   "moonbitlang/core/async",
   "moonbitlang/core/async/js_async",

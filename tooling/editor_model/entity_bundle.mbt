@@ -1,51 +1,84 @@
 ///|
 pub struct EntityBundle {
-  root : Raw
-  objects : FixedArray[Raw]
+  root : @core.Object3D
+  objects : Array[@core.Object3D]
 }
 
 ///|
-pub fn entity_bundle(scene : Raw, root : Raw) -> EntityBundle {
-  let e = entity(root)
-  let prefix = prefix_for(str(e, "collection"), str(e, "key"))
-  let objects = children(scene)
-    .iter()
-    .filter(n => {
-      n.strict_equal(root) || (prefix is Some(p) && belongs_to(binding(n), p))
-    })
-  { root, objects: FixedArray::from_iter(objects), }
+fn[T] bundle_members(
+  children : Iter[T],
+  owner : Raw,
+  is_root : (T) -> Bool,
+  binding : (T) -> String,
+) -> Array[T] {
+  let prefix = prefix_for(str(owner, "collection"), str(owner, "key"))
+  children
+  .filter(n => is_root(n) || (prefix is Some(p) && belongs_to(binding(n), p)))
+  .to_array()
+}
+
+///|
+pub fn entity_bundle(
+  scene : @core.Object3D,
+  root : @core.Object3D,
+) -> EntityBundle {
+  {
+    root,
+    objects: bundle_members(
+      scene.children.iter(),
+      root.user_data.get("entity"),
+      n => n.id == root.id,
+      n => str(n.user_data, "binding"),
+    ),
+  }
 }
 
 ///|
 pub fn clone_entity(
-  scene : Raw,
-  source : Raw,
+  scene : @core.Object3D,
+  source : @core.Object3D,
   id : String,
   offset~ : @math.Vector3 = @math.Vector3::new(0, 0, 0),
-  defaults? : Raw,
+  defaults? : Json,
 ) -> EntityBundle raise {
-  let old = EntityRef::read(entity(source))
+  guard exists(source.user_data.get("entity")) else {
+    raise Failure("Missing gameplay identity on copied entity")
+  }
+  let old = EntityRef::read(source.user_data.get("entity"))
   let e : EntityRef = { collection: old.collection, id, key: id, index: None, }
-  let game = clone(defaults.unwrap_or(get(data(source), "game")))
-  game.set("id", Raw::of(id))
-  if e.collection == "controls" {
-    game.set("circuitKey", Raw::of(id))
-    if defaults is Some(_) {
-      game.set("effects", Raw::from_array([id]))
-    } else if !exists(get(game, "effects")) {
-      game.set("effects", Raw::from_array([old.id]))
+  let properties = match defaults {
+    Some(value) => value
+    None => {
+      let field = source.user_data.get("game")
+      guard exists(field) else {
+        raise Failure("Missing gameplay properties on copied entity")
+      }
+      field.to_json()
     }
   }
-  e.check_new(str(game, "id"))
+  guard properties is Object(original_game) else {
+    raise Failure("Missing gameplay properties on copied entity")
+  }
+  let game = original_game.copy()
+  game["id"] = Json::string(id)
+  if e.collection == "controls" {
+    game["circuitKey"] = Json::string(id)
+    if defaults is Some(_) {
+      game["effects"] = [id]
+    } else if game.get("effects") is (None | Some(Null)) {
+      game["effects"] = [old.id]
+    }
+  }
+  e.check_new(id)
   let bundle = entity_bundle(scene, source).clone_with_offset(
     offset,
     old_prefix=prefix_for(old.collection, old.key).unwrap(),
     prefix=prefix_for(e.collection, e.key).unwrap(),
   )
-  let user = data(bundle.root)
+  let user = bundle.root.user_data
   user.set("entity", Raw::from_json(@json.to_json(e)))
-  user.set("game", game)
-  bundle.root.set("name", Raw::of(e.collection + ": " + id))
+  user.set("game", Raw::from_json(Json::object(game)))
+  bundle.root.name = e.collection + ": " + id
   if exists(get(user, "circuit")) {
     if defaults is Some(_) {
       @archive.remove(user, "circuit")
@@ -57,60 +90,81 @@ pub fn clone_entity(
 }
 
 ///|
+// Retain sharing within the copied entity, independently of the original's resources.
+fn[T] shared_clone(clone : (T) -> T) -> (T) -> T {
+  let copies : @webgl.WeakMap[T, T] = @webgl.WeakMap::new()
+  fn(source) {
+    if copies.get(source) is Some(copy) {
+      return copy
+    }
+    let copy = clone(source)
+    copies.set(source, copy)
+    copy
+  }
+}
+
+///|
 fn EntityBundle::clone_with_offset(
   self : EntityBundle,
   offset : @math.Vector3,
   old_prefix~ : String,
   prefix~ : String,
 ) -> EntityBundle raise {
-  let mats = Map([])
-  let geos = Map([])
-  fn resource(cache : Map[String, Raw], v : Raw) -> Raw {
-    cache.get_or_init(uuid(v), () => clone_resource(v))
+  let clone_material = shared_clone(copy_material)
+  let clone_geometry = shared_clone(copy_geometry)
+  fn slot(value : @core.MaterialSlot) -> @core.MaterialSlot {
+    match value {
+      Single(material) => Single(clone_material(material))
+      Multiple(materials) => Multiple(materials.map(clone_material))
+    }
+  }
+  fn rebase(source : @core.Object3D, n : @core.Object3D) {
+    if source_nodes.get(source) is Some(record) {
+      source_nodes.set(n, record)
+    }
+    let b = str(n.user_data, "binding")
+    if !b.is_empty() {
+      let role = if b == old_prefix {
+        prefix
+      } else if b.strip_prefix(old_prefix + "/") is Some(tail) {
+        prefix + "/" + tail.to_owned()
+      } else {
+        prefix + "/art/" + n.uuid
+      }
+      n.user_data.set("binding", Raw::of(role))
+    }
+    if n.name.contains("/") {
+      let role = str(n.user_data, "binding")
+      n.name = if role.is_empty() { n.type_ } else { role }
+    }
+    match (source.kind, n.kind) {
+      (Mesh(a), Mesh(b)) => {
+        b.geometry = clone_geometry(a.geometry)
+        b.material = slot(a.material)
+      }
+      (Line(a), Line(b)) => {
+        b.geometry = clone_geometry(a.geometry)
+        b.material = slot(a.material)
+      }
+      (Points(a), Points(b)) => {
+        b.geometry = clone_geometry(a.geometry)
+        b.material = slot(a.material)
+      }
+      (Sprite(a), Sprite(b)) => {
+        b.geometry = clone_geometry(a.geometry)
+        b.material = clone_material(a.material)
+      }
+      _ => ()
+    }
+    for i, child in source.children {
+      rebase(child, n.children[i])
+    }
   }
   let mut cloned_root = None
   let objects = self.objects.map(original => {
-    let c = clone_tree(original)
-    @archive.walk(c, n => {
-      let b = binding(n)
-      if !b.is_empty() {
-        let role = if b == old_prefix {
-          prefix
-        } else if b.strip_prefix(old_prefix + "/") is Some(tail) {
-          prefix + "/" + tail.to_owned()
-        } else {
-          prefix + "/art/" + uuid(n)
-        }
-        data(n).set("binding", Raw::of(role))
-      }
-      if str(n, "name").contains("/") {
-        n.set(
-          "name",
-          if !binding(n).is_empty() {
-            data(n).get("binding")
-          } else {
-            n.get("type")
-          },
-        )
-      }
-      if exists(get(n, "geometry")) {
-        n.set("geometry", resource(geos, n.get("geometry")))
-      }
-      let mat = get(n, "material")
-      if exists(mat) {
-        n.set(
-          "material",
-          if @archive.is_array(mat) {
-            Raw::from_array(
-              [ for m in @archive.items(mat) => resource(mats, m) ][:],
-            )
-          } else {
-            resource(mats, mat)
-          },
-        )
-      }
-    })
-    if original.strict_equal(self.root) {
+    let c = original.clone()
+    rebase(original, c)
+    if original.id == self.root.id {
       cloned_root = Some(c)
     }
     c
@@ -119,52 +173,33 @@ fn EntityBundle::clone_with_offset(
     raise Failure("Missing gameplay root")
   }
   for n in objects {
-    let pos = n.get("position")
-    set_position(
-      n,
-      number(pos, "x") + offset.x,
-      number(pos, "y") + offset.y,
-      number(pos, "z") + offset.z,
-    )
-    update_matrix_world(n)
+    ignore(n.position.add(offset))
+    n.update_matrix_world(force=true)
   }
   { root, objects, }
 }
 
 ///|
 pub fn creation_offset(
-  source : Raw,
+  source : @core.Object3D,
   x : Double,
   ground : Double,
   z : Double,
-) -> @math.Vector3 {
-  let origin = elements(data(source).get("placement").get("origin"))
-  let game = data(source).get("game")
-  let base = if str(entity(source), "collection") == "controls" {
-    if exists(get(game, "ground")) {
-      number(game, "ground")
-    } else {
-      origin[1] - 1.3
-    }
-  } else {
-    origin[1]
+) -> @math.Vector3 raise {
+  let origin = get(source.user_data.get("placement"), "origin")
+  guard exists(origin) else {
+    raise Failure("Missing template placement origin")
   }
-  @math.Vector3::new(x - origin[0], ground - base, z - origin[2])
+  let (ox, oy, oz) : (Double, Double, Double) = @json.from_json(
+    origin.to_json(),
+  )
+  let control_ground = get(source.user_data.get("game"), "ground")
+  let base = if str(source.user_data.get("entity"), "collection") != "controls" {
+    oy
+  } else if exists(control_ground) {
+    @json.from_json(control_ground.to_json())
+  } else {
+    oy - 1.3
+  }
+  @math.Vector3::new(x - ox, ground - base, z - oz)
 }
-
-///|
-extern "js" fn clone_resource(resource : Raw) -> Raw = "r=>r.clone()"
-
-///|
-extern "js" fn clone_tree(node : Raw) -> Raw = "n=>n.clone(true)"
-
-///|
-extern "js" fn set_position(
-  node : Raw,
-  x : Double,
-  y : Double,
-  z : Double,
-) -> Unit = "(n,x,y,z)=>n.position.set(x,y,z)"
-
-///|
-extern "js" fn update_matrix_world(node : Raw) -> Unit = "n=>n.updateMatrixWorld(true)"

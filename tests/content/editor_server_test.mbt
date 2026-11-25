@@ -1,52 +1,60 @@
 ///|
-#external
-priv type EditorProcess
-
-///|
-extern "js" fn launch_editor(
+#module("node:child_process")
+extern "js" fn spawn(
   exe : String,
   args : FixedArray[String],
-  repo : String,
-) -> EditorProcess =
-  #| (exe,args,cwd)=>process.getBuiltinModule("child_process").spawn(exe,args,{cwd,env:{...process.env,EDITOR_PORT:"0"},stdio:["ignore","pipe","inherit"],detached:true})
+  options : Raw,
+) -> Raw = "spawn"
 
 ///|
-extern "js" fn editor_output(
-  proc : EditorProcess,
-) -> @js_async.JsReadableStream =
-  #| p => process.getBuiltinModule("stream").Readable.toWeb(p.stdout)
+extern "js" fn editor_output(proc : Raw) -> @js_async.JsReadableStream = "p=>process.getBuiltinModule('stream').Readable.toWeb(p.stdout)"
+
+///|
+#module("node:os")
+extern "js" fn platform() -> String = "platform"
+
+///|
+#module("node:child_process")
+extern "js" fn spawn_sync(exe : String, args : FixedArray[String]) -> Unit = "spawnSync"
+
+///|
+extern "js" fn kill_child(proc : Raw) -> Unit = "p=>p.kill()"
 
 ///|
 // Moon may have both its JS runner and an active scene worker below it.
-extern "js" fn stop_editor(proc : EditorProcess) -> Unit =
-  #| p => {
-  #|   if (p.exitCode !== null || p.signalCode !== null) return;
-  #|   if (process.platform === "win32") {
-  #|     process.getBuiltinModule("child_process").spawnSync("taskkill",["/pid",String(p.pid),"/T","/F"]);
-  #|   } else {
-  #|     try { process.kill(-p.pid,"SIGTERM") }
-  #|     catch (e) { if (e.code !== "ESRCH" && e.code !== "EPERM") throw e; p.kill() }
-  #|   }
-  #| }
+fn stop_editor(proc : Raw) -> Unit raise {
+  if !proc.get("exitCode").is_null() || !proc.get("signalCode").is_null() {
+    return
+  }
+  let pid : Int32 = proc.get("pid").cast()
+  if platform() == "win32" {
+    spawn_sync("taskkill", ["/pid", pid.to_string(), "/T", "/F"])
+  } else if !@node.terminate_group(pid) {
+    kill_child(proc)
+  }
+}
 
 ///|
 async test "local HTTP editing validates writes, detects stale tabs and rejects foreign origins" {
   let repo = cwd()
   let sandbox = temp_dir()
-  defer {
-    chdir(repo)
-    @fs.remove_dir(sandbox)
-  }
-  make_fixture(repo, sandbox, three_core(repo))
-  chdir(repo)
+  defer @fs.remove_dir(sandbox)
+  make_fixture(repo, sandbox)
   copy_fixture(
     repo + "/content/abilities.json",
     sandbox + "/content/abilities.json",
   )
-  let proc = launch_editor(
+  let env = @env.get_env_vars()
+  env["EDITOR_PORT"] = "0"
+  let proc = spawn(
     "moon",
     ["run", "--quiet", "cmd/editor", "--", "serve", sandbox],
-    repo,
+    raw({
+      "cwd": @json.to_json(repo),
+      "env": @json.to_json(env),
+      "stdio": ["ignore", "pipe", "inherit"],
+      "detached": true,
+    }),
   )
   defer stop_editor(proc)
   let reader = @js_async.ReadableStream::from_js(editor_output(proc))
@@ -79,9 +87,10 @@ async test "local HTTP editing validates writes, detects stale tabs and rejects 
     "Origin": origin,
   })
   assert_eq(bad.code, 400)
+  let error = explanation.json()
   assert_true(
-    explanation.json() is { "error": String(msg), .. } &&
-    msg.contains("Invalid JSON"),
+    error is { "error": String(msg), .. } && msg.contains("Invalid JSON"),
+    msg=error.stringify(),
   )
   data.get("values").get("cannon").set("damage", Raw::of(-2))
   assert_eq(post(abilities, data, origin).0.code, 400)

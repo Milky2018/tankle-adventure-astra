@@ -35,9 +35,17 @@ fn belts(
         for k in 0..<2 {
           if nodes.get(prefix + "/rollers/\{k}") is Some(node) {
             node.matrix_auto_update = true
-            let instance = nodes
-              .get(metadata_string(node.user_data, "rollerBatch"))
-              .map(fn(batch) { (batch, node.user_data.get("instance").cast()) })
+            let instance = if scene_field(node.user_data, "rollerBatch")
+              is Some(id) &&
+              nodes.get(id) is Some(batch) &&
+              batch.kind is Mesh({ kind: InstancedMesh(_), count, .. }) &&
+              scene_field(node.user_data, "instance") is Some(index) &&
+              index >= 0 &&
+              index < count {
+              Some((batch, index))
+            } else {
+              None
+            }
             rollers.push({ node, mount: node.quaternion.clone(), instance, })
           }
         }

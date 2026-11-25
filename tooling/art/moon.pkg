@@ -7,6 +7,7 @@ import {
   "milky/tankle-astra/tooling/archive",
   "milky/tankle-astra/tooling/catalog",
   "moonbit-community/three/core",
+  "moonbit-community/three/renderers/webgl",
   "moonbit-community/three/math",
   "moonbit-community/three/addons/utils",
 }

@@ -56,26 +56,23 @@ pub extern "js" fn clone(v : Raw) -> Raw = "v=>structuredClone(v)"
 using @archive {append}
 
 ///|
-pub extern "js" fn pretty(v : Raw) -> String = "v=>JSON.stringify(v,null,2)"
-
-///|
-fn number(v : Raw, k : String) -> Double {
-  get(v, k).cast()
-}
-
-///|
-fn elements(a : Raw) -> Array[Double] {
-  let x : FixedArray[Double] = a.cast()
-  Array::from_fixed_array(x)
-}
-
-///|
-fn transform(node : Raw) -> @math.Matrix4 {
-  let m = @math.Matrix4::new()
-  if exists(get(node, "matrix")) {
-    ignore(m.from_array(elements(node.get("matrix"))))
+fn transform(node : Raw) -> @math.Matrix4 raise {
+  let matrix = @math.Matrix4::new()
+  let raw = get(node, "matrix")
+  if raw.is_undefined() {
+    return matrix
   }
-  m
+  guard @archive.is_array(raw) && @archive.items(raw).length() == 16 else {
+    raise Failure("Expected a 4 by 4 transform on " + str(node, "name"))
+  }
+  let values : Array[Double] = []
+  for v in @archive.items(raw) {
+    guard @archive.is_number(v) && (v.cast() : Double).is_finite() else {
+      raise Failure("Non-finite transform on " + str(node, "name"))
+    }
+    values.push(v.cast())
+  }
+  matrix.from_array(values)
 }
 
 ///|
@@ -84,15 +81,35 @@ fn matrix_value(m : @math.Matrix4) -> Raw {
 }
 
 ///|
-fn transforms(root : Raw) -> Map[String, @math.Matrix4] {
+priv struct SceneEntry {
+  node : Raw
+  world : @math.Matrix4
+  parent : SceneEntry?
+}
+
+///|
+fn index_scene(root : Raw) -> Map[String, SceneEntry] raise {
   let result = Map([])
-  fn visit(n : Raw, parent : @math.Matrix4) {
-    let world = parent.clone().multiply(transform(n))
-    result[uuid(n)] = world
-    for child in children(n) {
-      visit(child, world)
+  fn visit(node : Raw, parent : SceneEntry?) -> Unit raise {
+    let raw_id = get(node, "uuid")
+    guard @archive.is_string(raw_id) && (raw_id.cast() : String) != "" else {
+      raise Failure("Missing object UUID on " + str(node, "name"))
+    }
+    let id : String = raw_id.cast()
+    guard !result.contains(id) else {
+      raise Failure("Duplicate object UUID: " + id)
+    }
+    let matrix = transform(node)
+    let world = match parent {
+      Some(p) => p.world.clone().multiply(matrix)
+      None => matrix
+    }
+    let entry = { node, world, parent, }
+    result[id] = entry
+    for child in children(node) {
+      visit(child, Some(entry))
     }
   }
-  visit(root, @math.Matrix4::new())
+  visit(root, None)
   result
 }

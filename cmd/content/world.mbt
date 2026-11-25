@@ -1,7 +1,4 @@
 ///|
-extern "js" fn coord(n : Double) -> String = "(n) => n.toFixed(4)"
-
-///|
 fn location_key(
   target : String?,
   circuit : String?,
@@ -15,7 +12,12 @@ fn location_key(
       return s
     }
   }
-  [id, coord(x), coord(y), coord(z)].join(":")
+  [
+    id,
+    @scene_format.format_coordinate(x),
+    @scene_format.format_coordinate(y),
+    @scene_format.format_coordinate(z),
+  ].join(":")
 }
 
 ///|

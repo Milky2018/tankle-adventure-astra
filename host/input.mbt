@@ -1,8 +1,14 @@
 ///|
+fn as_key_event(e : @dom.Event) -> @dom.KeyboardEvent = "%identity"
+
+///|
+fn as_mouse_event(e : @dom.Event) -> @dom.MouseEvent = "%identity"
+
+///|
 fn key_event(name : String, callback : (@dom.KeyboardEvent) -> Unit) -> Unit {
   @dom.window()
   .reinterpret_as_event_target()
-  .add_event_listener(name, e => callback(@core.JsValue::of(e).cast()))
+  .add_event_listener(name, e => callback(as_key_event(e)))
 }
 
 ///|
@@ -36,7 +42,7 @@ fn mouse_event(
   name : String,
   callback : (@dom.MouseEvent) -> Unit,
 ) -> Unit {
-  target.add_event_listener(name, e => callback(@core.JsValue::of(e).cast()))
+  target.add_event_listener(name, e => callback(as_mouse_event(e)))
 }
 
 ///|

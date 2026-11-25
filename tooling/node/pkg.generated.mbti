@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "milky/tankle-astra/tooling/node"
+
+// Values
+pub fn chdir(String) -> Unit raise
+
+pub fn checked(() -> Unit) -> Unit raise
+
+pub fn process_exists(Int32) -> Bool
+
+pub fn process_id() -> Int32
+
+pub fn rename(String, String) -> Unit raise
+
+pub fn run_moon(FixedArray[String], cwd? : String) -> Unit raise
+
+pub fn temp_dir(String) -> String raise
+
+pub fn terminate_group(Int32) -> Bool raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

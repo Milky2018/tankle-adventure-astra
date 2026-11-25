@@ -71,7 +71,7 @@ fn tint_material(scene : Raw, props : Raw, uuid : String) -> Unit {
 ///|
 #derive(Eq, Hash)
 priv struct DrawGroup {
-  anchor : String
+  anchor : Int32
   material : String
   cell : String
   cast_shadow : Bool?
@@ -197,6 +197,18 @@ fn FittingBake::batch_fittings(
   let root = self.scene.get("object")
   let groups : Map[DrawGroup, (Raw, Array[Part])] = Map([])
   let tinted : Map[String, String] = Map([])
+  let anchors : @webgl.WeakMap[Raw, Int32] = @webgl.WeakMap::new()
+  let mut next_anchor = 0
+  fn anchor_id(node : Raw) -> Int32 {
+    if anchors.get(node) is Some(id) {
+      return id
+    }
+    let id = next_anchor
+    next_anchor += 1
+    anchors.set(node, id)
+    id
+  }
+
   fn visit(node : Raw, anchor : Raw, parent : @math.Matrix4, picking : Bool) {
     let id = binding(node)
     let path = id.split("/").to_array()
@@ -269,7 +281,7 @@ fn FittingBake::batch_fittings(
         let c = self.center(g)
         let center = project(transform, c[0], c[1], c[2])
         let key : DrawGroup = {
-          anchor: str(anchor, "uuid"),
+          anchor: anchor_id(anchor),
           material: mat_id,
           cell: cell_key(center, if world { 240 } else { 40 }),
           cast_shadow: boolean_field(node, "castShadow"),
@@ -318,7 +330,7 @@ fn FittingBake::batch_fittings(
   }
   visit(root, root, @math.Matrix4::new(), false)
   self.regroup_depth()
-  let replaced : Set[String] = Set([])
+  let replaced : @webgl.WeakMap[Raw, Bool] = @webgl.WeakMap::new()
   for key, group in groups {
     let (anchor, parts) = group
     guard parts.length() >= 2 else { continue }
@@ -350,12 +362,12 @@ fn FittingBake::batch_fittings(
       } else if children(part.node).length() > 0 {
         make_group(part.node)
       } else {
-        replaced.add(str(part.node, "uuid"))
+        replaced.set(part.node, true)
       }
     }
   }
   fn remove_originals(node : Raw) {
-    keep_children(node, child => !replaced.contains(str(child, "uuid")))
+    keep_children(node, child => !replaced.has(child))
     for child in children(node) {
       remove_originals(child)
     }

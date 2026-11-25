@@ -26,24 +26,28 @@ async fn run_moon(
   args : FixedArray[String],
   input~ : Bytes = b"",
 ) -> Bytes {
-  moon_process(root, args, InputStream::from_bytes(input), max_transfer_bytes).wait()
+  moon_process(root, args, InputStream::from_bytes(input), max_transfer_bytes)
 }
 
 ///|
-async fn read_body(input : InputStream) -> Raw {
+async fn read_body(input : InputStream) -> BytesView {
   let chunks = input.chunks()
-  let decoder = Utf8Decoder::new()
-  let text = StringBuilder()
+  let parts : Array[Bytes] = []
   let mut total = 0
   while chunks.next().wait() is { done: false, value: chunk, } {
     guard chunk.length() <= max_transfer_bytes - total else {
       raise Failure("Project exceeds the 256 MB save limit")
     }
     total += chunk.length()
-    text.write_string(decoder.decode(chunk).wait())
+    parts.push(chunk)
   }
-  text.write_string(decoder.finish().wait())
-  @archive.parse(text.to_string())
+  let body = FixedArray::make(total, b'\x00')
+  let mut offset = 0
+  for chunk in parts {
+    body.blit_from_bytesview(offset, chunk[:])
+    offset += chunk.length()
+  }
+  body.unsafe_reinterpret_as_bytes()[:]
 }
 
 ///|
@@ -67,10 +71,10 @@ fn send(
 fn json(
   res : Response,
   req : Request,
-  value : Raw,
+  value : Json,
   status~ : Int32 = 200,
 ) -> Unit {
-  let encoded = @utf8.encode(@archive.stringify(value))
+  let encoded = @utf8.encode(value.stringify(escape_slash=false))
   let length = encoded.length()
   let gzip = length > 4096 && req.header("accept-encoding").contains("gzip")
   send(
@@ -88,7 +92,7 @@ fn json(
 
 ///|
 fn problem(res : Response, q : Request, status : Int32, msg : String) -> Unit {
-  json(res, q, @archive.obj([("error", Raw::of(msg))]), status~)
+  json(res, q, { "error": msg }, status~)
 }
 
 ///|
@@ -142,7 +146,7 @@ async fn Server::handle(s : Server, q : Request, res : Response) -> Unit {
       ["run", "--quiet", "cmd/editor", "--", "scene-worker", verb, cwd()],
       input,
       max_transfer_bytes,
-    ).wait()
+    )
     send(res, 200, "application/json", result, gzip=true)
     return
   }
@@ -157,13 +161,21 @@ async fn Server::handle(s : Server, q : Request, res : Response) -> Unit {
     }
     match path {
       "/api/abilities" => {
-        let payload = read_body(q.stream())
-        let file = "content/abilities.json"
-        let current = read_file(file).wait()
-        guard str(payload, "revision") == @archive.digest(current) else {
-          raise Failure("Skills changed on disk. Reload before saving.")
+        let payload = @json.parse(@utf8.decode(read_body(q.stream()))) catch {
+          err => raise Failure("Invalid JSON: " + err.to_string())
         }
-        let next_text = @model.pretty(payload.get("values")) + "\n"
+        guard payload is { "revision": String(revision), "values": values, .. } else {
+          raise Failure("Expected ability values and revision")
+        }
+        let file = "content/abilities.json"
+        fn check_current() -> Unit raise {
+          guard revision == @archive.digest(@fs.read_file_to_bytes(file)) else {
+            raise Failure("Skills changed on disk. Reload before saving.")
+          }
+        }
+        @archive.recover_city_save()
+        check_current()
+        let next_text = values.stringify(indent=2, escape_slash=false) + "\n"
         let next = @utf8.encode(next_text)
         ignore(
           run_moon(
@@ -172,19 +184,12 @@ async fn Server::handle(s : Server, q : Request, res : Response) -> Unit {
             input=next,
           ),
         )
-        let tmp = temp_name(file)
-        defer (if @fs.path_exists(tmp) { @fs.remove_file(tmp) })
-        @fs.write_string_to_file(tmp, next_text)
-        rename(tmp, file).wait()
-        json(
-          res,
-          q,
-          @archive.obj([("revision", Raw::of(@archive.digest(next)))]),
-        )
+        @archive.publish_content(Map([(file, next)]), check_current~)
+        json(res, q, { "revision": @archive.digest(next) })
       }
       "/api/build" => {
         ignore(run_moon(cwd(), ["run", "scripts/build.mbtx"]))
-        json(res, q, Raw::from_json({ "url": "/play/?chapter=folded" }))
+        json(res, q, { "url": "/play/?chapter=folded" })
       }
       _ => problem(res, q, 404, "Unknown operation")
     }
@@ -205,33 +210,19 @@ async fn Server::handle(s : Server, q : Request, res : Response) -> Unit {
         cache="no-cache",
       )
     "/api/template-definitions" =>
-      json(
-        res,
-        q,
-        @archive.parse(
-          @utf8.decode_lossy(read_file("content/editor/templates.json").wait()),
-        ),
-      )
-    "/api/abilities" => {
-      let source = read_file("content/abilities.json").wait()
-      json(
-        res,
-        q,
-        @archive.obj([
-          ("values", @archive.parse(@utf8.decode_lossy(source))),
-          ("revision", Raw::of(@archive.digest(source))),
-        ]),
-      )
-    }
-    "/pathtracer/index.module.js" | "/bvh/index.module.js" =>
       send(
         res,
         200,
-        "text/javascript",
-        read_file(s.root + "/editor/vendor" + path + ".gz").wait(),
-        gzip=true,
-        cache="no-cache",
+        "application/json",
+        read_file("content/editor/templates.json").wait(),
       )
+    "/api/abilities" => {
+      let source = read_file("content/abilities.json").wait()
+      json(res, q, {
+        "values": @json.parse(@utf8.decode(source)),
+        "revision": @archive.digest(source),
+      })
+    }
     "/editor-ui.js" =>
       send(
         res,
@@ -240,13 +231,9 @@ async fn Server::handle(s : Server, q : Request, res : Response) -> Unit {
         read_file(s.root + "/_build/js/release/build/editor/editor.js").wait(),
         cache="no-cache",
       )
-    _ => {
-      let upstream = s.root + "/.editor/three-r185/"
+    _ =>
       for
         route in [
-          ("/upstream/", upstream + "editor"),
-          ("/build/", upstream + "build"),
-          ("/examples/", upstream + "examples"),
           ("/assets/", "dist/assets"),
           ("/generated/", "dist/generated"),
           ("/music/", "dist/music"),
@@ -279,13 +266,6 @@ async fn Server::handle(s : Server, q : Request, res : Response) -> Unit {
             problem(res, q, 403, "Invalid path")
             return
           }
-          if prefix is ("/examples/" | "/build/") {
-            ensure_three_file(
-              s.root,
-              prefix[1:].to_owned() +
-              relative.replace_all(old=@path.sep.to_string(), new="/"),
-            )
-          }
           guard @fs.path_exists(file) && @fs.is_file(file) else {
             problem(res, q, 404, "Not a file")
             return
@@ -300,7 +280,6 @@ async fn Server::handle(s : Server, q : Request, res : Response) -> Unit {
           return
         }
       }
-    }
   }
 }
 
@@ -334,8 +313,21 @@ async fn scene_worker(verb : String) -> Unit {
   let result = match verb {
     "GET" => @model.export_project(colliders=true, transfer=true)
     "POST" =>
-      @model.import_project(@model.unpack_scene_transfer(read_body(stdin())))
+      @model.import_project(
+        @model.unpack_scene_transfer(
+          parse_project_value(read_body(stdin())),
+          native_views=true,
+        ),
+      )
     _ => raise Failure("Expected GET or POST for scene worker")
   }
-  stdout(@archive.compress(@utf8.encode(@archive.stringify(result)))).wait()
+  let gzip = @gzip.StreamEncoder(WorkerOutput(@io.BinaryWriterController()))
+  let json : JsonOutput = {
+    write: async fn(text) { gzip.write(@utf8.encode(text)[:]) },
+    text: StringBuilder(),
+    size: 0,
+  }
+  json.value(result)
+  json.flush()
+  gzip.end()
 }

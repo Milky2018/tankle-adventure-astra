@@ -1,5 +1,5 @@
 ///|
-fn element(id : String) -> @dom.Element {
+pub fn element(id : String) -> @dom.Element {
   @dom.document_get_element_by_id(id).unwrap()
 }
 
@@ -19,7 +19,13 @@ pub fn pixel_ratio() -> Double {
 
 ///|
 /// Keep the animation timestamp as a Double throughout long play sessions.
-pub extern "js" fn frame(callback : (Double) -> Unit) -> Unit = "callback=>requestAnimationFrame(callback)"
+pub fn frame(callback : (Double) -> Unit) -> Unit {
+  ignore(
+    @webgl.global_self()
+    .unwrap()
+    .request_animation_frame((timestamp, _) => callback(timestamp)),
+  )
+}
 
 ///|
 pub fn on_resize(callback : () -> Unit) -> Unit {
@@ -74,9 +80,11 @@ extern "js" fn expose_read(read : () -> @core.JsValue) -> Unit = "read=>{window.
 pub fn diagnostics(read : () -> Json, camera_yaw : () -> Double) -> Unit {
   if query_params().has("test") {
     expose_read(fn() {
-      let state = @core.JsValue::from_json(read())
-      state.set("yaw", @core.JsValue::of(camera_yaw()))
-      state
+      guard read() is Object(fields) else {
+        abort("Expected an object in the game snapshot")
+      }
+      fields["yaw"] = Json::number(camera_yaw())
+      @core.JsValue::from_json(Json::object(fields))
     })
   }
 }
@@ -117,31 +125,41 @@ pub fn write_save(text : String) -> Unit {
 }
 
 ///|
-extern "js" fn history_state() -> @core.JsValue = "()=>({...history.state})"
+#external
+priv type HistoryEntry
 
 ///|
-extern "js" fn replace_history(state : @core.JsValue) -> Unit = "state=>history.replaceState(state,'')"
+extern "js" fn history_entry() -> HistoryEntry = "()=>({...history.state})"
 
 ///|
-extern "js" fn delete_property(obj : @core.JsValue, key : String) -> Unit = "(o,k)=>{delete o[k]}"
+extern "js" fn HistoryEntry::replace(self : HistoryEntry) -> Unit = "state=>history.replaceState(state,'')"
+
+///|
+extern "js" fn HistoryEntry::restarts(self : HistoryEntry) -> Bool = "s=>s.tankleRestart===true"
+
+///|
+extern "js" fn HistoryEntry::mark_restart(self : HistoryEntry) -> Unit = "s=>{s.tankleRestart=true}"
+
+///|
+extern "js" fn HistoryEntry::clear_restart(self : HistoryEntry) -> Unit = "s=>{delete s.tankleRestart}"
 
 ///|
 pub fn remove_save() -> Unit {
   if !playtest {
     @dom.window().local_storage().remove_item(save_key)
   }
-  let state = history_state()
-  state.set("tankleRestart", @core.JsValue::of(true))
-  replace_history(state)
+  let state = history_entry()
+  state.mark_restart()
+  state.replace()
   @dom.window().location().reload()
 }
 
 ///|
 pub fn direct_entry() -> Bool {
-  let state = history_state()
-  if state.get("tankleRestart").strict_equal(@core.JsValue::of(true)) {
-    delete_property(state, "tankleRestart")
-    replace_history(state)
+  let state = history_entry()
+  if state.restarts() {
+    state.clear_restart()
+    state.replace()
     true
   } else {
     query_params().has("chapter")
@@ -157,19 +175,31 @@ pub fn pointer_locked() -> Bool {
 }
 
 ///|
-extern "js" fn request_lock(node : @dom.Element) -> Unit = "n=>n.requestPointerLock?.()?.catch?.(()=>{})"
-
-///|
-pub fn capture_pointer() -> Unit {
-  request_lock(element("game"))
+/// Playback, fullscreen and pointer capture require browser permission or a user gesture.
+fn optional_action(promise : @js_async.Promise[Unit]) -> Unit {
+  ignore(@js_async.Promise::from_async(() => promise.wait() catch { _ => () }))
 }
 
 ///|
-pub extern "js" fn release_pointer() -> Unit = "()=>{if(document.pointerLockElement)document.exitPointerLock()}"
+extern "js" fn request_lock(node : @dom.Element) -> @js_async.Promise[Unit] =
+  #| async node=>node.requestPointerLock()
 
 ///|
-pub fn html(id : String, markup : String) -> Unit {
-  element(id).set_inner_html(markup)
+pub fn capture_pointer() -> Unit {
+  optional_action(request_lock(element("game")))
+}
+
+///|
+extern "js" fn has_locked_pointer() -> Bool = "()=>document.pointerLockElement!=null"
+
+///|
+extern "js" fn exit_lock() -> Unit = "()=>document.exitPointerLock()"
+
+///|
+pub fn release_pointer() -> Unit {
+  if has_locked_pointer() {
+    exit_lock()
+  }
 }
 
 ///|
@@ -178,14 +208,34 @@ pub fn attribute(id : String, key : String, value : String) -> Unit {
 }
 
 ///|
-pub extern "js" fn fullscreen() -> Unit = "()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()"
+extern "js" fn is_fullscreen() -> Bool = "()=>document.fullscreenElement!=null"
+
+///|
+extern "js" fn enter_fullscreen() -> @js_async.Promise[Unit] = "async ()=>document.documentElement.requestFullscreen()"
+
+///|
+extern "js" fn exit_fullscreen() -> @js_async.Promise[Unit] = "async ()=>document.exitFullscreen()"
+
+///|
+pub fn fullscreen() -> Unit {
+  optional_action(
+    if is_fullscreen() {
+      exit_fullscreen()
+    } else {
+      enter_fullscreen()
+    },
+  )
+}
 
 ///|
 pub type Canvas = @webgl.CanvasRenderingContext2D
 
 ///|
+fn as_canvas(node : @dom.Element) -> @webgl.HTMLCanvasElement = "%identity"
+
+///|
 fn canvas_element(id : String) -> @webgl.HTMLCanvasElement {
-  @core.JsValue::of(element(id)).cast()
+  as_canvas(element(id))
 }
 
 ///|
@@ -340,15 +390,11 @@ pub fn arrow(ctx : Canvas, x : Double, y : Double, heading : Double) -> Unit {
 
 ///|
 pub fn class_toggle(id : String, name : String, enabled : Bool) -> Unit {
-  set_class_enabled(element(id).class_list(), name, enabled)
+  let classes = element(id).class_list()
+  if classes.contains(name) != enabled {
+    ignore(classes.toggle(name))
+  }
 }
-
-///|
-extern "js" fn set_class_enabled(
-  classes : @dom.DomTokenList,
-  name : String,
-  enabled : Bool,
-) -> Unit = "(classes,name,enabled)=>classes.toggle(name,enabled)"
 
 ///|
 pub fn setting_value(id : String) -> String {
@@ -366,7 +412,7 @@ pub fn setting_number(id : String) -> Double {
 }
 
 ///|
-extern "js" fn numeric_value(input : @dom.HtmlInputElement) -> Double = "input=>Number(input.value)"
+extern "js" fn numeric_value(input : @dom.HtmlInputElement) -> Double = "input=>input.valueAsNumber"
 
 ///|
 pub fn setting_checked(id : String) -> Bool {

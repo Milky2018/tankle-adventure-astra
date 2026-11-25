@@ -44,3 +44,22 @@ test "distance culling preserves shadow casters and rejects stale world bounds" 
   visibility.apply(camera, cut)
   assert_true(camera.layers.test_(wall.layers))
 }
+
+///|
+test "animated instances stay out of static visibility bins" {
+  let scene = @core.Scene::new()
+  scene.user_data.set(
+    "portalRooms",
+    @core.JsValue::from_json([[-8, -8, -8, 8, 8, 8, []]]),
+  )
+  let batch = @core.InstancedMesh::new(
+    geometry=@geometries.BoxGeometry::new(),
+    material=Single(@core.MeshBasicMaterial::new()),
+    1,
+  )
+  scene.add(batch).update_matrix_world(force=true)
+  batch.user_data.set("portalStatic", @core.JsValue::of(false))
+  assert_true(RoomVisibility::new(scene, enabled=true).bins.is_empty())
+  batch.user_data.set("portalStatic", @core.JsValue::of(true))
+  assert_eq(RoomVisibility::new(scene, enabled=true).bins.length(), 1)
+}

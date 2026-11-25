@@ -1,0 +1,6 @@
+import {
+  "moonbitlang/core/path",
+  "tiye/dom-ffi" @dom,
+}
+
+supported_targets = "js"

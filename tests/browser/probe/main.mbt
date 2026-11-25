@@ -17,12 +17,10 @@ extern "js" fn project(
 ///|
 extern "js" fn relative_mouse(
   kind : String,
+  button : Int32,
   x : Int32,
   y : Int32,
-) -> @dom.Event = "(kind,x,y)=>new MouseEvent(kind,{button:1,movementX:x,movementY:y})"
-
-///|
-extern "js" fn frame(callback : (Double) -> Unit) -> Unit = "cb=>requestAnimationFrame(cb)"
+) -> @dom.Event = "(kind,button,x,y)=>new MouseEvent(kind,{button,movementX:x,movementY:y})"
 
 ///|
 extern "js" fn next_frame() -> @js_async.Promise[Double] = "()=>new Promise(requestAnimationFrame)"
@@ -31,7 +29,23 @@ extern "js" fn next_frame() -> @js_async.Promise[Double] = "()=>new Promise(requ
 extern "js" fn has_rects(element : @dom.Element) -> Bool = "e=>e.getClientRects().length>0"
 
 ///|
-extern "js" fn performance_entries(kind : String) -> FixedArray[@core.JsValue] = "kind=>performance.getEntriesByType(kind)"
+priv struct PerformanceMark {
+  name : String
+  startTime : Double
+}
+
+///|
+priv struct ResourceTiming {
+  name : String
+  transferSize : Double
+  responseEnd : Double
+}
+
+///|
+extern "js" fn marks() -> FixedArray[PerformanceMark] = "()=>performance.getEntriesByType('mark')"
+
+///|
+extern "js" fn resources() -> FixedArray[ResourceTiming] = "()=>performance.getEntriesByType('resource')"
 
 ///|
 fn node(selector : String) -> @dom.Element {
@@ -41,20 +55,20 @@ fn node(selector : String) -> @dom.Element {
 ///|
 fn startup_timing() -> @core.JsValue {
   let mut stamp = @dom.window().performance().now().to_double()
-  for e in performance_entries("mark") {
-    if e.get("name").strict_equal(@core.JsValue::of("moonbit-first-frame")) {
-      stamp = e.get("startTime").cast()
+  for e in marks() {
+    if e.name == "moonbit-first-frame" {
+      stamp = e.startTime
       break
     }
   }
   let loads : Array[Json] = []
-  for e in performance_entries("resource") {
-    let bytes : Double = e.get("transferSize").cast()
+  for e in resources() {
+    let bytes = e.transferSize
     if bytes > 200000 {
       loads.push({
-        "name": Json::string(e.get("name").cast()),
+        "name": Json::string(e.name),
         "bytes": bytes,
-        "end": Json::number(e.get("responseEnd").cast()),
+        "end": Json::number(e.responseEnd),
       })
     }
   }
@@ -65,16 +79,18 @@ fn startup_timing() -> @core.JsValue {
 fn main {
   let frames = []
   let mut measuring = false
+  let mut scheduled = false
   let mut previous = None
   fn sample(t : Double) {
     if !measuring {
+      scheduled = false
       return
     }
     if previous is Some(start) && t > start {
       frames.push(t - start)
     }
     previous = Some(t)
-    frame(sample)
+    @host.frame(sample)
   }
   install(raw => {
     let request : @protocol.Request = @json.from_json(raw.to_json()) catch {
@@ -144,7 +160,7 @@ fn main {
         ignore(
           node("#game")
           .reinterpret_as_event_target()
-          .dispatch_event(relative_mouse("mousemove", x, y)),
+          .dispatch_event(relative_mouse("mousemove", 1, x, y)),
         )
         @core.JsValue::undefined()
       }
@@ -154,7 +170,7 @@ fn main {
         } else {
           (@dom.window().reinterpret_as_event_target(), "mouseup")
         }
-        ignore(target.dispatch_event(relative_mouse(kind, 0, 0)))
+        ignore(target.dispatch_event(relative_mouse(kind, 1, 0, 0)))
         @core.JsValue::undefined()
       }
       StartupTiming => startup_timing()
@@ -162,7 +178,10 @@ fn main {
         frames.clear()
         previous = None
         measuring = true
-        frame(sample)
+        if !scheduled {
+          scheduled = true
+          @host.frame(sample)
+        }
         @core.JsValue::undefined()
       }
       EndFrameSample => {

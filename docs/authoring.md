@@ -4,20 +4,22 @@ The game has three independent concerns: authored content, gameplay simulation a
 
 ## Local project editor
 
-Run `moon run cmd/editor` from the repository root, then open <http://127.0.0.1:5176/>. Keep this server running while editing. The initial setup caches verified upstream r185 editor source and its MIT license in `.editor/three-r185/`; the viewport uses cached browser modules from that revision, with add-ons fetched on first use.
+Run `moon run cmd/editor` from the repository root, then open <http://127.0.0.1:5176/>. Keep this server running while editing. Moon builds the viewport against the same three.mbt dependency as the game.
 
 1. Use **快速定位** to choose a checkpoint region, or search by object ID, name, type or encounter. Search spans floors; without search, the list follows **编辑楼层**. Categories include enemies, controls, barriers, pickups, checkpoints, lifts, mirrors, player art and collision volumes.
 2. Click an object to select it, switch to its floor and focus the camera. Left-drag rotates, right-drag pans, and the wheel zooms. **定位 F** returns to the selection; **区域俯视** gives a top view.
-3. Edit the position or gameplay fields on the right. Select a model part under **编辑目标** to edit its transform or color. Changes use the official editor's undo/redo commands. Color edits clone shared materials so other objects retain their colors.
+3. Edit the position or gameplay fields on the right. Select a model part under **编辑目标** to edit its transform or color. Use the undo and redo buttons or keyboard shortcuts to step through scene edits. Color edits clone shared materials so other objects retain their colors.
 4. For collision work, select a collision category and enable **显示当前楼层碰撞框**. Move or resize the selected box. Art and collision remain separate; update both for passage changes.
 5. **技能数值** edits `content/abilities.json` through numeric forms. These forms save separately from scene data and do not share the scene undo stack.
 6. **保存到项目** validates and writes authored content directly. **保存并试玩** then rebuilds the game and opens/reuses a preview tab. Close the preview tab after testing to release the running game. A save retains scene undo history; reloading discards that history. Unsaved edits trigger the browser's leave-page prompt.
 
 Floor clipping, the editor background and collision visibility are view preferences, not saved game content. A revision check rejects stale scene/skill saves from another tab or an external file edit. On conflict, keep the current tab open while reconciling changes; do not blindly reload unsaved work. Scene and skill saves are independent: if one fails, the status reports the error and the remaining unsaved edits stay in memory.
 
+A scene save publishes the packed scene, its binary buffers and the changed level definitions together. The editor checks the source revision again immediately before replacing files. Reopening the project or running the content build recovers an interrupted save from its temporary journal.
+
 The local interface supports adding, copying and deleting enemies, controls and pickups, as well as editing existing gameplay objects and character parts. Use the official website workflow below for model import, detailed material/geometry editing and decorative additions. Other gameplay object types, circuit route definitions and bespoke puzzle behavior still require their source files. The player model's root position is an art preview; spawn position comes from checkpoint data. Runtime-controlled pivots may overwrite authored transforms, so adjust their mesh children.
 
-The MoonBit package in `editor/` connects selection, floor filtering and property forms to upstream editor commands. `cmd/editor/` serves the pinned modules, validates saves and runs the game build. The upstream viewport imports three-gpu-pathtracer 0.0.23 and three-mesh-bvh 0.7.4. Their browser distributions and licenses live in `editor/vendor/`. Upstream editor source is cached unchanged rather than maintained as a fork. The editor renders on changes and does not expose path tracing. Large scene JSON operations run one at a time in a `cmd/editor` worker process. That process exits after each load or save to release its unpacked scene.
+`editor/` owns viewport navigation, picking, transform handles and scene undo history. The game and editor share a three.mbt scene loader for geometry, instances and textures. `cmd/editor/` serves the local UI, validates saves and runs the game build. Large scene JSON operations run one at a time in a `cmd/editor` worker process. That process exits after each load or save to release its unpacked scene.
 
 ## Adding, copying and deleting gameplay objects
 
@@ -128,7 +130,7 @@ The large scene is stored as compressed Three.js metadata and binary vertex buff
 
 Use `moon run cmd/content` after editing JSON if working directly with `moon check`, `moon test` or `moon ide`. The build script `moon run scripts/build.mbtx` generates content first. After source changes, run `moon info && moon fmt`; review interface changes intentionally.
 
-The standalone import/export workflow was exercised against the live official r186 editor; the local entry pins the upstream r185 editor and core at the same revision. Re-run the round-trip and browser checks when upgrading either side. Browser checks under `tests/browser/` use real input and read-only diagnostics; they do not teleport the player or grant abilities.
+When upgrading three.mbt, check the local editing round trip and the standalone JSON import/export workflow. Browser checks under `tests/browser/` use real input and read-only diagnostics; they do not teleport the player or grant abilities.
 
 Temporary editor projects, test screenshots and logs belong under ignored `output/`. Remove stale exports after importing, close test browsers, and keep only the preview server currently in use.
 

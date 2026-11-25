@@ -55,7 +55,7 @@ fn collision_object(k : String, r : Json) -> Raw raise {
   ])
   let placement = @archive.obj([
     ("origin", Raw::from_array([x, y, z])),
-    ("matrix", matrix),
+    ("matrix", clone(matrix)),
   ])
   let ud = @archive.obj([
     ("editorOnly", Raw::of(true)),
@@ -75,6 +75,11 @@ fn collision_object(k : String, r : Json) -> Raw raise {
 
 ///|
 fn collision_resources(scene : Raw) -> Unit {
+  for k in ["geometries", "materials"] {
+    if scene.get(k).is_undefined() {
+      scene.set(k, Raw::from_json([]))
+    }
+  }
   append(
     scene.get("geometries"),
     Raw::from_json({
@@ -116,14 +121,26 @@ pub fn export_project(
   colliders~ : Bool = false,
   transfer~ : Bool = false,
 ) -> Raw raise {
-  let scene = if transfer {
-    @archive.read_scene(decode=pack_attribute)
+  let project = packed_project(selection?, colliders~)
+  @archive.hydrate_scene(
+    project.get("scene"),
+    decode=if transfer { pack_attribute } else { @archive.array_copy },
+  )
+  if transfer {
+    pack_scene_transfer(project)
   } else {
-    @archive.read_scene()
+    project
   }
+}
+
+///|
+fn packed_project(selection? : String, colliders~ : Bool = false) -> Raw raise {
+  @archive.recover_city_save()
+  let opened_revision = revision()
+  let scene = @archive.read_packed_scene()
   let catalog = EditableCatalog::read()
   let original = scene.get("object")
-  let world = transforms(original)
+  let index = index_scene(original)
   let mut prefix = ""
   let mut collider : Raw? = None
   if selection is Some(key) {
@@ -155,7 +172,6 @@ pub fn export_project(
           let helper = collision_object(k, matches[0])
           collider = Some(helper)
           collision_resources(scene)
-          world[uuid(helper)] = transform(helper)
           ent = Some(entity(helper))
         }
       }
@@ -179,9 +195,8 @@ pub fn export_project(
   fn select(n : Raw) {
     if !n.strict_equal(original) &&
       (prefix.is_empty() || belongs_to(binding(n), prefix)) {
-      let copy = clone(n)
-      copy.set("matrix", matrix_value(world[uuid(n)]))
-      roots.push(copy)
+      n.set("matrix", matrix_value(index[uuid(n)].world))
+      roots.push(n)
     } else {
       for child in children(n) {
         select(child)
@@ -200,7 +215,6 @@ pub fn export_project(
         let helper = collision_object(k, r)
         entity(helper).set("index", Raw::of(i))
         roots.push(helper)
-        world[uuid(helper)] = transform(helper)
       }
     }
   }
@@ -213,7 +227,7 @@ pub fn export_project(
   let metadata = @archive.obj([
     ("version", Raw::of(1)),
     ("fullScene", Raw::of(selection is None)),
-    ("revision", Raw::of(revision())),
+    ("revision", Raw::of(opened_revision)),
     ("references", Raw::from_json(@json.to_json(catalog.references()))),
     ("roots", Raw::from_array(ids[:])),
   ])
@@ -248,19 +262,23 @@ pub fn export_project(
           }
         }
       }
-      let y = match record.get("y") {
-        Some(Number(_, ..) as y) => y
-        _ =>
-          match record.get("stops") {
-            Some(Array([first, ..])) => first
-            _ => raise Failure("Missing floor on " + e.label())
-          }
+      if !truth(data(n), "editorOnly") {
+        let y = match record.get("y") {
+          Some(Number(_, ..) as y) => y
+          _ =>
+            match record.get("stops") {
+              Some(Array([first, ..])) => first
+              _ => raise Failure("Missing floor on " + e.label())
+            }
+        }
+        data(n).set(
+          "placement",
+          @archive.obj([
+            ("origin", Raw::from_json([record["x"], y, record["z"]])),
+            ("matrix", matrix_value(index[uuid(n)].world)),
+          ]),
+        )
       }
-      let place = @archive.obj([
-        ("origin", Raw::from_json([record["x"], y, record["z"]])),
-        ("matrix", matrix_value(world[uuid(n)])),
-      ])
-      data(n).set("placement", place)
       if str(n, "name").is_empty() || str(n, "name") == binding(n) {
         n.set("name", Raw::of(e.collection + ": " + e.id))
       }
@@ -316,7 +334,12 @@ pub fn export_project(
       append(root.get("children"), light_json)
     }
   }
-  let project = @archive.obj([
+  let selected = @archive.select_resources(
+    scene,
+    root,
+    retain_clips=selection is None,
+  )
+  @archive.obj([
     ("metadata", Raw::object()),
     (
       "project",
@@ -328,14 +351,9 @@ pub fn export_project(
       }),
     ),
     ("camera", Raw::from_json(camera.to_json())),
-    ("scene", @archive.select_resources(scene, root)),
+    ("scene", selected),
     ("scripts", Raw::object()),
     ("history", Raw::from_json({ "undos": [], "redos": [] })),
     ("environmentType", Raw::of("None")),
   ])
-  if transfer {
-    pack_scene_transfer(project)
-  } else {
-    project
-  }
 }

@@ -1,15 +1,22 @@
 ///|
+fn append_element(parent : @dom.Element, tag : String) -> @dom.Element {
+  let child = @dom.window().document().create_element(tag)
+  parent.append_child(child.reinterpret_as_node())
+  child
+}
+
+///|
 struct Hud {
   mini : @host.Canvas
   map : @host.Canvas
   mut dead : Bool
   mut reveal_at : Double
   mut layer : Double?
-  mut layers : String
+  mut layers : Array[(Double, Bool, Bool)]
   mut health : (Int32, Int32)
   mut equipped : @sim.Weapon?
   mut map_at : Double
-  mut acquired_action : String?
+  mut acquired_action : Action?
   mut acquired_until : Double
 }
 
@@ -21,7 +28,7 @@ fn Hud::new() -> Hud {
     dead: false,
     reveal_at: -10,
     layer: None,
-    layers: "",
+    layers: [],
     health: (-1, -1),
     equipped: None,
     map_at: -1,
@@ -44,7 +51,8 @@ fn Hud::update(
   if self.health != hp {
     self.health = hp
     let (current, maximum) = hp
-    let mut ticks = ""
+    @host.text("hp", "")
+    let meter = @host.element("hp")
     for i in 0..<(maximum / 5) {
       let state = if current <= i * 5 {
         "empty"
@@ -53,9 +61,8 @@ fn Hud::update(
       } else {
         ""
       }
-      ticks += "<i class=\"\{state}\"></i>"
+      append_element(meter, "i").set_attribute("class", state)
     }
-    @host.html("hp", ticks)
     @host.attribute("hp", "aria-valuemax", "\{maximum}")
     @host.attribute("hp", "aria-valuenow", "\{current}")
   }
@@ -265,16 +272,24 @@ fn Hud::map_layers(self : Hud, game : @sim.Game) -> Unit {
   }
   levels.sort_by(fn(a, b) { b.compare(a) })
   let selected = self.layer.unwrap_or(game.player.y)
-  let mut markup = ""
-  for i, y in levels {
-    markup += "<button id=\"map-layer-\{i}\" aria-label=\"View discovered floor at \{y.to_int()} metres\" aria-pressed=\"\{(y-selected).abs()<0.5}\">━\{if (y-game.player.y).abs()<3 { " ◂" } else { "" }}</button>"
-  }
-  if markup == self.layers {
+  let layers = levels.map(y => {
+    (y, (y - selected).abs() < 0.5, (y - game.player.y).abs() < 3)
+  })
+  if layers == self.layers {
     return
   }
-  self.layers = markup
-  @host.html("map-layers", markup)
-  for i, y in levels {
+  self.layers = layers
+  @host.text("map-layers", "")
+  let nav = @host.element("map-layers")
+  for i, (y, pressed, here) in layers {
+    let button = append_element(nav, "button")
+    button.set_attribute("id", "map-layer-\{i}")
+    button.set_attribute(
+      "aria-label",
+      "View discovered floor at \{y.to_int()} metres",
+    )
+    button.set_attribute("aria-pressed", pressed.to_string())
+    button.set_inner_text(if here { "━ ◂" } else { "━" })
     @host.on_click("map-layer-\{i}", fn() { self.layer = Some(y) })
   }
 }

@@ -30,5 +30,5 @@ fn Selection::owner(self : Selection) -> SceneNode? {
 
 ///|
 fn Selection::is_owner(self : Selection, n : SceneNode) -> Bool {
-  self.owner() is Some(owner) && n.same(owner)
+  self.owner() is Some(owner) && n.id == owner.id
 }

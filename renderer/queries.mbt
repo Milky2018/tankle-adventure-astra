@@ -61,7 +61,7 @@ pub fn View::queries(self : View, game : @sim.Game) -> @sim.Queries {
   root.traverse(fn(object) {
     let name = scene_binding(object)
     if name.has_suffix("/fixture-collider") ||
-      metadata_string(object.user_data, "renderRole") == "enclosure" {
+      scene_field(object.user_data, "renderRole") == Some("enclosure") {
       fixtures.push(collider(object, @sim.Terrain))
     }
     if name.has_prefix("world/surfaces/") && name.has_suffix("/mesh") {

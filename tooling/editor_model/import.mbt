@@ -63,26 +63,28 @@ priv struct ProjectMetadata {
 
 ///|
 pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
-  let edited = clone(
-    if exists(get(project, "scene")) {
-      project.get("scene")
-    } else {
-      project
-    },
-  )
-  let root = get(edited, "object")
-  let metadata = get(data(root), "tankle")
+  let edited = if exists(get(project, "scene")) {
+    project.get("scene")
+  } else {
+    project
+  }
+  let edited_root = get(edited, "object")
+  let metadata = get(data(edited_root), "tankle")
   guard get(metadata, "version").strict_equal(Raw::of(1)) else {
     raise Failure(
       "Open a project produced by the editor export command before importing edits.",
     )
   }
   let meta : ProjectMetadata = @json.from_json(metadata.to_json())
-  guard meta.revision == revision() else {
-    raise Failure(
-      "Content changed since export. Export a fresh project to avoid overwriting newer edits.",
-    )
+  fn check_current() -> Unit raise {
+    guard meta.revision == revision() else {
+      raise Failure(
+        "Content changed since export. Export a fresh project to avoid overwriting newer edits.",
+      )
+    }
   }
+  @archive.recover_city_save()
+  check_current()
   let scripts = get(project, "scripts")
   guard !@archive.keys(scripts)
     .iter()
@@ -91,35 +93,17 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
       "Editor JavaScript scripts are not supported. Implement behavior in MoonBit.",
     )
   }
-  let scene = @archive.read_scene()
+  let scene = @archive.read_packed_scene()
   let catalog = EditableCatalog::read()
   let original = scene.get("object")
-  let originals = Map([])
-  let parents = Map([])
-  fn index_tree(n : Raw, parent : Raw) {
-    originals[uuid(n)] = n
-    parents[uuid(n)] = parent
-    for child in children(n) {
-      index_tree(child, n)
-    }
-  }
-  index_tree(original, Raw::undefined())
-  let old_world = transforms(original)
-  let world = transforms(root)
-  let objects = Map([])
+  let root = clone(edited_root)
+  let originals = index_scene(original)
+  let objects = index_scene(root)
   let bindings = Set([])
-  fn index_edited(n : Raw) -> Unit raise {
-    let id = uuid(n)
-    guard !objects.contains(id) else {
-      raise Failure("Duplicate object UUID: " + id)
-    }
-    objects[id] = n
-    for child in children(n) {
-      index_edited(child)
-    }
-  }
-  index_edited(root)
   let roots = Set::from_array(meta.roots[:])
+  guard roots.length() == meta.roots.length() else {
+    raise Failure("Duplicate exported root UUID")
+  }
   let top = Set::from_iter(children(root).iter().map(uuid))
   let removed = Set([])
   let full = meta.full_scene.unwrap_or(false)
@@ -133,8 +117,8 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
     }
     e.check_new(e.id)
     let prefix = prefix_for(e.collection, e.key).unwrap()
-    for uid, n in originals {
-      if roots.contains(uid) && belongs_to(binding(n), prefix) {
+    for uid, entry in originals {
+      if roots.contains(uid) && belongs_to(binding(entry.node), prefix) {
         guard !objects.contains(uid) else {
           raise Failure("Delete the complete entity: " + e.label())
         }
@@ -149,7 +133,8 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
   }
   let added = []
   let seen = Set([])
-  for uid, n in objects {
+  for uid, entry in objects {
+    let n = entry.node
     let b = binding(n)
     if !b.is_empty() {
       guard !bindings.contains(b) else {
@@ -162,10 +147,6 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
       bindings.add(b)
     }
     let name = str(n, "name")
-    if exists(get(n, "matrix")) &&
-      !elements(n.get("matrix")).every(x => x.is_finite()) {
-      raise Failure("Non-finite transform on " + name)
-    }
     let raw = entity(n)
     if !exists(raw) {
       continue
@@ -181,7 +162,7 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
     }
     seen.add(identity)
     let old_entity = match originals.get(uid) {
-      Some(old) => entity(old)
+      Some(old) => entity(old.node)
       None => Raw::undefined()
     }
     if exists(old_entity) && entity_key(old_entity) != e.label() {
@@ -206,7 +187,7 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
     guard exists(place) && exists(get(user, "game")) else {
       raise Failure("Missing authoring properties on " + name)
     }
-    let m = world[uid].elements
+    let m = entry.world.elements
     let placement : Placement = @json.from_json(place.to_json())
     let baseline = placement.matrix
     guard baseline.length() == 16 else {
@@ -318,15 +299,18 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
     }
   }
   for uid in meta.roots {
+    guard originals.get(uid) is Some(source) && source.parent is Some(parent) else {
+      raise Failure("Invalid exported root: " + uid)
+    }
     if removed.contains(uid) {
-      let p = parents[uid]
+      let p = parent.node
       p.set(
         "children",
         Raw::from_array([ for c in children(p) if uuid(c) != uid => c ][:]),
       )
       continue
     }
-    guard originals.get(uid) is Some(old) && objects.get(uid) is Some(next) else {
+    guard objects.get(uid) is Some(edit) else {
       raise Failure(
         "An exported root was removed (" +
         uid +
@@ -339,7 +323,7 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
       )
     }
     let mut missing = ""
-    @archive.walk(old, n => {
+    @archive.walk(source.node, n => {
       let b = binding(n)
       if !b.is_empty() && !bindings.contains(b) {
         missing = b
@@ -348,23 +332,21 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
     guard missing.is_empty() else {
       raise Failure("Required runtime binding removed: " + missing)
     }
-    let parent = parents[uid]
+    let next = edit.node
     next.set(
       "matrix",
-      matrix_value(
-        old_world[uuid(parent)].clone().invert().multiply(world[uid]),
-      ),
+      matrix_value(parent.world.clone().invert().multiply(edit.world)),
     )
     @archive.walk(next, n => {
       let flag = match originals.get(uuid(n)) {
-        Some(o) => get(o, "matrixAutoUpdate")
+        Some(o) => get(o.node, "matrixAutoUpdate")
         None => Raw::undefined()
       }
       n.set("matrixAutoUpdate", if exists(flag) { flag } else { Raw::of(true) })
     })
-    let siblings = children(parent)
+    let siblings = children(parent.node)
     for i, node in siblings {
-      if node.strict_equal(old) {
+      if node.strict_equal(source.node) {
         siblings[i] = next
         break
       }
@@ -377,10 +359,10 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
       append(original.get("children"), n)
     }
   }
-  for
-    k in [
-      "geometries", "materials", "textures", "images", "animations", "skeletons",
-    ] {
+  for k in @archive.resource_libraries {
+    if scene.get(k).is_undefined() && edited.get(k).is_undefined() {
+      continue
+    }
     let resources = Map([])
     for lib in [scene, edited] {
       for r in array(lib, k) {
@@ -404,13 +386,17 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
   }
   @catalog.validate(catalog.files)
   if !dry_run {
-    @archive.write_scene(@archive.select_resources(scene, original))
+    let files = Map([])
     for name, entries in catalog.files {
-      @fs.write_string_to_file(
-        directory + "/" + name + ".json",
+      files[directory + "/" + name + ".json"] = @utf8.encode(
         entries.stringify(indent=2, escape_slash=false) + "\n",
       )
     }
+    @archive.write_scene(
+      @archive.select_resources(scene, original, retain_clips=true),
+      files~,
+      check_current~,
+    )
   }
   let root_ids = [
     for n in children(root) if !truth(data(n), "editorOnly") => uuid(n)

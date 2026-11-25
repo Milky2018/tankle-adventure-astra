@@ -251,6 +251,7 @@ test "roller instances keep segment transforms and independent belt animations" 
 test "static switch housings batch across circuits and moving controls and lamps remain independent" {
   let s = batch_scene()
   let roots = []
+  let retained = []
   let controls : Array[@catalog.Control] = @json.from_json([
     { "id": "left", "kind": "shot", "x": 0, "y": 0, "z": 0 },
     { "id": "right", "kind": "shot", "x": 20, "y": 0, "z": 0 },
@@ -258,6 +259,14 @@ test "static switch housings batch across circuits and moving controls and lamps
       "id": "carriage",
       "kind": "shot",
       "x": 40,
+      "y": 0,
+      "z": 0,
+      "mount": "lift",
+    },
+    {
+      "id": "other-carriage",
+      "kind": "shot",
+      "x": 60,
       "y": 0,
       "z": 0,
       "mount": "lift",
@@ -277,13 +286,21 @@ test "static switch housings batch across circuits and moving controls and lamps
       "name": @json.to_json("local-circuit:" + id),
       "matrix": matrix(x=1),
     })
+    if control.mount is Some(_) {
+      @archive.remove(root, "uuid")
+    }
     let a = tri("", 2)
+    a.set("uuid", Raw::of("shared-with-lamp"))
     a.set("name", Raw::of("Control bezel · outer"))
     let b = tri("", 4)
+    @archive.remove(b, "uuid")
     b.set("name", Raw::of("Control bezel · inner"))
     set_children(inner, [a, b])
-    set_children(root, [inner, tri(binding + "/lamp", 5)])
+    let lamp = tri(binding + "/lamp", 5)
+    lamp.set("uuid", Raw::of("shared-with-lamp"))
+    set_children(root, [inner, lamp])
     roots.push(root)
+    retained.push((inner, lamp))
   }
   set_children(s.get("object"), roots)
   @art.bake_fittings(
@@ -299,17 +316,27 @@ test "static switch housings batch across circuits and moving controls and lamps
     "min": [3, 0, 0],
     "max": [26, 1, 0],
   })
-  assert_eq(
-    rows(roots[2], "children")
-    .filter(n => @model.str(n, "type") == "Mesh" && @model.binding(n) == "")
-    .length(),
-    1,
-  )
-  for root in roots {
-    let lamps = rows(root, "children").filter(n => {
-      @model.binding(n).has_suffix("/lamp")
+  for root in roots[2:] {
+    let draws = rows(root, "children").filter(n => {
+      @model.str(n, "name") == "Workshop fittings"
     })
-    assert_eq(@model.str(lamps[0], "material"), "iron")
+    assert_eq(draws.length(), 1)
+    let mesh = resources(s, "geometries")[@model.str(draws[0], "geometry")]
+    assert_eq(
+      doubles(mesh.get("data").get("attributes").get("position").get("array")).length(),
+      18,
+    )
+  }
+  for i, root in roots {
+    let (wrapper, lamp) = retained[i]
+    assert_true(
+      rows(s.get("object"), "children").any(n => n.strict_equal(root)),
+    )
+    let children = rows(root, "children")
+    assert_true(children.any(n => n.strict_equal(wrapper)))
+    assert_true(rows(wrapper, "children").is_empty())
+    assert_true(children.any(n => n.strict_equal(lamp)))
+    assert_eq(@model.str(lamp, "material"), "iron")
   }
 }
 

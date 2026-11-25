@@ -4,7 +4,9 @@ package "milky/tankle-astra/host"
 import {
   "moonbit-community/three/core",
   "moonbit-community/three/renderers/webgl",
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
+  "tiye/dom-ffi",
 }
 
 // Values
@@ -38,6 +40,8 @@ pub fn direct_entry() -> Bool
 
 pub fn dot(@webgl.CanvasRenderingContext2D, Double, Double, Double, String) -> Unit
 
+pub fn element(String) -> @dom-ffi.Element
+
 pub fn frame((Double) -> Unit) -> Unit
 
 pub fn fullscreen() -> Unit
@@ -45,8 +49,6 @@ pub fn fullscreen() -> Unit
 pub fn height() -> Int32
 
 pub fn hidden(String, Bool) -> Unit
-
-pub fn html(String, String) -> Unit
 
 pub fn inspect_projection((Double, Double, Double) -> FixedArray[Double]) -> Unit
 
@@ -117,6 +119,18 @@ pub struct Audio {
 pub fn Audio::play_voice(Self, Voice, gain? : Double, pan? : Double) -> Unit
 pub fn Audio::update_music(Self, String, volume~ : Double, paused~ : Bool, restart~ : Bool) -> Unit
 
+#derive(@debug.Debug, @json.FromJson)
+pub(all) enum FilterKind {
+  Lowpass
+  Highpass
+  Bandpass
+  Lowshelf
+  Highshelf
+  Peaking
+  Notch
+  Allpass
+}
+
 pub(all) struct Voice {
   source : VoiceSource
   duration : Double
@@ -124,12 +138,20 @@ pub(all) struct Voice {
   delay : Double
   attack : Double
   hold : Double
-  filter : (String, Double)?
+  filter : (FilterKind, Double)?
 }
 
 pub(all) enum VoiceSource {
   Noise
-  Tone(wave~ : String, from_hz~ : Double, to_hz~ : Double)
+  Tone(wave~ : Waveform, from_hz~ : Double, to_hz~ : Double)
+}
+
+#derive(@debug.Debug, @json.FromJson)
+pub(all) enum Waveform {
+  Sine
+  Sawtooth
+  Square
+  Triangle
 }
 
 // Type aliases

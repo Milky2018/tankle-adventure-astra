@@ -8,20 +8,27 @@ priv struct Feed {
 }
 
 ///|
+#derive(FromJson)
+priv struct FeedLights {
+  id : String
+  duration : Double
+  progress : Array[Double]
+}
+
+///|
 fn feeds(scene : @core.Object3D) -> Array[Feed] {
-  let result : Array[Feed] = []
+  let result = []
   scene.traverse(fn(mesh) {
-    let feed = mesh.user_data.get("artFeed")
-    if !feed.is_undefined() {
-      let id = metadata_string(feed, "id")
-      let values : FixedArray[Double] = feed.get("progress").cast()
-      let progress = values.iter().to_array()
+    let lights : FeedLights? = scene_field(mesh.user_data, "artFeed")
+    if lights is Some(f) &&
+      mesh.kind is Mesh({ kind: InstancedMesh(_), count, .. }) &&
+      f.progress.length() <= count {
       result.push({
         mesh,
-        id,
-        duration: feed.get("duration").cast(),
-        progress,
-        colors: Array::make(progress.length(), -1),
+        id: f.id,
+        duration: f.duration,
+        progress: f.progress,
+        colors: Array::make(f.progress.length(), -1),
       })
     }
   })

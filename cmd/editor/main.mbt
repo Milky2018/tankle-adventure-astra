@@ -1,4 +1,12 @@
 ///|
+fn cwd() -> String raise {
+  guard @env.current_dir() is Some(path) else {
+    raise Failure("Cannot determine the current directory")
+  }
+  path
+}
+
+///|
 fn message(err : Error) -> String {
   match err {
     Failure(s) => s
@@ -13,12 +21,10 @@ async fn main {
     let args = @env.args()[2:].to_owned()
     let root = cwd()
     match args.get(0).unwrap_or("serve") {
-      "prepare-core" => ensure_three_file(root, "build/three.core.js")
       "serve" => {
-        setup(root)
         ignore(run_moon(root, ["build", "editor", "--release"]))
         if args.get(1) is Some(dir) {
-          change_directory(dir).wait()
+          @node.chdir(dir)
         }
         serve(root)
       }
@@ -26,7 +32,7 @@ async fn main {
         guard args.get(1) is Some(verb) && args.get(2) is Some(dir) else {
           raise Failure("Expected scene-worker METHOD DIRECTORY")
         }
-        change_directory(dir).wait()
+        @node.chdir(dir)
         scene_worker(verb)
       }
       "export" => {
@@ -36,7 +42,8 @@ async fn main {
           )
         }
         if path == "--list" {
-          @archive.walk(@archive.read_scene().get("object"), n => {
+          @archive.recover_city_save()
+          @archive.walk(@archive.read_packed_scene().get("object"), n => {
             let e = @model.entity(n)
             if exists(e) {
               println(@model.entity_key(e))
@@ -77,10 +84,7 @@ async fn main {
         )
       }
       "templates" => make_templates()
-      "test" => {
-        ensure_three_file(root, "build/three.core.js")
-        stdout(run_moon(root, ["test", "tests/content"])).wait()
-      }
+      "test" => stdout(run_moon(root, ["test", "tests/content"])).wait()
       _ =>
         raise Failure(
           "Usage: moon run cmd/editor -- [serve|export|import|templates|test]",

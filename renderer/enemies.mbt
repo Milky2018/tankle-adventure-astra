@@ -53,7 +53,7 @@ fn enemy_visuals(
       part.traverse(fn(node) {
         if node.kind is Mesh(mesh) &&
           mesh.material is Single(source) &&
-          metadata_string(source.user_data, "surfaceFinish") == "enemyEnamel" {
+          surface_finish(source) is Some(EnemyEnamel) {
           if enemy.definition.magnetic_shield &&
             scene_binding(node) == prefix + "/model/frontArmor" {
             let finish = source.clone()
