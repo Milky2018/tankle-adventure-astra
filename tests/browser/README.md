@@ -3,7 +3,7 @@
 From the repository root, build and serve the game in one terminal:
 
 ```sh
-moon run scripts/build.mbtx
+moonx scripts/build.mbtx
 moonx cli/serve@0.1.5 --port 5175 dist
 ```
 

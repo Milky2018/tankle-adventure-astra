@@ -23,13 +23,13 @@ On macOS, double-clicking `Play.command` runs the same command. Keep the termina
 Install the MoonBit toolchain and Node.js 22.18 or later. From the repository root:
 
 ```sh
-moon run scripts/build.mbtx
+moonx scripts/build.mbtx
 moonx cli/serve@0.1.5 --port 5175 dist
 ```
 
 Open http://127.0.0.1:5175/. The build prepares the authored city, audio and weapon definitions, compiles the browser game, and assembles `dist/`. Moon runs the JS-target content compiler on Node. Geometry processing uses three.mbt from Mooncakes. Rebuild and reload after edits. The city bake reuses its previous result when its inputs and compiler are unchanged.
 
-For the distributable ZIP, run `moon run scripts/build.mbtx -- --offline`. The output is `output/builds/Tankle-v3-dist.zip` and includes the game, launcher and README.
+For the distributable ZIP, run `moonx scripts/build.mbtx --offline`. The output is `output/builds/Tankle-v3-dist.zip` and includes the game, launcher and README.
 
 ## Structure
 
@@ -40,7 +40,7 @@ For the distributable ZIP, run `moon run scripts/build.mbtx -- --offline`. The o
 - `host/`: browser I/O, packed buffer loading and three.mbt scene deserialization.
 - `scene_format/`: the packed buffer, camera face and room portal formats shared by the asset compiler and game.
 - `content/levels/city/`: editable JSON definitions for floors, collision, enemies, controls, circuits, lifts, pickups and repair hives.
-- `scripts/tuning.mbtx`: validates weapon and drive parameters and generates their MoonBit records at build time. Run `moon run scripts/tuning.mbtx -- content/abilities.json` to check edits, or append `simulation/tuning.generated.mbt` to generate the records.
+- `scripts/tuning.mbtx`: validates weapon and drive parameters and generates their MoonBit records at build time. Run `moonx scripts/tuning.mbtx content/abilities.json` to check edits, or append `simulation/tuning.generated.mbt` to generate the records.
 - `content/abilities.json`: weapon damage, heat, range and movement parameters. `content/sounds.json` contains sound synthesis parameters.
 - `content/art/`: packed Three.js scene resources. Use the local editor for placement or export a project for detailed model editing.
 - `editor/` and `cmd/editor/`: MoonBit authoring UI and loopback service for loading, saving and previewing the project. `tooling/editor_model/` handles editable entities and project import/export.
