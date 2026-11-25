@@ -8,8 +8,6 @@ package "milky/tankle-astra/tests/browser"
 // Types and methods
 type Chrome
 
-type Stream
-
 // Type aliases
 
 // Traits

@@ -119,7 +119,7 @@ priv struct Snapshot {
 }
 
 ///|
-pub fn Game::snapshot(self : Game) -> String {
+pub fn Game::snapshot(self : Game) -> Json {
   let p = self.player
   Snapshot::{
     aim: self.aim_point,
@@ -156,5 +156,4 @@ pub fn Game::snapshot(self : Game) -> String {
     interactable: self.interactable(),
   }
   |> @json.ToJson::to_json
-  |> Json::stringify
 }

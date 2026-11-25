@@ -1,13 +1,8 @@
 ///|
-extern "js" fn arguments() -> FixedArray[String] = "()=>process.argv.slice(2)"
-
-///|
-extern "js" fn failed(msg : String) -> Unit = "m=>{process.stderr.write(m+'\\n');process.exitCode=1}"
-
-///|
 fn message(err : Error) -> String {
   match err {
     Failure(s) => s
+    @fs.IOError(detail) => detail
     other => other.to_string()
   }
 }
@@ -15,22 +10,15 @@ fn message(err : Error) -> String {
 ///|
 async fn main {
   try {
-    let args = Array::from_fixed_array(arguments())
+    let args = @env.args()[2:].to_owned()
     let root = cwd()
     match args.get(0).unwrap_or("serve") {
       "prepare-core" => ensure_three_file(root, "build/three.core.js")
       "serve" => {
         setup(root)
-        ignore(
-          run_moon(
-            root,
-            ["build", "editor", "--release"],
-            Raw::undefined(),
-            false,
-          ).wait(),
-        )
+        ignore(run_moon(root, ["build", "editor", "--release"]))
         if args.get(1) is Some(dir) {
-          change_directory(dir)
+          change_directory(dir).wait()
         }
         serve(root)
       }
@@ -38,7 +26,7 @@ async fn main {
         guard args.get(1) is Some(verb) && args.get(2) is Some(dir) else {
           raise Failure("Expected scene-worker METHOD DIRECTORY")
         }
-        change_directory(dir)
+        change_directory(dir).wait()
         scene_worker(verb)
       }
       "export" => {
@@ -91,9 +79,7 @@ async fn main {
       "templates" => make_templates()
       "test" => {
         ensure_three_file(root, "build/three.core.js")
-        stdout(
-          run_moon(root, ["test", "tests/content"], Raw::undefined(), false).wait(),
-        )
+        stdout(run_moon(root, ["test", "tests/content"])).wait()
       }
       _ =>
         raise Failure(
@@ -101,6 +87,9 @@ async fn main {
         )
     }
   } catch {
-    err => failed(message(err))
+    err => {
+      eprintln(message(err))
+      @env.exit(1)
+    }
   }
 }

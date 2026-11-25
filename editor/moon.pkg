@@ -1,8 +1,11 @@
 import {
   "milky/tankle-astra/tooling/editor_model" @model,
   "milky/tankle-astra/tooling/archive",
+  "moonbit-community/three/math",
   "moonbitlang/core/async/js_async",
   "moonbitlang/core/json",
+  "moonbitlang/core/string",
+  "tiye/dom-ffi" @dom,
 }
 
 pkgtype(kind: "executable")

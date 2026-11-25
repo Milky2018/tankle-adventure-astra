@@ -19,52 +19,15 @@ fn location_key(
 }
 
 ///|
-fn circuit_key(r : Record) -> String raise {
-  for k in ["targetKey", "circuitKey"] {
-    if field(r, k) is String(s) && !s.is_empty() {
-      return s
-    }
-  }
-  let rail = match field(r, "rail") {
-    Object(v) => v
-    _ => {}
-  }
-  let stops = list(field(r, "stops"))
-  let y = if stops.length() > 0 {
-    num(stops[0])
-  } else if field(r, "ground") is Number(n, ..) {
-    n
-  } else if field(r, "kind") is String(_) {
-    num(field(r, "restY", default=required(r, "y"))) - 1.3
-  } else {
-    num(required(r, "y"))
-  }
-  let x = if field(rail, "axis") == Json::string("x") {
-    required(rail, "min")
-  } else {
-    required(r, "x")
-  }
-  let z = if field(rail, "axis") == Json::string("z") {
-    required(rail, "min")
-  } else {
-    required(r, "z")
-  }
-  location_key(None, None, text(field(r, "id", default="")), num(x), y, num(z))
-}
-
-///|
 fn deck_title(id : String) -> String {
   let result = StringBuilder()
   let mut boundary = true
   for c in id {
-    let word = (c >= 'a' && c <= 'z') ||
-      (c >= 'A' && c <= 'Z') ||
-      (c >= '0' && c <= '9') ||
-      c == '_'
+    let word = (c.is_ascii_alphabetic() || c.is_ascii_digit()) || c == '_'
     if c == '-' {
       result.write_char(' ')
-    } else if boundary && c >= 'a' && c <= 'z' {
-      result.write_string(c.to_string().to_upper())
+    } else if boundary && c.is_ascii_lowercase() {
+      result.write_char(c.to_ascii_uppercase())
     } else {
       result.write_char(c)
     }
@@ -97,18 +60,31 @@ fn deck(r : @catalog.Deck) -> String {
 }
 
 ///|
-fn solid(r : Record) -> String raise {
-  let motion = match field(r, "motion") {
-    Object(m) =>
-      "Some({ axis: \{text(required(m,"axis")).to_upper()}, min: \{literal(required(m,"min"))}, max: \{literal(required(m,"max"))}, speed: \{literal(required(m,"speed"))} })"
-    _ => "None"
+fn solid(r : @catalog.Solid) -> String {
+  let id = r.id.unwrap_or("")
+  let motion = match r.motion {
+    Some(m) =>
+      "Some({ axis: \{@debug.to_string(m.axis)}, min: \{source(m.min)}, max: \{source(m.max)}, speed: \{source(m.speed)} })"
+    None => "None"
   }
-  let rail = match field(r, "rail") {
-    Object(m) =>
-      "Some({axis: \{text(required(m,"axis")).to_upper()}, min: \{literal(required(m,"min"))}, max: \{literal(required(m,"max"))}, release: \{optional(m,"release")}, latch: \{optional(m,"latch")}})"
-    _ => "None"
+  let rail = match r.rail {
+    Some(m) =>
+      "Some({axis: \{@debug.to_string(m.axis)}, min: \{source(m.min)}, max: \{source(m.max)}, release: \{option_source(m.release)}, latch: \{option_source(m.latch)}})"
+    None => "None"
   }
-  "{ id: \{literal(field(r,"id",default=""))}, rect: \{rect(r)}, y: \{literal(required(r,"y"))}, h: \{literal(required(r,"h"))}, shutter_height: None, permanent: \{field(r,"permanent") is True}, motion: \{motion}, direction: 1, red: \{field(r,"red") is True}, phoenix: \{field(r,"phoenix") is True}, rail: \{rail}, arena: \{optional(r,"arena")}, local_control: \{optional(r,"localControl")}, circuit_key: \{literal(Json::string(circuit_key(r)))} }"
+  let (x, z) = match r.rail {
+    Some({ axis: X, min, .. }) => (min, r.z)
+    Some({ axis: Z, min, .. }) => (r.x, min)
+    _ => (r.x, r.z)
+  }
+  // Keys from older placements use the rest height relative to the ground.
+  let y = match (r.ground, r.kind) {
+    (Some(ground), _) => ground
+    (None, Some(_)) => r.rest_y.unwrap_or(r.y) - 1.3
+    _ => r.y
+  }
+  let key = location_key(r.target_key, r.circuit_key, id, x, y, z)
+  "{ id: \{source(id)}, rect: \{rect_source(r.x,r.z,r.w,r.d)}, y: \{source(r.y)}, h: \{source(r.h)}, shutter_height: None, permanent: \{r.permanent.unwrap_or(false)}, motion: \{motion}, direction: 1, red: \{r.red.unwrap_or(false)}, phoenix: \{r.phoenix.unwrap_or(false)}, rail: \{rail}, arena: \{option_source(r.arena)}, local_control: \{option_source(r.local_control)}, circuit_key: \{source(key)} }"
 }
 
 ///|
@@ -118,11 +94,14 @@ fn arena(a : @catalog.Arena) -> String {
 }
 
 ///|
-fn lift(r : Record) -> String raise {
-  let stops = list(required(r, "stops"))
-  let settle = field(r, "settle") is True
-  let y = if settle { stops[stops.length() - 1] } else { stops[0] }
-  "{ id: \{literal(required(r,"id"))}, rect: \{rect(r)}, stops: [\{sequence(required(r,"stops"))}], lock: \{literal(field(r,"lock",default=required(r,"id")))}, locks: [\{sequence(field(r,"locks"))}], circuit_key: \{literal(Json::string(circuit_key(r)))}, settle: \{settle}, y: \{literal(y)}, destination: \{literal(stops[0])}, wait: 0 }"
+fn lift(r : @catalog.Lift) -> String {
+  let settle = r.settle.unwrap_or(false)
+  let first = r.stops[0]
+  let y = if settle { r.stops[r.stops.length() - 1] } else { first }
+  let key = location_key(r.target_key, r.circuit_key, r.id, r.x, first, r.z)
+  let stops = r.stops.map(n => source(n)).join(",")
+  let locks = r.locks.unwrap_or([]).map(s => source(s)).join(",")
+  "{ id: \{source(r.id)}, rect: \{rect_source(r.x,r.z,r.w,r.d)}, stops: [\{stops}], lock: \{source(r.lock.unwrap_or(r.id))}, locks: [\{locks}], circuit_key: \{source(key)}, settle: \{settle}, y: \{source(y)}, destination: \{source(first)}, wait: 0 }"
 }
 
 ///|
@@ -136,11 +115,10 @@ fn belt(b : @catalog.Belt) -> String {
 }
 
 ///|
-fn current(r : Record) -> String raise {
-  let flow = object(required(r, "current"))
-  let diverted = match field(r, "diverted") {
-    Object(d) => d
-    _ => {}
+fn current(r : @catalog.Current) -> String {
+  let (dx, dz) = match r.diverted {
+    Some(d) => (d.x.unwrap_or(0), d.z.unwrap_or(0))
+    None => (0.0, 0.0)
   }
-  "{rect:\{rect(r)},y:\{literal(required(r,"y"))},velocity:{x:\{literal(required(flow,"x"))},z:\{literal(required(flow,"z"))}},sluice:\{optional(r,"sluice")},diverted:{x:\{literal(field(diverted,"x",default=0))},z:\{literal(field(diverted,"z",default=0))}}}"
+  "{rect:\{rect_source(r.x,r.z,r.w,r.d)},y:\{source(r.y)},velocity:{x:\{source(r.current.x)},z:\{source(r.current.z)}},sluice:\{option_source(r.sluice)},diverted:{x:\{source(dx)},z:\{source(dz)}}}"
 }

@@ -2,38 +2,62 @@
 let save_key = "tankle-moonbit-v1"
 
 ///|
+async fn Browser::storage_id(self : Browser) -> Json {
+  let tree = self.command("Page.getFrameTree")
+  let key = self.command("Storage.getStorageKeyForFrame", params={
+    "frameId": prop(prop(prop(tree, "frameTree"), "frame"), "id"),
+  })
+  {
+    "securityOrigin": prop(
+      prop(prop(tree, "frameTree"), "frame"),
+      "securityOrigin",
+    ),
+    "storageKey": prop(key, "storageKey"),
+    "isLocalStorage": true,
+  }
+}
+
+///|
+async fn Browser::stored(self : Browser, key : String) -> String? {
+  let response = self.command("DOMStorage.getDOMStorageItems", params={
+    "storageId": self.storage_id(),
+  })
+  let entries : Array[(String, String)] = @json.from_json(
+    prop(response, "entries"),
+  )
+  entries.iter().find_first(e => e.0 == key).map(e => e.1)
+}
+
+///|
 async fn Browser::saved(self : Browser) -> Json {
-  @json.parse(text(self.evaluate("localStorage.getItem('" + save_key + "')")))
+  guard self.stored(save_key) is Some(s) else {
+    raise Failure("Save is missing")
+  }
+  @json.parse(s)
 }
 
 ///|
 async fn Browser::new_game(self : Browser) -> Unit {
   self.goto("?test")
   ensure(self.visible("#journey-start"), "Title screen did not offer New Game")
-  ensure(
-    self.evaluate("localStorage.getItem('" + save_key + "')") is Null,
-    "Profile already has a save",
-  )
+  ensure(self.stored(save_key) is None, "Profile already has a save")
   ensure(!self.visible("#journey-continue"), "Continue offered without a save")
   self.click("#journey-start")
-  self.until(
-    "!!localStorage.getItem('" +
-    save_key +
-    "') && !document.querySelector('#journey').open",
-  )
+  self.until("autosave and closed journey", () => {
+    self.stored(save_key) is Some(_) &&
+    self.probe(HasAttribute("#journey", "open")) is False
+  })
   let saved = self.saved()
   guard prop(saved, "flags") is Object(flags) else {
     raise Failure("Save is missing progression")
   }
   flags["relay-west"] = true
   ignore(
-    self.evaluate(
-      "localStorage.setItem('" +
-      save_key +
-      "'," +
-      Json::string(saved.stringify()).stringify() +
-      ")",
-    ),
+    self.command("DOMStorage.setDOMStorageItem", params={
+      "storageId": self.storage_id(),
+      "key": save_key,
+      "value": saved.stringify(),
+    }),
   )
   self.goto("?test")
   ensure(self.visible("#journey-start"), "New Game missing with a save")
@@ -42,9 +66,11 @@ async fn Browser::new_game(self : Browser) -> Unit {
   self.press("Escape")
   self.click("#journey-button")
   self.click("#journey-start")
-  self.until(
-    "typeof window.__typedRead==='function' && !document.querySelector('#journey').open && !__typedRead().flags['relay-west'] && !document.body.classList.contains('starting')",
-  )
+  self.until("new game replacing relay progress", () => {
+    self.game_ready() &&
+    self.probe(HasAttribute("#journey", "open")) is False &&
+    !self.player().flag("relay-west")
+  })
   ensure(
     prop(prop(self.saved(), "flags"), "relay-west") != true,
     "Old save survived restart",
@@ -56,31 +82,25 @@ async fn Browser::new_game(self : Browser) -> Unit {
 
 ///|
 async fn Browser::slider(self : Browser, id : String, value : String) -> Unit {
-  let el = element(id)
-  ignore(self.evaluate(el + ".value=" + Json::string(value).stringify()))
-  for event in ["input", "change"] {
-    ignore(
-      self.evaluate(
-        el + ".dispatchEvent(new Event('" + event + "',{bubbles:true}))",
-      ),
-    )
-  }
+  ignore(self.probe(SetSlider(id, value)))
 }
 
 ///|
 async fn Browser::interface_check(self : Browser) -> Unit {
   self.goto("?test&view=third")
   self.click("#journey-continue")
-  self.until("!!document.querySelector('#interaction').getClientRects().length")
+  self.until("interaction prompt", () => self.visible("#interaction"))
   self.press("Tab")
   ensure(self.visible("#region"), "Map did not open")
   let layers : Int32 = @json.from_json(
-    self.evaluate("document.querySelectorAll('#map-layers button').length"),
+    self.probe(ElementCount("#map-layers button")),
   )
   ensure(layers >= 2, "Discovered map layers missing")
   let last = "#map-layers button:last-child"
   self.click(last)
-  self.until(element(last) + ".getAttribute('aria-pressed')==='true'")
+  self.until("selected map layer", () => {
+    self.probe(Attribute(last, "aria-pressed")) == "true"
+  })
   self.shot("map")
   self.press("Escape")
   self.press("Escape")
@@ -88,19 +108,20 @@ async fn Browser::interface_check(self : Browser) -> Unit {
   self.click("#binding-up")
   self.press("KeyI")
   ensure(
-    self.evaluate(element("#binding-up") + ".textContent") == "KeyI",
+    self.probe(TextContent("#binding-up")) == "KeyI",
     "Binding was not replaced",
   )
   self.click("#camera-adjust summary")
   let dist = "#camera-distance"
   let range = "#camera-render-distance"
-  let old_dist = self.evaluate(element(dist) + ".value")
-  let old_range = self.evaluate(element(range) + ".value")
+  let old_dist = self.probe(InputValue(dist))
+  let old_range = self.probe(InputValue(range))
   self.slider(dist, "18")
   self.slider(range, "80")
-  let prefs = @json.parse(
-    text(self.evaluate("localStorage.getItem('tankle-moonbit-settings-v1')")),
-  )
+  guard self.stored("tankle-moonbit-settings-v1") is Some(settings) else {
+    raise Failure("Settings were not saved")
+  }
+  let prefs = @json.parse(settings)
   ensure(
     prop(prop(prefs, "camera"), "render_distance") == 80,
     "Render distance was not saved",
@@ -108,8 +129,8 @@ async fn Browser::interface_check(self : Browser) -> Unit {
   self.shot("camera-preview")
   self.click("#reset-camera")
   ensure(
-    self.evaluate(element(dist) + ".value") == old_dist &&
-    self.evaluate(element(range) + ".value") == old_range,
+    self.probe(InputValue(dist)) == old_dist &&
+    self.probe(InputValue(range)) == old_range,
     "Camera reset failed",
   )
   self.click("#camera-adjust summary")

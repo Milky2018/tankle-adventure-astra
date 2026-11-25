@@ -42,6 +42,16 @@ pub fn Action::equal(Self, Self) -> Bool
 #deprecated
 pub fn Action::not_equal(Self, Self) -> Bool
 
+#derive(Eq, @debug.Debug, @json.FromJson)
+pub(all) enum Axis {
+  X
+  Z
+}
+#deprecated
+pub fn Axis::equal(Self, Self) -> Bool
+#deprecated
+pub fn Axis::not_equal(Self, Self) -> Bool
+
 // Type aliases
 
 // Traits

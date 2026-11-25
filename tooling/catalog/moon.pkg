@@ -2,4 +2,5 @@ import {
   "milky/tankle-astra/model/interaction",
   "milky/tankle-astra/model/machine",
   "moonbitlang/core/json",
+  "moonbitlang/x/fs",
 }

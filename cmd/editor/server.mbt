@@ -5,122 +5,89 @@ struct Server {
 }
 
 ///|
-extern "js" fn listen(
-  port : Int32,
-  handler : (Raw, Raw) -> @js_async.Promise[Unit],
-  ready : (Int32) -> Unit,
-) -> Unit =
-  #| (p,handle,ready)=>{const s=process.getBuiltinModule('http').createServer((q,r)=>handle(q,r));s.listen(p,'127.0.0.1',()=>ready(s.address().port))}
+fn port() -> Int32 raise {
+  let text = @env.get_env_var("EDITOR_PORT").unwrap_or("5176").trim()
+  if text.is_empty() {
+    return 0
+  }
+  let value = @string.parse_int(text) catch { _ => -1 }
+  guard value >= 0 && value <= 65535 else {
+    raise Failure("Invalid editor port: \{text}")
+  }
+  value
+}
 
 ///|
-extern "js" fn port() -> Int32 = "()=>Number(process.env.EDITOR_PORT??5176)"
+let max_transfer_bytes : Int32 = 256 * 1024 * 1024
 
 ///|
-extern "js" fn run_moon(
+async fn run_moon(
   root : String,
   args : FixedArray[String],
-  input : Raw,
-  stream : Bool,
-) -> @js_async.Promise[Raw] =
-  #| (cwd,args,input,stream)=>new Promise((resolve,reject)=>{
-  #| const child=process.getBuiltinModule('child_process').execFile('moon',args,{cwd,encoding:'buffer',maxBuffer:256*1024*1024},(e,out,err)=>e?reject(new Error(err.toString().trim()||e.message)):resolve(out));
-  #| child.stdin.on('error',e=>{if(e.code!=='EPIPE')child.kill()});
-  #| if(stream){input.once('aborted',()=>child.kill());input.pipe(child.stdin)}else child.stdin.end(input)
-  #| })
+  input~ : Bytes = b"",
+) -> Bytes {
+  moon_process(root, args, InputStream::from_bytes(input), max_transfer_bytes).wait()
+}
 
 ///|
-extern "js" fn iterator(stream : Raw) -> Raw = "s=>s[Symbol.asyncIterator]()"
-
-///|
-extern "js" fn next_chunk(it : Raw) -> @js_async.Promise[Raw] = "i=>i.next()"
-
-///|
-extern "js" fn read_file(path : String) -> @js_async.Promise[Raw] = "p=>process.getBuiltinModule('fs/promises').readFile(p)"
-
-///|
-extern "js" fn js_call(f : () -> Raw) -> @js_async.Promise[Raw] = "f=>Promise.resolve().then(f)"
-
-///|
-extern "js" fn url_path(s : String) -> String = "s=>new URL(s,'http://localhost').pathname"
-
-///|
-extern "js" fn resolve(dir : String, path : String) -> String = "(d,p)=>process.getBuiltinModule('path').resolve(d,p)"
-
-///|
-extern "js" fn decode(s : String) -> String = "s=>decodeURIComponent(s)"
-
-///|
-extern "js" fn is_file(path : String) -> Bool = "p=>process.getBuiltinModule('fs').statSync(p,{throwIfNoEntry:false})?.isFile()??false"
-
-///|
-extern "js" fn stdin() -> Raw = "()=>process.stdin"
-
-///|
-extern "js" fn stdout(b : Raw) -> Unit = "b=>process.stdout.write(b)"
-
-///|
-async fn read_body(stream : Raw) -> Raw {
-  let chunks = []
-  let iter = iterator(stream)
+async fn read_body(input : InputStream) -> Raw {
+  let chunks = input.chunks()
+  let decoder = Utf8Decoder::new()
+  let text = StringBuilder()
   let mut total = 0
-  while true {
-    let n = next_chunk(iter).wait()
-    if @model.truth(n, "done") {
-      break
-    }
-    let chunk = n.get("value")
-    let size : Int32 = chunk.get("length").cast()
-    total += size
-    guard total <= 256 * 1024 * 1024 else {
+  while chunks.next().wait() is { done: false, value: chunk, } {
+    guard chunk.length() <= max_transfer_bytes - total else {
       raise Failure("Project exceeds the 256 MB save limit")
     }
-    chunks.push(chunk)
+    total += chunk.length()
+    text.write_string(decoder.decode(chunk).wait())
   }
-  let buf = @archive.concat(FixedArray::from_array(chunks[:]))
-  js_call(() => @archive.parse(buf)).wait()
+  text.write_string(decoder.finish().wait())
+  @archive.parse(text.to_string())
 }
 
 ///|
 fn send(
-  res : Raw,
+  res : Response,
   status : Int32,
   mime : String,
-  body : Raw,
+  body : Bytes,
   cache~ : String = "no-store",
   gzip~ : Bool = false,
 ) -> Unit {
-  let h = @archive.obj([
-    ("Content-Type", Raw::of(mime)),
-    ("Cache-Control", Raw::of(cache)),
-  ])
+  res.header("Content-Type", mime)
+  res.header("Cache-Control", cache)
   if gzip {
-    h.set("Content-Encoding", Raw::of("gzip"))
+    res.header("Content-Encoding", "gzip")
   }
-  ignore(call(res, "writeHead", [Raw::of(status), h]))
-  ignore(call(res, "end", [body]))
+  res.finish(status, body)
 }
 
 ///|
-fn json(res : Raw, req : Raw, value : Raw, status~ : Int32 = 200) -> Unit {
-  let b = bytes(@archive.stringify(value))
-  let length : Int32 = b.get("length").cast()
-  let gzip = length > 4096 &&
-    str(req.get("headers"), "accept-encoding").contains("gzip")
+fn json(
+  res : Response,
+  req : Request,
+  value : Raw,
+  status~ : Int32 = 200,
+) -> Unit {
+  let encoded = @utf8.encode(@archive.stringify(value))
+  let length = encoded.length()
+  let gzip = length > 4096 && req.header("accept-encoding").contains("gzip")
   send(
     res,
     status,
     "application/json",
     if gzip {
-      @archive.gzip(b)
+      @archive.compress(encoded)
     } else {
-      b
+      encoded
     },
     gzip~,
   )
 }
 
 ///|
-fn problem(res : Raw, q : Raw, status : Int32, msg : String) -> Unit {
+fn problem(res : Response, q : Request, status : Int32, msg : String) -> Unit {
   json(res, q, @archive.obj([("error", Raw::of(msg))]), status~)
 }
 
@@ -145,11 +112,10 @@ fn mime_type(path : String) -> String {
 }
 
 ///|
-async fn Server::handle(s : Server, q : Raw, res : Raw) -> Unit {
-  let path = js_call(() => Raw::of(url_path(str(q, "url")))).wait().cast()
-  let verb = str(q, "method")
-  let h = q.get("headers")
-  if verb == "POST" && str(h, "origin") != "http://" + str(h, "host") {
+async fn Server::handle(s : Server, q : Request, res : Response) -> Unit {
+  let path = pathname(q.url()).wait()
+  let verb = q.http_method()
+  if verb == "POST" && q.header("origin") != "http://" + q.header("host") {
     problem(
       res, q, 403, "Open the editor from its localhost address before saving",
     )
@@ -166,16 +132,16 @@ async fn Server::handle(s : Server, q : Raw, res : Raw) -> Unit {
     defer {
       s.busy = false
     }
-    let stream = verb == "POST"
-    let result = run_moon(
+    let input = if verb == "POST" {
+      q.stream()
+    } else {
+      InputStream::from_bytes(b"")
+    }
+    let result = moon_process(
       s.root,
       ["run", "--quiet", "cmd/editor", "--", "scene-worker", verb, cwd()],
-      if stream {
-        q
-      } else {
-        Raw::undefined()
-      },
-      stream,
+      input,
+      max_transfer_bytes,
     ).wait()
     send(res, 200, "application/json", result, gzip=true)
     return
@@ -191,25 +157,25 @@ async fn Server::handle(s : Server, q : Raw, res : Raw) -> Unit {
     }
     match path {
       "/api/abilities" => {
-        let payload = read_body(q)
+        let payload = read_body(q.stream())
         let file = "content/abilities.json"
         let current = read_file(file).wait()
         guard str(payload, "revision") == @archive.digest(current) else {
           raise Failure("Skills changed on disk. Reload before saving.")
         }
-        let next = Raw::of(@model.pretty(payload.get("values")) + "\n")
+        let next_text = @model.pretty(payload.get("values")) + "\n"
+        let next = @utf8.encode(next_text)
         ignore(
           run_moon(
             s.root,
             ["run", "--quiet", "scripts/tuning.mbtx", "--", "-"],
-            next,
-            false,
-          ).wait(),
+            input=next,
+          ),
         )
         let tmp = temp_name(file)
-        defer (if @archive.exists(tmp) { @archive.unlink(tmp) })
-        @archive.write_file(tmp, next)
-        rename(tmp, file)
+        defer (if @fs.path_exists(tmp) { @fs.remove_file(tmp) })
+        @fs.write_string_to_file(tmp, next_text)
+        rename(tmp, file).wait()
         json(
           res,
           q,
@@ -217,14 +183,7 @@ async fn Server::handle(s : Server, q : Raw, res : Raw) -> Unit {
         )
       }
       "/api/build" => {
-        ignore(
-          run_moon(
-            cwd(),
-            ["run", "scripts/build.mbtx"],
-            Raw::undefined(),
-            false,
-          ).wait(),
-        )
+        ignore(run_moon(cwd(), ["run", "scripts/build.mbtx"]))
         json(res, q, Raw::from_json({ "url": "/play/?chapter=folded" }))
       }
       _ => problem(res, q, 404, "Unknown operation")
@@ -249,7 +208,9 @@ async fn Server::handle(s : Server, q : Raw, res : Raw) -> Unit {
       json(
         res,
         q,
-        @archive.parse(read_file("content/editor/templates.json").wait()),
+        @archive.parse(
+          @utf8.decode_lossy(read_file("content/editor/templates.json").wait()),
+        ),
       )
     "/api/abilities" => {
       let source = read_file("content/abilities.json").wait()
@@ -257,7 +218,7 @@ async fn Server::handle(s : Server, q : Raw, res : Raw) -> Unit {
         res,
         q,
         @archive.obj([
-          ("values", @archive.parse(source)),
+          ("values", @archive.parse(@utf8.decode_lossy(source))),
           ("revision", Raw::of(@archive.digest(source))),
         ]),
       )
@@ -295,29 +256,37 @@ async fn Server::handle(s : Server, q : Raw, res : Raw) -> Unit {
         ] {
         let (prefix, dir) = route
         if path.strip_prefix(prefix) is Some(suffix) {
-          let rel : String = js_call(() => Raw::of(decode(suffix.to_owned())))
-            .wait()
-            .cast()
-          let root = resolve(dir, "")
-          let file = resolve(
-            root,
+          let rel = @percent.decode(suffix)
+          let root = @path.Path(dir).resolve()
+          let requested = @path.Path(
             if rel.is_empty() {
               "index.html"
             } else {
               rel
             },
           )
-          guard file.has_prefix(root + "/") else {
+          let target = if requested.is_absolute() {
+            requested.normalize()
+          } else {
+            root.join(requested)
+          }
+          let file = target.to_string()
+          let relative = target.relative(base=root).to_string()
+          guard relative != "." &&
+            relative != ".." &&
+            !relative.has_prefix(".." + @path.sep.to_string()) &&
+            !@path.Path(relative).is_absolute() else {
             problem(res, q, 403, "Invalid path")
             return
           }
           if prefix is ("/examples/" | "/build/") {
             ensure_three_file(
               s.root,
-              prefix[1:].to_owned() + file[root.length() + 1:].to_owned(),
+              prefix[1:].to_owned() +
+              relative.replace_all(old=@path.sep.to_string(), new="/"),
             )
           }
-          guard is_file(file) else {
+          guard @fs.path_exists(file) && @fs.is_file(file) else {
             problem(res, q, 404, "Not a file")
             return
           }
@@ -336,40 +305,37 @@ async fn Server::handle(s : Server, q : Raw, res : Raw) -> Unit {
 }
 
 ///|
-fn serve(root : String) -> Unit {
+async fn serve(root : String) -> Unit {
   let s : Server = { root, busy: false, }
-  listen(
-    port(),
-    (q, res) => {
-      @js_async.Promise::from_async(async fn() {
-        s.handle(q, res) catch {
-          err => {
-            let message = message(err)
-            problem(
-              res,
-              q,
-              if message.contains("ENOENT") {
-                404
-              } else {
-                400
-              },
-              message,
-            )
-          }
+  let port = listen(port(), (q, res) => {
+    @js_async.Promise::from_async(async fn() {
+      s.handle(q, res) catch {
+        err => {
+          let message = message(err)
+          problem(
+            res,
+            q,
+            if message.contains("ENOENT") {
+              404
+            } else {
+              400
+            },
+            message,
+          )
         }
-      })
-    },
-    p => println("Project editor: http://127.0.0.1:" + p.to_string()),
-  )
+      }
+    })
+  }).wait()
+  println("Project editor: http://127.0.0.1:" + port.to_string())
 }
 
 ///|
 async fn scene_worker(verb : String) -> Unit {
   let result = match verb {
-    "GET" => @model.pack_scene_transfer(@model.export_project(colliders=true))
+    "GET" => @model.export_project(colliders=true, transfer=true)
     "POST" =>
       @model.import_project(@model.unpack_scene_transfer(read_body(stdin())))
     _ => raise Failure("Expected GET or POST for scene worker")
   }
-  stdout(@archive.gzip(Raw::of(@archive.stringify(result))))
+  stdout(@archive.compress(@utf8.encode(@archive.stringify(result)))).wait()
 }

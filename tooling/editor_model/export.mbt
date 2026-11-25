@@ -1,14 +1,15 @@
 ///|
-fn revision() -> String {
-  let chunks = [
-    for f in @archive.list_files(directory) => {
-      @archive.read_file(directory + "/" + f)
-    }
-  ]
-  for f in ["city.scene.json.gz", "city.buffers.bin.gz"] {
-    chunks.push(@archive.read_file("content/art/" + f))
+fn revision() -> String raise {
+  let hash = @crypto.SHA256::new()
+  let files = @fs.read_dir(directory).to_owned()
+  files.sort_by(String::lexical_compare)
+  for name in files {
+    hash.update(@fs.read_file_to_bytes(directory + "/" + name))
   }
-  @archive.digest(@archive.concat(FixedArray::from_array(chunks[:])))
+  for name in ["city.scene.json.gz", "city.buffers.bin.gz"] {
+    hash.update(@fs.read_file_to_bytes("content/art/" + name))
+  }
+  @crypto.bytes_to_hex_string(hash.finalize())
 }
 
 ///|
@@ -62,7 +63,7 @@ fn collision_object(k : String, r : Json) -> Raw raise {
     ("placement", placement),
   ])
   @archive.obj([
-    ("uuid", Raw::of(new_uuid())),
+    ("uuid", Raw::of(@math.generate_uuid())),
     ("type", Raw::of("Mesh")),
     ("name", Raw::of(k + ": " + id)),
     ("geometry", Raw::of("tankle-editor-collision-box")),
@@ -96,9 +97,6 @@ fn collision_resources(scene : Raw) -> Unit {
 }
 
 ///|
-pub extern "js" fn buffer_text(buf : Raw) -> String = "b=>b.toString('utf8')"
-
-///|
 fn numeric_label(name : String) -> Bool {
   let parts = name.split("/").to_array()
   guard parts.length() >= 2 && (parts[0] == "enemies" || parts[0] == "world") else {
@@ -116,24 +114,29 @@ fn numeric_label(name : String) -> Bool {
 pub fn export_project(
   selection? : String,
   colliders~ : Bool = false,
+  transfer~ : Bool = false,
 ) -> Raw raise {
-  let scene = @archive.read_scene()
+  let scene = if transfer {
+    @archive.read_scene(decode=pack_attribute)
+  } else {
+    @archive.read_scene()
+  }
   let catalog = EditableCatalog::read()
   let original = scene.get("object")
   let world = transforms(original)
   let mut prefix = ""
-  let mut collider = Raw::undefined()
+  let mut collider : Raw? = None
   if selection is Some(key) {
     if key == "player" {
       prefix = "player"
     } else {
-      let mut ent = Raw::undefined()
+      let mut ent : Raw? = None
       @archive.walk(original, n => {
         if exists(entity(n)) && entity_key(entity(n)) == key {
-          ent = entity(n)
+          ent = Some(entity(n))
         }
       })
-      if !exists(ent) &&
+      if ent is None &&
         key.split_once(":") is Some((lib, id)) &&
         collidable(lib.to_owned()) {
         let k = lib.to_owned()
@@ -149,20 +152,27 @@ pub fn export_project(
           )
         }
         if matches.length() == 1 {
-          collider = collision_object(k, matches[0])
+          let helper = collision_object(k, matches[0])
+          collider = Some(helper)
           collision_resources(scene)
-          world[uuid(collider)] = transform(collider)
-          ent = entity(collider)
+          world[uuid(helper)] = transform(helper)
+          ent = Some(entity(helper))
         }
       }
-      guard exists(ent) else {
+      guard ent is Some(raw) else {
         raise Failure(
           "Unknown entity " +
           key +
           ". Use moon run cmd/editor -- export --list to see available objects.",
         )
       }
-      prefix = entity_prefix(ent)
+      if collider is None {
+        let e = EntityRef::read(raw)
+        guard prefix_for(e.collection, e.key) is Some(path) else {
+          raise Failure("No scene binding for " + e.label())
+        }
+        prefix = path
+      }
     }
   }
   let roots = []
@@ -178,12 +188,12 @@ pub fn export_project(
       }
     }
   }
-  if exists(collider) {
-    roots.push(collider)
+  if collider is Some(helper) {
+    roots.push(helper)
   } else {
     select(original)
   }
-  if colliders && !exists(collider) {
+  if colliders && collider is None {
     collision_resources(scene)
     for k in ["decks", "architecture", "obstacles"] {
       for i, r in catalog.rows(k) {
@@ -218,12 +228,13 @@ pub fn export_project(
     if numeric_label(str(n, "name")) && exists(get(data(n), "binding")) {
       n.set("name", data(n).get("binding"))
     }
-    let e = entity(n)
-    if exists(e) {
-      let k = str(e, "collection")
+    let raw = entity(n)
+    if exists(raw) {
+      let e = EntityRef::read(raw)
+      let k = e.collection
       guard catalog.find(e) is Some(slot) &&
         catalog.rows(k)[slot] is Object(record) else {
-        raise Failure("Missing " + entity_key(e))
+        raise Failure("Missing " + e.label())
       }
       let game = record.filter((key, _) => {
         key != "x" && key != "y" && key != "z"
@@ -231,7 +242,7 @@ pub fn export_project(
       data(n).set("game", Raw::from_json(Json::object(game)))
       if k == "controls" {
         for circuit in catalog.rows("circuits") {
-          if circuit is { "id": String(id), .. } && id == str(e, "id") {
+          if circuit is { "id": String(id), .. } && id == e.id {
             data(n).set("circuit", Raw::from_json(circuit))
             break
           }
@@ -242,7 +253,7 @@ pub fn export_project(
         _ =>
           match record.get("stops") {
             Some(Array([first, ..])) => first
-            _ => raise Failure("Missing floor on " + entity_key(e))
+            _ => raise Failure("Missing floor on " + e.label())
           }
       }
       let place = @archive.obj([
@@ -251,7 +262,7 @@ pub fn export_project(
       ])
       data(n).set("placement", place)
       if str(n, "name").is_empty() || str(n, "name") == binding(n) {
-        n.set("name", Raw::of(str(e, "collection") + ": " + str(e, "id")))
+        n.set("name", Raw::of(e.collection + ": " + e.id))
       }
     }
     for child in children(n) {
@@ -305,7 +316,7 @@ pub fn export_project(
       append(root.get("children"), light_json)
     }
   }
-  @archive.obj([
+  let project = @archive.obj([
     ("metadata", Raw::object()),
     (
       "project",
@@ -322,4 +333,9 @@ pub fn export_project(
     ("history", Raw::from_json({ "undos": [], "redos": [] })),
     ("environmentType", Raw::of("None")),
   ])
+  if transfer {
+    pack_scene_transfer(project)
+  } else {
+    project
+  }
 }

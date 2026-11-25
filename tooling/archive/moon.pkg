@@ -1,5 +1,16 @@
 import {
   "moonbit-community/three/core",
+  "milky/tankle-astra/scene_format",
+  "moonbitlang/core/compress/gzip" @compression,
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/buffer",
+  "moonbitlang/core/json",
+  "moonbitlang/x/crypto",
+  "moonbitlang/x/fs",
 }
 
 supported_targets = "js"
+
+options(
+  "allow-experimental-packages": true,
+)

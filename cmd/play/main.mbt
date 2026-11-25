@@ -107,79 +107,79 @@ fn Session::advance(self : Session, milliseconds : Double) -> Unit {
 }
 
 ///|
-fn main {
-  @host.load_scene(
-    "/generated/art/folded-scene.json.gz",
-    fn(scene) {
-      let direct = @host.direct_entry()
-      let (game, restored) = if @host.query("chapter") == "circulation" {
-        (@sim.Game::new(start={ x: 290, y: -24, z: 120, }), false)
-      } else {
-        let game = @sim.Game::new()
-        (game, game.restore(@host.read_save()))
+async fn main {
+  try {
+    let scene = @host.load_scene("/generated/art/folded-scene.json.gz")
+    let direct = @host.direct_entry()
+    let (game, restored) = if @host.query("chapter") == "circulation" {
+      (@sim.Game::new(start={ x: 290, y: -24, z: 120, }), false)
+    } else {
+      let game = @sim.Game::new()
+      (game, game.restore(@host.read_save()))
+    }
+    if direct && !restored {
+      @host.write_save(game.save())
+    }
+    let settings = Settings::load()
+    let view = @view.View::new(scene, game)
+    let session = Session::{
+      game,
+      settings,
+      sound: Sound::new(),
+      rebinding: None,
+      menu_open: !direct,
+      has_journey: restored || direct,
+      hud: Hud::new(),
+      queries: view.queries(game),
+      view,
+      keys: Set([]),
+      previous: 0,
+      paused: false,
+      looking: false,
+      map_open: false,
+      saved_at: 0,
+      rendered: false,
+      redraw: true,
+    }
+    @host.on_key(fn(key, down, repeat) { session.input(key, down, repeat) })
+    @host.on_button(fn(button, down) {
+      session.input("Mouse\{button}", down, false)
+      if button == 1 {
+        session.looking = down
       }
-      if direct && !restored {
-        @host.write_save(game.save())
+      if down && !session.paused && !session.map_open && !session.menu_open {
+        @host.capture_pointer()
       }
-      let settings = Settings::load()
-      let view = @view.View::new(scene, game)
-      let session = Session::{
-        game,
-        settings,
-        sound: Sound::new(),
-        rebinding: None,
-        menu_open: !direct,
-        has_journey: restored || direct,
-        hud: Hud::new(),
-        queries: view.queries(game),
-        view,
-        keys: Set([]),
-        previous: 0,
-        paused: false,
-        looking: false,
-        map_open: false,
-        saved_at: 0,
-        rendered: false,
-        redraw: true,
+    })
+    @host.on_pointer(fn(dx, dy, _, _) {
+      if (session.looking || @host.pointer_locked()) &&
+        !session.paused &&
+        !session.map_open {
+        session.view.turn(dx, dy)
       }
-      @host.on_key(fn(key, down, repeat) { session.input(key, down, repeat) })
-      @host.on_button(fn(button, down) {
-        session.input("Mouse\{button}", down, false)
-        if button == 1 {
-          session.looking = down
-        }
-        if down && !session.paused && !session.map_open && !session.menu_open {
-          @host.capture_pointer()
-        }
-      })
-      @host.on_pointer(fn(dx, dy, _, _) {
-        if (session.looking || @host.pointer_locked()) &&
-          !session.paused &&
-          !session.map_open {
-          session.view.turn(dx, dy)
-        }
-      })
-      @host.on_blur(fn() {
-        session.keys.clear()
-        session.looking = false
-      })
-      @host.on_resize(fn() {
-        session.view.resize()
-        session.redraw = true
-      })
-      view.barrel.matrix_auto_update = true
-      view.position_player(game.player, game.world, 0)
-      session.mount_settings()
-      if session.menu_open {
-        session.show_journey()
-      }
-      @host.inspect_projection(fn(x, y, z) {
-        let p = view.project({ x, y, z, })
-        [p.x, p.z]
-      })
-      @host.diagnostics(fn() { game.snapshot() })
-      @host.frame(fn(time) { session.advance(time) })
-    },
-    fn(error) { @host.text("startup-message", error) },
-  )
+    })
+    @host.on_blur(fn() {
+      session.keys.clear()
+      session.looking = false
+    })
+    @host.on_resize(fn() {
+      session.view.resize()
+      session.redraw = true
+    })
+    view.barrel.matrix_auto_update = true
+    view.position_player(game.player, game.world, 0)
+    session.mount_settings()
+    if session.menu_open {
+      session.show_journey()
+    }
+    @host.inspect_projection(fn(x, y, z) {
+      let p = view.project({ x, y, z, })
+      [p.x, p.z]
+    })
+    @host.diagnostics(() => game.snapshot(), () => view.yaw)
+    @host.frame(fn(time) { session.advance(time) })
+    @host.mark("view-created")
+  } catch {
+    err => @host.text("startup-message", err.to_string())
+  }
 }

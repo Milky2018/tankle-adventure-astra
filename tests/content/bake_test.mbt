@@ -3,7 +3,7 @@ fn vector_attr(size : Int32, values : Json) -> Raw {
   @archive.obj([
     ("itemSize", Raw::of(size)),
     ("type", Raw::of("Float32Array")),
-    ("array", @archive.typed("Float32Array", raw(values))),
+    ("array", Raw::of(@archive.typed("Float32Array", raw(values)))),
   ])
 }
 
@@ -28,7 +28,7 @@ fn batch_scene() -> Raw {
     "textures": [],
     "images": [],
   })
-  let attrs = lookup(scene, "geometries.0.data.attributes")
+  let attrs = @model.array(scene, "geometries")[0].get("data").get("attributes")
   attrs.set("position", vector_attr(3, [0, 0, 0, 1, 0, 0, 0, 1, 0]))
   attrs.set("normal", vector_attr(3, [0, 0, 1, 0, 0, 1, 0, 0, 1]))
   attrs.set("uv", vector_attr(2, [0, 0, 1, 0, 0, 1]))
@@ -81,35 +81,46 @@ test "stationary fittings share a spatial draw and moving doors keep local geome
   set_children(scene.get("object"), walls)
   @art.bake_fittings(
     scene,
-    v => v,
-    @art.FixtureLayout::from_catalog(Json::array(defs), []),
+    v => v.cast(),
+    @art.FixtureLayout::from_catalog(@json.from_json(Json::array(defs)), []),
   )
   let materials = resources(scene, "materials")
   for wall in walls[:2] {
-    assert_eq(name_at(wall, "geometry"), "tri")
-    let m = materials[name_at(wall, "material")]
-    assert_eq(name_at(m, "uuid"), "iron")
+    assert_eq(@model.str(wall, "geometry"), "tri")
+    let m = materials[@model.str(wall, "material")]
+    assert_eq(@model.str(m, "uuid"), "iron")
     assert_eq(quantity(m, "side"), 2)
   }
-  let batch = by_key(rows(scene, "object.children"), "type", "BatchedMesh")
-  assert_true(flag(batch, "castShadow"))
+  let batch = by_key(
+    rows(scene.get("object"), "children"),
+    "type",
+    "BatchedMesh",
+  )
+  assert_true(@model.truth(batch, "castShadow"))
   assert_eq(rows(batch, "instanceInfo").length(), 2)
   expect_json(batch.get("boundingBox"), { "min": [0, 0, 0], "max": [37, 1, 0] })
   let door = walls[2]
-  assert_eq(name_at(door, "material"), "iron")
+  assert_eq(@model.str(door, "material"), "iron")
   assert_eq(rows(door, "children").length(), 1)
-  let merged = resources(scene, "geometries")[name_at(
-      door, "children.0.geometry",
+  let merged = resources(scene, "geometries")[@model.str(
+      @model.children(door)[0],
+      "geometry",
     )]
-  assert_eq(quantity(merged, "data.attributes.position.array.0"), 1)
+  assert_eq(
+    doubles(merged.get("data").get("attributes").get("position").get("array"))[0],
+    1,
+  )
 }
 
 ///|
 test "hardware instances retain active transforms, depth layers and the original index range" {
   let scene = batch_scene()
-  let geo = lookup(scene, "geometries.0.data")
+  let geo = @model.array(scene, "geometries")[0].get("data")
   let idx = raw({ "type": "Uint16Array", "itemSize": 1 })
-  idx.set("array", @archive.typed("Uint16Array", raw([0, 1, 2, 3, 4, 5])))
+  idx.set(
+    "array",
+    Raw::of(@archive.typed("Uint16Array", raw([0, 1, 2, 3, 4, 5]))),
+  )
   geo.set("index", idx)
   for key in @archive.keys(geo.get("attributes")) {
     let a = geo.get("attributes").get(key)
@@ -122,7 +133,7 @@ test "hardware instances retain active transforms, depth layers and the original
       }),
     )
   }
-  lookup(scene, "materials.0").set("colorWrite", Raw::of(false))
+  @model.array(scene, "materials")[0].set("colorWrite", Raw::of(false))
   scene.set("textures", raw([{ "uuid": "matrices", "image": "data" }]))
   let transforms = []
   let instances = []
@@ -157,13 +168,13 @@ test "hardware instances retain active transforms, depth layers and the original
   })
   batch.set("instanceInfo", Raw::from_array(instances[:]))
   set_children(scene.get("object"), [batch])
-  @art.extract_repeats(scene, v => v)
+  @art.extract_repeats(scene, v => v.cast())
   let xs = []
-  for node in rows(scene, "object.children") {
-    assert_eq(name_at(node, "type"), "InstancedMesh")
+  for node in rows(scene.get("object"), "children") {
+    assert_eq(@model.str(node, "type"), "InstancedMesh")
     assert_eq(quantity(node, "layers"), 4)
-    assert_eq(quantity(node, "matrix.12"), 5)
-    for i, x in doubles(lookup(node, "instanceMatrix.array")) {
+    assert_eq(doubles(node.get("matrix"))[12], 5)
+    for i, x in doubles(node.get("instanceMatrix").get("array")) {
       if i % 16 == 12 {
         xs.push(x.to_int())
       }
@@ -173,8 +184,17 @@ test "hardware instances retain active transforms, depth layers and the original
   assert_eq(xs, [ for i in 0..<128 if i != 1 && i != 3 => i ])
   let gs = rows(scene, "geometries")
   let g = gs[gs.length() - 1]
-  expect_json(@archive.array_copy(lookup(g, "data.index.array")), [0, 1, 2])
-  assert_eq(quantity(g, "data.attributes.position.array.byteOffset"), 36)
+  expect_json(
+    @archive.array_copy(g.get("data").get("index").get("array").cast()),
+    [0, 1, 2],
+  )
+  assert_eq(
+    quantity(
+      g.get("data").get("attributes").get("position").get("array"),
+      "byteOffset",
+    ),
+    36,
+  )
 }
 
 ///|
@@ -195,31 +215,33 @@ test "roller instances keep segment transforms and independent belt animations" 
     segments.push(seg)
   }
   set_children(scene.get("object"), segments)
-  @art.extract_repeats(scene, v => v)
-  let nodes = rows(scene, "object.children")
+  @art.extract_repeats(scene, v => v.cast())
+  let nodes = rows(scene.get("object"), "children")
   for seg in segments {
-    let root = by_key(
-      nodes,
-      "userData.binding",
-      name_at(seg, "userData.binding"),
+    let root = nodes
+      .iter()
+      .find_first(n => @model.binding(n) == @model.binding(seg))
+      .unwrap()
+    let batch_id = @model.str(
+      @model.data(@model.children(root)[0]),
+      "rollerBatch",
     )
-    let batch = by_key(
-      nodes,
-      "userData.binding",
-      name_at(root, "children.0.userData.rollerBatch"),
-    )
-    assert_eq(name_at(batch, "type"), "InstancedMesh")
+    let batch = nodes
+      .iter()
+      .find_first(n => @model.binding(n) == batch_id)
+      .unwrap()
+    assert_eq(@model.str(batch, "type"), "InstancedMesh")
     assert_eq(quantity(batch, "count"), 2)
     for roller in rows(root, "children") {
-      assert_eq(name_at(roller, "type"), "Object3D")
+      assert_eq(@model.str(roller, "type"), "Object3D")
       assert_eq(
-        name_at(roller, "userData.rollerBatch"),
-        name_at(batch, "userData.binding"),
+        @model.str(@model.data(roller), "rollerBatch"),
+        @model.binding(batch),
       )
-      let idx = quantity(roller, "userData.instance").to_int() * 16 + 12
+      let idx = quantity(@model.data(roller), "instance").to_int() * 16 + 12
       assert_eq(
-        doubles(lookup(batch, "instanceMatrix.array"))[idx],
-        quantity(root, "matrix.12") + quantity(roller, "matrix.12"),
+        doubles(batch.get("instanceMatrix").get("array"))[idx],
+        doubles(root.get("matrix"))[12] + doubles(roller.get("matrix"))[12],
       )
     }
   }
@@ -229,20 +251,25 @@ test "roller instances keep segment transforms and independent belt animations" 
 test "static switch housings batch across circuits and moving controls and lamps remain independent" {
   let s = batch_scene()
   let roots = []
-  let controls = @archive.items(
-    raw([
-      { "id": "left" },
-      { "id": "right" },
-      { "id": "carriage", "mount": "lift" },
-    ]),
-  )
-  for i, control in controls {
-    let id = name_at(control, "id")
+  let controls : Array[@catalog.Control] = @json.from_json([
+    { "id": "left", "kind": "shot", "x": 0, "y": 0, "z": 0 },
+    { "id": "right", "kind": "shot", "x": 20, "y": 0, "z": 0 },
+    {
+      "id": "carriage",
+      "kind": "shot",
+      "x": 40,
+      "y": 0,
+      "z": 0,
+      "mount": "lift",
+    },
+  ])
+  for control in controls {
+    let id = control.id
     let binding = "world/controls/" + id
     let root = raw({
       "type": "Group",
       "uuid": @json.to_json(id),
-      "matrix": matrix(x=(i * 20).to_double()),
+      "matrix": matrix(x=control.x),
       "userData": { "binding": @json.to_json(binding + "/root") },
     })
     let inner = raw({
@@ -261,11 +288,11 @@ test "static switch housings batch across circuits and moving controls and lamps
   set_children(s.get("object"), roots)
   @art.bake_fittings(
     s,
-    v => v,
-    @art.FixtureLayout::from_catalog([], Raw::of(controls).to_json()),
+    v => v.cast(),
+    @art.FixtureLayout::from_catalog([], controls),
   )
-  let combined = rows(s, "object.children").filter(n => {
-    name_at(n, "type") == "BatchedMesh"
+  let combined = rows(s.get("object"), "children").filter(n => {
+    @model.str(n, "type") == "BatchedMesh"
   })
   assert_eq(combined.length(), 1)
   expect_json(combined[0].get("boundingBox"), {
@@ -274,31 +301,38 @@ test "static switch housings batch across circuits and moving controls and lamps
   })
   assert_eq(
     rows(roots[2], "children")
-    .filter(n => {
-      name_at(n, "type") == "Mesh" && name_at(n, "userData.binding") == ""
-    })
+    .filter(n => @model.str(n, "type") == "Mesh" && @model.binding(n) == "")
     .length(),
     1,
   )
   for root in roots {
     let lamps = rows(root, "children").filter(n => {
-      name_at(n, "userData.binding").has_suffix("/lamp")
+      @model.binding(n).has_suffix("/lamp")
     })
-    assert_eq(name_at(lamps[0], "material"), "iron")
+    assert_eq(@model.str(lamps[0], "material"), "iron")
   }
 }
 
 ///|
-test "camera bounds follow their placed fixture without sealing panel gaps" {
-  let geo = raw({
+fn panel_geometry(positions : Json) -> Raw {
+  let panel = raw({
     "uuid": "panel",
     "data": {
-      "attributes": {
-        "position": { "array": [0, 0, 0, 0, 3, 0, 0, 3, 4, 0, 0, 4] },
-      },
-      "index": { "array": [0, 1, 2, 0, 2, 3] },
+      "attributes": {},
+      "index": { "type": "Uint16Array", "itemSize": 1 },
     },
   })
+  let geometry = panel.get("data")
+  geometry.get("attributes").set("position", vector_attr(3, positions))
+  geometry
+  .get("index")
+  .set("array", Raw::of(@archive.typed("Uint16Array", raw([0, 1, 2, 0, 2, 3]))))
+  panel
+}
+
+///|
+test "camera bounds follow their placed fixture without sealing panel gaps" {
+  let geo = panel_geometry([0, 0, 0, 0, 3, 0, 0, 3, 4, 0, 0, 4])
   let s = raw({
     "materials": [{ "uuid": "metal" }],
     "object": {
@@ -316,11 +350,16 @@ test "camera bounds follow their placed fixture without sealing panel gaps" {
     },
   })
   s.set("geometries", Raw::from_array([geo]))
-  @art.camera_faces(s, v => v)
-  expect_json(lookup(s, "object.userData.cameraFaces"), [[5, 0, 0, 5, 3, 4]])
-  lookup(geo, "data.index").set("array", raw([0, 1, 2, 0, 1, 3]))
-  @art.camera_faces(s, v => v)
-  expect_json(lookup(s, "object.userData.cameraFaces"), [])
+  @art.camera_faces(s, v => v.cast())
+  expect_json(s.get("object").get("userData").get("cameraFaces"), [
+    [5, 0, 0, 5, 3, 4],
+  ])
+  geo
+  .get("data")
+  .get("index")
+  .set("array", Raw::of(@archive.typed("Uint16Array", raw([0, 1, 2, 0, 1, 3]))))
+  @art.camera_faces(s, v => v.cast())
+  expect_json(s.get("object").get("userData").get("cameraFaces"), [])
 }
 
 ///|
@@ -345,52 +384,44 @@ fn portals(material : Json) -> Raw {
       ],
     },
     "materials": [material],
-    "geometries": [
-      {
-        "uuid": "panel",
-        "data": {
-          "index": { "array": [0, 1, 2, 0, 2, 3] },
-          "attributes": {
-            "position": {
-              "itemSize": 3,
-              "array": [156, -42, 36, 156, 0, 36, 156, 0, 42, 156, -42, 42],
-            },
-          },
-        },
-      },
-    ],
   })
-  let m = lookup(scene, "materials.0")
+  scene.set(
+    "geometries",
+    Raw::from_array([
+      panel_geometry([156, -42, 36, 156, 0, 36, 156, 0, 42, 156, -42, 42]),
+    ]),
+  )
+  let m = @model.array(scene, "materials")[0]
   m.set("uuid", Raw::of("wall"))
   m.set("userData", raw({ "renderRole": "enclosure" }))
-  @art.room_portals(scene, v => v)
-  lookup(scene, "object.userData.portalRooms")
+  @art.room_portals(scene, v => v.cast())
+  @model.get(@model.data(scene.get("object")), "portalRooms")
 }
 
 ///|
 test "a one-sided enclosure seals only its front and keeps adjacent doorways open" {
-  let rooms = portals({})
-  fn face(sign : Double, z : Double) -> Double raise {
-    for room in @archive.items(rooms) {
-      for edge in rows(room, "6") {
-        let e = doubles(edge)
-        if e[0] >= 0 &&
-          e[1] == sign &&
-          e[3] == 156 &&
-          e[4] < -15 &&
-          e[7] > -15 &&
-          e[5] < z &&
-          z < e[8] {
-          return e[2]
+  let rooms : Array[@scene_format.Room] = @json.from_json(portals({}).to_json())
+  fn solid_face(sign : Int32, z : Double) -> Bool raise {
+    for room in rooms {
+      for edge in room.portals {
+        let { min, max, } = edge.bounds
+        if edge.destination >= 0 &&
+          edge.face == sign &&
+          min.0 == 156 &&
+          min.1 < -15 &&
+          max.1 > -15 &&
+          min.2 < z &&
+          z < max.2 {
+          return edge.solid
         }
       }
     }
     fail("Missing portal at z=" + z.to_string())
   }
-  assert_eq(face(-1, 39), 1)
-  assert_eq(face(1, 39), 0)
-  assert_eq(face(-1, 45), 0)
-  assert_eq(face(1, 45), 0)
+  assert_true(solid_face(-1, 39))
+  assert_false(solid_face(1, 39))
+  assert_false(solid_face(-1, 45))
+  assert_false(solid_face(1, 45))
   assert_true(portals({ "transparent": true }).is_undefined())
   assert_true(portals({ "alphaTest": 0.5 }).is_undefined())
 }
@@ -398,7 +429,7 @@ test "a one-sided enclosure seals only its front and keeps adjacent doorways ope
 ///|
 test "compiled art preserves typed pixels and independent attributes with identical contents" {
   let dir = temp_dir()
-  defer remove_dir(dir)
+  defer @fs.remove_dir(dir)
   let attr : Json = {
     "itemSize": 3,
     "type": "Float32Array",
@@ -440,28 +471,31 @@ test "compiled art preserves typed pixels and independent attributes with identi
     ],
   })
   @archive.write_json_gz(dir + "/city.scene.json.gz", scene)
-  @archive.write_file(
+  @fs.write_bytes_to_file(
     dir + "/city.buffers.bin.gz",
-    @archive.gzip(
+    @archive.compress(
       @archive.byte_view(@archive.typed("Float32Array", raw([-4, 7, 3.5]))),
     ),
   )
   @art.bake_city(dir, dir, @art.FixtureLayout::from_catalog([], []), [])
   let packed = @archive.read_json_gz(dir + "/folded-scene.json.gz")
-  let views = @archive.read_json_gz(dir + "/folded-views.json.gz")
-  let bytes = @archive.gunzip(
-    @archive.read_file(dir + "/folded-buffers.bin.gz"),
+  let views : @scene_format.PackedViews = @json.from_json(
+    @archive.read_json_gz(dir + "/folded-views.json.gz").to_json(),
   )
-  assert_eq(rows(packed, "materials").map(m => name_at(m, "uuid")), ["metal"])
-  expect_json(lookup(packed, "images.0.url.data"), [])
-  fn values(path : String) -> Raw {
-    @archive.array_copy(@archive.view(bytes, lookup(views, path)))
+  let bytes = @archive.decompress(
+    @fs.read_file_to_bytes(dir + "/folded-buffers.bin.gz"),
+  )
+  assert_eq(rows(packed, "materials").map(@model.uuid), ["metal"])
+  expect_json(@model.array(packed, "images")[0].get("url").get("data"), [])
+  fn values(desc : @scene_format.BufferView) -> Array[Double] {
+    @archive.view(bytes, raw(@json.ToJson::to_json(desc))).to_array()
   }
-  expect_json(values("images.probe"), [0, 3, 32768, 65535])
-  expect_json(values("geometry.mesh.position"), [-4, 7, 3.5])
+  let attributes = views.geometry["mesh"]
+  assert_eq(values(views.images["probe"]), [0, 3, 32768, 65535])
+  assert_eq(values(attributes["position"]), [-4, 7, 3.5])
   assert_eq(
-    quantity(views, "geometry.mesh.position.byteOffset"),
-    quantity(views, "geometry.mesh.normal.byteOffset"),
+    attributes["position"].byte_offset,
+    attributes["normal"].byte_offset,
   )
-  assert_true(flag(views, "geometry.mesh.normal.copy"))
+  assert_true(attributes["normal"].copy)
 }

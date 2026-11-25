@@ -12,8 +12,6 @@ type Session
 
 type Sound
 
-type Voice
-
 // Type aliases
 
 // Traits

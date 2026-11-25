@@ -6,20 +6,20 @@ priv struct AbilitySettings {
 }
 
 ///|
-fn on_event(n : Raw, key : String, f : Raw) -> Unit {
-  ignore(call(n, "addEventListener", [Raw::of(key), f]))
-}
-
-///|
 fn Workspace::set_mode(self : Workspace, next : Tab) -> Unit {
   self.mode = next
   for tab in [Level, Skills] {
     let id = tab.id()
-    by_id(id + "-workspace").set("hidden", Raw::of(next != tab))
-    attr(by_id(id + "-tab"), "aria-pressed", (next == tab).to_string())
+    ignore(
+      by_id(id + "-workspace").toggle_attribute_with_force(
+        "hidden",
+        next != tab,
+      ),
+    )
+    by_id(id + "-tab").set_attribute("aria-pressed", (next == tab).to_string())
   }
   if next is Level {
-    self.dispatch("windowResize")
+    self.editor.resized()
   }
 }
 
@@ -51,16 +51,9 @@ fn Workspace::save(self : Workspace, preview~ : Bool = false) -> Unit {
   guard self.ready && !self.busy else { return }
   self.busy = true
   self.refresh()
-  let tab = if preview {
-    call(window_obj(), "open", [
-      Raw::of("about:blank"),
-      Raw::of("tankle-preview"),
-    ])
-  } else {
-    Raw::null()
-  }
-  if exists(tab) {
-    set_text(tab.get("document").get("body"), "正在保存并构建游戏…")
+  let tab = if preview { preview_window() } else { None }
+  if tab is Some(window) && window.document().body() is Some(body) {
+    set_text(body, "正在保存并构建游戏…")
   }
   status("正在保存到项目…")
   ignore(
@@ -73,18 +66,16 @@ fn Workspace::save(self : Workspace, preview~ : Bool = false) -> Unit {
         frame().wait()
         if self.scene_dirty {
           for n in self.collisions {
-            n.set("visible", Raw::of(true))
+            n.set_visible(true)
           }
           let project = {
             defer {
-              self.scene().set("background", self.background)
+              self.scene().set_background(self.background)
               self.apply_floor()
             }
-            self.scene().set("background", self.game_bg)
-            invoke_async(fn() {
-              ignore(call(self.scene(), "updateMatrixWorld", [Raw::of(true)]))
-              call(self.editor, "toJSON", [])
-            }).wait()
+            self.scene().set_background(self.game_bg)
+            self.scene().update_world()
+            self.editor.serialize().wait()
           }
           project.set(
             "history",
@@ -94,7 +85,7 @@ fn Workspace::save(self : Workspace, preview~ : Bool = false) -> Unit {
             ]),
           )
           let res = api("scene", body=@model.pack_scene_transfer(project))
-          let meta = data(self.scene()).get("tankle")
+          let meta = self.scene().data().get("tankle")
           meta.set("revision", res.get("revision"))
           meta.set("roots", res.get("rootIds"))
           meta.set("deleted", Raw::from_json([]))
@@ -113,13 +104,10 @@ fn Workspace::save(self : Workspace, preview~ : Bool = false) -> Unit {
         if preview {
           status("已保存，正在构建试玩…")
           let res = api("build", body=Raw::object())
-          if exists(tab) {
-            tab
-            .get("location")
-            .set(
-              "href",
-              Raw::of(str(res, "url") + "&editor=" + self.version.to_string()),
-            )
+          if tab is Some(window) {
+            window
+            .location()
+            .assign(str(res, "url") + "&editor=" + self.version.to_string())
           }
           status("已保存，游戏已在试玩标签页打开")
         }
@@ -127,11 +115,8 @@ fn Workspace::save(self : Workspace, preview~ : Bool = false) -> Unit {
         err => {
           let m = message(err)
           status("保存或构建失败：" + m, error=true)
-          if exists(tab) {
-            set_text(
-              tab.get("document").get("body"),
-              "未能打开试玩：" + m,
-            )
+          if tab is Some(window) && window.document().body() is Some(body) {
+            set_text(body, "未能打开试玩：" + m)
           }
         }
       }
@@ -141,85 +126,57 @@ fn Workspace::save(self : Workspace, preview~ : Bool = false) -> Unit {
 
 ///|
 fn Workspace::events(self : Workspace) -> Unit {
-  on_event(
-    window_obj(),
-    "resize",
-    Raw::of(fn() { self.dispatch("windowResize") }),
-  )
-  let selector = self.editor.get("selector")
-  let original = bind_method(selector, "getIntersects")
-  selector.set(
-    "getIntersects",
-    Raw::of(fn(ray : Raw) -> Raw {
-      let hits = @archive.items(apply1(original, ray))
-      let visible = [
-        for hit in hits if (match self.floor {
-          None => true
-          Some(h) => {
-            let y = number(hit.get("point"), "y")
-            y >= h - 1 && y <= h + 6
-          }
-        }) &&
-        (
-          self.selection is Part(..) ||
-          exists(self.find_root(hit.get("object")))
-        ) => hit
-      ]
-      Raw::from_array(visible[:])
-    }),
-  )
-  self.signal(
-    "objectSelected",
-    Raw::of(fn(n : Raw) {
-      guard self.ready else { return }
-      let root = self.find_root(n)
-      guard exists(root) else {
-        self.selection = Nothing
-        self.properties()
-        self.render_list()
-        return
-      }
-      let part = self.selection is Part(..) && !n.strict_equal(root)
-      self.selection = if part { Part(root~, object=n) } else { Whole(root) }
-      if !part && !n.strict_equal(root) {
-        ignore(call(self.editor, "select", [root]))
-        return
+  @dom.window()
+  .reinterpret_as_event_target()
+  .add_event_listener("resize", _ => self.editor.resized())
+  self.editor.filter_picks(hit => {
+    let in_floor = match self.floor {
+      None => true
+      Some(h) => hit.y() >= h - 1 && hit.y() <= h + 6
+    }
+    in_floor &&
+    (self.selection is Part(..) || self.find_root(hit.object()) is Some(_))
+  })
+  self.editor.on_select(n => {
+    guard self.ready else { return }
+    guard self.find_root(n) is Some(root) else {
+      self.selection = Nothing
+      self.properties()
+      self.render_list()
+      return
+    }
+    let part = self.selection is Part(..) && !n.same(root)
+    self.selection = if part { Part(root~, object=n) } else { Whole(root) }
+    if !part && !n.same(root) {
+      self.editor.select(root)
+      return
+    }
+    self.properties()
+    self.render_list()
+  })
+  self.editor.on_object_change(n => {
+    if self.ready {
+      if self.selection.is_owner(n) && self.floor is Some(h) && h != floor_of(n) {
+        follow_floor(n)
+        self.apply_floor()
       }
       self.properties()
       self.render_list()
-    }),
-  )
-  self.signal(
-    "objectChanged",
-    Raw::of(fn(n : Raw) {
-      if self.ready {
-        if self.selection.is_owner(n) &&
-          self.floor is Some(h) &&
-          h != floor_of(n) {
-          follow_floor(n)
-          self.apply_floor()
-        }
-        self.properties()
-        self.render_list()
-        self.dirty()
-      }
-    }),
-  )
-  self.signal(
-    "materialChanged",
-    Raw::of(fn() {
-      if self.ready {
-        self.properties()
-        self.dirty()
-      }
-    }),
-  )
-  self.signal("historyChanged", Raw::of(fn() { self.refresh() }))
+      self.dirty()
+    }
+  })
+  self.editor.on_material_change(() => {
+    if self.ready {
+      self.properties()
+      self.dirty()
+    }
+  })
+  self.editor.on_history_change(() => self.refresh())
   handler(by_id("search"), "input", () => self.render_list())
   handler(by_id("category"), "change", () => {
-    if str(by_id("category"), "value")
+    if by_id("category").reinterpret_as_html_select_element().value()
       is ("decks" | "architecture" | "obstacles") {
-      by_id("collisions").set("checked", Raw::of(true))
+      by_id("collisions").reinterpret_as_html_input_element().set_checked(true)
     }
     self.apply_floor()
   })
@@ -230,117 +187,73 @@ fn Workspace::events(self : Workspace) -> Unit {
     let id = tab.id()
     handler(by_id(id + "-tab"), "click", () => self.set_mode(tab))
   }
-  for id in ["undo", "redo"] {
-    handler(by_id(id), "click", () => ignore(call(self.editor, id, [])))
-  }
+  handler(by_id("undo"), "click", () => self.editor.undo())
+  handler(by_id("redo"), "click", () => self.editor.redo())
   handler(by_id("focus"), "click", () => self.focus())
   handler(by_id("overview"), "click", () => self.focus(overview=true))
   handler(by_id("landmark"), "change", () => {
     if self.entities
       .iter()
-      .find_first(n => uuid(n) == str(by_id("landmark"), "value"))
+      .find_first(n => {
+        n.uuid() ==
+        by_id("landmark").reinterpret_as_html_select_element().value()
+      })
       is Some(n) {
       self.select_entity(n)
     }
   })
   handler(by_id("save"), "click", () => self.save())
   handler(by_id("preview"), "click", () => self.save(preview=true))
-  on_event(
-    window_obj(),
-    "beforeunload",
-    Raw::of(fn(e : Raw) {
-      if self.scene_dirty || self.skills_dirty {
-        ignore(call(e, "preventDefault", []))
-        e.set("returnValue", Raw::of(""))
+  @dom.window().set_onbeforeunload(e => {
+    if self.scene_dirty || self.skills_dirty {
+      prevent_unload(e)
+    }
+  })
+  on_keydown(e => {
+    let mod = e.meta_key() || e.ctrl_key()
+    let key = e.key().to_lower()
+    if mod && key == "s" {
+      e.prevent_default()
+      self.save()
+      return
+    }
+    if keyboard_target_matches(e, "input,textarea,select") ||
+      self.busy ||
+      self.mode != Level {
+      return
+    }
+    if mod && key == "z" {
+      e.prevent_default()
+      if e.shift_key() {
+        self.editor.redo()
+      } else {
+        self.editor.undo()
       }
-    }),
-  )
-  on_event(
-    window_obj(),
-    "keydown",
-    Raw::of(fn(e : Raw) {
-      let mod = truth(e, "metaKey") || truth(e, "ctrlKey")
-      let key = str(e, "key").to_lower()
-      if mod && key == "s" {
-        ignore(call(e, "preventDefault", []))
-        self.save()
-        return
-      }
-      let target = e.get("target")
-      if (
-          exists(get(target, "matches")) &&
-          call(target, "matches", [Raw::of("input,textarea,select")]).strict_equal(
-            Raw::of(true),
-          )
-        ) ||
-        self.busy ||
-        self.mode != Level {
-        return
-      }
-      if mod && key == "z" {
-        ignore(call(e, "preventDefault", []))
-        ignore(
-          call(
-            self.editor,
-            if truth(e, "shiftKey") {
-              "redo"
-            } else {
-              "undo"
-            },
-            [],
-          ),
-        )
-      }
-      if key == "f" {
-        self.focus()
-      }
-    }),
-  )
+    }
+    if key == "f" {
+      self.focus()
+    }
+  })
 }
 
 ///|
 async fn start_editor() -> Unit {
-  let three = load_module("three").wait()
-  let editor = new_instance(
-    load_module("/upstream/js/Editor.js").wait().get("Editor"),
-    [],
-  )
-  ignore(
-    call(editor.get("config"), "setKey", [
-      Raw::of("settings/history"),
-      Raw::of(false),
-    ]),
-  )
-  let viewport = new_instance(
-    load_module("/upstream/js/Viewport.js").wait().get("Viewport"),
-    [editor],
-  ).get("dom")
+  let three = import_three().wait()
+  let editor = open_editor().wait()
+  editor.set_history_storage(false)
+  let viewport = create_viewport(editor).wait()
   append(by_id("level-workspace"), viewport)
-  let realistic = call(viewport, "querySelector", [
-    Raw::of("option[value='realistic']"),
-  ])
-  if exists(realistic) {
-    ignore(call(realistic, "remove", []))
+  if viewport.query_selector("option[value='realistic']") is Some(option) {
+    option.reinterpret_as_node().remove()
   }
-  let renderer = new_instance(three.get("WebGLRenderer"), [
-    @archive.obj([("antialias", Raw::of(true))]),
-  ])
-  let commands = Map([])
-  for
-    key in [
-      "SetPositionCommand", "SetRotationCommand", "SetScaleCommand", "SetMaterialCommand",
-      "SetValueCommand", "Command",
-    ] {
-    let base = if key == "Command" {
-      "/upstream/js/"
-    } else {
-      "/upstream/js/commands/"
-    }
-    commands[key] = load_module(base + key + ".js").wait().get(key)
-  }
+  let renderer = three.renderer()
+  let commands = import_commands().wait()
+  let command_class = import_command_class().wait()
   let categories = Map([])
-  for opt in @model.array(by_id("category"), "options") {
-    categories[str(opt, "value")] = str(opt, "text")
+  for opt in by_id("category").query_selector_all("option") {
+    if opt.get_attribute("value") is Some(value) {
+      categories[value] = opt.text_content()
+    }
   }
   let abilities : AbilitySettings = @json.from_json(api("abilities").to_json())
   let w : Workspace = {
@@ -348,8 +261,9 @@ async fn start_editor() -> Unit {
     renderer,
     three,
     commands,
+    command_class,
     categories,
-    background: new_instance(three.get("Color"), [Raw::of(0x222d38)]),
+    background: three.background_color(0x222d38),
     entities: [],
     collisions: [],
     selection: Nothing,
@@ -360,30 +274,24 @@ async fn start_editor() -> Unit {
     scene_dirty: false,
     skills_dirty: false,
     version: 0,
-    game_bg: Raw::null(),
+    game_bg: editor.scene().background(),
     abilities,
-    templates: Raw::null(),
+    templates: None,
     definitions: [],
   }
-  w.dispatch("rendererCreated", args=[renderer])
-  ignore(call(editor, "setViewportShading", [Raw::of("solid")]))
+  editor.renderer_created(renderer)
+  editor.set_shading("solid")
   w.events()
   w.refresh()
   let project = api("scene")
   set_text(
-    call(by_id("loading"), "querySelector", [Raw::of("p")]),
+    by_id("loading").query_selector("p").unwrap(),
     "构建编辑视图…",
   )
-  ignore(
-    promise(call(editor, "fromJSON", [@model.unpack_scene_transfer(project)])).wait(),
-  )
-  w.game_bg = w.scene().get("background")
-  w.scene().set("background", w.background)
-  let helpers = Raw::object()
-  for k in ["gridHelper", "cameraHelpers", "lightHelpers", "skeletonHelpers"] {
-    helpers.set(k, Raw::of(false))
-  }
-  w.dispatch("showHelpersChanged", args=[helpers])
+  editor.load_project(@model.unpack_scene_transfer(project)).wait()
+  w.game_bg = w.scene().background()
+  w.scene().set_background(w.background)
+  editor.show_helpers(false, false, false, false)
   w.index_entities()
   let floors : Array[Double] = []
   for n in w.entities {
@@ -392,7 +300,7 @@ async fn start_editor() -> Unit {
       floors.push(h)
     }
     if category(n) == "hives" {
-      option(by_id("landmark"), uuid(n), title(n))
+      option(by_id("landmark"), n.uuid(), title(n))
     }
   }
   floors.sort_by((a, b) => b.compare(a))
@@ -408,15 +316,15 @@ async fn start_editor() -> Unit {
       w.entities
       .iter()
       .find_first(n => {
-        category(n) == "hives" && str(entity(n), "id") == "awakening"
+        category(n) == "hives" && str(n.entity(), "id") == "awakening"
       })
       .unwrap_or(w.entities[0]),
     )
   }
-  by_id("loading").set("hidden", Raw::of(true))
+  by_id("loading").set_attribute("hidden", "")
   status("本地项目已打开")
   w.refresh()
-  w.dispatch("windowResize")
+  w.editor.resized()
 }
 
 ///|
@@ -427,10 +335,10 @@ fn main {
         e => {
           let m = message(e)
           set_text(
-            call(by_id("loading"), "querySelector", [Raw::of("strong")]),
+            by_id("loading").query_selector("strong").unwrap(),
             "项目未能打开",
           )
-          set_text(call(by_id("loading"), "querySelector", [Raw::of("p")]), m)
+          set_text(by_id("loading").query_selector("p").unwrap(), m)
           status(m, error=true)
         }
       }

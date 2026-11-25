@@ -2,24 +2,8 @@
 extern "js" fn run_moon(args : FixedArray[String]) -> Unit = "args => process.getBuiltinModule('child_process').execFileSync('moon',args,{stdio:'inherit'})"
 
 ///|
-extern "js" fn executable() -> String = "()=>process.argv[1]"
-
-///|
-extern "js" fn rename_file(source : String, destination : String) -> Unit = "(a,b)=>process.getBuiltinModule('fs').renameSync(a,b)"
-
-///|
-extern "js" fn unique_id() -> String = "()=>crypto.randomUUID()"
-
-///|
-fn read_catalog() -> Record raise {
-  let records = Map([])
-  for name in @archive.list_files("content/levels/city") {
-    if name.strip_suffix(".json") is Some(stem) {
-      records[stem.to_owned()] = catalog(stem.to_owned())
-    }
-  }
-  records
-}
+#module("node:fs")
+extern "js" fn rename_file(source : String, destination : String) -> Unit = "renameSync"
 
 ///|
 fn required_roles(level : @catalog.Level) -> Array[String] {
@@ -39,70 +23,78 @@ fn required_roles(level : @catalog.Level) -> Array[String] {
 }
 
 ///|
-fn bake_if_changed(records : Record, level : @catalog.Level) -> Unit raise {
-  let hashes = [@archive.digest(@archive.read_file(executable()))]
+#derive(FromJson, ToJson)
+priv struct ArtCache {
+  digest : String
+  files : Array[String]
+}
+
+///|
+fn sha256(data : Bytes) -> String {
+  @crypto.bytes_to_hex_string(@crypto.sha256(data))
+}
+
+///|
+fn bake_if_changed(level : @catalog.Level) -> Unit raise {
+  // On Node the first two arguments identify the runtime and the compiled script.
+  let hashes = [sha256(@fs.read_file_to_bytes(@env.args()[1]))]
   for dir in ["content/art", "content/levels/city"] {
-    for name in @archive.list_files(dir) {
+    let names = @fs.read_dir(dir).to_owned()
+    names.sort_by(String::lexical_compare)
+    for name in names {
       hashes.push(name)
-      hashes.push(@archive.digest(@archive.read_file(dir + "/" + name)))
+      hashes.push(sha256(@fs.read_file_to_bytes(dir + "/" + name)))
     }
   }
-  let digest = @archive.digest(@archive.Raw::of(hashes.join("\n")))
+  let digest = sha256(@utf8.encode(hashes.join("\n")))
   let dest = "public/generated/art"
   let stamp = "_build/city-art-cache.json"
-  let cached = if @archive.exists(stamp) {
-    read_json(stamp) catch {
-      _ => @json.null
-    }
-  } else {
-    @json.null
+  let cached : ArtCache? = Some(@json.from_json(read_json(stamp))) catch {
+    _ => None
   }
-  if cached is Object(c) &&
-    field(c, "digest") == Json::string(digest) &&
-    field(c, "files") is Array(files) &&
-    !files.is_empty() &&
-    files.every(v => v is String(name) && @archive.exists(dest + "/" + name)) {
+  if cached is Some(entry) &&
+    entry.digest == digest &&
+    !entry.files.is_empty() &&
+    entry.files.every(name => @fs.path_exists(dest + "/" + name)) {
     return
   }
   @art.bake_city(
     "content/art",
     dest,
-    @art.FixtureLayout::from_catalog(
-      required(records, "barriers"),
-      required(records, "controls"),
-    ),
+    @art.FixtureLayout::from_catalog(level.barriers, level.controls),
     required_roles(level),
   )
   let files = [
     "folded-scene.json.gz", "folded-views.json.gz", "folded-buffers.bin.gz",
   ]
-  for name in @archive.list_files(dest + "/images") {
+  let images = @fs.read_dir(dest + "/images").to_owned()
+  images.sort_by(String::lexical_compare)
+  for name in images {
     files.push("images/" + name)
   }
-  let meta : Json = {
-    "digest": Json::string(digest),
-    "files": Json::array(files.map(Json::string)),
+  let entry : ArtCache = { digest, files, }
+  guard @env.rand(16) is Some(random) else {
+    raise Failure("Cannot allocate a unique cache file name")
   }
-  let tmp = stamp + "." + unique_id()
-  write_text(tmp, meta.stringify())
+  let tmp = stamp + "." + @hex.encode(random)
+  @fs.write_string_to_file(tmp, @json.to_json(entry).stringify())
   rename_file(tmp, stamp)
 }
 
 ///|
 fn main {
   try {
-    let records = read_catalog()
-    let level = @catalog.decode(records)
+    let level = @catalog.decode(@catalog.read_directory("content/levels/city"))
     run_moon([
       "run", "--quiet", "scripts/tuning.mbtx", "--", "content/abilities.json", "simulation/tuning.generated.mbt",
     ])
-    generate_levels(records, level)
+    generate_levels(level)
     generate_audio()
-    bake_if_changed(records, level)
+    bake_if_changed(level)
   } catch {
-    e => report_error(e.to_string())
+    e => {
+      eprintln(e)
+      @env.exit(1)
+    }
   }
 }
-
-///|
-extern "js" fn report_error(message : String) -> Unit = "s=>{console.error(s);process.exitCode=1}"

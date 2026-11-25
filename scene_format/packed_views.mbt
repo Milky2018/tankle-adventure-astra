@@ -9,6 +9,42 @@ pub(all) struct BufferView {
 }
 
 ///|
+pub fn element_width(name : String) -> Int32? {
+  match name {
+    "Uint8Array" | "Uint8ClampedArray" | "Int8Array" => Some(1)
+    "Uint16Array" | "Int16Array" => Some(2)
+    "Float32Array" | "Uint32Array" | "Int32Array" => Some(4)
+    "Float64Array" => Some(8)
+    _ => None
+  }
+}
+
+///|
+pub fn BufferView::check_range(
+  self : BufferView,
+  bytes : Int32,
+  id~ : String,
+) -> Unit raise {
+  guard element_width(self.type_name) is Some(stride) else {
+    raise Failure("Packed view \{id}: unsupported array type \{self.type_name}")
+  }
+  let offset = self.byte_offset
+  if offset % stride != 0 {
+    raise Failure(
+      "Packed view \{id}: byte offset \{offset} is not aligned to \{stride} bytes for \{self.type_name}",
+    )
+  }
+  if offset < 0 ||
+    offset > bytes ||
+    self.length < 0 ||
+    self.length > (bytes - offset) / stride {
+    raise Failure(
+      "Packed view \{id}: \{self.type_name} at byte \{offset} with \{self.length} elements is outside the \{bytes}-byte buffer",
+    )
+  }
+}
+
+///|
 pub impl @json.ToJson for BufferView with fn to_json(self) {
   let fields : Map[String, Json] = {
     "byteOffset": self.byte_offset,

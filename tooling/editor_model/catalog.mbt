@@ -8,15 +8,7 @@ priv struct EditableCatalog {
 
 ///|
 fn EditableCatalog::read() -> EditableCatalog raise {
-  let files = Map([])
-  for file in @archive.list_files(directory) {
-    if file.strip_suffix(".json") is Some(stem) {
-      files[stem.to_owned()] = @json.parse(
-        buffer_text(@archive.read_file(directory + "/" + file)),
-      )
-    }
-  }
-  { files, }
+  { files: @catalog.read_directory(directory), }
 }
 
 ///|
@@ -31,19 +23,17 @@ fn EditableCatalog::rows(
 }
 
 ///|
-fn EditableCatalog::find(self : EditableCatalog, e : Raw) -> Int32? {
-  let k = str(e, "collection")
+fn EditableCatalog::find(self : EditableCatalog, e : EntityRef) -> Int32? {
+  let k = e.collection
   let rows = self.rows(k)
-  let slot = get(e, "index")
-  if collidable(k) && exists(slot) {
-    let i : Int32 = slot.cast()
+  if collidable(k) && e.index is Some(i) {
     return match rows.get(i) {
-      Some({ "id": String(id), .. }) if id == str(e, "id") => Some(i)
+      Some({ "id": String(id), .. }) if id == e.id => Some(i)
       _ => None
     }
   }
   let key = if k == "barriers" { "circuitKey" } else { "id" }
-  let id = Json::string(str(e, "key"))
+  let id = Json::string(e.key)
   for i, row in rows {
     if row is Object(record) && record.get(key) == Some(id) {
       return Some(i)
@@ -57,14 +47,16 @@ fn EditableCatalog::find(self : EditableCatalog, e : Raw) -> Int32? {
 /// A reference to the current entity itself is omitted in the delete dialog.
 fn EditableCatalog::references(
   self : EditableCatalog,
-) -> Map[String, Array[String]] {
-  let sources = if @archive.exists("simulation") {
+) -> Map[String, Array[String]] raise {
+  let sources = if @fs.path_exists("simulation") {
+    let files = @fs.read_dir("simulation").to_owned()
+    files.sort_by(String::lexical_compare)
     [
-      for file in @archive.list_files("simulation") if file.has_suffix(".mbt") &&
+      for file in files if file.has_suffix(".mbt") &&
       !file.contains("generated") &&
       !file.contains("_test") &&
       !file.contains("_wbtest") => {
-        (file, buffer_text(@archive.read_file("simulation/" + file)))
+        (file, @fs.read_file_to_string("simulation/" + file))
       }
     ]
   } else {

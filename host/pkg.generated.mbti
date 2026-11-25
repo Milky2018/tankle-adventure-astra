@@ -4,22 +4,21 @@ package "milky/tankle-astra/host"
 import {
   "moonbit-community/three/core",
   "moonbit-community/three/renderers/webgl",
+  "moonbitlang/core/json",
 }
 
 // Values
-pub fn arrow(Canvas, Double, Double, Double) -> Unit
+pub fn arrow(@webgl.CanvasRenderingContext2D, Double, Double, Double) -> Unit
 
 pub fn attribute(String, String, String) -> Unit
 
 pub fn audio_resume(Audio) -> Unit
 
-pub fn audio_voice(Audio, Bool, Double, Double, Double, Double, Double, Double, Double, String, Double, String, Double) -> Unit
-
 pub fn audio_volume(Audio, Double) -> Unit
 
-pub fn canvas(String) -> Canvas
+pub fn canvas(String) -> @webgl.CanvasRenderingContext2D
 
-pub fn canvas_begin(Canvas, Int32, Int32, Double) -> Unit
+pub fn canvas_begin(@webgl.CanvasRenderingContext2D, Int32, Int32, Double) -> Unit
 
 pub fn capture_pointer() -> Unit
 
@@ -33,11 +32,11 @@ pub fn create_audio() -> Audio
 
 pub fn create_renderer() -> @webgl.WebGLRenderer
 
-pub fn diagnostics(() -> String) -> Unit
+pub fn diagnostics(() -> @json.Json, () -> Double) -> Unit
 
 pub fn direct_entry() -> Bool
 
-pub fn dot(Canvas, Double, Double, Double, String) -> Unit
+pub fn dot(@webgl.CanvasRenderingContext2D, Double, Double, Double, String) -> Unit
 
 pub fn frame((Double) -> Unit) -> Unit
 
@@ -51,9 +50,9 @@ pub fn html(String, String) -> Unit
 
 pub fn inspect_projection((Double, Double, Double) -> FixedArray[Double]) -> Unit
 
-pub fn load_scene(String, (@core.Object3D) -> Unit, (String) -> Unit) -> Unit
+pub async fn load_scene(String) -> @core.Object3D
 
-pub fn music(Audio, String, Double, Bool, Bool) -> Unit
+pub fn mark(String) -> Unit
 
 pub fn on_blur(() -> Unit) -> Unit
 
@@ -83,7 +82,7 @@ pub fn read_save() -> String
 
 pub fn ready() -> Unit
 
-pub fn rectangle(Canvas, Double, Double, Double, Double, String, Double) -> Unit
+pub fn rectangle(@webgl.CanvasRenderingContext2D, Double, Double, Double, Double, String, Double) -> Unit
 
 pub fn release_pointer() -> Unit
 
@@ -115,9 +114,25 @@ pub fn write_save(String) -> Unit
 pub struct Audio {
   // private fields
 }
+pub fn Audio::play_voice(Self, Voice, gain? : Double, pan? : Double) -> Unit
+pub fn Audio::update_music(Self, String, volume~ : Double, paused~ : Bool, restart~ : Bool) -> Unit
 
-pub type Canvas
+pub(all) struct Voice {
+  source : VoiceSource
+  duration : Double
+  gain : Double
+  delay : Double
+  attack : Double
+  hold : Double
+  filter : (String, Double)?
+}
+
+pub(all) enum VoiceSource {
+  Noise
+  Tone(wave~ : String, from_hz~ : Double, to_hz~ : Double)
+}
 
 // Type aliases
+pub using @webgl {type CanvasRenderingContext2D as Canvas}
 
 // Traits

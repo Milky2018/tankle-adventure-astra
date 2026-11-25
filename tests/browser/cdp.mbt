@@ -5,16 +5,12 @@
 type Chrome
 
 ///|
-#external
-type Stream
+#module("node:os")
+extern "js" fn system_tmpdir() -> String = "tmpdir"
 
 ///|
-extern "js" fn temp_profile() -> String =
-  #| () => process.getBuiltinModule("fs").mkdtempSync(process.getBuiltinModule("path").join(process.getBuiltinModule("os").tmpdir(),"tankle-browser-"))
-
-///|
-extern "js" fn remove_profile(path : String) -> Unit =
-  #| p => process.getBuiltinModule("fs").rmSync(p,{recursive:true,force:true,maxRetries:6})
+#module("node:fs")
+extern "js" fn make_temp(prefix : String) -> String = "mkdtempSync"
 
 ///|
 extern "js" fn launch(executable : String, args : FixedArray[String]) -> Chrome =
@@ -25,42 +21,22 @@ extern "js" fn kill(proc : Chrome) -> @js_async.Promise[Unit] =
   #| p => new Promise(r=>{if(p.exitCode!==null||p.signalCode!==null)r();else {p.once("exit",r);p.kill()}})
 
 ///|
-extern "js" fn pipe_stream(proc : Chrome) -> Stream =
-  #| p=>p.stdio[4].setEncoding("utf8")[Symbol.asyncIterator]()
-
-///|
-extern "js" fn read_pipe(stream : Stream) -> @js_async.Promise[String] =
-  #| r=>r.next().then(({value,done})=>{if(done)throw Error("Chrome closed its DevTools pipe");return value})
+extern "js" fn debugger_output(proc : Chrome) -> @js_async.JsReadableStream =
+  #| p=>process.getBuiltinModule("stream").Readable.toWeb(p.stdio[4])
 
 ///|
 extern "js" fn write_pipe(proc : Chrome, json : String) -> Unit =
   #| (p,msg)=>p.stdio[3].write(msg+"\0")
 
 ///|
-extern "js" fn save_image(path : String, base64 : String) -> Unit =
-  #| (p,v)=>process.getBuiltinModule("fs").writeFileSync(p,Buffer.from(v,"base64"))
-
-///|
-extern "js" fn mkdir(path : String) -> Unit =
-  #| p=>process.getBuiltinModule("fs").mkdirSync(p,{recursive:true})
-
-///|
-extern "js" fn file_exists(path : String) -> Bool =
-  #| p=>process.getBuiltinModule("fs").existsSync(p)
-
-///|
-extern "js" fn now_ms() -> Double = "()=>performance.now()"
-
-///|
 priv struct Browser {
   proc : Chrome
-  stream : Stream
-  mut carry : String
+  stream : @js_async.ReadableStream
   mut id : Int32
   mut session : String
   errors : Array[String]
   base : String
-  mut yaw : Double
+  mut probe_id : String
   mut firing : Bool
   mut width : Int32
   mut height : Int32
@@ -100,16 +76,15 @@ async fn Browser::command(
   }
   write_pipe(self.proc, Json::object(msg).stringify())
   for ;; {
-    while self.carry.find("\u0000") is None {
-      self.carry += @async.with_timeout(
+    guard @async.with_timeout(
         30000,
-        () => read_pipe(self.stream).wait(),
+        () => self.stream.read_until(b"\x00"),
         error=Failure("Chrome stopped responding to " + verb),
       )
+      is Some(bytes) else {
+      raise Failure("Chrome closed its DevTools pipe")
     }
-    let end = self.carry.find("\u0000").unwrap()
-    let m = @json.parse(self.carry[:end])
-    self.carry = self.carry[end + 1:].to_owned()
+    let m = @json.parse(@utf8.decode(bytes))
     if prop(m, "id") == Json::number(self.id.to_double()) {
       guard prop(m, "error") is Null else {
         raise Failure(verb + ": " + prop(m, "error").stringify())
@@ -117,6 +92,7 @@ async fn Browser::command(
       return prop(m, "result")
     }
     match prop(m, "method") {
+      String("Runtime.executionContextsCleared") => self.probe_id = ""
       String("Runtime.exceptionThrown") =>
         self.errors.push(
           prop(prop(m, "params"), "exceptionDetails").stringify(),
@@ -150,6 +126,13 @@ async fn Browser::attach(self : Browser) -> Unit {
   for verb in ["Page.enable", "Runtime.enable", "Network.enable"] {
     ignore(self.command(verb))
   }
+  ignore(
+    self.command("Page.addScriptToEvaluateOnNewDocument", params={
+      "source": @fs.read_file_to_string(
+        "_build/js/release/build/tests/browser/probe/probe.js",
+      ),
+    }),
+  )
   self.resize(1280, 720)
 }
 
@@ -168,16 +151,36 @@ async fn Browser::resize(self : Browser, w : Int32, h : Int32) -> Unit {
 }
 
 ///|
-async fn Browser::evaluate(self : Browser, expr : String) -> Json {
-  let r = self.command("Runtime.evaluate", params={
-    "expression": expr,
-    "awaitPromise": true,
+async fn Browser::probe(self : Browser, request : @protocol.Request) -> Json {
+  if self.probe_id == "" {
+    let remote = self.command("Runtime.evaluate", params={
+      "expression": "globalThis.__tankleProbe",
+    })
+    guard prop(prop(remote, "result"), "objectId") is String(id) else {
+      return @json.null
+    }
+    self.probe_id = id
+  }
+  let payload = @json.ToJson::to_json(request)
+  let r = self.command("Runtime.callFunctionOn", params={
+    "objectId": self.probe_id,
+    "functionDeclaration": "function(request){return this(request)}",
+    "arguments": [{ "value": payload }],
     "returnByValue": true,
+    "awaitPromise": true,
     "userGesture": true,
-  })
+  }) catch {
+    Failure(msg) if msg.contains("Cannot find context") ||
+      msg.contains("Could not find object") ||
+      msg.contains("Inspected target navigated") => {
+      self.probe_id = ""
+      return @json.null
+    }
+    err => raise err
+  }
   guard prop(r, "exceptionDetails") is Null else {
     raise Failure(
-      "Browser evaluation: " + prop(r, "exceptionDetails").stringify(),
+      payload.stringify() + ": " + prop(r, "exceptionDetails").stringify(),
     )
   }
   prop(prop(r, "result"), "value")
@@ -186,42 +189,44 @@ async fn Browser::evaluate(self : Browser, expr : String) -> Json {
 ///|
 async fn Browser::until(
   self : Browser,
-  condition : String,
+  description : String,
+  ready : async () -> Bool,
   timeout~ : Int32 = 15000,
 ) -> Unit {
-  let start = now_ms()
-  while now_ms() - start < timeout.to_double() {
-    if self.evaluate(condition) is True {
+  let start = @async.now()
+  while @async.now() - start < timeout.to_int64() {
+    if ready() {
       return
     }
     @async.sleep(35)
   }
   raise Failure(
-    "Timed out waiting for " +
-    condition +
-    ": " +
-    text(self.evaluate("document.body.innerText.slice(0,400)")),
+    "Timed out waiting for " + description + ": " + text(self.probe(BodyText)),
   )
+}
+
+///|
+async fn Browser::game_ready(self : Browser) -> Bool {
+  self.probe(GameReady) is True
 }
 
 ///|
 async fn Browser::goto(self : Browser, suffix : String) -> Unit {
   // Blank the old document before observing readiness on navigations to the same URL.
   ignore(self.command("Page.navigate", params={ "url": "about:blank" }))
-  self.until("location.href==='about:blank'")
+  self.until("blank page", () => self.probe(PageUrl) == "about:blank")
   ignore(self.command("Page.navigate", params={ "url": self.base + suffix }))
-  self.until(
-    "typeof window.__typedRead==='function'&&!document.body.classList.contains('starting')",
-    timeout=90000,
-  )
-  self.yaw = -@math.PI / 2
+  self.until("game startup", () => self.game_ready(), timeout=90000)
   self.firing = false
 }
 
 ///|
 async fn Browser::shot(self : Browser, name : String) -> Unit {
   let r = self.command("Page.captureScreenshot", params={ "format": "png" })
-  save_image("output/browser/" + name + ".png", text(prop(r, "data")))
+  @fs.write_bytes_to_file(
+    "output/browser/" + name + ".png",
+    @base64.decode(text(prop(r, "data"))),
+  )
 }
 
 ///|
@@ -234,7 +239,7 @@ fn ensure(ok : Bool, message : String) -> Unit raise {
 ///|
 fn chrome_path() -> String raise {
   if @env.get_env_var("CHROME") is Some(path) {
-    ensure(file_exists(path), "Chrome executable does not exist: " + path)
+    ensure(@fs.path_exists(path), "Chrome executable does not exist: " + path)
     return path
   }
   for
@@ -242,7 +247,7 @@ fn chrome_path() -> String raise {
       "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/usr/bin/google-chrome",
       "/usr/bin/chromium", "/usr/bin/chromium-browser", "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     ] {
-    if file_exists(p) {
+    if @fs.path_exists(p) {
       return p
     }
   }

@@ -5,7 +5,9 @@ fn index_triangles(
 ) -> @core.TypedArray {
   let fields = attrs
     .values()
-    .map(a => (array_bytes(a.array), a.item_size * a.array.bytes_per_element()))
+    .map(a => {
+      (@archive.byte_view(a.array), a.item_size * a.array.bytes_per_element())
+    })
     .to_array()
   let stride = fields.iter().fold(init=0, (total, field) => total + field.1)
   let first = []
@@ -51,9 +53,6 @@ fn index_triangles(
 }
 
 ///|
-extern "js" fn array_bytes(data : @core.TypedArray) -> Bytes = "a => new Uint8Array(a.buffer, a.byteOffset, a.byteLength)"
-
-///|
 /// Resource indices and decoded geometry are shared by the color and depth draws.
 priv struct FittingBake {
   scene : Raw
@@ -61,14 +60,14 @@ priv struct FittingBake {
   materials : Map[String, Raw]
   centers : Map[String, FixedArray[Double]]
   decoded : Map[String, @core.BufferGeometry]
-  read_view : (Raw) -> Raw
+  read_view : (Raw) -> @core.TypedArray
   mut serial : Int32
 }
 
 ///|
 pub fn bake_fittings(
   scene : Raw,
-  view : (Raw) -> Raw,
+  view : (Raw) -> @core.TypedArray,
   fixtures : FixtureLayout,
 ) -> Unit {
   if array_field(scene, "animations").length() > 0 {
@@ -88,19 +87,16 @@ pub fn bake_fittings(
 
 ///|
 fn FittingBake::center(self : FittingBake, g : Raw) -> FixedArray[Double] {
-  let id = string_field(g, "uuid")
+  let id = str(g, "uuid")
   if self.centers.get(id) is Some(v) {
     return v
   }
   let d = g.get("data")
   let a = d.get("attributes").get("position")
-  let v = if truthy(d, "boundingSphere") {
+  let v = if has_field(d, "boundingSphere") {
     d.get("boundingSphere").get("center").cast()
   } else {
-    geometry_center(
-      (self.read_view)(a.get("array")).cast(),
-      int_field(a, "itemSize"),
-    )
+    geometry_center((self.read_view)(a.get("array")), int_field(a, "itemSize"))
   }
   self.centers[id] = v
   v
@@ -108,7 +104,7 @@ fn FittingBake::center(self : FittingBake, g : Raw) -> FixedArray[Double] {
 
 ///|
 fn FittingBake::decode(self : FittingBake, g : Raw) -> @core.BufferGeometry {
-  let id = string_field(g, "uuid")
+  let id = str(g, "uuid")
   if self.decoded.get(id) is Some(v) {
     return v
   }
@@ -118,13 +114,13 @@ fn FittingBake::decode(self : FittingBake, g : Raw) -> @core.BufferGeometry {
   for k in @archive.keys(input) {
     let a = input.get(k)
     attrs[k] = @core.BufferAttribute::new(
-      (self.read_view)(a.get("array")).cast(),
+      (self.read_view)(a.get("array")),
       int_field(a, "itemSize"),
-      normalized=truthy(a, "normalized"),
+      normalized=a.get("normalized").strict_equal(Raw::of(true)),
     )
   }
-  let indices = if truthy(d, "index") {
-    (self.read_view)(d.get("index").get("array")).cast()
+  let indices = if has_field(d, "index") {
+    (self.read_view)(d.get("index").get("array"))
   } else {
     index_triangles(attrs)
   }
@@ -145,36 +141,35 @@ fn FittingBake::regroup_depth(self : FittingBake) -> Unit {
     for child in children(n) {
       visit(child)
     }
-    guard string_field(n, "type") == "BatchedMesh" &&
-      string_field(n, "name").has_prefix("static/") &&
+    guard str(n, "type") == "BatchedMesh" &&
+      str(n, "name").has_prefix("static/") &&
       binding(n).is_empty() &&
       children(n).length() == 0 &&
-      !truthy(n, "colorsTexture") &&
-      self.materials.get(string_field(n, "material")) is Some(m) &&
-      string_field(m, "type") == "MeshBasicMaterial" &&
+      !has_field(n, "colorsTexture") &&
+      self.materials.get(str(n, "material")) is Some(m) &&
+      str(m, "type") == "MeshBasicMaterial" &&
       m.get("colorWrite").strict_equal(Raw::of(false)) &&
-      !["transparent", "map", "alphaMap", "envMap"].any(k => truthy(m, k)) &&
-      !truthy(m.get("userData"), "surfaceFinish") &&
-      !truthy(n, "castShadow") else {
+      !m.get("transparent").strict_equal(Raw::of(true)) &&
+      ["map", "alphaMap", "envMap"].every(k => str(m, k).is_empty()) &&
+      str(m.get("userData"), "surfaceFinish").is_empty() &&
+      !n.get("castShadow").strict_equal(Raw::of(true)) else {
       return
     }
     let entries = array_field(n, "instanceInfo")
     guard entries.iter().filter(enabled_instance).count() >= 64 &&
-      self.geometries.get(string_field(n, "geometry")) is Some(g) else {
+      self.geometries.get(str(n, "geometry")) is Some(g) else {
       return
     }
     let data = g.get("data")
     let pos = data.get("attributes").get("position")
-    guard truthy(data, "index") &&
-      string_field(pos, "type") == "Float32Array" &&
+    guard has_field(data, "index") &&
+      str(pos, "type") == "Float32Array" &&
       int_field(pos, "itemSize") == 3 else {
       return
     }
     let matrices = matrices_for(n, textures, images)
-    let coords : FixedArray[Double] = (self.read_view)(pos.get("array")).cast()
-    let idx : FixedArray[Int32] = (self.read_view)(
-      data.get("index").get("array"),
-    ).cast()
+    let coords = (self.read_view)(pos.get("array"))
+    let idx = (self.read_view)(data.get("index").get("array"))
     let bins : Map[String, (Array[Double], Array[Int32])] = Map([])
     for i, e in entries {
       guard enabled_instance(e) else { continue }
@@ -184,16 +179,13 @@ fn FittingBake::regroup_depth(self : FittingBake) -> Unit {
           for j in 0..<16 => matrices[i * 16 + j]
         ],
       )
-      let c : FixedArray[Double] = if truthy(info, "boundingSphere") {
+      let c : FixedArray[Double] = if has_field(info, "boundingSphere") {
         info.get("boundingSphere").get("center").cast()
       } else {
         [0, 0, 0]
       }
       let key = cell_key(project(matrix, c[0], c[1], c[2]), 24)
-      if !bins.contains(key) {
-        bins[key] = ([], [])
-      }
-      let (vertices, indices) = bins[key]
+      let (vertices, indices) = bins.get_or_init(key, () => ([], []))
       let first = int_field(info, "vertexStart")
       let offset = vertices.length() / 3 - first
       for v in first..<(first + int_field(info, "vertexCount")) {
@@ -209,7 +201,7 @@ fn FittingBake::regroup_depth(self : FittingBake) -> Unit {
       }
       let start = int_field(info, "start")
       for j in start..<(start + int_field(info, "count")) {
-        indices.push(idx[j] + offset)
+        indices.push(idx.get_int(j) + offset)
       }
     }
     let cells = bins

@@ -3,41 +3,11 @@ extern "js" fn run_moon(args : FixedArray[String]) -> Unit =
   #| args=>process.getBuiltinModule("child_process").execFileSync("moon",args,{stdio:"inherit"})
 
 ///|
-extern "js" fn read_text(path : String) -> String =
-  #| p=>process.getBuiltinModule("fs").readFileSync(p,"utf8")
-
-///|
-extern "js" fn write_text(path : String, v : String) -> Unit =
-  #| (p,v)=>process.getBuiltinModule("fs").writeFileSync(p,v)
-
-///|
 async fn Browser::performance(self : Browser) -> Unit {
-  run_moon(["build", "tests/browser/probe", "--release"])
   self.goto("?chapter=folded&test")
-  let ready = self.evaluate(
-    "performance.getEntriesByName('moonbit-first-frame')[0]?.startTime??performance.now()",
-  )
-  let entries = self.evaluate(
-    "performance.getEntriesByType('resource').map(r=>r.toJSON())",
-  )
-  let loads : Array[Json] = []
-  if entries is Array(rs) {
-    for r in rs {
-      if prop(r, "transferSize") is Number(n, ..) && n > 200000 {
-        loads.push({
-          "name": prop(r, "name"),
-          "bytes": n,
-          "end": prop(r, "responseEnd"),
-        })
-      }
-    }
-  }
+  let startup = self.probe(StartupTiming)
   @async.sleep(1000)
-  ignore(
-    self.evaluate(
-      read_text("_build/js/release/build/tests/browser/probe/probe.js"),
-    ),
-  )
+  ignore(self.probe(BeginFrameSample))
   self.mouse("mouseMoved", 680, 280, 0)
   self.fire(true)
   for _ in 0..<3 {
@@ -49,9 +19,7 @@ async fn Browser::performance(self : Browser) -> Unit {
   }
   self.fire(false)
   @async.sleep(1200)
-  let times : Array[Double] = @json.from_json(
-    self.evaluate("__tankleEndFrameSample()"),
-  )
+  let times : Array[Double] = @json.from_json(self.probe(EndFrameSample))
   times.sort()
   let n = times.length()
   ensure(n > 0, "Browser recorded no animation frames")
@@ -64,12 +32,9 @@ async fn Browser::performance(self : Browser) -> Unit {
     "max": times[n - 1],
     "over33": times.filter(t => t > 33.5).length(),
   }
-  write_text(
+  @fs.write_string_to_file(
     "output/browser/performance.json",
-    Json::object({
-      "startup": { "ready": ready, "resources": Json::array(loads) },
-      "result": stats,
-    }).stringify(indent=2),
+    Json::object({ "startup": startup, "result": stats }).stringify(indent=2),
   )
   println(stats.stringify())
   self.shot("performance")

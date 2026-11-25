@@ -2,58 +2,59 @@
 pub type Raw = @core.JsValue
 
 ///|
-pub extern "js" fn read_file(path : String) -> Raw = "p=>process.getBuiltinModule('fs').readFileSync(p)"
+pub using @compression {compress, decompress}
 
 ///|
-pub extern "js" fn write_file(path : String, contents : Raw) -> Unit = "(p,v)=>process.getBuiltinModule('fs').writeFileSync(p,v)"
+pub extern "js" fn stringify(value : Raw) -> String = "JSON.stringify"
 
 ///|
-pub extern "js" fn gunzip(bytes : Raw) -> Raw = "b=>process.getBuiltinModule('zlib').gunzipSync(b)"
+extern "js" fn parse_js(text : String, on_error : (String) -> Unit) -> Raw =
+  #| (text,onError)=>{try{return JSON.parse(text)}catch(e){onError(e.message)}}
 
 ///|
-pub extern "js" fn gzip(bytes : Raw) -> Raw = "b=>process.getBuiltinModule('zlib').gzipSync(b)"
+pub fn parse(text : String) -> Raw raise {
+  let mut error = None
+  let result = parse_js(text, message => error = Some(message))
+  if error is Some(message) {
+    raise Failure("Invalid JSON: " + message)
+  }
+  result
+}
 
 ///|
-pub extern "js" fn stringify(value : Raw) -> String = "v=>JSON.stringify(v)"
+pub fn digest(bytes : Bytes) -> String {
+  @crypto.bytes_to_hex_string(@crypto.sha256(bytes))
+}
 
 ///|
-pub extern "js" fn parse(value : Raw) -> Raw = "v=>JSON.parse(v)"
-
-///|
-pub extern "js" fn digest(bytes : Raw) -> String = "b=>process.getBuiltinModule('crypto').createHash('sha256').update(b).digest('hex')"
-
-///|
-pub extern "js" fn list_files(path : String) -> FixedArray[String] = "p=>process.getBuiltinModule('fs').readdirSync(p).sort()"
-
-///|
-pub extern "js" fn exists(path : String) -> Bool = "p=>process.getBuiltinModule('fs').existsSync(p)"
-
-///|
-pub extern "js" fn mkdir(path : String) -> Unit = "p=>process.getBuiltinModule('fs').mkdirSync(p,{recursive:true})"
-
-///|
-pub extern "js" fn unlink(path : String) -> Unit = "p=>process.getBuiltinModule('fs').unlinkSync(p)"
-
-///|
-pub extern "js" fn concat(chunks : FixedArray[Raw]) -> Raw = "a=>Buffer.concat(a)"
-
-///|
-pub extern "js" fn zeros(count : Int32) -> Raw = "n=>Buffer.alloc(n)"
-
-///|
-pub extern "js" fn from_base64(data : String) -> Raw = "s=>Buffer.from(s,'base64')"
-
-///|
-pub extern "js" fn byte_view(data : Raw) -> Raw = "a=>Buffer.from(a.buffer,a.byteOffset,a.byteLength)"
+pub extern "js" fn byte_view(data : @core.TypedArray) -> Bytes = "a=>new Uint8Array(a.buffer,a.byteOffset,a.byteLength)"
 
 ///|
 pub extern "js" fn keys(value : Raw) -> FixedArray[String] = "v=>Object.keys(v??{})"
 
 ///|
-pub extern "js" fn items(value : Raw) -> FixedArray[Raw] = "v=>v??[]"
+pub fn items(value : Raw) -> FixedArray[Raw] {
+  if value.is_undefined() || value.is_null() {
+    []
+  } else {
+    value.cast()
+  }
+}
 
 ///|
-pub extern "js" fn kind(value : Raw) -> String = "v=>Array.isArray(v)?'array':typeof v"
+pub extern "js" fn is_array(value : Raw) -> Bool = "Array.isArray"
+
+///|
+pub extern "js" fn is_string(value : Raw) -> Bool = "v=>typeof v==='string'"
+
+///|
+pub extern "js" fn is_number(value : Raw) -> Bool = "v=>typeof v==='number'"
+
+///|
+extern "js" fn is_record(value : Raw) -> Bool = "v=>v!==null && typeof v==='object' && !Array.isArray(v)"
+
+///|
+pub extern "js" fn append(array : Raw, value : Raw) -> Unit = "(a,v)=>a.push(v)"
 
 ///|
 pub extern "js" fn copy(value : Raw) -> Raw = "v=>({...v})"
@@ -62,10 +63,17 @@ pub extern "js" fn copy(value : Raw) -> Raw = "v=>({...v})"
 pub extern "js" fn remove(value : Raw, key : String) -> Unit = "(v,k)=>{delete v[k]}"
 
 ///|
-pub extern "js" fn array_copy(value : Raw) -> Raw = "v=>Array.from(v)"
+pub extern "js" fn array_copy(value : @core.TypedArray) -> Raw = "a=>Array.from(a)"
 
 ///|
-pub extern "js" fn str(value : Raw, key : String) -> String = "(v,k)=>v?.[k]??''"
+pub fn str(value : Raw, key : String) -> String {
+  let field = prop(value, key)
+  if field.is_null() || field.is_undefined() {
+    ""
+  } else {
+    field.cast()
+  }
+}
 
 ///|
 pub fn prop(value : Raw, key : String) -> Raw {
@@ -79,60 +87,66 @@ pub fn prop(value : Raw, key : String) -> Raw {
 ///|
 pub fn obj(fields : Array[(String, Raw)]) -> Raw {
   let result = Raw::object()
-  for pair in fields {
-    result.set(pair.0, pair.1)
+  for (key, value) in fields {
+    result.set(key, value)
   }
   result
 }
 
 ///|
-extern "js" fn new_typed(ty : String, data : Raw) -> Raw = "(t,d)=>new globalThis[t](d)"
+/// The upstream numeric array is already a JS array. Pass it to three.mbt
+/// directly so exporting a complete city does not copy millions of doubles.
+priv struct NumberArray(Raw)
 
 ///|
-extern "js" fn typed_view(
-  ty : String,
-  bytes : Raw,
-  offset : Int32,
-  length : Int32,
-) -> Raw =
-  #| (t,b,o,n)=>new globalThis[t](b.buffer,b.byteOffset+o,n)
+impl @core.TypedArrayInit for NumberArray with fn to_js_init(self) {
+  self.0
+}
 
 ///|
-fn checked_type(ty : String) -> String {
-  match ty {
-    "Float32Array"
-    | "Float64Array"
-    | "Uint8Array"
-    | "Uint16Array"
-    | "Uint32Array"
-    | "Int8Array"
-    | "Int16Array"
-    | "Int32Array" => ty
-    _ => abort("Unsupported attribute type: " + ty)
+pub fn typed(name : String, values : Raw) -> @core.TypedArray {
+  guard @scene_format.element_width(name) is Some(_) else {
+    abort("Unsupported attribute type: " + name)
   }
+  @core.TypedArray::new_by_name(name, NumberArray(values))
 }
 
 ///|
-pub fn typed(ty : String, values : Raw) -> Raw {
-  new_typed(checked_type(ty), values)
-}
-
-///|
-pub fn view(buffer : Raw, descriptor : Raw) -> Raw {
-  typed_view(
-    checked_type(str(descriptor, "type")),
-    buffer,
-    descriptor.get("byteOffset").cast(),
-    descriptor.get("length").cast(),
+/// Bytes has the Uint8Array representation on this package's JS target.
+pub fn typed_view(
+  bytes : Bytes,
+  name : String,
+  offset~ : Int32,
+  length~ : Int32,
+) -> @core.TypedArray {
+  guard @scene_format.element_width(name) is Some(_) else {
+    abort("Unsupported attribute type: " + name)
+  }
+  let source : @core.TypedArray = Raw::of(bytes).cast()
+  @core.TypedArray::view_by_name(
+    name,
+    source.buffer(),
+    byte_offset=source.byte_offset() + offset,
+    length~,
   )
 }
 
 ///|
-pub fn read_json_gz(path : String) -> Raw {
-  parse(gunzip(read_file(path)))
+pub fn view(buffer : Bytes, descriptor : Raw) -> @core.TypedArray {
+  typed_view(
+    buffer,
+    str(descriptor, "type"),
+    offset=descriptor.get("byteOffset").cast(),
+    length=descriptor.get("length").cast(),
+  )
 }
 
 ///|
-pub fn write_json_gz(path : String, value : Raw) -> Unit {
-  write_file(path, gzip(Raw::of(stringify(value))))
+pub fn read_json_gz(path : String) -> Raw raise {
+  parse(@utf8.decode_lossy(decompress(@fs.read_file_to_bytes(path))))
+}
+
+///|
+pub fn write_json_gz(path : String, value : Raw) -> Unit raise {
+  @fs.write_bytes_to_file(path, compress(@utf8.encode(stringify(value))))
 }

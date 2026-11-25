@@ -2,21 +2,21 @@
 package "milky/tankle-astra/tooling/art"
 
 import {
+  "milky/tankle-astra/tooling/catalog",
   "moonbit-community/three/core",
-  "moonbitlang/core/json",
   "moonbitlang/core/set",
 }
 
 // Values
 pub fn bake_city(String, String, FixtureLayout, Array[String]) -> Unit raise
 
-pub fn bake_fittings(@core.JsValue, (@core.JsValue) -> @core.JsValue, FixtureLayout) -> Unit
+pub fn bake_fittings(@core.JsValue, (@core.JsValue) -> @core.TypedArray, FixtureLayout) -> Unit
 
-pub fn camera_faces(@core.JsValue, (@core.JsValue) -> @core.JsValue) -> Unit
+pub fn camera_faces(@core.JsValue, (@core.JsValue) -> @core.TypedArray) -> Unit
 
-pub fn extract_repeats(@core.JsValue, (@core.JsValue) -> @core.JsValue) -> Unit
+pub fn extract_repeats(@core.JsValue, (@core.JsValue) -> @core.TypedArray) -> Unit
 
-pub fn room_portals(@core.JsValue, (@core.JsValue) -> @core.JsValue) -> Unit
+pub fn room_portals(@core.JsValue, (@core.JsValue) -> @core.TypedArray) -> Unit
 
 // Errors
 
@@ -25,7 +25,7 @@ pub struct FixtureLayout {
   walls : Map[String, (Double, Double, Double)]
   controls : @set.Set[String]
 }
-pub fn FixtureLayout::from_catalog(@json.Json, @json.Json) -> Self raise
+pub fn FixtureLayout::from_catalog(Array[@catalog.Solid], Array[@catalog.Control]) -> Self
 
 // Type aliases
 

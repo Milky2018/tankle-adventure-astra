@@ -1,38 +1,44 @@
 ///|
-using @model {type Raw, str, exists, call}
+using @model {type Raw, str, exists}
 
 ///|
-extern "js" fn dirname(path : String) -> String = "p=>process.getBuiltinModule('path').dirname(p)"
+extern "js" fn rename(a : String, b : String) -> @js_async.Promise[Unit] =
+  #| (a,b)=>process.getBuiltinModule("node:fs/promises").rename(a,b)
 
 ///|
-extern "js" fn rename(a : String, b : String) -> Unit = "(a,b)=>process.getBuiltinModule('fs').renameSync(a,b)"
+fn temp_name(path : String) -> String raise {
+  guard @env.rand(16) is Some(random) else {
+    raise Failure("Cannot generate a temporary file name")
+  }
+  path + "." + @hex.encode(random)
+}
 
 ///|
-extern "js" fn temp_name(path : String) -> String = "p=>p+'.'+crypto.randomUUID()"
+#external
+priv type OutputFile
 
 ///|
-extern "js" fn open_new(path : String) -> Int32 = "p=>process.getBuiltinModule('fs').openSync(p,'wx')"
+extern "js" fn open_new(path : String) -> @js_async.Promise[OutputFile] =
+  #| p=>process.getBuiltinModule("node:fs/promises").open(p,"wx")
 
 ///|
-extern "js" fn close_file(fd : Int32) -> Unit = "fd=>process.getBuiltinModule('fs').closeSync(fd)"
+extern "js" fn OutputFile::close(self : OutputFile) -> @js_async.Promise[Unit] =
+  #| file=>file.close()
 
 ///|
-extern "js" fn write_fd(fd : Int32, s : String) -> Unit = "(fd,s)=>process.getBuiltinModule('fs').writeFileSync(fd,s)"
+extern "js" fn OutputFile::write(
+  self : OutputFile,
+  text : String,
+) -> @js_async.Promise[Unit] =
+  #| (file,text)=>file.writeFile(text)
 
 ///|
 extern "js" fn max_string_length() -> Int32 = "()=>process.getBuiltinModule('buffer').constants.MAX_STRING_LENGTH"
 
 ///|
-extern "js" fn slice(buf : Raw, start : Int32, end : Int32) -> Raw = "(b,s,e)=>b.subarray(s,e)"
-
-///|
-extern "js" fn bytes(text : String) -> Raw = "s=>Buffer.from(s)"
-
-///|
-fn write_project(path : String, p : Raw) -> Unit {
-  @archive.mkdir(dirname(path))
+async fn write_project(path : String, p : Raw) -> Unit {
+  @fs.create_dir(@path.Path(path).dirname().to_string())
   let temp = temp_name(path)
-  defer (if @archive.exists(temp) { @archive.unlink(temp) })
   let scene = p.get("scene")
   let head = @archive.copy(p)
   let library = @archive.copy(scene)
@@ -40,35 +46,40 @@ fn write_project(path : String, p : Raw) -> Unit {
   @archive.remove(library, "geometries")
   library.set("geometries", Raw::from_json([]))
   head.set("scene", library)
+  let file = open_new(temp).wait()
+  defer (if @fs.path_exists(temp) { @fs.remove_file(temp) })
   {
-    let fd = open_new(temp)
-    defer close_file(fd)
+    defer @async.protect_from_cancel(() => file.close().wait())
     let s = @archive.stringify(head)
-    write_fd(fd, s[:s.length() - 3].to_owned())
+    file.write(s[:s.length() - 3].to_owned()).wait()
     for i, g in @model.array(scene, "geometries") {
       if i > 0 {
-        write_fd(fd, ",")
+        file.write(",").wait()
       }
-      write_fd(fd, @archive.stringify(g))
+      file.write(@archive.stringify(g)).wait()
     }
-    write_fd(fd, "]}}")
+    file.write("]}}").wait()
   }
-  rename(temp, path)
+  rename(temp, path).wait()
+}
+
+///|
+fn parse_bytes(data : BytesView) -> Raw raise {
+  @archive.parse(@utf8.decode_lossy(data, ignore_bom=true))
 }
 
 ///|
 /// Full-city geometry libraries can exceed Node's maximum string size.
 /// Scan the top-level scene geometry array, then parse one record at a time.
 fn read_project(path : String) -> Raw raise {
-  let buf = @archive.read_file(path)
-  let chars : FixedArray[Int32] = buf.cast()
+  let chars = @fs.read_file_to_bytes(path)
   let n = chars.length()
   if n <= max_string_length() {
-    return @archive.parse(buf)
+    return parse_bytes(chars)
   }
   fn space(start : Int32) -> Int32 {
     let mut i = start
-    while i < n && chars[i] is (9 | 10 | 13 | 32) {
+    while i < n && chars[i].to_int() is (9 | 10 | 13 | 32) {
       i += 1
     }
     i
@@ -76,7 +87,7 @@ fn read_project(path : String) -> Raw raise {
   fn quote(start : Int32) -> Int32 raise {
     let mut i = start + 1
     while i < n {
-      match chars[i] {
+      match chars[i].to_int() {
         34 => return i
         92 => i += 2
         _ => i += 1
@@ -88,7 +99,7 @@ fn read_project(path : String) -> Raw raise {
   let mut depth = 0
   let mut scene_start = -1
   while at < n {
-    match chars[at] {
+    match chars[at].to_int() {
       123 | 91 => depth += 1
       125 | 93 => {
         depth -= 1
@@ -102,7 +113,7 @@ fn read_project(path : String) -> Raw raise {
         if depth <= 2 && at - key_start <= 12 {
           let colon = space(at + 1)
           if colon < n && chars[colon] == 58 {
-            let key = @model.buffer_text(slice(buf, key_start + 1, at))
+            let key = @utf8.decode_lossy(chars[key_start + 1:at])
             let start = space(colon + 1)
             if start < n && depth == 1 && key == "scene" && chars[start] == 123 {
               scene_start = start
@@ -117,22 +128,20 @@ fn read_project(path : String) -> Raw raise {
               let mut nested = 0
               let mut i = begin
               while i < n {
-                match chars[i] {
+                match chars[i].to_int() {
                   34 => i = quote(i)
                   44 if nested == 0 => {
-                    geos.push(@archive.parse(slice(buf, begin, i)))
+                    geos.push(parse_bytes(chars[begin:i]))
                     begin = i + 1
                   }
                   93 if nested == 0 => {
                     if space(begin) != i || !geos.is_empty() {
-                      geos.push(@archive.parse(slice(buf, begin, i)))
+                      geos.push(parse_bytes(chars[begin:i]))
                     }
                     let project = @archive.parse(
-                      @archive.concat([
-                        slice(buf, 0, start),
-                        bytes("[]"),
-                        slice(buf, i + 1, n),
-                      ]),
+                      @utf8.decode_lossy(chars[:start], ignore_bom=true) +
+                      "[]" +
+                      @utf8.decode_lossy(chars[i + 1:], ignore_bom=true),
                     )
                     project
                     .get("scene")
@@ -160,7 +169,7 @@ fn read_project(path : String) -> Raw raise {
 ///|
 fn make_templates() -> Unit raise {
   let definitions = @archive.items(
-    @archive.parse(@archive.read_file("content/editor/templates.json")),
+    @archive.parse(@fs.read_file_to_string("content/editor/templates.json")),
   )
   let project = @model.export_project()
   let scene = project.get("scene")
@@ -184,7 +193,7 @@ fn make_templates() -> Unit raise {
         str(d, "source"),
       )
     }
-    for n in @model.entity_bundle(root, template) {
+    for n in @model.entity_bundle(root, template).objects {
       if !seen.contains(@model.uuid(n)) {
         seen.add(@model.uuid(n))
         chosen.push(n)

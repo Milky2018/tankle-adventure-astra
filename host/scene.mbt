@@ -1,14 +1,5 @@
 ///|
-// ObjectLoader may finish synchronously when all textures are packed in memory.
-extern "js" fn when_textured(
-  start : ((@core.Object3D) -> Unit) -> Unit,
-) -> @js_async.Promise[@core.Object3D] = "f=>new Promise(f)"
-
-///|
-fn parse_scene(
-  tree : Json,
-  buffers : SceneBuffers,
-) -> @js_async.Promise[@core.Object3D] {
+async fn parse_scene(tree : Json, buffers : SceneBuffers) -> @core.Object3D {
   let loader = @loaders.ObjectLoader::new()
   // The override calls the default material parser after supplying packed image data.
   let defaults = @loaders.ObjectLoader::new()
@@ -21,7 +12,9 @@ fn parse_scene(
     }
     defaults.parse_materials(json, textures)
   })
-  when_textured(fn(done) {
+  // ObjectLoader.parse starts all image requests together. Restore shared arrays
+  // while the images load, then resume the game when the loader signals readiness.
+  @loaders.loader_promise(fn(done, _) {
     let scene = loader.parse(tree, on_load=done)
     fn restore(attribute : @core.BufferAttribute, array : @core.TypedArray?) {
       if array is Some(array) {
@@ -51,17 +44,14 @@ fn parse_scene(
         }
       }
     })
+    mark("art-parsed")
   })
 }
 
 ///|
-extern "js" fn game_canvas() -> @webgl.HTMLCanvasElement =
-  #| () => document.getElementById('game')
-
-///|
 pub fn create_renderer() -> @webgl.WebGLRenderer {
   @webgl.WebGLRenderer::new(
-    canvas=game_canvas(),
+    canvas=canvas_element("game"),
     antialias=true,
     power_preference="high-performance",
   )

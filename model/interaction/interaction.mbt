@@ -30,3 +30,14 @@ pub(all) enum Acquisition {
   LaserFocus
   Scope
 }
+
+///|
+#derive(Eq, Debug, FromJson(rename_cases="lowercase"))
+pub(all) enum Axis {
+  X
+  Z
+}
+
+///|
+#deprecated
+pub extend Axis with Eq::{equal, not_equal}

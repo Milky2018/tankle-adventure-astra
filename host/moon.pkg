@@ -1,10 +1,13 @@
 import {
   "milky/tankle-astra/scene_format",
   "moonbitlang/core/json",
+  "moonbitlang/core/math",
+  "tiye/dom-ffi" @dom,
   "moonbitlang/core/async",
   "moonbitlang/core/async/js_async",
   "moonbit-community/three/core",
   "moonbit-community/three/audio",
+  "moonbit-community/three/math" @three_math,
   "moonbit-community/three/loaders",
   "moonbit-community/three/renderers/webgl",
 }

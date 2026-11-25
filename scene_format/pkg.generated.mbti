@@ -6,6 +6,7 @@ import {
 }
 
 // Values
+pub fn element_width(String) -> Int32?
 
 // Errors
 
@@ -24,6 +25,7 @@ pub(all) struct BufferView {
   length : Int32
   copy : Bool
 }
+pub fn BufferView::check_range(Self, Int32, id~ : String) -> Unit raise
 pub impl @json.FromJson for BufferView
 pub impl @json.ToJson for BufferView
 

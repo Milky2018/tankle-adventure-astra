@@ -1,6 +1,6 @@
 ///|
 test "arena bindings accept distinct instance IDs and reject missing bosses or covers" {
-  let data = read_catalog()
+  let data = @catalog.read_directory("content/levels/city")
   let arenas = @catalog.list(data["arenas"]).map(@catalog.object)
   let arena = arenas.iter().filter(a => a["id"] == "sorter").nth(0).unwrap()
   arena["id"] = "freight-test"
@@ -19,7 +19,7 @@ test "arena bindings accept distinct instance IDs and reject missing bosses or c
 
 ///|
 test "machinery rejects references to missing boss parts and encounter groups" {
-  let data = read_catalog()
+  let data = @catalog.read_directory("content/levels/city")
   let belts = @catalog.list(data["belts"]).map(@catalog.object)
   let drive = @catalog.object(
     belts.iter().filter(b => b.contains("drive")).nth(0).unwrap()["drive"],

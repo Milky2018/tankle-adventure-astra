@@ -1,11 +1,11 @@
 ///|
-fn city() -> Raw {
+fn city() -> Raw raise {
   @archive.read_json_gz("content/art/city.scene.json.gz")
 }
 
 ///|
-fn city_buffers() -> Raw {
-  @archive.gunzip(@archive.read_file("content/art/city.buffers.bin.gz"))
+fn city_buffers() -> Bytes raise {
+  @archive.decompress(@fs.read_file_to_bytes("content/art/city.buffers.bin.gz"))
 }
 
 ///|
@@ -16,7 +16,7 @@ fn doubles(value : Raw) -> Array[Double] {
 
 ///|
 fn fallback_number(r : Raw, key : String, fallback : Double) -> Double {
-  let v = lookup(r, key)
+  let v = @model.get(r, key)
   if v.is_undefined() {
     fallback
   } else {
@@ -25,22 +25,20 @@ fn fallback_number(r : Raw, key : String, fallback : Double) -> Double {
 }
 
 ///|
-fn position_geometry(g : Raw, bytes : Raw) -> @core.BufferGeometry {
+fn position_geometry(g : Raw, bytes : Bytes) -> @core.BufferGeometry {
   let geo = @core.BufferGeometry::new()
-  let p = lookup(g, "data.attributes.position")
+  let p = g.get("data").get("attributes").get("position")
   let array = @archive.view(bytes, p.get("array"))
   ignore(
     geo.set_attribute(
       "position",
-      @core.BufferAttribute::new(array.cast(), quantity(p, "itemSize").to_int()),
+      @core.BufferAttribute::new(array, quantity(p, "itemSize").to_int()),
     ),
   )
-  let idx = lookup(g, "data.index.array")
+  let idx = @model.get(g.get("data").get("index"), "array")
   if !idx.is_undefined() {
     ignore(
-      geo.set_index(
-        @core.BufferAttribute::new(@archive.view(bytes, idx).cast(), 1),
-      ),
+      geo.set_index(@core.BufferAttribute::new(@archive.view(bytes, idx), 1)),
     )
   }
   geo
@@ -74,19 +72,22 @@ test "enemy models stay outside the scenery cutaway, including detached boss par
   let materials = resources(scene, "materials")
   let models = []
   @archive.walk(scene.get("object"), node => {
-    let binding = name_at(node, "userData.binding")
+    let binding = @model.binding(node)
     if binding.has_prefix("enemies/") && !node.get("material").is_undefined() {
       models.push(node)
     }
   })
   let mut casings = 0
   for node in models {
-    let binding = name_at(node, "userData.binding")
-    let m = materials[name_at(node, "material")]
-    assert_true(name_at(m, "userData.renderRole").is_empty(), msg=binding)
+    let binding = @model.binding(node)
+    let m = materials[@model.str(node, "material")]
+    assert_true(
+      @model.str(@model.data(m), "renderRole").is_empty(),
+      msg=binding,
+    )
     if binding.has_suffix("/model/casting") {
       assert_eq(
-        name_at(m, "userData.surfaceFinish"),
+        @model.str(@model.data(m), "surfaceFinish"),
         "enemyEnamel",
         msg=binding,
       )
@@ -102,18 +103,18 @@ test "workshop panes transmit the scene and sit in open window frames" {
   let bytes = city_buffers()
   let glazing = Set([])
   for m in rows(scene, "materials") {
-    if name_at(m, "userData.surfaceFinish") == "glass" {
-      assert_true(flag(m, "transparent"))
+    if @model.str(@model.data(m), "surfaceFinish") == "glass" {
+      assert_true(@model.truth(m, "transparent"))
       assert_true(m.get("depthWrite").strict_equal(Raw::of(false)))
       assert_true(quantity(m, "opacity") > 0 && quantity(m, "opacity") < 1)
-      glazing.add(name_at(m, "uuid"))
+      glazing.add(@model.str(m, "uuid"))
     }
   }
   let geometries = resources(scene, "geometries")
   let bays = []
   @archive.walk(scene.get("object"), n => {
-    if name_at(n, "type") == "Group" &&
-      name_at(n, "name").has_prefix("Engine house · ") {
+    if @model.str(n, "type") == "Group" &&
+      @model.str(n, "name").has_prefix("Engine house · ") {
       bays.push(n)
     }
   })
@@ -121,17 +122,17 @@ test "workshop panes transmit the scene and sit in open window frames" {
   for bay in bays {
     let children = rows(bay, "children")
     let pane = children[children
-      .search_by(c => glazing.contains(name_at(c, "material")))
+      .search_by(c => glazing.contains(@model.str(c, "material")))
       .unwrap()]
     let vertices = position_geometry(
-        geometries[name_at(pane, "geometry")],
+        geometries[@model.str(pane, "geometry")],
         bytes,
       )
       .get_attribute("position")
       .unwrap()
     let surround = [
       for n in children if !n.strict_equal(pane) => {
-        mesh(position_geometry(geometries[name_at(n, "geometry")], bytes))
+        mesh(position_geometry(geometries[@model.str(n, "geometry")], bytes))
       }
     ]
     // Offset each sample from the centre to avoid window mullions.
@@ -154,7 +155,7 @@ test "workshop panes transmit the scene and sit in open window frames" {
       let distance = distance_to(p, @math.Vector3::new(0, 0, -1), surround)
       assert_true(
         distance.is_finite() && distance > 0.45,
-        msg=name_at(bay, "name"),
+        msg=@model.str(bay, "name"),
       )
       tested += 1
     }
@@ -166,13 +167,13 @@ test "workshop panes transmit the scene and sit in open window frames" {
 test "workshop interiors are enclosed and the open reservoir looks onto the quarry bank" {
   let scene = city()
   let bytes = city_buffers()
-  let nodes = rows(scene, "object.children")
+  let nodes = rows(scene.get("object"), "children")
   let shell = by_key(nodes, "name", "City · building envelope")
   let materials = resources(scene, "materials")
   let geometries = resources(scene, "geometries")
   for m in materials.values() {
-    let role = name_at(m, "userData.renderRole")
-    let solid = name_at(m, "userData.surfaceFinish")
+    let role = @model.str(@model.data(m), "renderRole")
+    let solid = @model.str(@model.data(m), "surfaceFinish")
       is ("paving" | "masonry" | "ironwork")
     if role is ("structure" | "floor" | "floorDetail" | "scenery" | "belt") &&
       (m.get("map").is_undefined() || solid) &&
@@ -180,13 +181,13 @@ test "workshop interiors are enclosed and the open reservoir looks onto the quar
       fallback_number(m, "opacity", 1) == 1 &&
       m.get("alphaMap").is_undefined() &&
       fallback_number(m, "alphaTest", 0) == 0 {
-      assert_false(flag(m, "transparent"), msg=role)
+      assert_false(@model.truth(m, "transparent"), msg=role)
       assert_false(m.get("depthWrite").strict_equal(Raw::of(false)), msg=role)
     }
   }
   fn mesh_for(n : Raw) -> @core.Object3D {
-    let g = position_geometry(geometries[name_at(n, "geometry")], bytes)
-    let mat = materials[name_at(n, "material")]
+    let g = position_geometry(geometries[@model.str(n, "geometry")], bytes)
+    let mat = materials[@model.str(n, "material")]
     let m = mesh(g, side=fallback_number(mat, "side", 0).to_int())
     ignore(m.matrix.from_array(doubles(n.get("matrix"))))
     m.matrix_auto_update = false
@@ -195,9 +196,9 @@ test "workshop interiors are enclosed and the open reservoir looks onto the quar
   }
   let meshes = []
   for n in rows(shell, "children") {
-    let mat = materials[name_at(n, "material")]
-    assert_eq(name_at(n, "userData.renderRole"), "enclosure")
-    assert_false(flag(mat, "transparent"))
+    let mat = materials[@model.str(n, "material")]
+    assert_eq(@model.str(@model.data(n), "renderRole"), "enclosure")
+    assert_false(@model.truth(mat, "transparent"))
     assert_false(mat.get("depthWrite").strict_equal(Raw::of(false)))
     meshes.push(mesh_for(n))
   }
@@ -249,7 +250,7 @@ test "workshop interiors are enclosed and the open reservoir looks onto the quar
     )
     assert_true(
       distance_to(p, up, meshes) > stops[stops.length() - 1] - stops[0] + 2,
-      msg=name_at(lift, "id"),
+      msg=@model.str(lift, "id"),
     )
   }
 }
@@ -268,24 +269,35 @@ test "static floor and depth batches leave the lift carriages room to descend" {
     let world = parent
       .clone()
       .multiply(@math.Matrix4::new().from_array(doubles(n.get("matrix"))))
-    if name_at(n, "type") == "BatchedMesh" &&
-      name_at(materials[name_at(n, "material")], "userData.renderRole") ==
+    if @model.str(n, "type") == "BatchedMesh" &&
+      @model.str(
+        @model.data(materials[@model.str(n, "material")]),
+        "renderRole",
+      ) ==
       "floor" {
       let matrices = doubles(
-        lookup(images[name_at(n, "matricesTexture.image")], "url.data"),
+        @model.get(
+          @model.get(
+            images[@model.str(n.get("matricesTexture"), "image")],
+            "url",
+          ),
+          "data",
+        ),
       )
       let geometry = rows(n, "geometryInfo")
       for i, entry in rows(n, "instanceInfo") {
-        guard flag(entry, "active") && flag(entry, "visible") else { continue }
+        guard @model.truth(entry, "active") && @model.truth(entry, "visible") else {
+          continue
+        }
         let g = geometry[quantity(entry, "geometryIndex").to_int()]
         let transform = world
           .clone()
           .multiply(@math.Matrix4::new().from_array(matrices, offset=i * 16))
         let lo = @math.Vector3::new(0, 0, 0).from_array(
-          doubles(lookup(g, "boundingBox.min")),
+          doubles(g.get("boundingBox").get("min")),
         )
         let hi = @math.Vector3::new(0, 0, 0).from_array(
-          doubles(lookup(g, "boundingBox.max")),
+          doubles(g.get("boundingBox").get("max")),
         )
         let box = @math.Box3::new(min=lo, max=hi).apply_matrix4(transform)
         // Landing ramps may abut a shaft. Only slabs wholly inside constrain the carriage.
@@ -306,7 +318,7 @@ test "static floor and depth batches leave the lift carriages room to descend" {
           checked += 1
           assert_true(
             box.max.y < stops[0] - 0.7,
-            msg=name_at(lift, "id") +
+            msg=@model.str(lift, "id") +
               " has static flooring in the carriage path",
           )
         }

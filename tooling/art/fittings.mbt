@@ -2,19 +2,24 @@
 type Raw = @core.JsValue
 
 ///|
-extern "js" fn string_field(obj : Raw, key : String) -> String = "(o,k) => o?.[k] ?? ''"
+using @archive {str}
 
 ///|
-extern "js" fn array_field(obj : Raw, key : String) -> FixedArray[Raw] = "(o,k) => o?.[k] ?? []"
+fn array_field(obj : Raw, key : String) -> FixedArray[Raw] {
+  @archive.items(@archive.prop(obj, key))
+}
 
 ///|
-extern "js" fn truthy(obj : Raw, key : String) -> Bool = "(o,k) => !!o?.[k]"
+fn has_field(obj : Raw, key : String) -> Bool {
+  let v = @archive.prop(obj, key)
+  !v.is_null() && !v.is_undefined()
+}
 
 ///|
 fn resource_index(items : FixedArray[Raw]) -> Map[String, Raw] {
   let result = Map([])
   for item in items {
-    result[string_field(item, "uuid")] = item
+    result[str(item, "uuid")] = item
   }
   result
 }
@@ -37,7 +42,7 @@ fn scenery(name : String) -> Bool {
 
 ///|
 fn numbered(segment : StringView) -> Bool {
-  !segment.is_empty() && segment.iter().all(c => c >= '0' && c <= '9')
+  !segment.is_empty() && segment.iter().all(c => c.is_ascii_digit())
 }
 
 ///|
@@ -60,7 +65,7 @@ fn tint_material(scene : Raw, props : Raw, uuid : String) -> Unit {
   material.set("uuid", Raw::of(uuid))
   material.set("color", Raw::of(0xffffff))
   material.set("vertexColors", Raw::of(true))
-  append_item(scene.get("materials"), material)
+  @archive.append(scene.get("materials"), material)
 }
 
 ///|
@@ -90,7 +95,7 @@ fn boolean_field(object : Raw, key : String) -> Bool? {
 ///|
 fn numeric_field(object : Raw, key : String) -> Double? {
   let v = object.get(key)
-  if @archive.kind(v) == "number" {
+  if @archive.is_number(v) {
     Some(v.cast())
   } else {
     None
@@ -101,7 +106,7 @@ fn numeric_field(object : Raw, key : String) -> Double? {
 fn add_batch(scene : Raw, payload : Raw) -> Raw {
   for k in ["geometries", "images", "textures"] {
     for item in @archive.items(payload.get(k)) {
-      append_item(scene.get(k), item)
+      @archive.append(scene.get(k), item)
     }
   }
   let obj = payload.get("object")
@@ -118,7 +123,7 @@ fn add_mesh(
   uuid : String,
   matrix : FixedArray[Double],
 ) -> Raw {
-  append_item(scene.get("geometries"), geometry)
+  @archive.append(scene.get("geometries"), geometry)
   @archive.obj([
     ("uuid", Raw::of(uuid)),
     ("type", Raw::of("Mesh")),
@@ -135,7 +140,7 @@ fn mount_draw(anchor : Raw, draw : Raw, id : String, original : Raw) -> Unit {
   for k in ["castShadow", "receiveShadow", "renderOrder", "layers"] {
     draw.set(k, original.get(k))
   }
-  append_item(anchor.get("children"), draw)
+  @archive.append(anchor.get("children"), draw)
 }
 
 ///|
@@ -157,15 +162,6 @@ fn keep_children(node : Raw, include_child : (Raw) -> Bool) -> Unit {
     )
   }
 }
-
-///|
-extern "js" fn identity_set() -> Raw = "() => new Set()"
-
-///|
-extern "js" fn remember(set : Raw, obj : Raw) -> Unit = "(s,o) => s.add(o)"
-
-///|
-extern "js" fn remembered(set : Raw, obj : Raw) -> Bool = "(s,o) => s.has(o)"
 
 ///|
 priv struct Part {
@@ -222,7 +218,7 @@ fn FittingBake::batch_fittings(
           numbered(a) && numbered(b)
         _ => false
       })
-    let name = string_field(node, "name")
+    let name = str(node, "name")
     let decoration = id.is_empty() && scenery(name)
     let collider = scenery(name) &&
       id.has_prefix("structure/") &&
@@ -235,46 +231,45 @@ fn FittingBake::batch_fittings(
       Some(
         (transform.elements[12], transform.elements[13], transform.elements[14]),
       )
-    let mesh = string_field(node, "type") == "Mesh"
+    let mesh = str(node, "type") == "Mesh"
     let leaf = children(node).length() == 0
     if (fitting || (leaf && (fixed_track || decoration))) &&
       mesh &&
       visible(node) &&
-      self.materials.get(string_field(node, "material")) is Some(m) &&
+      self.materials.get(str(node, "material")) is Some(m) &&
       visible(m) &&
       !m.get("color").is_undefined() &&
-      string_field(m.get("userData"), "surfaceFinish") != "glass" &&
-      self.geometries.get(string_field(node, "geometry")) is Some(g) &&
-      truthy(g, "data") {
+      str(m.get("userData"), "surfaceFinish") != "glass" &&
+      self.geometries.get(str(node, "geometry")) is Some(g) &&
+      has_field(g, "data") {
       let attrs = g.get("data").get("attributes")
       if !attrs.is_undefined() &&
         (
           attrs.key_count() == 3 ||
-          (attrs.key_count() == 4 && truthy(attrs, "color"))
+          (attrs.key_count() == 4 && has_field(attrs, "color"))
         ) &&
-        truthy(attrs, "normal") &&
-        truthy(attrs, "position") &&
-        truthy(attrs, "uv") &&
+        has_field(attrs, "normal") &&
+        has_field(attrs, "position") &&
+        has_field(attrs, "uv") &&
         (
-          !truthy(m, "vertexColors") ||
+          !m.get("vertexColors").strict_equal(Raw::of(true)) ||
           (
-            truthy(attrs, "color") &&
+            has_field(attrs, "color") &&
             attrs.get("color").get("itemSize").cast() == 3
           )
         ) &&
         transform.determinant() > 0 {
         let props = material_properties(m)
         let sig = signature(props)
-        if tinted.get(sig) is None {
-          let mat_id = self.fresh("fitting-material-")
-          tint_material(self.scene, props, mat_id)
-          tinted[sig] = mat_id
-        }
-        let mat_id = tinted[sig]
+        let mat_id = tinted.get_or_init(sig, () => {
+          let id = self.fresh("fitting-material-")
+          tint_material(self.scene, props, id)
+          id
+        })
         let c = self.center(g)
         let center = project(transform, c[0], c[1], c[2])
         let key : DrawGroup = {
-          anchor: string_field(anchor, "uuid"),
+          anchor: str(anchor, "uuid"),
           material: mat_id,
           cell: cell_key(center, if world { 240 } else { 40 }),
           cast_shadow: boolean_field(node, "castShadow"),
@@ -286,7 +281,7 @@ fn FittingBake::batch_fittings(
           node,
           geometry: g,
           color: int_field(m, "color"),
-          vertex_colors: truthy(m, "vertexColors"),
+          vertex_colors: m.get("vertexColors").strict_equal(Raw::of(true)),
           transform,
           center,
           picking,
@@ -297,13 +292,13 @@ fn FittingBake::batch_fittings(
       (name.is_empty() || name.has_prefix("local-circuit:"))
     // Moving and separately bound parts start a new transform and picking frame.
     let flatten = visible(node) &&
-      !has_order(node) &&
+      numeric_field(node, "renderOrder").unwrap_or(0) == 0 &&
       array_field(node, "animations").length() == 0 &&
       (
         fixed_wall ||
         (fitting && mesh) ||
         (
-          string_field(node, "type") == "Group" &&
+          str(node, "type") == "Group" &&
           (
             placement ||
             fixtures.controls.contains(id) ||
@@ -323,7 +318,7 @@ fn FittingBake::batch_fittings(
   }
   visit(root, root, @math.Matrix4::new(), false)
   self.regroup_depth()
-  let replaced = identity_set()
+  let replaced : Set[String] = Set([])
   for key, group in groups {
     let (anchor, parts) = group
     guard parts.length() >= 2 else { continue }
@@ -355,12 +350,12 @@ fn FittingBake::batch_fittings(
       } else if children(part.node).length() > 0 {
         make_group(part.node)
       } else {
-        remember(replaced, part.node)
+        replaced.add(str(part.node, "uuid"))
       }
     }
   }
   fn remove_originals(node : Raw) {
-    keep_children(node, child => !remembered(replaced, child))
+    keep_children(node, child => !replaced.contains(str(child, "uuid")))
     for child in children(node) {
       remove_originals(child)
     }

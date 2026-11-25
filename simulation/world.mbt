@@ -14,15 +14,7 @@ pub fn Deck::height(self : Deck, z : Double) -> Double {
 }
 
 ///|
-#derive(Eq)
-pub(all) enum Axis {
-  X
-  Z
-}
-
-///|
-#deprecated
-pub extend Axis with Eq::{equal, not_equal}
+pub using @interaction {type Axis}
 
 ///|
 pub(all) struct Rail {
@@ -251,7 +243,7 @@ pub fn World::move_hull(
     { x: -0.64, z: -0.64, },
   ]
   for _ in 0..<steps {
-    for axis in [X, Z] {
+    for axis in [Axis::X, Z] {
       let ax = if axis == X { dx / steps.to_double() } else { 0.0 }
       let az = if axis == Z { dz / steps.to_double() } else { 0.0 }
       if ax == 0 && az == 0 {

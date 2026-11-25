@@ -7,47 +7,27 @@ pub struct FixtureLayout {
 
 ///|
 pub fn FixtureLayout::from_catalog(
-  barriers : Json,
-  controls : Json,
-) -> FixtureLayout raise {
-  guard barriers is Array(wall_records) && controls is Array(control_records) else {
-    raise Failure("Expected barrier and control catalogs")
-  }
-  fn unassigned(record : Map[String, Json], field : String) -> Bool {
-    match record.get(field) {
-      None | Some(Null | False | String("")) => true
-      _ => false
-    }
-  }
+  barriers : Array[@catalog.Solid],
+  controls : Array[@catalog.Control],
+) -> FixtureLayout {
   let walls = Map([])
-  for row in wall_records {
-    guard row is Object(r) &&
-      row
-      is {
-        "permanent": True,
-        "circuitKey": String(key),
-        "x": Number(x, ..),
-        "y": Number(y, ..),
-        "z": Number(z, ..),
-        "w": Number(w, ..),
-        "h": Number(h, ..),
-        "d": Number(d, ..),
-        ..
-      } else {
-      continue
-    }
-    if unassigned(r, "motion") &&
-      unassigned(r, "rail") &&
-      unassigned(r, "arena") {
-      walls["world/walls/" + key + "/mesh"] = (x + w / 2, y + h / 2, z + d / 2)
+  for wall in barriers {
+    if wall.permanent == Some(true) &&
+      wall.motion is None &&
+      wall.rail is None &&
+      wall.arena.unwrap_or("").is_empty() &&
+      wall.circuit_key is Some(key) {
+      walls["world/walls/" + key + "/mesh"] = (
+        wall.x + wall.w / 2,
+        wall.y + wall.h / 2,
+        wall.z + wall.d / 2,
+      )
     }
   }
   let fixed = Set([])
-  for row in control_records {
-    if row is Object(r) &&
-      row is { "id": String(id), .. } &&
-      unassigned(r, "mount") {
-      fixed.add("world/controls/" + id + "/root")
+  for control in controls {
+    if control.mount.unwrap_or("").is_empty() {
+      fixed.add("world/controls/" + control.id + "/root")
     }
   }
   { walls, controls: fixed, }

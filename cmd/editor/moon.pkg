@@ -1,7 +1,16 @@
 import {
+  "moonbitlang/core/env",
+  "moonbitlang/core/path",
+  "moonbitlang/core/string",
+  "moonbitlang/core/encoding/hex",
+  "moonbitlang/core/encoding/percent",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/x/crypto",
+  "moonbitlang/x/fs",
   "milky/tankle-astra/tooling/editor_model" @model,
   "milky/tankle-astra/tooling/archive",
   "moonbitlang/core/async/js_async",
+  "moonbitlang/core/async/http",
   "moonbitlang/core/async",
 }
 

@@ -1,26 +1,12 @@
 ///|
-struct Voice {
-  noise : Bool
-  frequency : Double
-  end : Double
-  duration : Double
-  gain : Double
-  delay : Double
-  attack : Double
-  hold : Double
-  wave : String
-  cutoff : Double
-  filter : String
-}
-
-///|
 struct Sound {
   mut audio : @host.Audio?
   mut laser_at : Double
   mut magnet_at : Double
   mut engine_at : Double
-  lift_heights : Map[String, Double]
-  phases : Map[String, Bool]
+  mut press_down : Bool?
+  lifts : Map[String, (Double, Bool)]
+  warning_enemies : Set[String]
 }
 
 ///|
@@ -30,8 +16,9 @@ fn Sound::new() -> Sound {
     laser_at: -1,
     magnet_at: -1,
     engine_at: -1,
-    lift_heights: {},
-    phases: {},
+    press_down: None,
+    lifts: {},
+    warning_enemies: Set([]),
   }
 }
 
@@ -51,22 +38,8 @@ fn Sound::play(
   gain~ : Double = 1,
 ) -> Unit {
   if self.audio is Some(audio) && sound_layers.get(id) is Some(layers) {
-    for v in layers {
-      @host.audio_voice(
-        audio,
-        v.noise,
-        v.frequency,
-        v.end,
-        v.duration,
-        v.gain * gain,
-        v.delay,
-        v.attack,
-        v.hold,
-        v.wave,
-        v.cutoff,
-        v.filter,
-        pan,
-      )
+    for layer in layers {
+      audio.play_voice(layer, gain~, pan~)
     }
   }
 }
@@ -96,80 +69,18 @@ fn Sound::update(
       }
   }
   if music_tracks.get(track) is Some((url, gain)) {
-    @host.music(
-      audio,
+    audio.update_music(
       url,
-      settings.volume * gain,
-      paused || !settings.music || p.hp <= 0,
-      game.effects.any(fn(event) { event is @sim.Respawned }),
+      volume=settings.volume * gain,
+      paused=paused || !settings.music || p.hp <= 0,
+      restart=game.effects.any(event => event is Respawned),
     )
   }
   if paused || !settings.sfx {
     return
   }
-  let pressed = game.press_cycle() >= 0.5
-  if pressed && self.phases.get("west-die") == Some(false) {
-    let distance = p.position().distance({ x: -44, y: -5, z: 86, })
-    if distance < 49 {
-      self.play("die-strike", gain=1 - distance / 49)
-    }
-  }
-  self.phases["west-die"] = pressed
-  for lift in game.world.lifts {
-    let previous = self.lift_heights.get(lift.id)
-    let travelling = previous is Some(h) && (lift.y - h).abs() > 0.0001
-    let key = "hoist/" + lift.id
-    if previous is Some(_) && self.phases.get(key) != Some(travelling) {
-      let at = @sim.Vec3::{
-        x: lift.rect.x + lift.rect.w / 2,
-        y: lift.y,
-        z: lift.rect.z + lift.rect.d / 2,
-      }
-      let gain = @sim.clamp(1 - at.distance(p.position()) / 25, 0, 1)
-      if gain > 0 {
-        self.play(if travelling { "hoist-drive" } else { "hoist-brake" }, gain~)
-      }
-    }
-    self.lift_heights[lift.id] = lift.y
-    self.phases[key] = travelling
-  }
-  for event in game.effects {
-    if event is @sim.Fired(_, @sim.Cannon) && p.upgrades.cannon {
-      self.play("recoil-return")
-    }
-    let distance = match event {
-      @sim.Fired(at, _)
-      | @sim.EnemyFired(at, _)
-      | @sim.Impact(at, _)
-      | @sim.Chips(at, _)
-      | @sim.Ricochet(at, _)
-      | @sim.Armored(at) => at.distance(p.position())
-      @sim.Killed(index) =>
-        game.enemies[index].position().distance(p.position())
-      _ => 0
-    }
-    let gain = 1.0 - @sim.clamp((distance - 5) / 54, 0, 1)
-    if gain <= 0 {
-      continue
-    }
-    self.play(
-      match event {
-        @sim.Fired(_, @sim.Mortar) | @sim.EnemyFired(_, @sim.Mortar) => "mortar"
-        @sim.Fired(_, _) | @sim.EnemyFired(_, _) => "shot"
-        @sim.Impact(_, true) | @sim.Killed(_) => "explode"
-        @sim.Impact(_, false) => "hit"
-        @sim.ReinforcedStrike(_, _, _) => continue
-        @sim.Chips(_, _) => "chip"
-        @sim.Armored(_) | @sim.Ricochet(_, _) => "armor"
-        @sim.Hurt => "hurt"
-        @sim.Acquired(_) => "unlock"
-        @sim.Activated(_) => "lever"
-        @sim.Repaired(_) => "repair"
-        @sim.Respawned => continue
-      },
-      gain~,
-    )
-  }
+  self.update_machinery(game)
+  self.play_events(game)
   if game.laser_path.any(fn(b) { b.live }) && game.time - self.laser_at > 0.13 {
     self.laser_at = game.time
     self.play("laser")
@@ -187,11 +98,15 @@ fn Sound::update(
   for e in game.enemies {
     let warn = e.phase.is_warning()
     if warn &&
-      self.phases.get(e.definition.id) != Some(true) &&
+      !self.warning_enemies.contains(e.definition.id) &&
       e.position().distance(p.position()) < 35 {
       self.play("warn", gain=0.45, pan=@sim.clamp((e.x - p.x) / 24, -1, 1))
     }
-    self.phases[e.definition.id] = warn
+    if warn {
+      self.warning_enemies.add(e.definition.id)
+    } else {
+      self.warning_enemies.remove(e.definition.id)
+    }
   }
   let speed = Double::min(24, game.velocity.length())
   if moving && p.hp > 0 && game.time - self.engine_at > 0.17 - speed * 0.003 {
@@ -199,20 +114,78 @@ fn Sound::update(
     if speed > 1 && !p.afloat {
       self.play("tread", gain=Double::min(1, speed / 12))
     }
-    @host.audio_voice(
-      audio,
-      false,
-      52 + speed * 2.3,
-      52 + speed * 2.3,
-      0.2,
-      0.025,
-      0,
-      0.035,
-      0.05,
-      "triangle",
-      900,
-      "lowpass",
-      0,
-    )
+    let hz = 52.0 + speed * 2.3
+    audio.play_voice({
+      source: Tone(wave="triangle", from_hz=hz, to_hz=hz),
+      duration: 0.2,
+      gain: 0.025,
+      delay: 0,
+      attack: 0.035,
+      hold: 0.05,
+      filter: Some(("lowpass", 900)),
+    })
+  }
+}
+
+///|
+fn Sound::update_machinery(self : Sound, game : @sim.Game) -> Unit {
+  let listener = game.player.position()
+  let pressed = game.press_cycle() >= 0.5
+  if pressed && self.press_down == Some(false) {
+    let distance = listener.distance({ x: -44, y: -5, z: 86, })
+    if distance < 49 {
+      self.play("die-strike", gain=1 - distance / 49)
+    }
+  }
+  self.press_down = Some(pressed)
+  for lift in game.world.lifts {
+    let (height, was_moving) = self.lifts
+      .get(lift.id)
+      .unwrap_or((lift.y, false))
+    let travelling = (lift.y - height).abs() > 0.0001
+    self.lifts[lift.id] = (lift.y, travelling)
+    if travelling != was_moving {
+      let at = @sim.Vec3::{
+        x: lift.rect.x + lift.rect.w / 2,
+        y: lift.y,
+        z: lift.rect.z + lift.rect.d / 2,
+      }
+      let gain = @sim.clamp(1 - at.distance(listener) / 25, 0, 1)
+      if gain > 0 {
+        self.play(if travelling { "hoist-drive" } else { "hoist-brake" }, gain~)
+      }
+    }
+  }
+}
+
+///|
+fn Sound::play_events(self : Sound, game : @sim.Game) -> Unit {
+  let p = game.player
+  for event in game.effects {
+    let (cue, origin) = match event {
+      Fired(at, Cannon) if p.upgrades.cannon => {
+        self.play("recoil-return")
+        ("shot", Some(at))
+      }
+      Fired(at, Mortar) | EnemyFired(at, Mortar) => ("mortar", Some(at))
+      Fired(at, _) | EnemyFired(at, _) => ("shot", Some(at))
+      Killed(index) => ("explode", Some(game.enemies[index].position()))
+      Impact(at, exploded) =>
+        (if exploded { "explode" } else { "hit" }, Some(at))
+      Chips(at, _) => ("chip", Some(at))
+      Armored(at) | Ricochet(at, _) => ("armor", Some(at))
+      Hurt => ("hurt", None)
+      Acquired(_) => ("unlock", None)
+      Activated(_) => ("lever", None)
+      Repaired(_) => ("repair", None)
+      ReinforcedStrike(_, _, _) | Respawned => continue
+    }
+    let gain = match origin {
+      Some(at) => 1.0 - @sim.clamp((at.distance(p.position()) - 5) / 54, 0, 1)
+      None => 1.0
+    }
+    if gain > 0 {
+      self.play(cue, gain~)
+    }
   }
 }

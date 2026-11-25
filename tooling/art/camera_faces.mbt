@@ -1,5 +1,5 @@
 ///|
-pub fn camera_faces(scene : Raw, view : (Raw) -> Raw) -> Unit {
+pub fn camera_faces(scene : Raw, view : (Raw) -> @core.TypedArray) -> Unit {
   let geometry = resource_index(array_field(scene, "geometries"))
   let materials = resource_index(array_field(scene, "materials"))
   let faces : Set[@scene_format.Bounds] = Set([])
@@ -9,28 +9,33 @@ pub fn camera_faces(scene : Raw, view : (Raw) -> Raw) -> Unit {
     }
     let fixture = fixture_parent || binding(n).has_suffix("/fixture-collider")
     let matrix = parent.clone().multiply(node_matrix(n))
-    let material_ok = match materials.get(string_field(n, "material")) {
+    let material_ok = match materials.get(str(n, "material")) {
       None => true
-      Some(m) => visible(m) && !truthy(m, "wireframe")
+      Some(m) => visible(m) && !m.get("wireframe").strict_equal(Raw::of(true))
     }
     if material_ok &&
-      (fixture || string_field(n.get("userData"), "renderRole") == "enclosure") &&
-      geometry.get(string_field(n, "geometry")) is Some(g) &&
-      truthy(@archive.prop(g.get("data"), "attributes"), "position") {
+      (fixture || str(n.get("userData"), "renderRole") == "enclosure") &&
+      geometry.get(str(n, "geometry")) is Some(g) &&
+      has_field(@archive.prop(g.get("data"), "attributes"), "position") {
       let d = g.get("data")
-      let pos : FixedArray[Double] = view(
-        d.get("attributes").get("position").get("array"),
-      ).cast()
-      let indexed = truthy(d, "index")
-      let idx : FixedArray[Int32] = if indexed {
-        view(d.get("index").get("array")).cast()
+      let pos = view(d.get("attributes").get("position").get("array"))
+      let indexed = has_field(d, "index")
+      let idx = if indexed {
+        Some(view(d.get("index").get("array")))
       } else {
-        []
+        None
       }
-      let count = if indexed { idx.length() } else { pos.length() / 3 }
+      let count = match idx {
+        Some(indices) => indices.length()
+        None => pos.length() / 3
+      }
       for i = 0; i + 5 < count; i = i + 6 {
         let p = FixedArray::makei(6, j => {
-          let v = 3 * (if indexed { idx[i + j] } else { i + j })
+          let v = 3 *
+            (match idx {
+              Some(indices) => indices.get_int(i + j)
+              None => i + j
+            })
           let coord = project(matrix, pos[v], pos[v + 1], pos[v + 2])
           FixedArray::makei(3, k => (coord[k] * 1000 + 0.5).floor() * 0.001)
         })

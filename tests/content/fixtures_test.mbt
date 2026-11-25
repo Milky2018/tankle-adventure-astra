@@ -7,37 +7,13 @@ fn raw(value : Json) -> Raw {
 }
 
 ///|
-fn lookup(value : Raw, path : String) -> Raw {
-  let mut result = value
-  for key in path.split(".") {
-    result = @archive.prop(result, key.to_owned())
-  }
-  result
+fn rows(value : Raw, key : String) -> Array[Raw] {
+  Array::from_fixed_array(@model.array(value, key))
 }
 
 ///|
-fn rows(value : Raw, path : String) -> Array[Raw] {
-  Array::from_fixed_array(@archive.items(lookup(value, path)))
-}
-
-///|
-fn quantity(value : Raw, path : String) -> Double {
-  lookup(value, path).cast()
-}
-
-///|
-fn name_at(value : Raw, path : String) -> String {
-  let item = lookup(value, path)
-  if item.is_null() || item.is_undefined() {
-    ""
-  } else {
-    item.cast()
-  }
-}
-
-///|
-fn flag(value : Raw, path : String) -> Bool {
-  lookup(value, path).strict_equal(Raw::of(true))
+fn quantity(value : Raw, key : String) -> Double {
+  value.get(key).cast()
 }
 
 ///|
@@ -64,30 +40,30 @@ fn matrix(x~ : Double = 0, y~ : Double = 0, z~ : Double = 0) -> Json {
 
 ///|
 fn by_key(items : Array[Raw], key : String, value : String) -> Raw {
-  items.iter().filter(v => name_at(v, key) == value).nth(0).unwrap()
+  items.iter().filter(v => @model.str(v, key) == value).nth(0).unwrap()
 }
 
 ///|
 fn resources(scene : Raw, key : String) -> Map[String, Raw] {
   let result = Map([])
   for r in rows(scene, key) {
-    result[name_at(r, "uuid")] = r
+    result[@model.uuid(r)] = r
   }
   result
 }
 
 ///|
-fn read_json(path : String) -> Raw {
-  @archive.parse(@archive.read_file(path))
+fn read_json(path : String) -> Raw raise {
+  raw(@json.parse(@fs.read_file_to_string(path)))
 }
 
 ///|
-fn records(name : String) -> Raw {
+fn records(name : String) -> Raw raise {
   read_json("content/levels/city/" + name + ".json")
 }
 
 ///|
-fn record(name : String, id : String) -> Raw {
+fn record(name : String, id : String) -> Raw raise {
   by_key(Array::from_fixed_array(@archive.items(records(name))), "id", id)
 }
 
@@ -103,33 +79,44 @@ fn expect_json(actual : Raw, expected : Json) -> Unit raise {
 }
 
 ///|
-fn read_catalog() -> @catalog.Record {
-  let result = Map([])
-  for name in @archive.list_files("content/levels/city") {
-    if name.strip_suffix(".json") is Some(key) {
-      result[key.to_owned()] = records(key.to_owned()).to_json()
-    }
-  }
-  result
+#module("node:os")
+extern "js" fn system_tmpdir() -> String = "tmpdir"
+
+///|
+#module("node:fs")
+extern "js" fn make_temp(prefix : String) -> String = "mkdtempSync"
+
+///|
+fn temp_dir() -> String {
+  make_temp((@path.Path(system_tmpdir()) / "tankle-authoring-").to_string())
 }
 
 ///|
-extern "js" fn temp_dir() -> String =
-  #| () => process.getBuiltinModule("fs").mkdtempSync(process.getBuiltinModule("path").join(process.getBuiltinModule("os").tmpdir(),"tankle-authoring-"))
+fn copy_fixture(source : String, target : String) -> Unit raise {
+  if @fs.is_dir(source) {
+    @fs.create_dir(target)
+    for entry in @fs.read_dir(source) {
+      copy_fixture(
+        (@path.Path(source) / @path.Path(entry)).to_string(),
+        (@path.Path(target) / @path.Path(entry)).to_string(),
+      )
+    }
+  } else {
+    @fs.write_bytes_to_file(target, @fs.read_file_to_bytes(source))
+  }
+}
 
 ///|
-extern "js" fn remove_dir(path : String) -> Unit =
-  #| path => process.getBuiltinModule("fs").rmSync(path,{recursive:true,force:true})
+fn cwd() -> String raise {
+  guard @env.current_dir() is Some(path) else {
+    raise Failure("Current working directory is unavailable")
+  }
+  path
+}
 
 ///|
-extern "js" fn copy_dir(source : String, target : String) -> Unit =
-  #| (src,dst) => process.getBuiltinModule("fs").cpSync(src,dst,{recursive:true})
-
-///|
-extern "js" fn cwd() -> String = "() => process.cwd()"
-
-///|
-extern "js" fn chdir(path : String) -> Unit = "path => process.chdir(path)"
+#module("node:process")
+extern "js" fn chdir(path : String) -> Unit = "chdir"
 
 ///|
 fn set_children(node : Raw, children : Array[Raw]) -> Unit {
@@ -149,4 +136,9 @@ fn raises_like(expected : String, action : () -> Unit raise) -> Unit raise {
     }
   }
   fail("Expected failure containing " + expected)
+}
+
+///|
+fn project_world(project : Raw) -> Raw {
+  project.get("scene").get("object")
 }

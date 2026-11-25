@@ -3,28 +3,23 @@ package "milky/tankle-astra/tooling/editor_model"
 
 import {
   "moonbit-community/three/core",
+  "moonbit-community/three/math",
 }
 
 // Values
-pub fn append(@core.JsValue, @core.JsValue) -> Unit
-
 pub fn array(@core.JsValue, String) -> FixedArray[@core.JsValue]
 
 pub fn belongs_to(String, String) -> Bool
 
 pub fn binding(@core.JsValue) -> String
 
-pub fn buffer_text(@core.JsValue) -> String
-
-pub fn call(@core.JsValue, String, FixedArray[@core.JsValue]) -> @core.JsValue
-
 pub fn children(@core.JsValue) -> FixedArray[@core.JsValue]
 
 pub fn clone(@core.JsValue) -> @core.JsValue
 
-pub fn clone_entity(@core.JsValue, @core.JsValue, String, @core.JsValue, defaults? : @core.JsValue) -> @core.JsValue raise
+pub fn clone_entity(@core.JsValue, @core.JsValue, String, offset? : @math.Vector3, defaults? : @core.JsValue) -> EntityBundle raise
 
-pub fn creation_position(@core.JsValue, Double, Double, Double) -> @core.JsValue
+pub fn creation_offset(@core.JsValue, Double, Double, Double) -> @math.Vector3
 
 pub fn data(@core.JsValue) -> @core.JsValue
 
@@ -32,21 +27,17 @@ pub fn editable(String) -> Bool
 
 pub fn entity(@core.JsValue) -> @core.JsValue
 
-pub fn entity_bundle(@core.JsValue, @core.JsValue) -> FixedArray[@core.JsValue]
+pub fn entity_bundle(@core.JsValue, @core.JsValue) -> EntityBundle
 
 pub fn entity_key(@core.JsValue) -> String
 
-pub fn entity_prefix(@core.JsValue) -> String
-
 pub fn exists(@core.JsValue) -> Bool
 
-pub fn export_project(selection? : String, colliders? : Bool) -> @core.JsValue raise
+pub fn export_project(selection? : String, colliders? : Bool, transfer? : Bool) -> @core.JsValue raise
 
 pub fn get(@core.JsValue, String) -> @core.JsValue
 
 pub fn import_project(@core.JsValue, dry_run? : Bool) -> @core.JsValue raise
-
-pub fn index_of(@core.JsValue, @core.JsValue) -> Int32
 
 pub fn pack_scene_transfer(@core.JsValue) -> @core.JsValue
 
@@ -63,6 +54,10 @@ pub fn uuid(@core.JsValue) -> String
 // Errors
 
 // Types and methods
+pub struct EntityBundle {
+  root : @core.JsValue
+  objects : FixedArray[@core.JsValue]
+}
 
 // Type aliases
 pub using @core {type JsValue as Raw}

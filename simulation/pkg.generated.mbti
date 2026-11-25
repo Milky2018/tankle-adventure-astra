@@ -125,16 +125,6 @@ pub fn Attack::equal(Self, Self) -> Bool
 #deprecated
 pub fn Attack::not_equal(Self, Self) -> Bool
 
-#derive(Eq)
-pub(all) enum Axis {
-  X
-  Z
-}
-#deprecated
-pub fn Axis::equal(Self, Self) -> Bool
-#deprecated
-pub fn Axis::not_equal(Self, Self) -> Bool
-
 pub(all) struct BarrageTarget {
   position : Vec3
   delay : Double
@@ -494,7 +484,7 @@ pub fn Game::reset_enemies(Self) -> Unit
 pub fn Game::respawn(Self) -> Unit
 pub fn Game::restore(Self, String) -> Bool
 pub fn Game::save(Self) -> String
-pub fn Game::snapshot(Self) -> String
+pub fn Game::snapshot(Self) -> @json.Json
 pub fn Game::update_enemies(Self, Queries, Double) -> Unit
 pub fn Game::update_mines(Self, Double) -> Unit
 pub fn Game::update_puzzles(Self, Double) -> Unit
@@ -715,7 +705,7 @@ pub(all) struct Queries {
 }
 
 pub(all) struct Rail {
-  axis : Axis
+  axis : @interaction.Axis
   min : Double
   max : Double
   release : String?
@@ -824,9 +814,9 @@ pub(all) struct Solid {
   circuit_key : String
 }
 pub fn Solid::active(Self, Progress) -> Bool
-pub fn Solid::coordinate(Self, Axis) -> Double
+pub fn Solid::coordinate(Self, @interaction.Axis) -> Double
 pub fn Solid::exposed_height(Self, Progress) -> Double
-pub fn Solid::set_coordinate(Self, Axis, Double) -> Unit
+pub fn Solid::set_coordinate(Self, @interaction.Axis, Double) -> Unit
 
 pub(all) struct Support {
   deck : Deck
@@ -834,7 +824,7 @@ pub(all) struct Support {
 }
 
 pub(all) struct Transport {
-  axis : Axis
+  axis : @interaction.Axis
   min : Double
   max : Double
   speed : Double
@@ -935,6 +925,8 @@ pub fn World::support(Self, Double, Double, Double, Bool) -> Support?
 pub using @interaction {type Acquisition}
 
 pub using @interaction {type Action}
+
+pub using @interaction {type Axis}
 
 pub using @machine {type EnemyKind}
 

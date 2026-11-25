@@ -1,29 +1,49 @@
 ///|
+priv enum TransformField {
+  Position
+  Rotation
+  Scale
+}
+
+///|
 fn Workspace::transform_fields(
   self : Workspace,
-  panel : Raw,
-  object : Raw,
-  key : String,
-  title : String,
-  command : String,
+  panel : Element,
+  object : SceneNode,
+  field : TransformField,
+  title? : String,
 ) -> Unit {
-  append(panel, el("h3", label=title))
+  let (key, heading, value) = match field {
+    Position => ("position", "位置", object.position())
+    Rotation => ("rotation", "旋转（弧度）", object.rotation())
+    Scale => ("scale", "缩放", object.scale())
+  }
+  append(panel, el("h3", label=title.unwrap_or(heading)))
   let row = el("div", style="axes")
-  for axis in ["x", "y", "z"] {
+  for
+    (axis, current, set_component) in [
+      ("x", value.x(), Coordinates::set_x),
+      ("y", value.y(), Coordinates::set_y),
+      ("z", value.z(), Coordinates::set_z),
+    ] {
     let label = el("label", label=axis.to_upper())
     let input = el("input")
-    input.set("type", Raw::of("number"))
-    input.set("step", Raw::of("0.1"))
-    input.set("value", Raw::of(round4(number(object.get(key), axis))))
-    attr(input, "aria-label", key + "." + axis)
-    handler(input, "change", () => {
-      let next = number(input, "valueAsNumber")
-      if next.is_finite() {
-        let value = call(object.get(key), "clone", [])
-        value.set(axis, Raw::of(next))
-        self.execute(command, [object, value])
-      }
-    })
+    input.set_attribute("aria-label", key + "." + axis)
+    number_input(
+      input,
+      round4(current),
+      next => {
+        let updated = value.clone()
+        set_component(updated, next)
+        let cmd = match field {
+          Position => self.commands.position(self.editor, object, updated)
+          Rotation => self.commands.rotation(self.editor, object, updated)
+          Scale => self.commands.scale(self.editor, object, updated)
+        }
+        self.editor.execute(cmd)
+      },
+      step="0.1",
+    )
     append(label, input)
     append(row, label)
   }
@@ -31,7 +51,7 @@ fn Workspace::transform_fields(
 }
 
 ///|
-fn part_label(n : Raw, index : Int32) -> String {
+fn part_label(n : SceneNode, index : Int32) -> String {
   let names : Map[String, String] = {
     "body": "车身",
     "turret": "炮塔",
@@ -46,7 +66,7 @@ fn part_label(n : Raw, index : Int32) -> String {
     "arms": "机械臂",
     "pivot": "转轴",
   }
-  let role = binding(n)
+  let role = n.binding()
   if !role.is_empty() &&
     !role.has_prefix("world/occluders/") &&
     !role.contains("/art/") {
@@ -61,12 +81,11 @@ fn part_label(n : Raw, index : Int32) -> String {
       .map(s => names.get_or_default(s, s))
       .join(" / ")
   }
-  let name = str(n, "name")
+  let name = n.name()
   if !name.is_empty() && !name.contains("/") {
     return name
   }
-  (if truth(n, "isMesh") { "装饰网格 " } else { "组件 " }) +
-  index.to_string()
+  (if n.is_mesh() { "装饰网格 " } else { "组件 " }) + index.to_string()
 }
 
 ///|
@@ -101,31 +120,32 @@ fn Workspace::properties(self : Workspace) -> Unit {
   )
   let parts = el("label", label="编辑目标")
   let menu = el("select")
-  attr(menu, "aria-label", "编辑目标")
+  menu.set_attribute("aria-label", "编辑目标")
   let mut index = 0
-  @archive.walk(root, n => {
-    let label = if n.strict_equal(root) {
+  root.visit(n => {
+    let label = if n.same(root) {
       "整个对象（游戏位置与属性）"
     } else {
       index += 1
       "零件 · " + part_label(n, index)
     }
-    option(menu, uuid(n), label)
+    option(menu, n.uuid(), label)
   })
-  menu.set("value", Raw::of(uuid(obj)))
+  let select = menu.reinterpret_as_html_select_element()
+  select.set_value(obj.uuid())
   handler(menu, "change", () => {
-    let id = menu.get("value")
-    let selected = call(root, "getObjectByProperty", [Raw::of("uuid"), id])
-    self.selection = if selected.strict_equal(root) {
+    let selected = root.by_uuid(select.value())
+    guard selected.present() else { return }
+    self.selection = if selected.same(root) {
       Whole(root)
     } else {
       Part(root~, object=selected)
     }
-    ignore(call(self.editor, "select", [selected]))
+    self.editor.select(selected)
   })
   append(parts, menu)
   append(panel, parts)
-  self.transform_fields(panel, obj, "position", "位置", "SetPositionCommand")
+  self.transform_fields(panel, obj, Position)
   if category(root) == "player" {
     append(
       panel,
@@ -137,32 +157,28 @@ fn Workspace::properties(self : Workspace) -> Unit {
     )
   }
   if self.selection is Part(..) {
-    self.transform_fields(
-      panel, obj, "rotation", "旋转（弧度）", "SetRotationCommand",
-    )
-    self.transform_fields(panel, obj, "scale", "缩放", "SetScaleCommand")
+    self.transform_fields(panel, obj, Rotation)
+    self.transform_fields(panel, obj, Scale)
     let modes = el("div")
     for
       p in [("移动", "translate"), ("旋转", "rotate"), ("缩放", "scale")] {
       let b = el("button", label=p.0)
-      handler(b, "click", () => {
-        self.dispatch("transformModeChanged", args=[Raw::of(p.1)])
-      })
+      handler(b, "click", () => self.editor.transform_mode(p.1))
       append(modes, b)
     }
     append(panel, modes)
-    let mat = get(obj, "material")
-    let color = get(mat, "color")
-    if exists(color) {
+    let mat = obj.material()
+    if mat.colored() {
       let label = el("label", label="零件颜色")
       let input = el("input")
-      input.set("type", Raw::of("color"))
-      let hex : String = call(color, "getHexString", []).cast()
-      input.set("value", Raw::of("#" + hex))
+      input.set_attribute("type", "color")
+      let control = input.reinterpret_as_html_input_element()
+      let hex = mat.color().hex()
+      control.set_value("#" + hex)
       handler(input, "change", () => {
-        let cloned = call(mat, "clone", [])
-        ignore(call(cloned.get("color"), "set", [input.get("value")]))
-        self.execute("SetMaterialCommand", [obj, cloned])
+        let cloned = mat.clone()
+        cloned.color().set(control.value())
+        self.editor.execute(self.commands.material(self.editor, obj, cloned))
       })
       append(label, input)
       append(panel, label)
@@ -176,12 +192,10 @@ fn Workspace::properties(self : Workspace) -> Unit {
       ),
     )
   } else {
-    self.dispatch("transformModeChanged", args=[Raw::of("translate")])
-    let collision = truth(data(root), "editorOnly")
+    self.editor.transform_mode("translate")
+    let collision = truth(root.data(), "editorOnly")
     if collision {
-      self.transform_fields(
-        panel, root, "scale", "碰撞尺寸倍率", "SetScaleCommand",
-      )
+      self.transform_fields(panel, root, Scale, title="碰撞尺寸倍率")
       append(
         panel,
         el(
@@ -191,7 +205,7 @@ fn Workspace::properties(self : Workspace) -> Unit {
         ),
       )
     }
-    let game = get(data(root), "game")
+    let game = get(root.data(), "game")
     if exists(game) && game.to_json() is Object(record) {
       let values = record.copy()
       if category(root) is ("controls" | "pickups") &&
@@ -199,7 +213,7 @@ fn Workspace::properties(self : Workspace) -> Unit {
         values["requires"] = ""
       }
       if category(root) == "controls" && !values.contains("effects") {
-        values["effects"] = [Json::string(str(entity(root), "id"))]
+        values["effects"] = [Json::string(str(root.entity(), "id"))]
       }
       for k in ["id", "circuitKey"] {
         values.remove(k)
@@ -211,16 +225,16 @@ fn Workspace::properties(self : Workspace) -> Unit {
       }
       append(panel, el("h3", label="游戏属性"))
       fields(panel, Json::object(values), (path, next) => {
-        let d = @archive.copy(data(root))
+        let d = @archive.copy(root.data())
         d.set(
           "game",
           Raw::from_json(replace_field(d.get("game").to_json(), path, next)),
         )
-        self.execute("SetValueCommand", [root, Raw::of("userData"), d])
+        self.editor.execute(self.commands.user_data(self.editor, root, d))
       })
     }
   }
-  let id = get(entity(root), "id")
+  let id = get(root.entity(), "id")
   set_text(
     by_id("selection-note"),
     if exists(id) {

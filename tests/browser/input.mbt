@@ -15,6 +15,7 @@ priv struct Player {
   x : Double
   y : Double
   z : Double
+  yaw : Double
   hp : Double
   heat : Double
   time : Double
@@ -25,7 +26,7 @@ priv struct Player {
 
 ///|
 async fn Browser::player(self : Browser) -> Player {
-  @json.from_json(self.evaluate("__typedRead()"))
+  @json.from_json(self.probe(PlayerSnapshot))
 }
 
 ///|
@@ -99,53 +100,31 @@ async fn Browser::fire(self : Browser, down : Bool) -> Unit {
 }
 
 ///|
-fn element(selector : String) -> String {
-  "document.querySelector(" + Json::string(selector).stringify() + ")"
-}
-
-///|
 async fn Browser::visible(self : Browser, selector : String) -> Bool {
-  self.evaluate("!!" + element(selector) + "?.getClientRects().length") is True
+  self.probe(Visible(selector)) is True
 }
 
 ///|
 async fn Browser::click(self : Browser, selector : String) -> Unit {
-  let el = element(selector)
-  self.until("!!" + el + "?.getClientRects().length")
-  let r = self.evaluate(el + ".getBoundingClientRect().toJSON()")
-  let x : Double = @json.from_json(prop(r, "x"))
-  let w : Double = @json.from_json(prop(r, "width"))
-  let y : Double = @json.from_json(prop(r, "y"))
-  let h : Double = @json.from_json(prop(r, "height"))
-  self.mouse("mousePressed", x + w / 2, y + h / 2, 1)
-  self.mouse("mouseReleased", x + w / 2, y + h / 2, 0)
+  self.until("visible " + selector, () => self.visible(selector))
+  let (x, y) : (Double, Double) = @json.from_json(self.probe(Center(selector)))
+  self.mouse("mousePressed", x, y, 1)
+  self.mouse("mouseReleased", x, y, 0)
 }
 
 ///|
 async fn Browser::drag(self : Browser, x : Double, y : Double) -> Unit {
-  let dx = @math.round(x).to_int()
-  let dy = @math.round(y).to_int()
-  ignore(
-    self.evaluate(
-      "document.querySelector('#game').dispatchEvent(new MouseEvent('mousemove',{movementX:\{dx},movementY:\{dy}}))",
-    ),
-  )
-  self.yaw -= dx.to_double() * 0.0075
+  ignore(self.probe(Drag(@math.round(x).to_int(), @math.round(y).to_int())))
 }
 
 ///|
 async fn Browser::look(self : Browser, down : Bool) -> Unit {
-  let expr = if down {
-    "document.querySelector('#game').dispatchEvent(new MouseEvent('mousedown',{button:1}))"
-  } else {
-    "window.dispatchEvent(new MouseEvent('mouseup',{button:1}))"
-  }
-  ignore(self.evaluate(expr))
+  ignore(self.probe(Look(down)))
 }
 
 ///|
 async fn Browser::frame(self : Browser) -> Double {
-  @json.from_json(self.evaluate("new Promise(requestAnimationFrame)"))
+  @json.from_json(self.probe(NextFrame))
 }
 
 ///|
@@ -155,12 +134,17 @@ async fn Browser::project(
   y : Double,
   z : Double,
 ) -> (Double, Double) {
-  @json.from_json(self.evaluate("__typedProject(\{x},\{y},\{z})"))
+  @json.from_json(self.probe(Project(x, y, z)))
 }
 
 ///|
-async fn Browser::face(self : Browser, dx : Double, dz : Double) -> Unit {
-  let angle = @math.atan2(dx, dz) - self.yaw
+async fn Browser::face(
+  self : Browser,
+  dx : Double,
+  dz : Double,
+  yaw : Double,
+) -> Unit {
+  let angle = @math.atan2(dx, dz) - yaw
   self.drag(-@math.atan2(@math.sin(angle), @math.cos(angle)) / 0.0075, 0)
 }
 
@@ -173,7 +157,7 @@ async fn Browser::aim(
   z : Double,
 ) -> Unit {
   self.look(true)
-  self.face(x - p.x, z - p.z)
+  self.face(x - p.x, z - p.z, p.yaw)
   let focal = self.height.to_double() / (2 * @math.tan(@math.PI / 6))
   for _ in 0..<8 {
     ignore(self.frame())
@@ -195,8 +179,9 @@ async fn Browser::walk(
   dz : Double,
   ms : Int32,
 ) -> Unit {
-  let forward = dx * @math.sin(self.yaw) + dz * @math.cos(self.yaw)
-  let right = -dx * @math.cos(self.yaw) + dz * @math.sin(self.yaw)
+  let yaw = self.player().yaw
+  let forward = dx * @math.sin(yaw) + dz * @math.cos(yaw)
+  let right = -dx * @math.cos(yaw) + dz * @math.sin(yaw)
   let limit = forward.abs().max(right.abs()) * @math.tan(@math.PI / 8)
   let keys = []
   if forward.abs() > limit {

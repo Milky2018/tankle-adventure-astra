@@ -89,42 +89,48 @@ fn replace_field(value : Json, path : ArrayView[FieldKey], next : Json) -> Json 
 }
 
 ///|
-fn form_input(container : Raw, key : String, path : String) -> Raw {
+fn form_input(container : Element, key : String, path : String) -> Element {
   let label = el("label", style="property")
   append(label, el("span", label=labels.get_or_default(key, key)))
-  let input = el("input")
-  attr(input, "aria-label", path)
-  input.set("title", Raw::of(path))
-  input.set("disabled", Raw::of(key == "id" || key == "circuitKey"))
-  append(label, input)
+  let node = el("input")
+  node.set_attribute("aria-label", path)
+  node.set_attribute("title", path)
+  if key == "id" || key == "circuitKey" {
+    node.set_attribute("disabled", "")
+  }
+  append(label, node)
   append(container, label)
-  input
+  node
 }
 
 ///|
 fn number_input(
-  input : Raw,
+  node : Element,
   initial : Double,
   change : (Double) -> Unit,
+  step~ : String = "any",
 ) -> Unit {
+  node.set_attribute("type", "number")
+  node.set_attribute("step", step)
+  let input = node.reinterpret_as_html_input_element()
   let mut current = initial
-  input.set("type", Raw::of("number"))
-  input.set("step", Raw::of("any"))
-  input.set("value", Raw::of(initial))
-  handler(input, "change", () => {
-    let next = number(input, "valueAsNumber")
-    if next.is_finite() {
-      current = next
-      change(next)
-    } else {
-      input.set("value", Raw::of(current))
-    }
-  })
+  input.set_value(initial.to_string())
+  input.set_onchange(
+    Some(_ => {
+      let next = input_number(input)
+      if next.is_finite() {
+        current = next
+        change(next)
+      } else {
+        input.set_value(current.to_string())
+      }
+    }),
+  )
 }
 
 ///|
 fn fields(
-  container : Raw,
+  container : Element,
   values : Json,
   change : (ArrayView[FieldKey], Json) -> Unit,
 ) -> Unit {
@@ -142,7 +148,7 @@ fn fields(
     }
   }
   fn render(
-    parent : Raw,
+    parent : Element,
     path : Array[FieldKey],
     key : FieldKey,
     value : Json,
@@ -153,22 +159,26 @@ fn fields(
     match value {
       Array(entries) if k is ("effects" | "weapons") => {
         let label = el("label", label=title)
-        let input = el("textarea")
+        let node = el("textarea")
+        let input = node.reinterpret_as_html_textarea_element()
         let lines = [ for item in entries if item is String(s) => s ]
-        input.set("rows", Raw::of(3))
-        input.set("value", Raw::of(lines.join("\n")))
-        attr(input, "aria-label", k)
-        handler(input, "change", () => {
-          let lines = str(input, "value")
-            .replace_all(old=",", new="\n")
-            .split("\n")
-            .map(s => s.trim().to_owned())
-            .filter(s => !s.is_empty())
-            .map(Json::string)
-            .to_array()
-          change(path[:], Json::array(lines))
-        })
-        append(label, input)
+        node.set_attribute("rows", "3")
+        input.set_value(lines.join("\n"))
+        node.set_attribute("aria-label", k)
+        input.set_onchange(
+          Some(_ => {
+            let lines = input
+              .value()
+              .replace_all(old=",", new="\n")
+              .split("\n")
+              .map(s => s.trim().to_owned())
+              .filter(s => !s.is_empty())
+              .map(Json::string)
+              .to_array()
+            change(path[:], Json::array(lines))
+          }),
+        )
+        append(label, node)
         append(parent, label)
       }
       Object(_) | Array(_) => {
@@ -177,25 +187,28 @@ fn fields(
         visit_children(value, (key, child) => render(group, path, key, child))
         append(parent, group)
       }
-      Number(n, ..) => {
-        let input = form_input(parent, k, path.map(FieldKey::label).join("."))
-        number_input(input, n, edited => change(path[:], Json::number(edited)))
-      }
+      Number(n, ..) =>
+        number_input(
+          form_input(parent, k, path.map(FieldKey::label).join(".")),
+          n,
+          edited => change(path[:], Json::number(edited)),
+        )
       True | False => {
-        let input = form_input(parent, k, path.map(FieldKey::label).join("."))
-        input.set("type", Raw::of("checkbox"))
-        input.set("checked", Raw::of(value is True))
-        handler(input, "change", () => {
-          change(path[:], Json::boolean(truth(input, "checked")))
-        })
+        let node = form_input(parent, k, path.map(FieldKey::label).join("."))
+        node.set_attribute("type", "checkbox")
+        let input = node.reinterpret_as_html_input_element()
+        input.set_checked(value is True)
+        input.set_onchange(
+          Some(_ => change(path[:], Json::boolean(input.checked()))),
+        )
       }
       Null | String(_) => {
-        let input = form_input(parent, k, path.map(FieldKey::label).join("."))
-        input.set("type", Raw::of("text"))
-        input.set("value", Raw::of(if value is String(s) { s } else { "" }))
-        handler(input, "change", () => {
-          change(path[:], Json::string(str(input, "value")))
-        })
+        let node = form_input(parent, k, path.map(FieldKey::label).join("."))
+        let input = node.reinterpret_as_html_input_element()
+        input.set_value(if value is String(s) { s } else { "" })
+        input.set_onchange(
+          Some(_ => change(path[:], Json::string(input.value()))),
+        )
       }
     }
   }

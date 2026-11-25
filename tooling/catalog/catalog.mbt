@@ -2,11 +2,8 @@
 pub type Record = Map[String, Json]
 
 ///|
-pub fn field(r : Record, key : String, default~ : Json = @json.null) -> Json {
-  match r.get(key) {
-    Some(Null) | None => default
-    Some(v) => v
-  }
+fn field(r : Record, key : String) -> Json {
+  r.get_or_default(key, @json.null)
 }
 
 ///|
@@ -27,19 +24,19 @@ pub fn list(v : Json) -> Array[Json] raise {
 }
 
 ///|
-pub fn text(v : Json) -> String raise {
-  guard v is String(s) else {
-    raise Failure("Expected authored string, got " + v.stringify())
+/// Read in stable filename order so editor reference lists are reproducible.
+pub fn read_directory(path : String) -> Record raise {
+  let files = @fs.read_dir(path).to_owned()
+  files.sort_by(String::lexical_compare)
+  let catalog = Map([])
+  for file in files {
+    if file.strip_suffix(".json") is Some(name) {
+      catalog[name.to_owned()] = @json.parse(
+        @fs.read_file_to_string(path + "/" + file),
+      )
+    }
   }
-  s
-}
-
-///|
-pub fn num(v : Json) -> Double raise {
-  guard v is Number(n, ..) else {
-    raise Failure("Expected authored number, got " + v.stringify())
-  }
-  n
+  catalog
 }
 
 ///|
@@ -74,8 +71,6 @@ pub fn decode(catalog : Record) -> Level raise {
     @json.Replacer((_, v) => if v is Null { None } else { Some(v) }),
   )
   let level : Level = @json.from_json(input)
-  let obstacles = records(catalog, "obstacles")
-  let lifts = records(catalog, "lifts")
   for
     k in [
       "decks", "barriers", "obstacles", "architecture", "lifts", "enemies", "arenas",
@@ -179,9 +174,8 @@ pub fn decode(catalog : Record) -> Level raise {
     cleared.add(battle)
   }
   let covers = Set([])
-  for obstacle in obstacles {
-    if field(obstacle, "rail") is Object(_) &&
-      field(obstacle, "id") is String(id) {
+  for obstacle in level.obstacles {
+    if obstacle.rail is Some(_) && obstacle.id is Some(id) {
       covers.add(id)
     }
   }
@@ -227,16 +221,7 @@ pub fn decode(catalog : Record) -> Level raise {
       )
     }
   }
-  let lift_ids = Set::from_iter(
-    lifts
-    .iter()
-    .filter_map(l => {
-      match field(l, "id") {
-        String(id) => Some(id)
-        _ => None
-      }
-    }),
-  )
+  let lift_ids = Set::from_iter(level.lifts.iter().map(lift => lift.id))
   for pickup in level.pickups {
     let p = pickup.placement
     if p.lift is Some(lift) && !lift.is_empty() && !lift_ids.contains(lift) {

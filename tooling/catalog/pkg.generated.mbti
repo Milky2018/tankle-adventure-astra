@@ -10,15 +10,11 @@ import {
 // Values
 pub fn decode(Map[String, @json.Json]) -> Level raise
 
-pub fn field(Map[String, @json.Json], String, default? : @json.Json) -> @json.Json
-
 pub fn list(@json.Json) -> Array[@json.Json] raise
-
-pub fn num(@json.Json) -> Double raise
 
 pub fn object(@json.Json) -> Map[String, @json.Json] raise
 
-pub fn text(@json.Json) -> String raise
+pub fn read_directory(String) -> Map[String, @json.Json] raise
 
 pub fn validate(Map[String, @json.Json]) -> Unit raise
 
@@ -102,6 +98,18 @@ pub struct ConveyorMotion {
 }
 
 #derive(@json.FromJson)
+pub struct Current {
+  x : Double
+  y : Double
+  z : Double
+  w : Double
+  d : Double
+  current : Flow
+  sluice : String?
+  diverted : Diversion?
+}
+
+#derive(@json.FromJson)
 pub struct Deck {
   id : String
   x : Double
@@ -112,6 +120,12 @@ pub struct Deck {
   rise : Double?
   water : Bool?
   region : String?
+}
+
+#derive(@json.FromJson)
+pub struct Diversion {
+  x : Double?
+  z : Double?
 }
 
 #derive(@json.FromJson)
@@ -150,6 +164,12 @@ pub struct Enemy {
 }
 
 #derive(@json.FromJson)
+pub struct Flow {
+  x : Double
+  z : Double
+}
+
+#derive(@json.FromJson)
 pub struct Footprint {
   x : Double
   z : Double
@@ -170,6 +190,11 @@ pub struct Hive {
 
 #derive(@json.FromJson)
 pub struct Level {
+  barriers : Array[Solid]
+  obstacles : Array[Solid]
+  architecture : Array[Solid]
+  lifts : Array[Lift]
+  currents : Array[Current]
   controls : Array[Control]
   pickups : Array[Pickup]
   hives : Array[Hive]
@@ -184,6 +209,21 @@ pub struct Level {
 }
 
 #derive(@json.FromJson)
+pub struct Lift {
+  id : String
+  x : Double
+  z : Double
+  w : Double
+  d : Double
+  stops : Array[Double]
+  settle : Bool?
+  lock : String?
+  locks : Array[String]?
+  target_key : String?
+  circuit_key : String?
+}
+
+#derive(@json.FromJson)
 pub struct Mirror {
   id : String
   x : Double
@@ -192,6 +232,14 @@ pub struct Mirror {
   n : (Double, Double, Double)
   size : Double
   turnable : Bool?
+}
+
+#derive(@json.FromJson)
+pub struct Motion {
+  axis : @interaction.Axis
+  min : Double
+  max : Double
+  speed : Double
 }
 
 pub struct Pickup {
@@ -210,6 +258,38 @@ pub struct PickupPlacement {
   lift : String?
   hidden : Bool?
   preview : Bool?
+}
+
+#derive(@json.FromJson)
+pub struct Rail {
+  axis : @interaction.Axis
+  min : Double
+  max : Double
+  release : String?
+  latch : String?
+}
+
+#derive(@json.FromJson)
+pub struct Solid {
+  id : String?
+  x : Double
+  y : Double
+  z : Double
+  w : Double
+  h : Double
+  d : Double
+  kind : String?
+  ground : Double?
+  rest_y : Double?
+  target_key : String?
+  circuit_key : String?
+  local_control : String?
+  permanent : Bool?
+  red : Bool?
+  phoenix : Bool?
+  arena : String?
+  motion : Motion?
+  rail : Rail?
 }
 
 pub enum Trigger {

@@ -1,8 +1,12 @@
 import {
   "moonbitlang/core/json",
   "moonbitlang/core/debug",
+  "moonbitlang/core/env",
+  "moonbitlang/core/encoding/hex",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/x/crypto",
+  "moonbitlang/x/fs",
   "milky/tankle-astra/tooling/catalog",
-  "milky/tankle-astra/tooling/archive",
   "milky/tankle-astra/tooling/art",
 }
 

@@ -179,7 +179,7 @@ fn step_transport(
 ) -> Unit {
   for solid in solids {
     guard solid.motion is Some(motion) else { continue }
-    let other = if motion.axis == X { Z } else { X }
+    let other : Axis = if motion.axis == X { Z } else { X }
     let size = if motion.axis == X { solid.rect.w } else { solid.rect.d }
     let other_size = if motion.axis == X { solid.rect.d } else { solid.rect.w }
     let mut remaining = dt

@@ -30,14 +30,14 @@ fn slab(
 }
 
 ///|
-pub fn room_portals(scene : Raw, view : (Raw) -> Raw) -> Unit {
+pub fn room_portals(scene : Raw, view : (Raw) -> @core.TypedArray) -> Unit {
   let root = scene.get("object")
   guard array_field(scene, "animations").length() == 0 &&
     visible(root) &&
     array_field(root, "animations").length() == 0 &&
     children(root)
     .iter()
-    .find_first(n => string_field(n, "name") == "City · building envelope")
+    .find_first(n => str(n, "name") == "City · building envelope")
     is Some(envelope) else {
     return
   }
@@ -53,13 +53,16 @@ pub fn room_portals(scene : Raw, view : (Raw) -> Raw) -> Unit {
       return
     }
     let matrix = parent.clone().multiply(node_matrix(n))
-    if string_field(n.get("userData"), "renderRole") == "enclosure" &&
-      materials.get(string_field(n, "material")) is Some(m) &&
-      string_field(m.get("userData"), "renderRole") == "enclosure" &&
+    if str(n.get("userData"), "renderRole") == "enclosure" &&
+      materials.get(str(n, "material")) is Some(m) &&
+      str(m.get("userData"), "renderRole") == "enclosure" &&
       visible(m) &&
-      ![
-        "transparent", "alphaTest", "alphaMap", "alphaHash", "wireframe", "side",
-      ].any(k => truthy(m, k)) &&
+      !["transparent", "alphaHash", "wireframe"].any(k => {
+        m.get(k).strict_equal(Raw::of(true))
+      }) &&
+      numeric_field(m, "alphaTest").unwrap_or(0) == 0 &&
+      numeric_field(m, "side").unwrap_or(0) == 0 &&
+      str(m, "alphaMap").is_empty() &&
       array_field(m, "clippingPlanes").length() == 0 &&
       !m.get("depthTest").strict_equal(Raw::of(false)) &&
       !m.get("depthWrite").strict_equal(Raw::of(false)) &&
@@ -68,22 +71,23 @@ pub fn room_portals(scene : Raw, view : (Raw) -> Raw) -> Unit {
         m.get("opacity").strict_equal(Raw::of(1))
       ) &&
       matrix.determinant() > 0 &&
-      geometry.get(string_field(n, "geometry")) is Some(g) &&
-      truthy(g.get("data"), "index") {
+      geometry.get(str(n, "geometry")) is Some(g) &&
+      has_field(g.get("data"), "index") {
       let d = g.get("data")
       let position = @archive.prop(d.get("attributes"), "position")
       if !position.is_undefined() &&
         int_field(position, "itemSize") == 3 &&
         array_field(d, "groups").length() == 0 &&
-        !truthy(d, "morphAttributes") {
-        let vertices : FixedArray[Double] = view(position.get("array")).cast()
-        let indices : FixedArray[Int32] = view(d.get("index").get("array")).cast()
+        !has_field(d, "morphAttributes") {
+        let vertices = view(position.get("array"))
+        let indices = view(d.get("index").get("array"))
         for i = 0; i + 5 < indices.length(); i = i + 6 {
-          guard indices[i] == indices[i + 3] && indices[i + 2] == indices[i + 4] else {
+          guard indices.get_int(i) == indices.get_int(i + 3) &&
+            indices.get_int(i + 2) == indices.get_int(i + 4) else {
             continue
           }
           let p = [0, 1, 2, 5].map(j => {
-            let k = indices[i + j] * 3
+            let k = indices.get_int(i + j) * 3
             project(matrix, vertices[k], vertices[k + 1], vertices[k + 2])
           })
           guard axes.iter().find_first(k => p.every(pt => pt[k] == p[0][k]))
@@ -285,10 +289,8 @@ pub fn room_portals(scene : Raw, view : (Raw) -> Raw) -> Unit {
       !id.has_suffix("/fixture-collider") {
       return
     }
-    if ["Mesh", "BatchedMesh", "InstancedMesh"].contains(
-        string_field(n, "type"),
-      ) &&
-      materials.get(string_field(n, "material")) is Some(m) &&
+    if ["Mesh", "BatchedMesh", "InstancedMesh"].contains(str(n, "type")) &&
+      materials.get(str(n, "material")) is Some(m) &&
       !m.get("depthTest").strict_equal(Raw::of(false)) &&
       (
         n.get("layers").is_undefined() ||
@@ -301,7 +303,7 @@ pub fn room_portals(scene : Raw, view : (Raw) -> Raw) -> Unit {
     }
   }
   for n in children(root) {
-    if fixed_name(string_field(n, "name")) || fixed_binding(binding(n)) {
+    if fixed_name(str(n, "name")) || fixed_binding(binding(n)) {
       mark(n)
     }
   }

@@ -1,9 +1,15 @@
 import {
+  "milky/tankle-astra/tests/browser/protocol",
   "moonbitlang/core/json",
+  "moonbitlang/core/string",
   "moonbitlang/core/math",
   "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+  "moonbitlang/core/path",
+  "moonbitlang/core/encoding/base64",
   "moonbitlang/core/async",
   "moonbitlang/core/async/js_async",
+  "moonbitlang/core/encoding/utf8",
 }
 
 pkgtype(kind: "executable")

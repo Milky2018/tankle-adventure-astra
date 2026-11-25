@@ -53,6 +53,15 @@ priv struct Placement {
 }
 
 ///|
+#derive(FromJson(rename_fields="camelCase"))
+priv struct ProjectMetadata {
+  revision : String
+  roots : Array[String]
+  full_scene : Bool?
+  deleted : Array[EntityRef]?
+}
+
+///|
 pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
   let edited = clone(
     if exists(get(project, "scene")) {
@@ -62,13 +71,14 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
     },
   )
   let root = get(edited, "object")
-  let meta = get(data(root), "tankle")
-  guard get(meta, "version").strict_equal(Raw::of(1)) else {
+  let metadata = get(data(root), "tankle")
+  guard get(metadata, "version").strict_equal(Raw::of(1)) else {
     raise Failure(
       "Open a project produced by the editor export command before importing edits.",
     )
   }
-  guard str(meta, "revision") == revision() else {
+  let meta : ProjectMetadata = @json.from_json(metadata.to_json())
+  guard meta.revision == revision() else {
     raise Failure(
       "Content changed since export. Export a fresh project to avoid overwriting newer edits.",
     )
@@ -109,26 +119,24 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
     }
   }
   index_edited(root)
-  let roots : Set[String] = Set::from_iter(
-    array(meta, "roots").iter().map(v => v.cast()),
-  )
+  let roots = Set::from_array(meta.roots[:])
   let top = Set::from_iter(children(root).iter().map(uuid))
   let removed = Set([])
-  let full = truth(meta, "fullScene")
-  for e in array(meta, "deleted") {
-    let k = str(e, "collection")
-    let id = str(e, "id")
+  let full = meta.full_scene.unwrap_or(false)
+  for e in meta.deleted.unwrap_or([]) {
+    let k = e.collection
+    let id = e.id
     guard full && editable(k) else {
       raise Failure(
         "Entity deletion requires a full project and an enemy, control or pickup.",
       )
     }
-    valid_identity(e, e)
-    let prefix = entity_prefix(e)
+    e.check_new(e.id)
+    let prefix = prefix_for(e.collection, e.key).unwrap()
     for uid, n in originals {
       if roots.contains(uid) && belongs_to(binding(n), prefix) {
         guard !objects.contains(uid) else {
-          raise Failure("Delete the complete entity: " + entity_key(e))
+          raise Failure("Delete the complete entity: " + e.label())
         }
         removed.add(uid)
       }
@@ -158,15 +166,15 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
       !elements(n.get("matrix")).every(x => x.is_finite()) {
       raise Failure("Non-finite transform on " + name)
     }
-    let e = entity(n)
-    if !exists(e) {
+    let raw = entity(n)
+    if !exists(raw) {
       continue
     }
-    let k = str(e, "collection")
-    let identity = if exists(get(e, "index")) {
-      entity_key(e) + ":" + @archive.stringify(e.get("index"))
-    } else {
-      k + ":" + str(e, "key")
+    let e = EntityRef::read(raw)
+    let k = e.collection
+    let identity = match e.index {
+      Some(index) => e.label() + ":" + index.to_string()
+      None => k + ":" + e.key
     }
     guard !seen.contains(identity) else {
       raise Failure("Duplicate gameplay identity: " + identity)
@@ -176,7 +184,7 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
       Some(old) => entity(old)
       None => Raw::undefined()
     }
-    if exists(old_entity) && entity_key(old_entity) != entity_key(e) {
+    if exists(old_entity) && entity_key(old_entity) != e.label() {
       raise Failure("Keep stable IDs unchanged on " + name)
     }
     let records = catalog.rows(k)
@@ -186,7 +194,7 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
       guard full && !originals.contains(uid) else {
         raise Failure("Unknown gameplay identity " + identity)
       }
-      valid_identity(e, get(user, "game"))
+      e.check_new(str(get(user, "game"), "id"))
       guard top.contains(uid) else {
         raise Failure("New gameplay roots must be at the scene's top level.")
       }
@@ -279,7 +287,7 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
     } else {
       records.push(Json::object(r))
       let circuit = get(user, "circuit")
-      let id = str(e, "id")
+      let id = e.id
       if k == "controls" &&
         exists(circuit) &&
         !catalog
@@ -296,14 +304,20 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
     }
   }
   for e in added {
-    for b in required(e) {
+    let prefix = prefix_for(e.collection, e.key).unwrap()
+    let roles = if e.collection == "enemies" {
+      ["model/root", "model/body", "model/turret"]
+    } else {
+      ["root"]
+    }
+    for role in roles {
+      let b = prefix + "/" + role
       guard bindings.contains(b) else {
         raise Failure("Missing scene role: " + b)
       }
     }
   }
-  for v in array(meta, "roots") {
-    let uid : String = v.cast()
+  for uid in meta.roots {
     if removed.contains(uid) {
       let p = parents[uid]
       p.set(
@@ -348,11 +362,13 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
       }
       n.set("matrixAutoUpdate", if exists(flag) { flag } else { Raw::of(true) })
     })
-    assign_at(
-      parent.get("children"),
-      index_of(parent.get("children"), old),
-      next,
-    )
+    let siblings = children(parent)
+    for i, node in siblings {
+      if node.strict_equal(old) {
+        siblings[i] = next
+        break
+      }
+    }
   }
   for n in children(root) {
     if !roots.contains(uuid(n)) &&
@@ -390,9 +406,9 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
   if !dry_run {
     @archive.write_scene(@archive.select_resources(scene, original))
     for name, entries in catalog.files {
-      @archive.write_file(
+      @fs.write_string_to_file(
         directory + "/" + name + ".json",
-        Raw::of(entries.stringify(indent=2, escape_slash=false) + "\n"),
+        entries.stringify(indent=2, escape_slash=false) + "\n",
       )
     }
   }

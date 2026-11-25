@@ -1,14 +1,17 @@
 ///|
-extern "js" fn children(node : @core.JsValue) -> FixedArray[@core.JsValue] = "(n) => n.children ?? []"
+fn children(node : Raw) -> FixedArray[Raw] {
+  array_field(node, "children")
+}
 
 ///|
-extern "js" fn binding(node : @core.JsValue) -> String = "(n) => n.userData?.binding ?? ''"
+fn binding(node : Raw) -> String {
+  str(node.get("userData"), "binding")
+}
 
 ///|
-extern "js" fn visible(node : @core.JsValue) -> Bool = "(n) => n.visible !== false"
-
-///|
-extern "js" fn has_order(node : @core.JsValue) -> Bool = "(n) => !!n.renderOrder"
+fn visible(node : Raw) -> Bool {
+  !node.get("visible").strict_equal(Raw::of(false))
+}
 
 ///|
 fn roller_key(belt : String, roller : Raw, material : Raw) -> String {
@@ -62,7 +65,7 @@ fn attach_roller_batch(
       ("normalized", Raw::of(false)),
     ]),
   )
-  append_item(root.get("children"), n)
+  @archive.append(root.get("children"), n)
 }
 
 ///|
@@ -76,17 +79,13 @@ fn bind_roller(n : Raw, batch : String, index : Int32) -> Unit {
 
 ///|
 fn instance_belt_rollers(scene : @core.JsValue) -> Unit {
-  let materials : Map[String, @core.JsValue] = Map([])
-  let entries : FixedArray[@core.JsValue] = scene.get("materials").cast()
-  for m in entries {
-    materials[m.get("uuid").cast()] = m
-  }
+  let materials = resource_index(array_field(scene, "materials"))
   let root = scene.get("object")
   let groups : Map[String, Array[(String, @core.JsValue, @core.JsValue)]] = Map([],
   )
   for segment in children(root) {
     guard visible(segment) &&
-      !has_order(segment) &&
+      numeric_field(segment, "renderOrder").unwrap_or(0) == 0 &&
       segment.get("type").cast() == "Group" else {
       continue
     }
@@ -95,7 +94,7 @@ fn instance_belt_rollers(scene : @core.JsValue) -> Unit {
       is ["world", "belts", belt, "segments", index, "root"] &&
       !belt.is_empty() &&
       !index.is_empty() &&
-      index.iter().all(c => c >= '0' && c <= '9') else {
+      index.iter().all(c => c.is_ascii_digit()) else {
       continue
     }
     let prefix = "world/belts/\{belt}/segments/\{index}/rollers/"
@@ -110,10 +109,7 @@ fn instance_belt_rollers(scene : @core.JsValue) -> Unit {
         continue
       }
       let k = roller_key(belt.to_owned(), roller, material)
-      if groups.get(k) is None {
-        groups[k] = []
-      }
-      groups[k].push((belt.to_owned(), segment, roller))
+      groups.get_or_init(k, () => []).push((belt.to_owned(), segment, roller))
     }
   }
   let mut serial = 0

@@ -3,51 +3,48 @@ package "milky/tankle-astra/tooling/archive"
 
 import {
   "moonbit-community/three/core",
+  "moonbitlang/core/compress/flate",
+  "moonbitlang/core/compress/gzip",
   "moonbitlang/core/set",
 }
 
 // Values
-pub fn array_copy(@core.JsValue) -> @core.JsValue
+pub fn append(@core.JsValue, @core.JsValue) -> Unit
 
-pub fn byte_view(@core.JsValue) -> @core.JsValue
+pub fn array_copy(@core.TypedArray) -> @core.JsValue
 
-pub fn concat(FixedArray[@core.JsValue]) -> @core.JsValue
+pub fn byte_view(@core.TypedArray) -> Bytes
+
+pub fn compress(BytesView, strategy? : @flate.Strategy, fast_store? : Bool) -> Bytes
 
 pub fn copy(@core.JsValue) -> @core.JsValue
 
-pub fn digest(@core.JsValue) -> String
+#label_migration(max_output_bytes, alias=max_output, msg="Use max_output_bytes= instead")
+pub fn decompress(BytesView, max_output_bytes? : Int32, cancelled? : () -> Bool) -> Bytes raise @gzip.GzipError
 
-pub fn exists(String) -> Bool
+pub fn digest(Bytes) -> String
 
-pub fn from_base64(String) -> @core.JsValue
+pub fn is_array(@core.JsValue) -> Bool
 
-pub fn gunzip(@core.JsValue) -> @core.JsValue
+pub fn is_number(@core.JsValue) -> Bool
 
-pub fn gzip(@core.JsValue) -> @core.JsValue
+pub fn is_string(@core.JsValue) -> Bool
 
 pub fn items(@core.JsValue) -> FixedArray[@core.JsValue]
 
 pub fn keys(@core.JsValue) -> FixedArray[String]
 
-pub fn kind(@core.JsValue) -> String
-
-pub fn list_files(String) -> FixedArray[String]
-
-pub fn mkdir(String) -> Unit
-
 pub fn obj(Array[(String, @core.JsValue)]) -> @core.JsValue
 
-pub fn parse(@core.JsValue) -> @core.JsValue
+pub fn parse(String) -> @core.JsValue raise
 
 pub fn prop(@core.JsValue, String) -> @core.JsValue
 
 pub fn reachable(@core.JsValue, @core.JsValue, Array[String], retain_clips? : Bool) -> @set.Set[String]
 
-pub fn read_file(String) -> @core.JsValue
+pub fn read_json_gz(String) -> @core.JsValue raise
 
-pub fn read_json_gz(String) -> @core.JsValue
-
-pub fn read_scene() -> @core.JsValue
+pub fn read_scene(decode? : (@core.TypedArray) -> @core.JsValue) -> @core.JsValue raise
 
 pub fn remove(@core.JsValue, String) -> Unit
 
@@ -57,23 +54,19 @@ pub fn str(@core.JsValue, String) -> String
 
 pub fn stringify(@core.JsValue) -> String
 
-pub fn typed(String, @core.JsValue) -> @core.JsValue
+pub fn typed(String, @core.JsValue) -> @core.TypedArray
 
-pub fn unlink(String) -> Unit
+pub fn typed_view(Bytes, String, offset~ : Int32, length~ : Int32) -> @core.TypedArray
 
-pub fn validate_views(@core.JsValue, @core.JsValue) -> Unit
+pub fn validate_views(@core.JsValue, Bytes) -> Unit raise
 
-pub fn view(@core.JsValue, @core.JsValue) -> @core.JsValue
+pub fn view(Bytes, @core.JsValue) -> @core.TypedArray
 
-pub fn walk(@core.JsValue, (@core.JsValue) -> Unit) -> Unit
+pub fn walk(@core.JsValue, (@core.JsValue) -> Unit raise?) -> Unit raise?
 
-pub fn write_file(String, @core.JsValue) -> Unit
+pub fn write_json_gz(String, @core.JsValue) -> Unit raise
 
-pub fn write_json_gz(String, @core.JsValue) -> Unit
-
-pub fn write_scene(@core.JsValue) -> Unit
-
-pub fn zeros(Int32) -> @core.JsValue
+pub fn write_scene(@core.JsValue) -> Unit raise
 
 // Errors
 

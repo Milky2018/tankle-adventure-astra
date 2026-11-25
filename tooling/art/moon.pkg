@@ -1,7 +1,11 @@
 import {
+  "moonbitlang/core/buffer",
   "moonbitlang/core/json",
+  "moonbitlang/core/encoding/base64",
+  "moonbitlang/x/fs",
   "milky/tankle-astra/scene_format",
   "milky/tankle-astra/tooling/archive",
+  "milky/tankle-astra/tooling/catalog",
   "moonbit-community/three/core",
   "moonbit-community/three/math",
   "moonbit-community/three/addons/utils",

@@ -1,17 +1,5 @@
 ///|
-fn generate_levels(data : Record, level : @catalog.Level) -> Unit raise {
-  fn records(
-    collection : String,
-    ty : String,
-    encode : (Record) -> String raise,
-  ) -> String raise {
-    array_def(
-      "authored_" + collection,
-      ty,
-      list(required(data, collection)).map(object),
-      encode,
-    )
-  }
+fn generate_levels(level : @catalog.Level) -> Unit raise {
   let world =
     #|///|
     #|pub fn authored_world() -> World {
@@ -19,30 +7,25 @@ fn generate_levels(data : Record, level : @catalog.Level) -> Unit raise {
     #|{ decks: authored_decks(), solids: authored_solids(), obstacles: authored_obstacles(), architecture, architecture_grid: architecture_grid(architecture), lifts: authored_lifts() }
     #|}
     #|
-  write_text(
+  @fs.write_string_to_file(
     "simulation/level-world.generated.mbt",
     "// Generated from content/levels/city. Run moon run cmd/content; do not edit.\n\n" +
     [
       array_def("authored_decks", "Deck", level.decks, deck),
       array_def("authored_arenas", "Arena", level.arenas, arena),
-      array_def(
-        "authored_solids",
-        "Solid",
-        list(required(data, "barriers")).map(object),
-        solid,
-      ),
-      records("obstacles", "Solid", solid),
-      records("architecture", "Solid", solid),
-      records("lifts", "Lift", lift),
+      array_def("authored_solids", "Solid", level.barriers, solid),
+      array_def("authored_obstacles", "Solid", level.obstacles, solid),
+      array_def("authored_architecture", "Solid", level.architecture, solid),
+      array_def("authored_lifts", "Lift", level.lifts, lift),
       world,
     ].join("\n"),
   )
-  write_text(
+  @fs.write_string_to_file(
     "simulation/level-enemies.generated.mbt",
     "// Authored enemy definitions. Runtime state is constructed by Enemy::new.\n\n" +
     array_def("authored_enemies", "EnemyDef", level.enemies, enemy),
   )
-  write_text(
+  @fs.write_string_to_file(
     "simulation/level-controls.generated.mbt",
     [
       array_def("authored_controls", "Control", level.controls, control),
@@ -57,19 +40,19 @@ fn generate_levels(data : Record, level : @catalog.Level) -> Unit raise {
       signals.push(source(battle) + ":" + source(c.id))
     }
   }
-  write_text(
+  @fs.write_string_to_file(
     "simulation/level-circuits.generated.mbt",
     array_def("authored_circuits", "Circuit", level.circuits, circuit) +
     "\n///|\nfn authored_battle_signals() -> Map[String, String] {\n{" +
     signals.join(",") +
     "}\n}\n",
   )
-  write_text(
+  @fs.write_string_to_file(
     "simulation/level-motion.generated.mbt",
     [
       array_def("authored_belts", "Belt", level.belts, belt),
       array_def("authored_heat", "Belt", level.heat, belt),
-      records("currents", "Current", current),
+      array_def("authored_currents", "Current", level.currents, current),
     ].join("\n"),
   )
   let segments = []
@@ -77,51 +60,10 @@ fn generate_levels(data : Record, level : @catalog.Level) -> Unit raise {
     let pairs = rows.map(p => "(" + source(p.0) + "," + source(p.1) + ")")
     segments.push(source(id) + ":[" + pairs.join(",") + "]")
   }
-  write_text(
+  @fs.write_string_to_file(
     "renderer/belt-data.generated.mbt",
     "///|\nfn belt_segments() -> Map[String, Array[(Double, Int32)]] {\n{" +
     segments.join(",\n") +
     "}\n}\n",
-  )
-}
-
-///|
-fn generate_audio() -> Unit raise {
-  let voices = []
-  for name, rows in object(read_json("content/sounds.json")) {
-    let layers = list(rows).map(v => {
-      let r = object(v)
-      let duration = num(required(r, "duration"))
-      let attack = Json::number(
-        num(field(r, "attack", default=0.003)).min(duration * 0.3),
-      )
-      let hold = Json::number(
-        num(field(r, "hold", default=0)).min(duration * 0.5),
-      )
-      "{noise:\{field(r,"noise") is True},frequency:\{literal(field(r,"frequency",default=0))},end:\{literal(field(r,"end",default=0))},duration:\{literal(required(r,"duration"))},gain:\{literal(required(r,"gain"))},delay:\{literal(field(r,"delay",default=0))},attack:\{literal(attack)},hold:\{literal(hold)},wave:\{literal(field(r,"type",default="sine"))},cutoff:\{literal(field(r,"cutoff",default=0))},filter:\{literal(field(r,"filter",default="lowpass"))}}"
-    })
-    voices.push(literal(Json::string(name)) + ": [" + layers.join(",") + "]")
-  }
-  let tracks = list(
-    required(object(read_json("public/music/manifest.json")), "tracks"),
-  ).map(v => {
-    let r = object(v)
-    let mix = Json::string(
-      "/music/" + text(required(object(required(r, "assets")), "mix")),
-    )
-    literal(required(r, "id")) +
-    ": (" +
-    literal(mix) +
-    "," +
-    literal(field(r, "gain", default=1)) +
-    ")"
-  })
-  write_text(
-    "cmd/play/sound-data.generated.mbt",
-    "// Authored sound parameters.\n///|\nlet sound_layers : Map[String,Array[Voice]] = {" +
-    voices.join(",\n") +
-    "}\n///|\nlet music_tracks : Map[String,(String,Double)] = {" +
-    tracks.join(",\n") +
-    "}\n",
   )
 }

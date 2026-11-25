@@ -14,4 +14,6 @@ description = "MoonBit JavaScript edition of Tankle Adventure — Astra"
 
 import {
   "moonbit-community/three@0.1.1",
+  "moonbitlang/x@0.5.8",
+  "tiye/dom-ffi@0.5.1",
 }

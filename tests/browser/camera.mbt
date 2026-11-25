@@ -35,7 +35,11 @@ async fn Browser::camera(self : Browser) -> Unit {
   )
   self.goto(url)
   self.key("KeyS", true)
-  self.until("__typedRead().x>=300", timeout=12000)
+  self.until(
+    "tank reaches the wall",
+    () => self.player().x >= 300,
+    timeout=12000,
+  )
   self.key("KeyS", false)
   let wall = self.pitches()
   for i, p in lane {

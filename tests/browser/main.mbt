@@ -1,9 +1,12 @@
 ///|
 async fn main {
   let choice = @env.args().get(2).unwrap_or("all")
+  run_moon(["build", "tests/browser/probe", "--release"])
   let executable = chrome_path()
-  mkdir("output/browser")
-  let profile = temp_profile()
+  @fs.create_dir("output/browser")
+  let profile = make_temp(
+    (@path.Path(system_tmpdir()) / "tankle-browser-").to_string(),
+  )
   let proc = launch(executable, [
     "--remote-debugging-pipe",
     "--headless=new",
@@ -18,13 +21,12 @@ async fn main {
   let base = @env.get_env_var("TANKLE_URL").unwrap_or("http://127.0.0.1:5175")
   let b : Browser = {
     proc,
-    stream: pipe_stream(proc),
-    carry: "",
+    stream: @js_async.ReadableStream::from_js(debugger_output(proc)),
     id: 0,
     session: "",
     errors: [],
     base,
-    yaw: 0,
+    probe_id: "",
     firing: false,
     width: 1280,
     height: 720,
@@ -58,12 +60,15 @@ async fn main {
       try {
         b.shot("failure")
         println(
-          text(
-            b.evaluate(
-              "typeof __typedRead==='function' ? __typedRead() : document.title",
-            ),
-          ),
+          if b.game_ready() {
+            text(b.probe(PlayerSnapshot))
+          } else {
+            text(b.probe(BodyText))
+          },
         )
+        if !b.errors.is_empty() {
+          println(b.errors.join("\n"))
+        }
       } catch {
         _ => ()
       }
@@ -71,8 +76,28 @@ async fn main {
     }
   }
   kill(proc).wait()
-  remove_profile(profile)
+  remove_chrome_profile(profile)
   if !success {
     @env.exit(1)
+  }
+}
+
+///|
+// Chrome helpers can briefly keep files open after the browser exits on Windows.
+async fn remove_chrome_profile(path : String) -> Unit {
+  for attempt in 0..<7 {
+    @fs.remove_dir(path) catch {
+      e => {
+        if !@fs.path_exists(path) {
+          return
+        }
+        if attempt == 6 {
+          raise e
+        }
+        @async.sleep((attempt + 1) * 100)
+        continue
+      }
+    }
+    return
   }
 }

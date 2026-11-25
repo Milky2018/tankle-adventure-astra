@@ -1,13 +1,14 @@
 ///|
 priv struct Workspace {
-  editor : Raw
-  renderer : Raw
-  three : Raw
-  commands : Map[String, Raw]
-  background : Raw
+  editor : Editor
+  renderer : ThreeRenderer
+  three : Three
+  commands : Commands
+  command_class : CommandClass
+  background : Background
   categories : Map[String, String]
-  mut entities : Array[Raw]
-  mut collisions : Array[Raw]
+  mut entities : Array[SceneNode]
+  mut collisions : Array[SceneNode]
   mut selection : Selection
   mut floor : Double?
   mut busy : Bool
@@ -16,15 +17,15 @@ priv struct Workspace {
   mut scene_dirty : Bool
   mut skills_dirty : Bool
   mut version : Int32
-  mut game_bg : Raw
+  mut game_bg : Background
   abilities : AbilitySettings
-  mut templates : Raw
+  mut templates : SceneNode?
   mut definitions : Array[TemplateDefinition]
 }
 
 ///|
-fn category(n : Raw) -> String {
-  let c = str(entity(n), "collection")
+fn category(n : SceneNode) -> String {
+  let c = str(n.entity(), "collection")
   if c.is_empty() {
     "player"
   } else {
@@ -33,12 +34,12 @@ fn category(n : Raw) -> String {
 }
 
 ///|
-fn title(n : Raw) -> String {
-  let name = get(get(data(n), "game"), "name")
+fn title(n : SceneNode) -> String {
+  let name = get(get(n.data(), "game"), "name")
   if exists(name) {
     return name.cast()
   }
-  let id = get(entity(n), "id")
+  let id = get(n.entity(), "id")
   if exists(id) {
     id.cast()
   } else {
@@ -47,9 +48,9 @@ fn title(n : Raw) -> String {
 }
 
 ///|
-fn floor_of(n : Raw) -> Double {
-  let pos = number(n.get("position"), "y")
-  let p = get(data(n), "placement")
+fn floor_of(n : SceneNode) -> Double {
+  let pos = n.position().y()
+  let p = get(n.data(), "placement")
   let h = if exists(p) {
     let o : FixedArray[Double] = p.get("origin").cast()
     let m : FixedArray[Double] = p.get("matrix").cast()
@@ -61,65 +62,32 @@ fn floor_of(n : Raw) -> Double {
 }
 
 ///|
-fn Workspace::scene(self : Workspace) -> Raw {
-  self.editor.get("scene")
-}
-
-///|
-fn Workspace::dispatch(
-  self : Workspace,
-  name : String,
-  args~ : FixedArray[Raw] = [],
-) -> Unit {
-  ignore(call(self.editor.get("signals").get(name), "dispatch", args))
-}
-
-///|
-fn Workspace::signal(self : Workspace, name : String, f : Raw) -> Unit {
-  ignore(call(self.editor.get("signals").get(name), "add", [f]))
-}
-
-///|
-fn Workspace::execute(
-  self : Workspace,
-  name : String,
-  args : Array[Raw],
-) -> Unit {
-  ignore(
-    call(self.editor, "execute", [
-      new_instance(
-        self.commands[name],
-        FixedArray::from_array(([self.editor] + args)[:]),
-      ),
-    ]),
-  )
+fn Workspace::scene(self : Workspace) -> SceneNode {
+  self.editor.scene()
 }
 
 ///|
 fn Workspace::refresh(self : Workspace) -> Unit {
   let blocked = self.busy || !self.ready
   for k in ["level-workspace", "skills-workspace"] {
-    by_id(k).set("inert", Raw::of(self.busy))
+    ignore(by_id(k).toggle_attribute_with_force("inert", self.busy))
   }
   for k in ["save", "preview", "add-entity"] {
-    by_id(k).set("disabled", Raw::of(blocked))
+    by_id(k).reinterpret_as_html_button_element().set_disabled(blocked)
   }
+  let can_edit = self.selection.owner() is Some(n) &&
+    @model.editable(category(n))
   for k in ["copy-entity", "delete-entity"] {
-    by_id(k).set(
-      "disabled",
-      Raw::of(
-        blocked ||
-        !(self.selection.owner() is Some(n) && @model.editable(category(n))),
-      ),
-    )
+    by_id(k)
+    .reinterpret_as_html_button_element()
+    .set_disabled(blocked || !can_edit)
   }
-  let history = self.editor.get("history")
-  for pair in [("undo", "undos"), ("redo", "redos")] {
-    by_id(pair.0).set(
-      "disabled",
-      Raw::of(self.busy || @model.array(history, pair.1).length() == 0),
-    )
-  }
+  by_id("undo")
+  .reinterpret_as_html_button_element()
+  .set_disabled(self.busy || !self.editor.can_undo())
+  by_id("redo")
+  .reinterpret_as_html_button_element()
+  .set_disabled(self.busy || !self.editor.can_redo())
 }
 
 ///|
@@ -132,78 +100,75 @@ fn Workspace::dirty(self : Workspace) -> Unit {
 }
 
 ///|
-fn follow_floor(n : Raw) -> Unit {
+fn follow_floor(n : SceneNode) -> Unit {
   let height = floor_of(n).to_string()
   let menu = by_id("floor")
-  if !@model.array(menu, "options").iter().any(o => str(o, "value") == height) {
+  if !menu
+    .query_selector_all("option")
+    .any(o => o.get_attribute("value") == Some(height)) {
     option(menu, height, "Y " + height)
   }
-  menu.set("value", Raw::of(height))
-}
-
-///|
-fn Workspace::vec(self : Workspace, x : Double, y : Double, z : Double) -> Raw {
-  new_instance(self.three.get("Vector3"), [Raw::of(x), Raw::of(y), Raw::of(z)])
+  menu.reinterpret_as_html_select_element().set_value(height)
 }
 
 ///|
 fn Workspace::apply_floor(self : Workspace) -> Unit {
-  let v = by_id("floor").get("value")
-  self.floor = if v.strict_equal(Raw::of("all")) {
+  let v = by_id("floor").reinterpret_as_html_select_element().value()
+  self.floor = if v == "all" {
     None
   } else {
-    Some(js_number(v))
-  }
-  let planes : Array[Raw] = []
-  if self.floor is Some(h) {
-    for pair in [(-1.0, h + 6), (1.0, 1 - h)] {
-      planes.push(
-        new_instance(self.three.get("Plane"), [
-          self.vec(0, pair.0, 0),
-          Raw::of(pair.1),
-        ]),
-      )
+    Some(@string.parse_double(v)) catch {
+      _ => None
     }
   }
-  self.renderer.set("clippingPlanes", Raw::from_array(planes[:]))
+  let planes : FixedArray[Plane] = match self.floor {
+    Some(h) => [self.three.plane(-1, h + 6), self.three.plane(1, 1 - h)]
+    None => []
+  }
+  self.renderer.clip(planes)
   for n in self.collisions {
     let level = match self.floor {
       None => true
       Some(h) => h == floor_of(n)
     }
-    n.set(
-      "visible",
-      Raw::of(
-        level &&
-        (self.selection.is_owner(n) || truth(by_id("collisions"), "checked")),
+    n.set_visible(
+      level &&
+      (
+        self.selection.is_owner(n) ||
+        by_id("collisions").reinterpret_as_html_input_element().checked()
       ),
     )
   }
-  self.dispatch("cameraChanged")
+  self.editor.camera_changed()
   self.render_list()
 }
 
 ///|
-fn Workspace::find_root(self : Workspace, n : Raw) -> Raw {
+fn Workspace::find_root(self : Workspace, n : SceneNode) -> SceneNode? {
   let mut obj = n
-  while exists(obj) && !obj.strict_equal(self.scene()) {
-    if self.entities.any(e => e.strict_equal(obj)) {
-      return obj
+  while obj.present() && !obj.same(self.scene()) {
+    if self.entities.any(e => e.same(obj)) {
+      return Some(obj)
     }
-    obj = get(obj, "parent")
+    obj = obj.parent()
   }
-  Raw::null()
+  None
 }
 
 ///|
 fn Workspace::render_list(self : Workspace) -> Unit {
-  let query = str(by_id("search"), "value").trim().to_owned().to_lower()
-  let group = str(by_id("category"), "value")
+  let query = by_id("search")
+    .reinterpret_as_html_input_element()
+    .value()
+    .trim()
+    .to_owned()
+    .to_lower()
+  let group = by_id("category").reinterpret_as_html_select_element().value()
   let rows = self.entities.filter(n => {
     let kind = category(n)
-    let game = get(data(n), "game")
+    let game = get(n.data(), "game")
     let inside = if group == "gameplay" {
-      !truth(data(n), "editorOnly")
+      !truth(n.data(), "editorOnly")
     } else {
       kind == group
     }
@@ -214,13 +179,7 @@ fn Workspace::render_list(self : Workspace) -> Unit {
         None => true
       }
     } else {
-      [
-        title(n),
-        str(n, "name"),
-        kind,
-        str(game, "type"),
-        str(game, "encounter"),
-      ]
+      [title(n), n.name(), kind, str(game, "type"), str(game, "encounter")]
       .join(" ")
       .to_lower()
       .contains(query)
@@ -232,10 +191,10 @@ fn Workspace::render_list(self : Workspace) -> Unit {
     "搜索所有楼层"
   }
   set_text(by_id("count"), "\{rows.length()} 个对象 · \{suffix}")
-  let container = fragment()
+  let buttons = []
   for n in rows {
     let button = el("button", label=title(n))
-    attr(button, "aria-current", self.selection.is_owner(n).to_string())
+    button.set_attribute("aria-current", self.selection.is_owner(n).to_string())
     append(
       button,
       el(
@@ -246,11 +205,10 @@ fn Workspace::render_list(self : Workspace) -> Unit {
       ),
     )
     handler(button, "click", () => self.select_entity(n))
-    append(container, button)
+    buttons.push(button)
   }
   if rows.is_empty() {
-    append(
-      container,
+    buttons.push(
       el(
         "p",
         label="当前楼层没有匹配对象。输入名称可跨楼层搜索，或切换楼层。",
@@ -258,7 +216,7 @@ fn Workspace::render_list(self : Workspace) -> Unit {
       ),
     )
   }
-  replace(by_id("objects"), [container])
+  replace(by_id("objects"), FixedArray::from_array(buttons[:]))
 }
 
 ///|
@@ -270,27 +228,25 @@ fn Workspace::focus(self : Workspace, overview~ : Bool = false) -> Unit {
   } else {
     return
   }
-  let center = call(n, "getWorldPosition", [self.vec(0, 0, 0)])
-  ignore(call(self.editor.get("controls").get("center"), "copy", [center]))
-  let camera = self.editor.get("camera")
-  ignore(
-    call(call(camera.get("position"), "copy", [center]), "add", [
-      if overview {
-        self.vec(0, 65, 0.01)
-      } else {
-        self.vec(16, 21, 24)
-      },
-    ]),
-  )
-  ignore(call(camera, "lookAt", [center]))
-  self.dispatch("cameraChanged")
+  let center = n.world_position()
+  self.editor.center().set(center.x(), center.y(), center.z())
+  let (dx, dy, dz) = if overview {
+    (0.0, 65.0, 0.01)
+  } else {
+    (16.0, 21.0, 24.0)
+  }
+  self.editor
+  .camera_position()
+  .set(center.x() + dx, center.y() + dy, center.z() + dz)
+  self.editor.look_at(center)
+  self.editor.camera_changed()
 }
 
 ///|
-fn Workspace::select_entity(self : Workspace, n : Raw) -> Unit {
+fn Workspace::select_entity(self : Workspace, n : SceneNode) -> Unit {
   self.selection = Whole(n)
   follow_floor(n)
-  ignore(call(self.editor, "select", [n]))
+  self.editor.select(n)
   self.apply_floor()
   self.focus()
 }
@@ -298,22 +254,24 @@ fn Workspace::select_entity(self : Workspace, n : Raw) -> Unit {
 ///|
 fn Workspace::index_entities(self : Workspace) -> Unit {
   self.entities = [
-    for n in children(self.scene()) if exists(entity(n)) ||
-    binding(n) == "player/root" => n
+    for n in self.scene().children() if exists(n.entity()) ||
+    n.binding() == "player/root" => n
   ]
-  self.collisions = self.entities.filter(n => truth(data(n), "editorOnly"))
+  self.collisions = self.entities.filter(n => truth(n.data(), "editorOnly"))
 }
 
 ///|
-fn Workspace::entity_changed(self : Workspace, n : Raw) -> Unit {
+fn Workspace::entity_changed(self : Workspace, changed : SceneNode?) -> Unit {
   self.index_entities()
-  if exists(n) {
-    by_id("search").set("value", Raw::of(""))
-    by_id("category").set("value", Raw::of(category(n)))
+  if changed is Some(n) {
+    by_id("search").reinterpret_as_html_input_element().set_value("")
+    by_id("category")
+    .reinterpret_as_html_select_element()
+    .set_value(category(n))
     self.select_entity(n)
   } else {
     self.selection = Nothing
-    ignore(call(self.editor, "deselect", []))
+    self.editor.deselect()
     set_text(by_id("selection-note"), "")
     self.properties()
     self.render_list()

@@ -1,6 +1,7 @@
 ///|
 fn enabled_instance(n : Raw) -> Bool {
-  truthy(n, "active") && truthy(n, "visible")
+  n.get("active").strict_equal(Raw::of(true)) &&
+  n.get("visible").strict_equal(Raw::of(true))
 }
 
 ///|
@@ -9,16 +10,15 @@ fn matrices_for(
   textures : Map[String, Raw],
   images : Map[String, Raw],
 ) -> FixedArray[Double] {
-  guard textures.get(string_field(batch.get("matricesTexture"), "uuid"))
-    is Some(t) &&
-    images.get(string_field(t, "image")) is Some(img) else {
+  guard textures.get(str(batch.get("matricesTexture"), "uuid")) is Some(t) &&
+    images.get(str(t, "image")) is Some(img) else {
     return []
   }
   img.get("url").get("data").cast()
 }
 
 ///|
-pub fn extract_repeats(scene : Raw, view : (Raw) -> Raw) -> Unit {
+pub fn extract_repeats(scene : Raw, view : (Raw) -> @core.TypedArray) -> Unit {
   if array_field(scene, "animations").length() > 0 {
     return
   }
@@ -28,24 +28,24 @@ pub fn extract_repeats(scene : Raw, view : (Raw) -> Raw) -> Unit {
   let images = resource_index(array_field(scene, "images"))
   fn extract(n : Raw) -> Array[Raw] {
     let instances = array_field(n, "instanceInfo")
-    guard string_field(n, "type") == "BatchedMesh" &&
-      string_field(n, "name").has_prefix("static/") &&
+    guard str(n, "type") == "BatchedMesh" &&
+      str(n, "name").has_prefix("static/") &&
       binding(n).is_empty() &&
       children(n).length() == 0 &&
-      !truthy(n, "colorsTexture") &&
+      !has_field(n, "colorsTexture") &&
       instances.length() >= 128 &&
-      materials.get(string_field(n, "material")) is Some(m) else {
+      materials.get(str(n, "material")) is Some(m) else {
       return []
     }
     guard m.get("colorWrite").strict_equal(Raw::of(false)) ||
       (
-        string_field(m.get("userData"), "renderRole") == "floor" &&
-        string_field(m, "type") == "MeshToonMaterial"
+        str(m.get("userData"), "renderRole") == "floor" &&
+        str(m, "type") == "MeshToonMaterial"
       ) else {
       return []
     }
-    guard geometry.get(string_field(n, "geometry")) is Some(g) &&
-      truthy(g.get("data"), "index") else {
+    guard geometry.get(str(n, "geometry")) is Some(g) &&
+      has_field(g.get("data"), "index") else {
       return []
     }
     let data = g.get("data")
@@ -57,17 +57,14 @@ pub fn extract_repeats(scene : Raw, view : (Raw) -> Raw) -> Unit {
     for i, e in instances {
       if enabled_instance(e) {
         let id = int_field(e, "geometryIndex")
-        if !groups.contains(id) {
-          groups[id] = []
-        }
-        groups[id].push(i)
+        groups.get_or_init(id, () => []).push(i)
       }
     }
     let extracted = []
     for id, copies in groups {
       guard copies.length() >= 96 else { continue }
       let info = array_field(n, "geometryInfo")[id]
-      let tag = string_field(n, "uuid") + "-repeats-" + id.to_string()
+      let tag = str(n, "uuid") + "-repeats-" + id.to_string()
       let attrs = Raw::object()
       let source = data.get("attributes")
       let vertex = int_field(info, "vertexStart")
@@ -76,12 +73,7 @@ pub fn extract_repeats(scene : Raw, view : (Raw) -> Raw) -> Unit {
         let a = @archive.copy(source.get(key))
         let d = @archive.copy(a.get("array"))
         let size = int_field(a, "itemSize")
-        let width = match string_field(a, "type") {
-          "Float64Array" => 8
-          "Uint8Array" | "Int8Array" => 1
-          "Uint16Array" | "Int16Array" => 2
-          _ => 4
-        }
+        let width = @scene_format.element_width(str(a, "type")).unwrap()
         d.set(
           "byteOffset",
           Raw::of(int_field(d, "byteOffset") + vertex * size * width),
@@ -91,13 +83,13 @@ pub fn extract_repeats(scene : Raw, view : (Raw) -> Raw) -> Unit {
         attrs.set(key, a)
       }
       let index = @archive.copy(data.get("index"))
-      let indices : FixedArray[Int32] = view(index.get("array")).cast()
+      let indices = view(index.get("array"))
       let start = int_field(info, "start")
       index.set(
         "array",
         Raw::of(
           FixedArray::makei(int_field(info, "count"), i => {
-            indices[start + i] - vertex
+            indices.get_int(start + i) - vertex
           }),
         ),
       )
@@ -113,16 +105,17 @@ pub fn extract_repeats(scene : Raw, view : (Raw) -> Raw) -> Unit {
           ]),
         ),
       ])
-      append_item(scene.get("geometries"), lib)
+      @archive.append(scene.get("geometries"), lib)
       let cells : Map[String, Array[Double]] = Map([])
       for i in copies {
-        let matrix = FixedArray::makei(16, j => matrices[i * 16 + j])
-        let key = cell_key([matrix[12], matrix[13], matrix[14]], 96)
-        if !cells.contains(key) {
-          cells[key] = []
-        }
-        for x in matrix {
-          cells[key].push(x)
+        let start = i * 16
+        let key = cell_key(
+          [matrices[start + 12], matrices[start + 13], matrices[start + 14]],
+          96,
+        )
+        let values = cells.get_or_init(key, () => [])
+        for j in start..<(start + 16) {
+          values.push(matrices[j])
         }
         instances[i].set("visible", Raw::of(false))
       }
@@ -179,6 +172,3 @@ pub fn extract_repeats(scene : Raw, view : (Raw) -> Raw) -> Unit {
   visit(scene.get("object"))
   instance_belt_rollers(scene)
 }
-
-///|
-extern "js" fn append_item(array : Raw, item : Raw) -> Unit = "(a,v)=>a.push(v)"

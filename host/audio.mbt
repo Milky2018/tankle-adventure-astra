@@ -3,62 +3,71 @@ pub struct Audio {
   priv ctx : @audio.AudioContext
   priv master : @audio.GainNode
   priv noise : @audio.AudioBuffer
-  priv track : @core.JsValue
+  priv track : MusicTrack
 }
 
 ///|
-extern "js" fn create_noise_buffer(
+extern "js" fn sample_rate(ctx : @audio.AudioContext) -> Int32 = "ctx=>ctx.sampleRate"
+
+///|
+extern "js" fn mono_buffer(
   ctx : @audio.AudioContext,
-) -> @audio.AudioBuffer =
-  #| ctx=>ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate)
+  length : Int32,
+  rate : Int32,
+) -> @audio.AudioBuffer = "(ctx,len,hz)=>ctx.createBuffer(1,len,hz)"
 
 ///|
-extern "js" fn samples(buffer : @audio.AudioBuffer) -> FixedArray[Float] =
-  #| b=>b.getChannelData(0)
+extern "js" fn samples(buffer : @audio.AudioBuffer) -> FixedArray[Float] = "b=>b.getChannelData(0)"
 
 ///|
-extern "js" fn random() -> Double = "()=>Math.random()"
+#external
+priv type MusicTrack
 
 ///|
-extern "js" fn new_track() -> @core.JsValue = "()=>new Audio()"
+extern "js" fn MusicTrack::new() -> MusicTrack = "()=>new Audio()"
+
+///|
+extern "js" fn MusicTrack::set_loop(self : MusicTrack, looped : Bool) -> Unit = "(m,v)=>{m.loop=v}"
 
 ///|
 pub fn create_audio() -> Audio {
   let ctx = @audio.AudioContext::get_context()
   let master = ctx.create_gain()
   master.as_node().connect(ctx.destination())
-  let noise = create_noise_buffer(ctx)
+  let rate = sample_rate(ctx)
+  let noise = mono_buffer(ctx, rate * 2, rate)
   let data = samples(noise)
   for i in 0..<data.length() {
-    data[i] = Float::from_double(random() * 2 - 1)
+    data[i] = Float::from_double(@three_math.rand_float(-1, 1))
   }
-  let track = new_track()
-  track.set("loop", @core.JsValue::of(true))
+  let track = MusicTrack::new()
+  track.set_loop(true)
   { ctx, master, noise, track, }
 }
 
 ///|
-extern "js" fn oscillator(
-  ctx : @audio.AudioContext,
-  wave : String,
-) -> @audio.AudioNode =
-  #| (ctx,type)=>{ const n=ctx.createOscillator();n.type=type;return n }
+extern "js" fn oscillator(ctx : @audio.AudioContext) -> @audio.AudioNode = "c=>c.createOscillator()"
 
 ///|
-extern "js" fn stereo(
-  ctx : @audio.AudioContext,
-  pan : Double,
-) -> @audio.AudioNode =
-  #| (ctx,value)=>{const n=ctx.createStereoPanner();n.pan.value=value;return n}
+extern "js" fn stereo(ctx : @audio.AudioContext) -> @audio.AudioNode = "c=>c.createStereoPanner()"
 
 ///|
-extern "js" fn biquad(
-  ctx : @audio.AudioContext,
-  kind : String,
-  cutoff : Double,
-  q : Double,
-) -> @audio.AudioNode =
-  #| (ctx,type,hz,q)=>{const n=ctx.createBiquadFilter();n.type=type;n.frequency.value=hz;n.Q.value=q;return n}
+extern "js" fn biquad(ctx : @audio.AudioContext) -> @audio.AudioNode = "c=>c.createBiquadFilter()"
+
+///|
+extern "js" fn set_node_type(node : @audio.AudioNode, kind : String) -> Unit = "(n,v)=>{n.type=v}"
+
+///|
+extern "js" fn pan_param(node : @audio.AudioNode) -> @audio.AudioParam = "n=>n.pan"
+
+///|
+extern "js" fn resonance(node : @audio.AudioNode) -> @audio.AudioParam = "n=>n.Q"
+
+///|
+extern "js" fn set_audio_value(
+  param : @audio.AudioParam,
+  value : Double,
+) -> Unit = "(p,v)=>{p.value=v}"
 
 ///|
 extern "js" fn set_at(
@@ -80,12 +89,7 @@ extern "js" fn exp_at(
 extern "js" fn frequency_of(source : @audio.AudioNode) -> @audio.AudioParam = "n=>n.frequency"
 
 ///|
-extern "js" fn start_source(
-  node : @audio.AudioNode,
-  time : Double,
-  offset : Double,
-) -> Unit =
-  #| (n,t,o)=>n.start(t,o)
+extern "js" fn start_oscillator(node : @audio.AudioNode, time : Double) -> Unit = "(n,t)=>n.start(t)"
 
 ///|
 extern "js" fn stop_source(node : @audio.AudioNode, time : Double) -> Unit = "(n,t)=>n.stop(t)"
@@ -94,40 +98,52 @@ extern "js" fn stop_source(node : @audio.AudioNode, time : Double) -> Unit = "(n
 extern "js" fn on_end(node : @audio.AudioNode, callback : () -> Unit) -> Unit = "(n,cb)=>{n.onended=cb}"
 
 ///|
-extern "js" fn disconnect(node : @audio.AudioNode) -> Unit = "n=>n.disconnect()"
+pub(all) enum VoiceSource {
+  Noise
+  Tone(wave~ : String, from_hz~ : Double, to_hz~ : Double)
+}
 
 ///|
-pub fn audio_voice(
-  audio : Audio,
-  noise : Bool,
-  frequency : Double,
-  end : Double,
-  duration : Double,
-  gain : Double,
-  delay : Double,
-  attack : Double,
-  hold : Double,
-  wave : String,
-  cutoff : Double,
-  filter : String,
-  pan : Double,
+pub(all) struct Voice {
+  source : VoiceSource
+  duration : Double
+  gain : Double
+  delay : Double
+  attack : Double
+  hold : Double
+  filter : (String, Double)?
+}
+
+///|
+pub fn Audio::play_voice(
+  self : Audio,
+  voice : Voice,
+  gain~ : Double = 1,
+  pan~ : Double = 0,
 ) -> Unit {
-  let ctx = audio.ctx
-  let at = ctx.current_time() + delay
-  let source = if noise {
-    let node = ctx.create_buffer_source()
-    node.set_buffer(Some(audio.noise))
-    node.set_loop(true)
-    node.as_node()
-  } else {
-    let node = oscillator(ctx, wave)
-    let pitch = frequency_of(node)
-    set_at(pitch, frequency, at)
-    exp_at(pitch, end.max(20), at + duration)
-    node
+  let ctx = self.ctx
+  let at = ctx.current_time() + voice.delay
+  let { duration, attack, hold, .. } = voice
+  let gain = voice.gain * gain
+  let source = match voice.source {
+    Noise => {
+      let node = ctx.create_buffer_source()
+      node.set_buffer(Some(self.noise))
+      node.set_loop(true)
+      node.as_node()
+    }
+    Tone(wave~, from_hz~, to_hz~) => {
+      let node = oscillator(ctx)
+      set_node_type(node, wave)
+      let pitch = frequency_of(node)
+      set_at(pitch, from_hz, at)
+      exp_at(pitch, to_hz.max(20), at + duration)
+      node
+    }
   }
   let envelope = ctx.create_gain()
-  let panner = stereo(ctx, pan)
+  let panner = stereo(ctx)
+  set_audio_value(pan_param(panner), pan)
   let level = envelope.gain()
   set_at(level, 0, at)
   level.linear_ramp_to_value_at_time(gain, at + attack)
@@ -139,8 +155,11 @@ pub fn audio_voice(
   )
   exp_at(level, 0.0001, at + duration)
   level.linear_ramp_to_value_at_time(0, at + duration + 0.01)
-  let effect = if cutoff != 0 {
-    let n = biquad(ctx, filter, cutoff, 0.65)
+  let effect = if voice.filter is Some((filter, cutoff)) {
+    let n = biquad(ctx)
+    set_node_type(n, filter)
+    set_audio_value(frequency_of(n), cutoff)
+    set_audio_value(resonance(n), 0.65)
     source.connect(n)
     n.connect(envelope.as_node())
     Some(n)
@@ -149,47 +168,68 @@ pub fn audio_voice(
     None
   }
   envelope.as_node().connect(panner)
-  panner.connect(audio.master.as_node())
+  panner.connect(self.master.as_node())
   on_end(source, fn() {
-    disconnect(source)
-    if effect is Some(n) {
-      disconnect(n)
+    match effect {
+      Some(n) => {
+        source.disconnect(n)
+        n.disconnect(envelope.as_node())
+      }
+      None => source.disconnect(envelope.as_node())
     }
-    disconnect(envelope.as_node())
-    disconnect(panner)
+    envelope.as_node().disconnect(panner)
+    panner.disconnect(self.master.as_node())
   })
-  start_source(source, at, if noise { random() * 1.5 } else { 0 })
+  match voice.source {
+    Noise => source.as_buffer_source().start(at, @three_math.rand_float(0, 1.5))
+    Tone(..) => start_oscillator(source, at)
+  }
   stop_source(source, at + duration + 0.012)
 }
 
 ///|
-extern "js" fn music_src(track : @core.JsValue) -> String = "m=>m.getAttribute('src')??''"
+extern "js" fn music_src(track : MusicTrack) -> String = "m=>m.getAttribute('src')??''"
 
 ///|
-extern "js" fn pause_track(track : @core.JsValue) -> Unit = "m=>m.pause()"
+extern "js" fn pause_track(track : MusicTrack) -> Unit = "m=>m.pause()"
 
 ///|
-extern "js" fn play_track(track : @core.JsValue) -> Unit = "m=>m.play().catch(()=>{})"
+extern "js" fn play_track(track : MusicTrack) -> Unit = "m=>m.play().catch(()=>{})"
 
 ///|
-pub fn music(
-  audio : Audio,
-  url : String,
+extern "js" fn MusicTrack::set_src(self : MusicTrack, path : String) -> Unit = "(m,path)=>{m.src=path}"
+
+///|
+extern "js" fn MusicTrack::seek(self : MusicTrack, time : Double) -> Unit = "(m,t)=>{m.currentTime=t}"
+
+///|
+extern "js" fn MusicTrack::is_paused(self : MusicTrack) -> Bool = "m=>m.paused"
+
+///|
+extern "js" fn MusicTrack::set_volume(
+  self : MusicTrack,
   volume : Double,
-  paused : Bool,
-  restart : Bool,
+) -> Unit = "(m,v)=>{m.volume=v}"
+
+///|
+pub fn Audio::update_music(
+  self : Audio,
+  url : String,
+  volume~ : Double,
+  paused~ : Bool,
+  restart~ : Bool,
 ) -> Unit {
-  let track = audio.track
+  let track = self.track
   if music_src(track) != url {
-    track.set("src", @core.JsValue::of(url))
+    track.set_src(url)
   }
   if restart {
-    track.set("currentTime", @core.JsValue::of(0))
+    track.seek(0)
   }
-  track.set("volume", @core.JsValue::of(volume))
+  track.set_volume(volume)
   if paused {
     pause_track(track)
-  } else if track.get("paused").cast() {
+  } else if track.is_paused() {
     play_track(track)
   }
 }

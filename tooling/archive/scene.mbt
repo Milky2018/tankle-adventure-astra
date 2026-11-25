@@ -1,5 +1,5 @@
 ///|
-pub fn walk(node : Raw, visit : (Raw) -> Unit) -> Unit {
+pub fn walk(node : Raw, visit : (Raw) -> Unit raise?) -> Unit raise? {
   visit(node)
   for child in items(node.get("children")) {
     walk(child, visit)
@@ -7,7 +7,7 @@ pub fn walk(node : Raw, visit : (Raw) -> Unit) -> Unit {
 }
 
 ///|
-fn attributes(scene : Raw, visit : (Raw) -> Unit) -> Unit {
+fn attributes(scene : Raw, visit : (Raw) -> Unit raise?) -> Unit raise? {
   for g in items(scene.get("geometries")) {
     let data = g.get("data")
     if data.is_undefined() {
@@ -33,36 +33,47 @@ fn attributes(scene : Raw, visit : (Raw) -> Unit) -> Unit {
 }
 
 ///|
+fn check_descriptor(desc : Raw, buffer : Bytes) -> Unit raise {
+  let view : @scene_format.BufferView = @json.from_json(desc.to_json())
+  view.check_range(buffer.length(), id="geometry attribute")
+}
+
+///|
 /// Validate even resources that the runtime bake will subsequently discard.
-pub fn validate_views(scene : Raw, buffer : Raw) -> Unit {
+pub fn validate_views(scene : Raw, buffer : Bytes) -> Unit raise {
   attributes(scene, a => {
     let desc = a.get("array")
-    if kind(desc) == "object" && !desc.is_null() {
-      ignore(view(buffer, desc))
+    if is_record(desc) {
+      check_descriptor(desc, buffer)
     }
   })
 }
 
 ///|
-pub fn read_scene() -> Raw {
+pub fn read_scene(
+  decode~ : (@core.TypedArray) -> Raw = array_copy,
+) -> Raw raise {
   let scene = read_json_gz("content/art/city.scene.json.gz")
-  let bytes = gunzip(read_file("content/art/city.buffers.bin.gz"))
+  let bytes = decompress(
+    @fs.read_file_to_bytes("content/art/city.buffers.bin.gz"),
+  )
   attributes(scene, a => {
     let desc = a.get("array")
-    if kind(desc) == "object" && !desc.is_null() {
-      a.set("array", array_copy(view(bytes, desc)))
+    if is_record(desc) {
+      check_descriptor(desc, bytes)
+      a.set("array", decode(view(bytes, desc)))
     }
   })
   scene
 }
 
 ///|
-pub fn write_scene(scene : Raw) -> Unit {
-  let chunks = []
+pub fn write_scene(scene : Raw) -> Unit raise {
+  let data = @buffer.Buffer()
   let mut offset = 0
   attributes(scene, a => {
     let values = a.get("array")
-    if kind(values) == "array" {
+    if is_array(values) {
       let ty = str(a, "type")
       let b = byte_view(typed(ty, values))
       a.set(
@@ -73,19 +84,18 @@ pub fn write_scene(scene : Raw) -> Unit {
           ("type", Raw::of(ty)),
         ]),
       )
-      chunks.push(b)
-      let n : Int32 = b.get("length").cast()
-      offset += n
+      data.write_bytes(b)
+      offset += b.length()
       let padding = (8 - offset % 8) % 8
       if padding > 0 {
-        chunks.push(zeros(padding))
+        data.write_bytes(Bytes::make(padding, 0))
         offset += padding
       }
     }
   })
-  write_file(
+  @fs.write_bytes_to_file(
     "content/art/city.buffers.bin.gz",
-    gzip(concat(FixedArray::from_array(chunks[:]))),
+    compress(data.to_bytes()),
   )
   write_json_gz("content/art/city.scene.json.gz", scene)
 }
@@ -106,25 +116,20 @@ pub fn reachable(
   }
   let used = Set([])
   fn collect(v : Raw) {
-    match kind(v) {
-      "string" => {
-        let id : String = v.cast()
-        if !used.contains(id) && index.get(id) is Some(entry) {
-          used.add(id)
-          collect(entry)
-        }
+    if is_string(v) {
+      let id : String = v.cast()
+      if !used.contains(id) && index.get(id) is Some(entry) {
+        used.add(id)
+        collect(entry)
       }
-      "array" =>
-        for entry in items(v) {
-          collect(entry)
-        }
-      "object" =>
-        if !v.is_null() {
-          for k in keys(v) {
-            collect(v.get(k))
-          }
-        }
-      _ => ()
+    } else if is_array(v) {
+      for item in items(v) {
+        collect(item)
+      }
+    } else if is_record(v) {
+      for key in keys(v) {
+        collect(v.get(key))
+      }
     }
   }
   collect(root)

@@ -3,10 +3,7 @@
 priv type Response
 
 ///|
-extern "js" fn fetch(url : String) -> @js_async.Promise[Response] = "url=>fetch(url)"
-
-///|
-extern "js" fn Response::ok(self : Response) -> Bool = "r=>r.ok"
+extern "js" fn fetch(url : String) -> @js_async.Promise[Response] = "fetch"
 
 ///|
 extern "js" fn Response::status(self : Response) -> Int32 = "r=>r.status"
@@ -28,14 +25,17 @@ extern "js" fn Response::buffer(
 ) -> @js_async.Promise[@core.ArrayBuffer] = "r=>r.arrayBuffer()"
 
 ///|
-extern "js" fn mark(name : String) -> Unit = "name=>performance.mark(name)"
+pub extern "js" fn mark(name : String) -> Unit = "name=>performance.mark(name)"
 
 ///|
 async fn asset(path : String) -> Response {
   let response = fetch(path).wait()
-  if !response.ok() {
-    raise Failure("Art asset " + path + ": " + response.status().to_string())
+  let status = response.status()
+  if !(status is (200..<300)) {
+    raise Failure("Art asset " + path + ": " + status.to_string())
   }
+  // Fetch removes HTTP Content-Encoding. Static hosts can instead serve the
+  // gzip file as ordinary bytes, which must be decompressed while streaming.
   if response.content_encoding().to_lower() == "gzip" {
     response
   } else {
@@ -60,31 +60,11 @@ fn scene_buffers(
     id : String,
     view : @scene_format.BufferView,
   ) -> @core.TypedArray raise {
-    let stride = match view.type_name {
-      "Uint8Array" | "Uint8ClampedArray" | "Int8Array" => 1
-      "Uint16Array" | "Int16Array" => 2
-      "Float32Array" | "Uint32Array" | "Int32Array" => 4
-      "Float64Array" => 8
-      name => raise Failure("Packed view \{id}: unsupported array type \{name}")
-    }
-    let offset = view.byte_offset
-    if offset % stride != 0 {
-      raise Failure(
-        "Packed view \{id}: byte offset \{offset} is not aligned to \{stride} bytes for \{view.type_name}",
-      )
-    }
-    if offset < 0 ||
-      offset > bytes ||
-      view.length < 0 ||
-      view.length > (bytes - offset) / stride {
-      raise Failure(
-        "Packed view \{id}: \{view.type_name} at byte \{offset} with \{view.length} elements is outside the \{bytes}-byte buffer",
-      )
-    }
+    view.check_range(bytes, id~)
     let array = @core.TypedArray::view_by_name(
       view.type_name,
       buffer,
-      byte_offset=offset,
+      byte_offset=view.byte_offset,
       length=view.length,
     )
     if view.copy {
@@ -107,40 +87,26 @@ fn scene_buffers(
 }
 
 ///|
-pub fn load_scene(
-  url : String,
-  ready : (@core.Object3D) -> Unit,
-  failed : (String) -> Unit,
-) -> Unit {
-  ignore(
-    @js_async.Promise::from_async(async fn() {
-      try {
-        mark("art-start")
-        @async.with_task_group(group => {
-          let tree = group.spawn(() => asset(url).text().wait())
-          let binary = group.spawn(() => {
-            asset("/generated/art/folded-buffers.bin.gz").buffer().wait()
-          })
-          let manifest = group.spawn(() => {
-            let text = asset("/generated/art/folded-views.json.gz")
-              .text()
-              .wait()
-            @json.from_json(@json.parse(text))
-          })
-          let scene_text = tree.wait()
-          let buffer = binary.wait()
-          let views = manifest.wait()
-          mark("art-decoded")
-          let buffers = scene_buffers(views, buffer)
-          mark("art-parse-start")
-          let scene = parse_scene(@json.parse(scene_text), buffers)
-          mark("art-parsed")
-          ready(scene.wait())
-          mark("view-created")
-        })
-      } catch {
-        err => failed(err.to_string())
-      }
-    }),
-  )
+pub async fn load_scene(url : String) -> @core.Object3D {
+  mark("art-start")
+  let mut result = None
+  @async.with_task_group(group => {
+    let tree = group.spawn(() => asset(url).text().wait())
+    let binary = group.spawn(() => {
+      asset("/generated/art/folded-buffers.bin.gz").buffer().wait()
+    })
+    let manifest = group.spawn(() => {
+      @json.from_json(
+        @json.parse(asset("/generated/art/folded-views.json.gz").text().wait()),
+      )
+    })
+    let scene_text = tree.wait()
+    let buffer = binary.wait()
+    let views = manifest.wait()
+    mark("art-decoded")
+    let buffers = scene_buffers(views, buffer)
+    mark("art-parse-start")
+    result = Some(parse_scene(@json.parse(scene_text), buffers))
+  })
+  result.unwrap()
 }

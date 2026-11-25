@@ -16,12 +16,12 @@ fn Tab::id(self : Tab) -> String {
 ///|
 priv enum Selection {
   Nothing
-  Whole(Raw)
-  Part(root~ : Raw, object~ : Raw)
+  Whole(SceneNode)
+  Part(root~ : SceneNode, object~ : SceneNode)
 }
 
 ///|
-fn Selection::owner(self : Selection) -> Raw? {
+fn Selection::owner(self : Selection) -> SceneNode? {
   match self {
     Whole(n) | Part(root=n, ..) => Some(n)
     Nothing => None
@@ -29,6 +29,6 @@ fn Selection::owner(self : Selection) -> Raw? {
 }
 
 ///|
-fn Selection::is_owner(self : Selection, n : Raw) -> Bool {
-  self.owner() is Some(owner) && n.strict_equal(owner)
+fn Selection::is_owner(self : Selection, n : SceneNode) -> Bool {
+  self.owner() is Some(owner) && n.same(owner)
 }
