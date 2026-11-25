@@ -165,8 +165,3 @@ fn batch_json(
   }
   @core.JsValue::from_json(obj.to_json())
 }
-
-///|
-fn main {
-  ()
-}

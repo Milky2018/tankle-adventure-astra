@@ -1,28 +1,8 @@
 import {
+  "milky/tankle-astra/tooling/archive",
   "moonbit-community/three/core",
   "moonbit-community/three/math",
   "moonbit-community/three/addons/utils",
 }
 
 supported_targets = "js"
-
-pkgtype(kind: "executable")
-
-options(
-  link: {
-    "js": {
-      "format": "esm",
-      "exports": [
-        "instance_belt_rollers",
-        "identity",
-        "compose_transform",
-        "determinant",
-        "project",
-        "geometry_center",
-        "read_geometry",
-        "depth_geometry",
-        "batch_fittings",
-      ],
-    },
-  },
-)

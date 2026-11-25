@@ -15,20 +15,6 @@ pub extern "js" fn frame(callback : (Double) -> Unit) -> Unit =
   #| callback => { requestAnimationFrame(callback); }
 
 ///|
-#module("tankle-astra-platform/host")
-pub extern "js" fn on_key(callback : (String, Bool, Bool) -> Unit) -> Unit = "onKey"
-
-///|
-#module("tankle-astra-platform/host")
-pub extern "js" fn on_pointer(
-  callback : (Double, Double, Double, Double) -> Unit,
-) -> Unit = "onPointer"
-
-///|
-#module("tankle-astra-platform/host")
-pub extern "js" fn on_button(callback : (Int32, Bool) -> Unit) -> Unit = "onButton"
-
-///|
 pub extern "js" fn on_resize(callback : () -> Unit) -> Unit =
   #| callback => addEventListener('resize', callback)
 
@@ -179,49 +165,6 @@ pub extern "js" fn class_toggle(
   enabled : Bool,
 ) -> Unit =
   #| (id,name,enabled) => {document.getElementById(id).classList.toggle(name,enabled);}
-
-///|
-pub type Audio
-
-///|
-#module("tankle-astra-platform/host")
-pub extern "js" fn create_audio() -> Audio = "createAudio"
-
-///|
-#module("tankle-astra-platform/host")
-pub extern "js" fn audio_voice(
-  audio : Audio,
-  noise : Bool,
-  frequency : Double,
-  end : Double,
-  duration : Double,
-  gain : Double,
-  delay : Double,
-  attack : Double,
-  hold : Double,
-  wave : String,
-  cutoff : Double,
-  filter : String,
-  pan : Double,
-) -> Unit = "audioVoice"
-
-///|
-#module("tankle-astra-platform/host")
-pub extern "js" fn music(
-  audio : Audio,
-  url : String,
-  volume : Double,
-  paused : Bool,
-  restart : Bool,
-) -> Unit = "setMusic"
-
-///|
-pub extern "js" fn audio_volume(audio : Audio, volume : Double) -> Unit =
-  #| (audio,volume) => {audio.master.gain.setTargetAtTime(volume,audio.ctx.currentTime,.1);}
-
-///|
-pub extern "js" fn audio_resume(audio : Audio) -> Unit =
-  #| audio => {audio.ctx.resume();}
 
 ///|
 pub extern "js" fn setting_value(id : String) -> String =

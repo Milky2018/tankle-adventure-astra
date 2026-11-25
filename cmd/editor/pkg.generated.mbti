@@ -6,6 +6,7 @@ package "milky/tankle-astra/cmd/editor"
 // Errors
 
 // Types and methods
+type Server
 
 // Type aliases
 

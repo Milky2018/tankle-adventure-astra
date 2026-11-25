@@ -107,7 +107,7 @@ fn Session::advance(self : Session, milliseconds : Double) -> Unit {
 }
 
 ///|
-pub fn start() -> Unit {
+fn main {
   @host.load_scene(
     "/generated/art/folded-scene.json.gz",
     fn(scene) {
@@ -182,9 +182,4 @@ pub fn start() -> Unit {
     },
     fn(error) { @host.text("startup-message", error) },
   )
-}
-
-///|
-fn main {
-  ()
 }

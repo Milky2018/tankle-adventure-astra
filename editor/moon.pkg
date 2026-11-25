@@ -1,0 +1,14 @@
+import {
+  "milky/tankle-astra/tooling/editor_model" @model,
+  "milky/tankle-astra/tooling/archive",
+  "moonbitlang/core/async/js_async",
+}
+
+pkgtype(kind: "executable")
+
+supported_targets = "js"
+
+options(
+  "allow-experimental-packages": true,
+  link: { "js": { "format": "esm" } },
+)

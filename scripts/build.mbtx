@@ -52,9 +52,6 @@ async fn main {
   copy_tree("public", site)
   copy_tree("index.html", "\{site}/index.html")
   copy_tree("browser/styles", "\{site}/browser/styles")
-  for file in ["main.js", "host.js"] {
-    copy_tree("browser/\{file}", "\{site}/browser/\{file}")
-  }
   let game = "_build/js/release/build/cmd/play"
   @fs.mkdir("\{site}/\{game}", recursive=true)
   copy_tree("\{game}/play.js", "\{site}/\{game}/play.js")

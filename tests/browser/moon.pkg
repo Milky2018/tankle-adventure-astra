@@ -1,0 +1,15 @@
+import {
+  "moonbitlang/core/json",
+  "moonbitlang/core/math",
+  "moonbitlang/core/env",
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/js_async",
+}
+
+pkgtype(kind: "executable")
+
+supported_targets = "js"
+
+options(
+  "allow-experimental-packages": true,
+)

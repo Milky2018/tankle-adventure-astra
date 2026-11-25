@@ -1,0 +1,85 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "milky/tankle-astra/tooling/archive"
+
+import {
+  "moonbit-community/three/core",
+  "moonbitlang/core/set",
+}
+
+// Values
+pub fn array_copy(@core.JsValue) -> @core.JsValue
+
+pub fn byte_view(@core.JsValue) -> @core.JsValue
+
+pub fn concat(FixedArray[@core.JsValue]) -> @core.JsValue
+
+pub fn copy(@core.JsValue) -> @core.JsValue
+
+pub fn digest(@core.JsValue) -> String
+
+pub fn exists(String) -> Bool
+
+pub fn from_base64(String) -> @core.JsValue
+
+pub fn gunzip(@core.JsValue) -> @core.JsValue
+
+pub fn gzip(@core.JsValue) -> @core.JsValue
+
+pub fn items(@core.JsValue) -> FixedArray[@core.JsValue]
+
+pub fn keys(@core.JsValue) -> FixedArray[String]
+
+pub fn kind(@core.JsValue) -> String
+
+pub fn list_files(String) -> FixedArray[String]
+
+pub fn mkdir(String) -> Unit
+
+pub fn obj(Array[(String, @core.JsValue)]) -> @core.JsValue
+
+pub fn parse(@core.JsValue) -> @core.JsValue
+
+pub fn prop(@core.JsValue, String) -> @core.JsValue
+
+pub fn reachable(@core.JsValue, @core.JsValue, Array[String], retain_clips? : Bool) -> @set.Set[String]
+
+pub fn read_file(String) -> @core.JsValue
+
+pub fn read_json_gz(String) -> @core.JsValue
+
+pub fn read_scene() -> @core.JsValue
+
+pub fn remove(@core.JsValue, String) -> Unit
+
+pub fn select_resources(@core.JsValue, @core.JsValue) -> @core.JsValue
+
+pub fn str(@core.JsValue, String) -> String
+
+pub fn stringify(@core.JsValue) -> String
+
+pub fn typed(String, @core.JsValue) -> @core.JsValue
+
+pub fn unlink(String) -> Unit
+
+pub fn validate_views(@core.JsValue, @core.JsValue) -> Unit
+
+pub fn view(@core.JsValue, @core.JsValue) -> @core.JsValue
+
+pub fn walk(@core.JsValue, (@core.JsValue) -> Unit) -> Unit
+
+pub fn write_file(String, @core.JsValue) -> Unit
+
+pub fn write_json_gz(String, @core.JsValue) -> Unit
+
+pub fn write_scene(@core.JsValue) -> Unit
+
+pub fn zeros(Int32) -> @core.JsValue
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @core {type JsValue as Raw}
+
+// Traits

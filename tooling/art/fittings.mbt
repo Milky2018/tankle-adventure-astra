@@ -41,61 +41,103 @@ fn numbered(segment : StringView) -> Bool {
 }
 
 ///|
-extern "js" fn material_properties(m : Raw) -> Raw =
-  #| ({uuid, name, color, vertexColors, ...properties}) => properties
+fn material_properties(m : Raw) -> Raw {
+  let props = @archive.copy(m)
+  for k in ["uuid", "name", "color", "vertexColors"] {
+    @archive.remove(props, k)
+  }
+  props
+}
 
 ///|
-extern "js" fn signature(value : Raw) -> String = "(v) => JSON.stringify(v)"
+fn signature(value : Raw) -> String {
+  @archive.stringify(value)
+}
 
 ///|
-extern "js" fn tint_material(scene : Raw, props : Raw, uuid : String) -> Unit =
-  #| (scene, props, uuid) => scene.materials.push({...props, uuid, color: 0xffffff, vertexColors: true})
+fn tint_material(scene : Raw, props : Raw, uuid : String) -> Unit {
+  let material = @archive.copy(props)
+  material.set("uuid", Raw::of(uuid))
+  material.set("color", Raw::of(0xffffff))
+  material.set("vertexColors", Raw::of(true))
+  append_item(scene.get("materials"), material)
+}
 
 ///|
-extern "js" fn state_key(
-  anchor : Raw,
-  id : String,
-  cell : String,
-  node : Raw,
-) -> String =
-  #| (a,id,cell,n) => JSON.stringify([a.uuid,id,cell,n.castShadow,n.receiveShadow,n.renderOrder,n.layers])
+fn state_key(anchor : Raw, id : String, cell : String, node : Raw) -> String {
+  @archive.stringify(
+    Raw::from_array([
+      anchor.get("uuid"),
+      Raw::of(id),
+      Raw::of(cell),
+      node.get("castShadow"),
+      node.get("receiveShadow"),
+      node.get("renderOrder"),
+      node.get("layers"),
+    ]),
+  )
+}
 
 ///|
-extern "js" fn add_batch(scene : Raw, payload : Raw) -> Raw =
-  #| (s,j) => {
-  #|   s.geometries.push(...j.geometries); s.images.push(...j.images); s.textures.push(...j.textures);
-  #|   for (const key of ["matricesTexture","indirectTexture"]) j.object[key] = {uuid:j.object[key].uuid};
-  #|   return j.object;
-  #| }
+fn add_batch(scene : Raw, payload : Raw) -> Raw {
+  for k in ["geometries", "images", "textures"] {
+    for item in @archive.items(payload.get(k)) {
+      append_item(scene.get(k), item)
+    }
+  }
+  let obj = payload.get("object")
+  for k in ["matricesTexture", "indirectTexture"] {
+    obj.set(k, @archive.obj([("uuid", obj.get(k).get("uuid"))]))
+  }
+  obj
+}
 
 ///|
-extern "js" fn add_mesh(
+fn add_mesh(
   scene : Raw,
   geometry : Raw,
   uuid : String,
   matrix : FixedArray[Double],
-) -> Raw =
-  #| (s,g,uuid,matrix) => { s.geometries.push(g); return {uuid,type:"Mesh",geometry:g.uuid,matrix} }
+) -> Raw {
+  append_item(scene.get("geometries"), geometry)
+  @archive.obj([
+    ("uuid", Raw::of(uuid)),
+    ("type", Raw::of("Mesh")),
+    ("geometry", geometry.get("uuid")),
+    ("matrix", Raw::of(matrix)),
+  ])
+}
 
 ///|
-extern "js" fn mount_draw(
-  anchor : Raw,
-  draw : Raw,
-  id : String,
-  original : Raw,
-) -> Unit =
-  #| (a,d,id,{castShadow,receiveShadow,renderOrder,layers}) => {
-  #|   Object.assign(d,{name:"Workshop fittings",material:id,matrixAutoUpdate:false,castShadow,receiveShadow,renderOrder,layers});
-  #|   a.children.push(d);
-  #| }
+fn mount_draw(anchor : Raw, draw : Raw, id : String, original : Raw) -> Unit {
+  draw.set("name", Raw::of("Workshop fittings"))
+  draw.set("material", Raw::of(id))
+  draw.set("matrixAutoUpdate", Raw::of(false))
+  for k in ["castShadow", "receiveShadow", "renderOrder", "layers"] {
+    draw.set(k, original.get(k))
+  }
+  append_item(anchor.get("children"), draw)
+}
 
 ///|
-extern "js" fn make_group(node : Raw) -> Unit =
-  #| n => { n.type="Group"; delete n.material; delete n.geometry }
+fn make_group(node : Raw) -> Unit {
+  node.set("type", Raw::of("Group"))
+  @archive.remove(node, "material")
+  @archive.remove(node, "geometry")
+}
 
 ///|
-extern "js" fn keep_children(node : Raw, include_child : (Raw) -> Bool) -> Unit =
-  #| (n, keep) => { if (n.children) n.children = n.children.filter(keep) }
+fn keep_children(node : Raw, include_child : (Raw) -> Bool) -> Unit {
+  let children = node.get("children")
+  if !children.is_undefined() {
+    node.set(
+      "children",
+      Raw::from_array(
+        [ for n in @archive.items(children) if include_child(n) => n ][:],
+      ),
+    )
+  }
+}
 
 ///|
 extern "js" fn identity_set() -> Raw = "() => new Set()"

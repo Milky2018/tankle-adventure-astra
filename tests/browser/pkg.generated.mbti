@@ -1,0 +1,15 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "milky/tankle-astra/tests/browser"
+
+// Values
+
+// Errors
+
+// Types and methods
+type Chrome
+
+type Stream
+
+// Type aliases
+
+// Traits

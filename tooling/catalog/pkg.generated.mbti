@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "milky/tankle-astra/tooling/catalog"
+
+import {
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn field(Map[String, @json.Json], String, default? : @json.Json) -> @json.Json
+
+pub fn list(@json.Json) -> Array[@json.Json]
+
+pub fn num(@json.Json) -> Double
+
+pub fn object(@json.Json) -> Map[String, @json.Json]
+
+pub fn text(@json.Json) -> String
+
+pub fn validate(Map[String, @json.Json]) -> Unit raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub type Record = Map[String, @json.Json]
+
+// Traits

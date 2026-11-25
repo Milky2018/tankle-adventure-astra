@@ -11,41 +11,68 @@ extern "js" fn visible(node : @core.JsValue) -> Bool = "(n) => n.visible !== fal
 extern "js" fn has_order(node : @core.JsValue) -> Bool = "(n) => !!n.renderOrder"
 
 ///|
-extern "js" fn roller_key(
-  belt : String,
-  roller : @core.JsValue,
-  material : @core.JsValue,
-) -> String =
-  #| (belt, roller, { uuid, name, ...properties }) => JSON.stringify([
-  #|   belt, roller.geometry, properties, roller.castShadow, roller.receiveShadow, roller.layers, roller.renderOrder
-  #| ])
+fn roller_key(belt : String, roller : Raw, material : Raw) -> String {
+  let props = @archive.copy(material)
+  for key in ["uuid", "name"] {
+    @archive.remove(props, key)
+  }
+  @archive.stringify(
+    Raw::from_array([
+      Raw::of(belt),
+      roller.get("geometry"),
+      props,
+      roller.get("castShadow"),
+      roller.get("receiveShadow"),
+      roller.get("layers"),
+      roller.get("renderOrder"),
+    ]),
+  )
+}
 
 ///|
-extern "js" fn attach_roller_batch(
-  root : @core.JsValue,
+fn attach_roller_batch(
+  root : Raw,
   id : String,
-  roller : @core.JsValue,
+  roller : Raw,
   matrix : FixedArray[Double],
   matrices : FixedArray[Double],
   count : Int32,
-) -> Unit =
-  #| (root, id, r, matrix, matrices, count) => root.children.push({
-  #|   uuid: id, name: "Conveyor rollers", type: "InstancedMesh", matrix, matrixAutoUpdate: false,
-  #|   geometry: r.geometry, material: r.material, layers: r.layers, renderOrder: r.renderOrder,
-  #|   castShadow: r.castShadow, receiveShadow: r.receiveShadow, userData: { binding: id }, count,
-  #|   instanceMatrix: { type: "Float32Array", itemSize: 16, array: matrices, normalized: false }
-  #| })
+) -> Unit {
+  let n = @archive.obj([
+    ("uuid", Raw::of(id)),
+    ("name", Raw::of("Conveyor rollers")),
+    ("type", Raw::of("InstancedMesh")),
+    ("matrix", Raw::of(matrix)),
+    ("matrixAutoUpdate", Raw::of(false)),
+  ])
+  for
+    key in [
+      "geometry", "material", "layers", "renderOrder", "castShadow", "receiveShadow",
+    ] {
+    n.set(key, roller.get(key))
+  }
+  n.set("userData", @archive.obj([("binding", Raw::of(id))]))
+  n.set("count", Raw::of(count))
+  n.set(
+    "instanceMatrix",
+    @archive.obj([
+      ("type", Raw::of("Float32Array")),
+      ("itemSize", Raw::of(16)),
+      ("array", Raw::of(matrices)),
+      ("normalized", Raw::of(false)),
+    ]),
+  )
+  append_item(root.get("children"), n)
+}
 
 ///|
-extern "js" fn bind_roller(
-  node : @core.JsValue,
-  batch : String,
-  index : Int32,
-) -> Unit =
-  #| (r, batch, index) => {
-  #|   r.type = "Object3D"; r.userData.rollerBatch = batch; r.userData.instance = index;
-  #|   delete r.material; delete r.geometry;
-  #| }
+fn bind_roller(n : Raw, batch : String, index : Int32) -> Unit {
+  n.set("type", Raw::of("Object3D"))
+  n.get("userData").set("rollerBatch", Raw::of(batch))
+  n.get("userData").set("instance", Raw::of(index))
+  @archive.remove(n, "material")
+  @archive.remove(n, "geometry")
+}
 
 ///|
 pub fn instance_belt_rollers(scene : @core.JsValue) -> Unit {

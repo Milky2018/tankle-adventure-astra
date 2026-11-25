@@ -1,0 +1,18 @@
+supported_targets = "js"
+
+import {
+  "milky/tankle-astra/tooling/archive",
+  "milky/tankle-astra/tooling/catalog",
+  "milky/tankle-astra/tooling/art",
+  "milky/tankle-astra/tooling/editor_model" @model,
+  "moonbit-community/three/core",
+  "moonbit-community/three/math",
+  "moonbitlang/core/json",
+  "moonbitlang/core/double",
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/js_async",
+} for "test"
+
+options(
+  "allow-experimental-packages": true,
+)

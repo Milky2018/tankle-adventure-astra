@@ -112,7 +112,9 @@ pub fn write_save(String) -> Unit
 // Errors
 
 // Types and methods
-pub type Audio
+pub struct Audio {
+  // private fields
+}
 
 pub type Canvas
 

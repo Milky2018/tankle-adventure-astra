@@ -1,3 +1,10 @@
+import {
+  "moonbitlang/core/json",
+  "milky/tankle-astra/tooling/catalog",
+  "milky/tankle-astra/tooling/archive",
+  "milky/tankle-astra/tooling/art",
+}
+
 pkgtype(kind: "executable")
 
 supported_targets = "js"

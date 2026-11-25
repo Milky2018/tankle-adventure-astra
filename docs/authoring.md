@@ -17,7 +17,7 @@ Floor clipping, the editor background and collision visibility are view preferen
 
 The local interface supports adding, copying and deleting enemies, controls and pickups, as well as editing existing gameplay objects and character parts. Use the official website workflow below for model import, detailed material/geometry editing and decorative additions. Other gameplay object types, circuit route definitions and bespoke puzzle behavior still require their source files. The player model's root position is an art preview; spawn position comes from checkpoint data. Runtime-controlled pivots may overwrite authored transforms, so adjust their mesh children.
 
-The local implementation is deliberately small: `editor/app.js` connects selection, view filtering and official commands; `editor/fields.js` builds property forms; `scripts/editor-server.mjs` serves pinned modules, validates content saves and runs the normal game build. The upstream viewport imports three-gpu-pathtracer 0.0.23 and three-mesh-bvh 0.7.4. Their browser distributions and licenses live in `editor/vendor/`. Upstream editor source is cached unchanged rather than maintained as a fork. The editor renders on changes and does not expose path tracing. Large scene JSON operations run one at a time in `scripts/editor-scene-worker.mjs`; the process exits after each load/save so the service does not retain the unpacked scene heap.
+The MoonBit package in `editor/` connects selection, floor filtering and property forms to upstream editor commands. `cmd/editor/` serves the pinned modules, validates saves and runs the game build. The upstream viewport imports three-gpu-pathtracer 0.0.23 and three-mesh-bvh 0.7.4. Their browser distributions and licenses live in `editor/vendor/`. Upstream editor source is cached unchanged rather than maintained as a fork. The editor renders on changes and does not expose path tracing. Large scene JSON operations run one at a time in a `cmd/editor` worker process. That process exits after each load or save to release its unpacked scene.
 
 ## Adding, copying and deleting gameplay objects
 
@@ -28,7 +28,7 @@ The local implementation is deliberately small: `editor/app.js` connects selecti
 
 For a new control, the **触发信号** (`effects`) field lists emitted signals, one per line. It starts with the new control ID. To operate an existing gate, use that gate's prerequisite signal. The **前置条件** (`requires`) field is optional; clear it to remove the prerequisite. These fields are regular forms, with no JSON editing required. Fresh pickup templates have no story prerequisite; upgrade effects and save restoration use their acquisition type rather than a fixed original ID.
 
-`editor/entity-model.js` owns complete entity copying, `entity-commands.js` provides undoable presence changes, and `entity-tools.js` owns the dialogs. `content/editor/templates.json` contains template labels and gameplay defaults; `templates.scene.json.gz` stores the independent model palette. Normal builds never regenerate this palette from the level. Maintainers can explicitly refresh it with `moon run cmd/editor -- templates` after changing source art; every configured source must still exist when refreshing. This maintenance command is not needed to place or copy objects.
+`tooling/editor_model/` copies complete entities. `editor/tools.mbt` handles the dialogs and groups each addition or removal into one undoable edit. `content/editor/templates.json` contains template labels and gameplay defaults; `templates.scene.json.gz` stores the independent model palette. Normal builds never regenerate this palette from the level. Maintainers can explicitly refresh it with `moon run cmd/editor -- templates` after changing source art; every configured source must still exist when refreshing. This maintenance command is not needed to place or copy objects.
 
 ## Where to make a change
 
@@ -122,7 +122,7 @@ glTF/GLB is a model interchange format. Native editor project JSON retains Three
 
 ## Runtime and build boundaries
 
-`scripts/build-content.mjs` validates and compiles JSON definitions into concrete MoonBit records, and copies packed assets to the public build directory. `simulation/Game` owns authoritative state and rules. `renderer/View` binds that state to scene roles. `cmd/play` handles browser interaction and the frame loop. `browser/host.js` fetches and decompresses the scene assets. The MoonBit `host` package passes the metadata to the three.mbt object loader and attaches the packed geometry buffers.
+`cmd/content/` validates and compiles JSON definitions into MoonBit records and bakes the packed scene for the public build directory. `simulation/Game` owns authoritative state and rules. `renderer/View` binds that state to scene roles. `cmd/play` handles browser interaction and the frame loop. `host/` fetches and decompresses the scene assets, passes the metadata to the three.mbt object loader and attaches the packed geometry buffers.
 
 The large scene is stored as compressed Three.js metadata and binary vertex buffers to keep loading and repository size manageable. The editor commands unpack and repack this representation; nobody should hand-edit it. Plain JSON gameplay catalogs remain diffable. Behavior remains readable MoonBit functions, with simulation tests independent of the browser.
 

@@ -1,22 +1,4 @@
 ///|
-#module("tankle-astra-platform/host")
-extern "js" fn load_art(
-  url : String,
-  parse : (String, @core.JsValue, () -> Unit) -> @core.Object3D,
-  ready : (@core.Object3D) -> Unit,
-  failed : (String) -> Unit,
-) -> Unit = "loadScene"
-
-///|
-pub fn load_scene(
-  url : String,
-  ready : (@core.Object3D) -> Unit,
-  failed : (String) -> Unit,
-) -> Unit {
-  load_art(url, parse_scene, ready, failed)
-}
-
-///|
 fn parse_scene(
   text : String,
   buffers : @core.JsValue,

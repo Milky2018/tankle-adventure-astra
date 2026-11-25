@@ -37,13 +37,13 @@ For the distributable ZIP, run `moon run scripts/build.mbtx -- --offline`. The o
 - `renderer/`: scene views, cameras, picking, shader effects and WebGL rendering with three.mbt.
 - `cmd/play/`: browser session and interface policy in MoonBit.
 - `scripts/build.mbtx`: builds content, compiles the game and assembles the static site or offline archive.
-- `host/` and `browser/host.js`: browser I/O, packed buffer loading and three.mbt scene deserialization.
+- `host/`: browser I/O, packed buffer loading and three.mbt scene deserialization.
 - `content/levels/city/`: editable JSON definitions for floors, collision, enemies, controls, circuits, lifts, pickups and repair hives.
 - `scripts/tuning.mbtx`: validates weapon and drive parameters and generates their MoonBit records at build time. Run `moon run scripts/tuning.mbtx -- content/abilities.json` to check edits, or append `simulation/tuning.generated.mbt` to generate the records.
 - `content/abilities.json`: weapon damage, heat, range and movement parameters. `content/sounds.json` contains sound synthesis parameters.
 - `content/art/`: packed Three.js scene resources. Use the official editor workflow below to edit them.
-- `editor/` and `scripts/editor-server.mjs`: local authoring UI and loopback-only content/save/build service.
-- `cmd/content/`, `tooling/art/` and `scripts/content/`: compile level definitions and bake the city. Generated MoonBit files and packed assets in `public/generated/` are build outputs.
+- `editor/` and `cmd/editor/`: MoonBit authoring UI and loopback service for loading, saving and previewing the project. `tooling/editor_model/` handles editable entities and project import/export.
+- `cmd/content/`, `tooling/catalog/`, `tooling/archive/` and `tooling/art/`: validate level definitions, generate MoonBit data and bake city geometry. Generated MoonBit files and packed assets in `public/generated/` are build outputs.
 
 The browser session reads input and resolves the camera aim. `Game::advance_combat` advances weapons, enemies and projectiles in gameplay order. `View::present` consumes the resulting state for the frame. Enemy warnings carry the chosen attack, and interrupted actions retain their phase and remaining time. Target prediction operates on an observed position and velocity. When sight is lost, enemies can use a remembered position until it expires.
 
@@ -57,14 +57,15 @@ The game and city geometry compiler use three.mbt. The optional visual editor us
 moon run cmd/content
 moon check
 moon test
-moon run cmd/editor -- test
-moon info . simulation host renderer cmd/play
-moon fmt . simulation host renderer cmd/play
+moon info
+moon fmt
 ```
 
 Run `moon run cmd/content` first on a fresh checkout or after editing content to prepare the generated files. The web build also runs this step.
 
-Browser input checks are in `tests/browser/`. They use keyboard and mouse events. The `?test` query enables read-only diagnostics; no simulation stepping, teleportation or ability-grant API is exposed.
+The MoonBit tests in `tests/content/` exercise the compiler, packaged assets and editor. To run just this suite, use `moon test tests/content`. The model import/export checks load the pinned upstream Three.js object loader. Its first use needs network access.
+
+Browser checks in `tests/browser/` send keyboard and mouse input to Chrome through its DevTools pipe. The `?test` query exposes read-only game diagnostics.
 
 ## Editing content
 
@@ -90,6 +91,6 @@ The local editor was exercised through search, floor focus, gizmo dragging, prop
 
 Browser acceptance uses a fresh save and real keyboard/mouse input: both opening relays, the Scrap Ram fight, Overdrive acquisition, the reverse conveyor, the local shortcut and a return to the repair hive (10 to 25 hull). Third-person movement and firing, rebinding, pause, map layer selection and camera settings were also exercised. This is an opening-loop acceptance run, not a claim that every later encounter has been played through.
 
-For optional Playwright walkthroughs, run `typed-opening-check.js`, `typed-first-boss-check.js` and `typed-return-check.js` in order through `playwright-cli run-code`; they deliberately replace the save in the test browser profile. Run `interface-check.js` after that route. Diagnostics and screenshots are written under ignored `output/playwright/`. Close the test browser after use.
+With the built game served on port 5175 and Chrome or Chromium installed, run `moon run tests/browser -- all`. Choose `new-game`, `camera`, `performance` or `campaign` to run one scenario. Each invocation creates and cleans up its own browser profile. Screenshots go in `output/browser/`. Set `CHROME` to choose an executable or `TANKLE_URL` to use another server.
 
 Before the content-editor refactor, at 1280 × 720 on this machine, the development reload sample had a 489 ms first frame and 17.6 ms p95 frame interval. A fresh Chrome profile running the production build took 3.28 s to its first frame; its input sample had 18.3 ms p95 and one 158 ms interval. These are historical local samples, not a full-world performance guarantee. Cold startup and occasional stalls remain optimization targets.

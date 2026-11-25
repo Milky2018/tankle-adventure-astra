@@ -1,8 +1,15 @@
 import {
   "moonbitlang/core/json",
+  "moonbitlang/core/async",
+  "moonbitlang/core/async/js_async",
   "moonbit-community/three/core",
+  "moonbit-community/three/audio",
   "moonbit-community/three/loaders",
   "moonbit-community/three/renderers/webgl",
 }
 
 supported_targets = "js"
+
+options(
+  "allow-experimental-packages": true,
+)
