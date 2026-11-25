@@ -53,7 +53,7 @@ fn bake_if_changed(level : @catalog.Level) -> Unit raise {
     required_roles(level),
   )
   let files = [
-    "folded-scene.json.gz", "folded-views.json.gz", "folded-buffers.bin.gz",
+    "folded-scene.json.gz", "folded-views.json.gz", "folded-buffers.bin.gz", "folded-recipes.bin.gz",
   ]
   let images = @fs.read_dir(dest + "/images").to_owned()
   images.sort_by(String::lexical_compare)

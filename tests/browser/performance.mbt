@@ -22,6 +22,8 @@ async fn Browser::performance(self : Browser) -> Unit {
   let pct = fn(q : Double) { times[(n.to_double() * q).to_int()] }
   let stats : Json = {
     "frames": n,
+    "mean": times.fold(init=0.0, (total, dt) => total + dt) / n.to_double(),
+    "over25ms": times.filter(dt => dt > 25.0).length(),
     "p50": pct(0.5),
     "p95": pct(0.95),
     "p99": pct(0.99),

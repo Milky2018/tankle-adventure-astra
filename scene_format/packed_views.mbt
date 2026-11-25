@@ -1,11 +1,13 @@
 ///|
-/// Describes an element range inside the scene's shared binary asset.
+/// Describes an element range inside a packed scene.
+/// A nonzero recipe length selects the recipe file; other views use the literal file.
 /// A copy gives a mutable attribute its own storage when bytes were deduplicated.
 pub(all) struct BufferView {
   byte_offset : Int32
   type_name : String
   length : Int32
   copy : Bool
+  recipe_bytes : Int32
 }
 
 ///|
@@ -24,7 +26,11 @@ pub fn BufferView::check_range(
   self : BufferView,
   bytes : Int32,
   id~ : String,
+  packed~ : Bool = false,
 ) -> Unit raise {
+  if !packed && self.recipe_bytes != 0 {
+    raise Failure("Unexpected geometry recipe in source view " + id)
+  }
   guard element_width(self.type_name) is Some(stride) else {
     raise Failure("Packed view \{id}: unsupported array type \{self.type_name}")
   }
@@ -37,7 +43,13 @@ pub fn BufferView::check_range(
   if offset < 0 ||
     offset > bytes ||
     self.length < 0 ||
-    self.length > (bytes - offset) / stride {
+    self.length > @int.MAX_VALUE / stride ||
+    self.recipe_bytes < 0 ||
+    (if self.recipe_bytes == 0 {
+      self.length > (bytes - offset) / stride
+    } else {
+      self.recipe_bytes > bytes - offset
+    }) {
     raise Failure(
       "Packed view \{id}: \{self.type_name} at byte \{offset} with \{self.length} elements is outside the \{bytes}-byte buffer",
     )
@@ -50,6 +62,9 @@ pub impl @json.ToJson for BufferView with fn to_json(self) {
     "byteOffset": self.byte_offset,
     "type": self.type_name,
     "length": self.length,
+  }
+  if self.recipe_bytes > 0 {
+    fields["recipeBytes"] = @json.to_json(self.recipe_bytes)
   }
   if self.copy {
     fields["copy"] = true
@@ -74,6 +89,11 @@ pub impl @json.FromJson for BufferView with fn from_json(value, path) {
     type_name: @json.from_json(name, path=path.add_key("type")),
     length: @json.from_json(length, path=path.add_key("length")),
     copy,
+    recipe_bytes: match value {
+      { "recipeBytes": n, .. } =>
+        @json.from_json(n, path=path.add_key("recipeBytes"))
+      _ => 0
+    },
   }
 }
 

@@ -1,0 +1,8 @@
+import {
+  "moonbitlang/core/buffer",
+  "moonbitlang/core/compress/gzip",
+}
+
+options(
+  "allow-experimental-packages": [ "moonbitlang/core/compress/gzip" ],
+)

@@ -27,7 +27,7 @@ moonx scripts/build.mbtx
 moonx cli/serve@0.1.5 --port 5175 dist
 ```
 
-Open http://127.0.0.1:5175/. The build prepares the authored city, audio and weapon definitions, compiles the browser game, and assembles `dist/`. Moon runs the JS-target content compiler on Node. Geometry processing uses three.mbt from Mooncakes. Rebuild and reload after edits. The city bake reuses its previous result when its inputs and compiler are unchanged.
+Open http://127.0.0.1:5175/. The build prepares the authored city, audio and weapon definitions, compiles the browser game, and assembles `dist/`. Moon runs the JS-target content compiler on Node. Geometry processing uses three.mbt from Mooncakes. Rebuild and reload after edits. The city bake reuses its previous result when its inputs and compiler are unchanged. It stores box corners, stepped indices and repeated attribute values as lossless recipes wherever these reduce compressed size. At startup the game expands every recipe into resident vertex or index data before it creates the playable scene. The editor continues to read the original scene.
 
 For the distributable ZIP, run `moonx scripts/build.mbtx --offline`. The output is `output/builds/Tankle-v3-dist.zip` and includes the game, launcher and README.
 

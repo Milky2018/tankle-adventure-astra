@@ -26,8 +26,9 @@ pub(all) struct BufferView {
   type_name : String
   length : Int32
   copy : Bool
+  recipe_bytes : Int32
 }
-pub fn BufferView::check_range(Self, Int32, id~ : String) -> Unit raise
+pub fn BufferView::check_range(Self, Int32, id~ : String, packed? : Bool) -> Unit raise
 pub impl @json.FromJson for BufferView
 pub impl @json.ToJson for BufferView
 

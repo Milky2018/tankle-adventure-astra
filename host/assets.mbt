@@ -54,19 +54,48 @@ async fn asset(path : String) -> Response {
 fn scene_buffers(
   views : @scene_format.PackedViews,
   buffer : @core.ArrayBuffer,
+  source : Bytes,
 ) -> @loader.Buffers raise {
   let bytes = buffer.byte_length()
+  let decoded : Map[Int32, @core.TypedArray] = Map([])
   fn open_view(
     id : String,
     view : @scene_format.BufferView,
   ) -> @core.TypedArray raise {
-    view.check_range(bytes, id~)
-    let array = @core.TypedArray::view_by_name(
-      view.type_name,
-      buffer,
-      byte_offset=view.byte_offset,
-      length=view.length,
+    view.check_range(
+      if view.recipe_bytes == 0 {
+        bytes
+      } else {
+        source.length()
+      },
+      id~,
+      packed=true,
     )
+    let array = if view.recipe_bytes == 0 {
+      @core.TypedArray::view_by_name(
+        view.type_name,
+        buffer,
+        byte_offset=view.byte_offset,
+        length=view.length,
+      )
+    } else if decoded.get(view.byte_offset) is Some(value) {
+      value
+    } else {
+      let width = @scene_format.element_width(view.type_name).unwrap()
+      let recipe = @geometry.Recipe::parse(
+        source[view.byte_offset:view.byte_offset + view.recipe_bytes],
+        size=view.length * width,
+      )
+      let restored : @core.TypedArray = @core.JsValue::of(recipe.expand()).cast()
+      let value = @core.TypedArray::view_by_name(
+        view.type_name,
+        restored.buffer(),
+        byte_offset=restored.byte_offset(),
+        length=view.length,
+      )
+      decoded[view.byte_offset] = value
+      value
+    }
     if view.copy {
       array.clone()
     } else {
@@ -100,11 +129,21 @@ pub async fn load_scene(url : String) -> @core.Object3D {
         @json.parse(asset("/generated/art/folded-views.json.gz").text().wait()),
       )
     })
+    let views : @scene_format.PackedViews = manifest.wait()
+    // Old baked scenes have only literal geometry. New recipes occupy a separate
+    // backing store so that live GPU attributes cannot retain their ingredients.
+    let recipes : Bytes = if views.geometry
+      .values()
+      .any(slots => slots.values().any(v => v.recipe_bytes > 0)) {
+      let data = asset("/generated/art/folded-recipes.bin.gz").buffer().wait()
+      @core.TypedArray::view_by_name("Uint8Array", data).to_js_init().cast()
+    } else {
+      b""
+    }
     let scene_text = tree.wait()
     let buffer = binary.wait()
-    let views = manifest.wait()
     mark("art-decoded")
-    let buffers = scene_buffers(views, buffer)
+    let buffers = scene_buffers(views, buffer, recipes)
     mark("art-parse-start")
     result = Some(
       buffers.parse(@json.parse(scene_text), on_parsed=() => mark("art-parsed")),

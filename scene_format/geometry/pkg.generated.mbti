@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "milky/tankle-astra/scene_format/geometry"
+
+// Values
+pub fn encode(Bytes, name~ : String, type_name~ : String, item_size~ : Int32) -> Bytes?
+
+// Errors
+
+// Types and methods
+pub struct Recipe {
+  // private fields
+}
+pub fn Recipe::expand(Self) -> Bytes
+pub fn Recipe::parse(BytesView, size~ : Int32) -> Self raise
+
+// Type aliases
+
+// Traits

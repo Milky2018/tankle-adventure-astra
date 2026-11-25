@@ -1,4 +1,5 @@
 import {
+  "milky/tankle-astra/scene_format/geometry",
   "milky/tankle-astra/scene_format",
   "milky/tankle-astra/scene_format/loader",
   "moonbitlang/core/json",

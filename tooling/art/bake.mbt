@@ -108,26 +108,39 @@ pub fn bake_city(
   bake_fittings(scene, view, fixtures)
   room_portals(scene, view)
   let binary = @buffer.Buffer()
+  let recipes = @buffer.Buffer()
   let stored : Map[(String, String), @scene_format.BufferView] = Map([])
-  fn store(data : @core.TypedArray) -> @scene_format.BufferView {
+  fn store(
+    data : @core.TypedArray,
+    attribute : (String, Int32)?,
+  ) -> @scene_format.BufferView {
     let bytes = @archive.byte_view(data)
     let key = (data.type_name(), @archive.digest(bytes))
     if stored.get(key) is Some(first) {
       return { ..first, copy: true, }
     }
-    let pad = (8 - binary.length() % 8) % 8
-    binary.write_bytes(Bytes::make(pad, 0))
+    let recipe = attribute.bind(fn(info) {
+      let (name, item_size) = info
+      @geometry.encode(bytes, name~, type_name=key.0, item_size~)
+    })
+    let storage = if recipe is Some(_) { recipes } else { binary }
+    let pad = (8 - storage.length() % 8) % 8
+    storage.write_bytes(Bytes::make(pad, 0))
     let descriptor : @scene_format.BufferView = {
-      byte_offset: binary.length(),
+      byte_offset: storage.length(),
       type_name: key.0,
       length: data.length(),
       copy: false,
+      recipe_bytes: recipe.map(Bytes::length).unwrap_or(0),
     }
-    binary.write_bytes(bytes)
+    storage.write_bytes(recipe.unwrap_or(bytes))
     stored[key] = descriptor
     descriptor
   }
-  fn pack_attr(a : Raw) -> @scene_format.BufferView {
+  fn pack_attr(
+    a : Raw,
+    attribute : (String, Int32)?,
+  ) -> @scene_format.BufferView {
     let values = a.get("array")
     let data = if @archive.is_array(values) {
       @archive.typed(str(a, "type"), values)
@@ -135,7 +148,7 @@ pub fn bake_city(
       view(values)
     }
     put_array(a, "array", [])
-    store(data)
+    store(data, attribute)
   }
   let packed : @scene_format.PackedViews = {
     geometry: Map([]),
@@ -147,7 +160,7 @@ pub fn bake_city(
       let attrs = Map([])
       for k in ["instanceMatrix", "instanceColor"] {
         if has_field(n, k) {
-          attrs[k] = pack_attr(n.get(k))
+          attrs[k] = pack_attr(n.get(k), None)
         }
       }
       packed.instances[str(n, "uuid")] = attrs
@@ -173,7 +186,9 @@ pub fn bake_city(
     attrs.set("index", data.get("index"))
     for k in @archive.keys(attrs) {
       if has_field(attrs.get(k), "array") {
-        result[k] = pack_attr(attrs.get(k))
+        let a = attrs.get(k)
+        let size = if k == "index" { 1 } else { int_field(a, "itemSize") }
+        result[k] = pack_attr(a, Some((k, size)))
       }
     }
     packed.geometry[str(g, "uuid")] = result
@@ -199,7 +214,7 @@ pub fn bake_city(
     } else if @archive.is_array(@archive.prop(url, "data")) {
       let ty = str(url, "type")
       let data = @archive.typed(ty, url.get("data"))
-      pixels[str(img, "uuid")] = store(data)
+      pixels[str(img, "uuid")] = store(data, None)
       put_array(url, "data", [])
     }
   }
@@ -216,6 +231,10 @@ pub fn bake_city(
   @fs.write_bytes_to_file(
     dest + "/folded-buffers.bin.gz",
     @archive.compress(binary.to_bytes()),
+  )
+  @fs.write_bytes_to_file(
+    dest + "/folded-recipes.bin.gz",
+    @archive.compress(recipes.to_bytes()),
   )
   for name in @fs.read_dir(image_dir) {
     if name.split_once(".") is Some((hash, extension)) &&
