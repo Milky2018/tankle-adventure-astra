@@ -1,4 +1,30 @@
 ///|
+#derive(Debug)
+priv enum ApertureRole {
+  Uncut
+  Ground
+  Scenery
+}
+
+///|
+#derive(Debug)
+priv struct CutawayEffect {
+  role : ApertureRole
+  finish : SurfaceFinish?
+  probe : Bool
+  hull_fill : Bool
+  currents : Int32
+}
+
+///|
+priv struct PatchedShader {
+  vertex : String
+  fragment : String
+  patched_vertex : String
+  patched_fragment : String
+}
+
+///|
 struct Cutaway {
   player : @m3.Vector3
   sight_length : @core.Uniform
@@ -80,6 +106,7 @@ fn Cutaway::new(
       }
     }
   }
+  let shaders : Map[String, Array[PatchedShader]] = Map([])
   let registered : Set[String] = Set([])
   scene.traverse(fn(object) {
     if object.kind is Mesh(mesh) && scene_binding(object) != "city/sky" {
@@ -88,7 +115,7 @@ fn Cutaway::new(
           continue
         }
         registered.add(material.uuid) |> ignore
-        cutaway.apply(material, hull_fills.get(material.uuid))
+        cutaway.apply(material, hull_fills.get(material.uuid), shaders)
       }
     }
   })
@@ -109,11 +136,105 @@ fn Cutaway::apply(
   self : Cutaway,
   material : @core.Material,
   hull_fill : @core.Uniform?,
+  shaders : Map[String, Array[PatchedShader]],
 ) -> Unit {
-  let role : String = scene_field(material.user_data, "renderRole").unwrap_or(
-    "",
-  )
+  let role = match scene_field(material.user_data, "renderRole") {
+    Some("floor" | "belt") => Ground
+    Some("") | None => Uncut
+    Some(_) => Scenery
+  }
   let finish = surface_finish(material)
+  let reflection : ReflectionProbe? = if material.emissive_map is Some(_) {
+    Some(@json.from_json(material.user_data.to_json())) catch {
+      _ => None
+    }
+  } else {
+    None
+  }
+  let probe = reflection is Some(_)
+  let effect : CutawayEffect = {
+    role,
+    finish,
+    probe,
+    hull_fill: hull_fill is Some(_),
+    currents: if probe && finish is Some(Canal) {
+      self.currents.length()
+    } else {
+      0
+    },
+  }
+  let key = "typed-cutaway-\{@debug.to_string(effect)}"
+  let sources = shaders.get_or_init(key, () => [])
+  material.on_before_compile = Some(fn(shader, _renderer) {
+    let uniforms = shader.uniforms
+    if reflection is Some(r) {
+      for
+        (name, (x, y, z)) in [
+          ("probeCenter", r.probe_center),
+          ("probeMin", r.probe_min),
+          ("probeMax", r.probe_max),
+        ] {
+        uniforms[name] = @core.Uniform::new(Vector3(@m3.Vector3::new(x, y, z)))
+      }
+      uniforms["wetness"] = @core.Uniform::new(Number(r.wetness))
+    }
+    uniforms["waterTime"] = self.water_time
+    if finish is Some(Canal) && probe {
+      uniforms["wakeSpeed"] = self.wake_speed
+      for i, (c, velocity) in self.currents {
+        let bounds = "currentBounds\{i}"
+        let flow = "currentFlow\{i}"
+        uniforms[bounds] = @core.Uniform::new(
+          Vector4(
+            @m3.Vector4::new(
+              c.rect.x,
+              c.rect.z,
+              c.rect.x + c.rect.w,
+              c.rect.z + c.rect.d,
+            ),
+          ),
+        )
+        uniforms[flow] = @core.Uniform::new(Vector3(velocity))
+      }
+    }
+    uniforms["hullHeading"] = self.heading
+    uniforms["aperturePlayer"] = @core.Uniform::new(Vector3(self.player))
+    uniforms["apertureDirection"] = @core.Uniform::new(Vector3(self.direction))
+    uniforms["renderDistance"] = self.distance
+    uniforms["sightLength"] = self.sight_length
+    uniforms["apertureEnabled"] = self.enabled
+    for i in 0..<4 {
+      uniforms["bounds\{i}"] = @core.Uniform::new(Vector4(self.bounds[i]))
+      uniforms["plane\{i}"] = @core.Uniform::new(Vector4(self.planes[i]))
+    }
+    if hull_fill is Some(strength) {
+      uniforms["hullFill"] = strength
+    }
+    let vertex = shader.vertex_shader
+    let fragment = shader.fragment_shader
+    let cached = for entry in sources {
+      if entry.vertex == vertex && entry.fragment == fragment {
+        break entry
+      }
+    } nobreak {
+      let entry = effect.patch(vertex, fragment)
+      sources.push(entry)
+      entry
+    }
+    shader.vertex_shader = cached.patched_vertex
+    shader.fragment_shader = cached.patched_fragment
+  })
+  material.custom_program_cache_key = Some(() => key)
+}
+
+///|
+fn CutawayEffect::patch(
+  self : CutawayEffect,
+  vertex : String,
+  fragment_source : String,
+) -> PatchedShader {
+  let finish = self.finish
+  let probe = self.probe
   let finish_uv = match finish {
     Some(Paving) =>
       (
@@ -141,14 +262,6 @@ fn Cutaway::apply(
   } else {
     ""
   }
-  let reflection : ReflectionProbe? = if material.emissive_map is Some(_) {
-    Some(@json.from_json(material.user_data.to_json())) catch {
-      _ => None
-    }
-  } else {
-    None
-  }
-  let probe = reflection is Some(_)
   let map_fragment = match finish {
     Some(Vapor) => steam_alpha
     _ => "#include <map_fragment>"
@@ -185,7 +298,7 @@ fn Cutaway::apply(
   } else {
     "#include <aomap_fragment>"
   }
-  let terrain = role is ("floor" | "belt")
+  let terrain = self.role is Ground
   let contact = if terrain {
     (
       #| vec2 groundDelta = apertureWorld.xz - aperturePlayer.xz;
@@ -211,7 +324,7 @@ fn Cutaway::apply(
     #| float halfHeight = 1.05 + 0.7*abs(viewDirection.y);
     #| float silhouette = length(max(abs(vec2(dot(radial,right),dot(radial,up))) - vec2(halfWidth,halfHeight)*0.70,vec2(0.)));
     #| float eyeCut = (1.-smoothstep(.32,.62,silhouette))*step(.05,along)*step(along,sightLength);
-  let fragment = if hull_fill is Some(_) {
+  let fragment = if self.hull_fill {
     hull_fill_fragment
   } else if finish is Some(EnemyEnamel) {
     // Preserve the moulded relief in shadow. Blue induction strips keep their
@@ -229,7 +342,7 @@ fn Cutaway::apply(
       #| diffuseColor.a = min(.67, diffuseColor.a + .42*edge*edge);
       #| #include <opaque_fragment>
     )
-  } else if role == "" {
+  } else if self.role is Uncut {
     "#include <opaque_fragment>"
   } else {
     aperture +
@@ -251,126 +364,87 @@ fn Cutaway::apply(
     contact +
     "\n#include <opaque_fragment>"
   }
-  material.on_before_compile = Some(fn(shader, _renderer) {
-    let uniforms = shader.uniforms
-    if reflection is Some(r) {
-      for
-        (name, (x, y, z)) in [
-          ("probeCenter", r.probe_center),
-          ("probeMin", r.probe_min),
-          ("probeMax", r.probe_max),
-        ] {
-        uniforms[name] = @core.Uniform::new(Vector3(@m3.Vector3::new(x, y, z)))
-      }
-      uniforms["wetness"] = @core.Uniform::new(Number(r.wetness))
+  let extra_varying = if finish is Some(Vapor) {
+    "\nvarying vec2 plumeUv;"
+  } else {
+    ""
+  }
+  let extra_fragment = if self.hull_fill {
+    "uniform float hullFill;"
+  } else if finish is Some(Vapor) {
+    steam_fragment
+  } else {
+    ""
+  }
+  let mut water_source = ""
+  if finish is Some(Canal) && probe {
+    water_source = "uniform float wakeSpeed;\n"
+    let mut regions = ""
+    for i in 0..<self.currents {
+      let bounds = "currentBounds\{i}"
+      let flow = "currentFlow\{i}"
+      water_source += "uniform vec4 \{bounds}; uniform vec3 \{flow};\n"
+      regions += "if (abs(p.y-\{flow}.z)<0.5 && all(greaterThanEqual(p.xz,\{bounds}.xy)) && all(lessThanEqual(p.xz,\{bounds}.zw))) return \{flow}.xy;\n"
     }
-    uniforms["waterTime"] = self.water_time
-    let mut water_source = ""
-    if finish is Some(Canal) && probe {
-      uniforms["wakeSpeed"] = self.wake_speed
-      let mut regions = ""
-      water_source = "uniform float wakeSpeed;\n"
-      for i, (c, velocity) in self.currents {
-        let bounds = "currentBounds\{i}"
-        let flow = "currentFlow\{i}"
-        uniforms[bounds] = @core.Uniform::new(
-          Vector4(
-            @m3.Vector4::new(
-              c.rect.x,
-              c.rect.z,
-              c.rect.x + c.rect.w,
-              c.rect.z + c.rect.d,
-            ),
-          ),
-        )
-        uniforms[flow] = @core.Uniform::new(Vector3(velocity))
-        water_source += "uniform vec4 \{bounds}; uniform vec3 \{flow};\n"
-        regions += "if (abs(p.y-\{flow}.z)<0.5 && all(greaterThanEqual(p.xz,\{bounds}.xy)) && all(lessThanEqual(p.xz,\{bounds}.zw))) return \{flow}.xy;\n"
-      }
-      water_source += "vec2 canalFlow(vec3 p){\n" +
-        regions +
-        "return vec2(0.0);\n}\n"
-    }
-    uniforms["hullHeading"] = self.heading
-    uniforms["aperturePlayer"] = @core.Uniform::new(Vector3(self.player))
-    uniforms["apertureDirection"] = @core.Uniform::new(Vector3(self.direction))
-    uniforms["renderDistance"] = self.distance
-    uniforms["sightLength"] = self.sight_length
-    uniforms["apertureEnabled"] = self.enabled
-    for i in 0..<4 {
-      uniforms["bounds\{i}"] = @core.Uniform::new(Vector4(self.bounds[i]))
-      uniforms["plane\{i}"] = @core.Uniform::new(Vector4(self.planes[i]))
-    }
-    let extra_varying = if finish is Some(Vapor) {
-      "\nvarying vec2 plumeUv;"
-    } else {
-      ""
-    }
-    let extra_fragment = if hull_fill is Some(strength) {
-      uniforms["hullFill"] = strength
-      "uniform float hullFill;"
-    } else if finish is Some(Vapor) {
-      steam_fragment
-    } else {
-      ""
-    }
-    shader.vertex_shader = shader.vertex_shader
-      .replace(
-        old="#include <common>",
-        new="#include <common>\nvarying vec3 apertureWorld;" + extra_varying,
-      )
-      .replace(
-        old="#include <project_vertex>",
-        new=world_vertex +
-          "\n" +
-          finish_uv +
-          relief_uv +
-          (if finish is Some(Vapor) { "\nplumeUv = uv;" } else { "" }),
-      )
-    shader.fragment_shader = shader.fragment_shader
-      .replace(
-        old="#include <common>",
-        new=world_declarations +
-          "\n" +
-          freight_declarations +
-          extra_varying +
-          "\n" +
-          extra_fragment,
-      )
-      .replace(
-        old="#include <emissivemap_pars_fragment>",
-        new=if probe {
-          "#include <emissivemap_pars_fragment>\n" +
-          water_source +
-          room_reflection
-        } else {
-          "#include <emissivemap_pars_fragment>"
-        },
-      )
-      .replace(
-        old="#include <emissivemap_fragment>",
-        new=if probe { "" } else { "#include <emissivemap_fragment>" },
-      )
-      .replace(
-        old="#include <opaque_fragment>",
-        new=fragment + "\n" + freight_haze,
-      )
-      .replace(
-        old="#include <aomap_fragment>",
-        new=lighting + "\n" + freight_daylight,
-      )
-      .replace(old="#include <map_fragment>", new=map_fragment)
-      .replace(
-        old="#include <clipping_planes_fragment>",
-        new=(
-          #| #include <clipping_planes_fragment>
-          #| vec3 offsetFromPlayer = apertureWorld - aperturePlayer;
-          #| if (dot(offsetFromPlayer, offsetFromPlayer) > renderDistance * renderDistance) discard;
-        ),
-      )
-  })
-  let key = "typed-cutaway-\{role}-\{@debug.to_string(finish)}-\{probe}-\{hull_fill is Some(_)}"
-  material.custom_program_cache_key = Some(() => key)
+    water_source += "vec2 canalFlow(vec3 p){\n" +
+      regions +
+      "return vec2(0.0);\n}\n"
+  }
+  let patched_vertex = vertex
+    .replace(
+      old="#include <common>",
+      new="#include <common>\nvarying vec3 apertureWorld;" + extra_varying,
+    )
+    .replace(
+      old="#include <project_vertex>",
+      new=world_vertex +
+        "\n" +
+        finish_uv +
+        relief_uv +
+        (if finish is Some(Vapor) { "\nplumeUv = uv;" } else { "" }),
+    )
+  let patched_fragment = fragment_source
+    .replace(
+      old="#include <common>",
+      new=world_declarations +
+        "\n" +
+        freight_declarations +
+        extra_varying +
+        "\n" +
+        extra_fragment,
+    )
+    .replace(
+      old="#include <emissivemap_pars_fragment>",
+      new=if probe {
+        "#include <emissivemap_pars_fragment>\n" +
+        water_source +
+        room_reflection
+      } else {
+        "#include <emissivemap_pars_fragment>"
+      },
+    )
+    .replace(
+      old="#include <emissivemap_fragment>",
+      new=if probe { "" } else { "#include <emissivemap_fragment>" },
+    )
+    .replace(
+      old="#include <opaque_fragment>",
+      new=fragment + "\n" + freight_haze,
+    )
+    .replace(
+      old="#include <aomap_fragment>",
+      new=lighting + "\n" + freight_daylight,
+    )
+    .replace(old="#include <map_fragment>", new=map_fragment)
+    .replace(
+      old="#include <clipping_planes_fragment>",
+      new=(
+        #| #include <clipping_planes_fragment>
+        #| vec3 offsetFromPlayer = apertureWorld - aperturePlayer;
+        #| if (dot(offsetFromPlayer, offsetFromPlayer) > renderDistance * renderDistance) discard;
+      ),
+    )
+  { vertex, fragment: fragment_source, patched_vertex, patched_fragment, }
 }
 
 ///|
