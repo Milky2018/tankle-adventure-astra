@@ -54,7 +54,7 @@ fn control(c : @catalog.Control) -> String {
     c.ground.unwrap_or(c.rest_y.unwrap_or(c.y) - 1.3),
     c.z,
   )
-  "{id:\{source(c.id)},position:\{vec_source(c.x,c.y,c.z)},ground:\{source(ground)},actions:[\{actions}],requires:\{option_source(c.requires)},effects:[\{effects}],circuit_key:\{source(key)},mount:\{option_source(c.mount)},facing:\{optional_vec(c.facing)},optical_normal:\{optional_vec(c.normal)},top:\{c.surface==Some("top")},rotor:\{c.rotor.unwrap_or(false)},counterweight:\{c.counterweight.unwrap_or(false)},flash:0,pull:0}"
+  "{id:\{source(c.id)},position:\{vec_source(c.x,c.y,c.z)},ground:\{source(ground)},actions:[\{actions}],requires:\{option_source(c.requires)},effects:[\{effects}],circuit_key:\{source(key)},mount:\{option_source(c.mount)},facing:\{optional_vec(c.facing)},optical_normal:\{optional_vec(c.normal)},relay_mirror:\{option_source(c.relay_mirror)},top:\{c.surface==Some("top")},rotor:\{c.rotor.unwrap_or(false)},counterweight:\{c.counterweight.unwrap_or(false)},flash:0,pull:0}"
 }
 
 ///|

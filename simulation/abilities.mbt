@@ -26,6 +26,7 @@ pub fn Game::laser(
   }
   let mut ray = Ray::{ origin, direction: aim.sub(origin).normalized(), }
   let mut remaining = laser_tuning.range
+  let mut last_mirror : String? = None
   for _ in 0..<laser_tuning.segments {
     let hit = self.cast(queries, ray, remaining, optical=true)
     let end = hit.map(fn(h) { h.point }).unwrap_or(ray.point(remaining))
@@ -38,12 +39,14 @@ pub fn Game::laser(
     guard hit is Some(hit) else { break }
     let normal = match hit.target {
       MirrorTarget(i) => {
+        last_mirror = Some(self.mirrors[i].id)
         if live {
           self.mirrors[i].flash = 0.15
         }
         Some(self.mirrors[i].normal())
       }
       EnemyTarget(i, _) => {
+        last_mirror = None
         let e = self.enemies[i]
         if e.definition.mirror &&
           @math.cos(@math.atan2(ray.origin.x - e.x, ray.origin.z - e.z) - e.aim) >
@@ -69,17 +72,17 @@ pub fn Game::laser(
             |> ignore
           }
         ControlTarget(i) => {
-          if self.commands.controls[i].actions.contains(LaserAction) {
-            self.commands.controls[i].flash = 0.13
+          let receiver = self.commands.controls[i]
+          if self.commands.activate(
+              self.progress,
+              receiver.id,
+              LaserAction,
+              p,
+              self.time,
+              reflected_by?=last_mirror,
+            ) {
+            receiver.flash = 0.13
           }
-          self.commands.activate(
-            self.progress,
-            self.commands.controls[i].id,
-            LaserAction,
-            p,
-            self.time,
-          )
-          |> ignore
         }
         MineTarget(i) => self.detonate_mine(i)
         TorpedoTarget(i) => self.shots[i].captured = true
@@ -183,7 +186,7 @@ pub fn Game::magnet(
     }
     if c.actions.contains(MagnetAction) &&
       !self.commands.active(self.progress, c.id) {
-      consider(ControlTarget(i), c.position, 0.75)
+      consider(ControlTarget(i), c.position, c.strike_radius())
     }
   }
   if refuge_at(p.position(), self.hives, self.progress) is None {
@@ -203,7 +206,7 @@ pub fn Game::magnet(
   }
   for i, m in self.mines {
     if !m.disarmed {
-      consider(MineTarget(i), m.position, 0.75)
+      consider(MineTarget(i), m.position.add({ x: 0, y: 0.4, z: 0, }), 1.05)
     }
   }
   for i, s in self.shots {

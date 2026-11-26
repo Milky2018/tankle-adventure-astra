@@ -13,6 +13,7 @@ pub(all) struct Control {
   mount : String?
   facing : Vec3?
   optical_normal : Vec3?
+  relay_mirror : String?
   top : Bool
   rotor : Bool
   counterweight : Bool
@@ -24,11 +25,13 @@ pub(all) struct Control {
 /// Radius of the exposed face, measured in the authored instrument model.
 fn Control::strike_radius(self : Control) -> Double {
   if self.top {
-    1.71
+    2.56
   } else if self.mount is Some(_) && self.actions.contains(CannonAction) {
-    1.14
+    1.71
+  } else if self.mount is Some(_) {
+    1.43
   } else {
-    0.95
+    1.6
   }
 }
 
@@ -108,6 +111,7 @@ pub fn Commands::activate(
   action : Action,
   player : Player,
   time : Double,
+  reflected_by? : String,
 ) -> Bool {
   if self.active(state, id) {
     return false
@@ -117,6 +121,9 @@ pub fn Commands::activate(
   }
   if control.requires is Some(required) &&
     !state.circuit_ready(required, control.circuit_key, control.id) {
+    return false
+  }
+  if control.relay_mirror is Some(_) && control.relay_mirror != reflected_by {
     return false
   }
   if !control.actions.contains(action) ||

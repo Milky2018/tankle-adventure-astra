@@ -152,6 +152,21 @@ pub fn View::aim(
       .cast(queries, ray, 300, ground=true, refuge=false)
       .map(fn(hit) { hit.point })
       .unwrap_or(point)
+    Some({ target: @sim.MirrorTarget(i), point: contact, .. }) if game.player.weapon ==
+      @sim.Laser => {
+      let n = game.mirrors[i].normal()
+      let outgoing = direction.sub(n.scale(2 * direction.dot(n)))
+      let reflected = @sim.Ray::{
+        origin: contact.add(outgoing.scale(0.03)),
+        direction: outgoing,
+      }
+      match game.cast(queries, reflected, 300, refuge=false, optical=true) {
+        Some(hit) =>
+          // Aim the offset muzzle at the virtual image seen by the camera.
+          hit.point.sub(n.scale(2 * hit.point.sub(contact).dot(n)))
+        None => contact
+      }
+    }
     Some(hit) => hit.point
     None => ray.point(150)
   }

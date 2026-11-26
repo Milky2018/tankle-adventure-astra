@@ -120,11 +120,39 @@ pub fn Game::cast(
       if id == "gutter-plug" && self.puzzles.gutter.unplugged {
         continue
       }
-      accept(ray.sphere(position, 0.7), PuzzleTarget(id), None)
+      if ray.sphere(position, 1.55) is Some(_) {
+        let heading = if id == "rail-carrier" {
+          self.puzzles.rail.heading
+        } else {
+          0
+        }
+        let face_ray : Ray = {
+          origin: ray.origin.sub(position).rotate_y(-heading),
+          direction: ray.direction.rotate_y(-heading),
+        }
+        accept(
+          face_ray
+          .box({ x: -1.14, y: -0.85, z: -0.32, }, { x: 1.14, y: 0.68, z: 0.54, })
+          .map(fn(hit) { hit.0 }),
+          PuzzleTarget(id),
+          None,
+        )
+      }
     }
     for i, mine in self.mines {
       if !mine.disarmed {
-        accept(ray.sphere(mine.position, 0.7), MineTarget(i), None)
+        let p = mine.position
+        accept(
+          ray
+          .box({ x: p.x - 1.05, y: p.y, z: p.z - 1.05, }, {
+            x: p.x + 1.05,
+            y: p.y + 0.98,
+            z: p.z + 1.05,
+          })
+          .map(fn(hit) { hit.0 }),
+          MineTarget(i),
+          None,
+        )
       }
     }
     for i, shot in self.shots {
@@ -161,7 +189,11 @@ pub fn Game::cast(
         ray.point(d).distance(center) > control.strike_radius() {
         continue
       }
-      let back = (control.top || control.mount is Some(_)) &&
+      let back = (
+          control.top ||
+          control.mount is Some(_) ||
+          control.relay_mirror is Some(_)
+        ) &&
         normal is Some(n) &&
         ray.direction.dot(n) >= 0
       let target = if back { BlockedControl(i) } else { ControlTarget(i) }

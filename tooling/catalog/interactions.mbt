@@ -37,6 +37,7 @@ pub struct Control {
   mount : String?
   facing : (Double, Double, Double)?
   normal : (Double, Double, Double)?
+  relay_mirror : String?
   surface : String?
   rotor : Bool?
   counterweight : Bool?

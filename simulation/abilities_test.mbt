@@ -126,7 +126,7 @@ test "final docking requires the defeated Keeper and a continuous stationary hol
     .iter()
     .find_first(fn(c) { c.actions.contains(Dock) })
     .unwrap()
-  game.player.y = dock.position.y - 1.3
+  game.player.y = dock.ground
   game.dock(true, false, 3)
   assert_true(game.ending_at is None)
   game.progress.complete("keeper") |> ignore
@@ -146,20 +146,42 @@ test "final docking requires the defeated Keeper and a continuous stationary hol
 }
 
 ///|
-test "a latched optical receiver holds the beam at its face" {
+test "a relay rejects direct light and keeps the reflected beam on its latched face" {
   let game = @simulation.Game::new()
   game.player.abilities.laser = true
   game.player.weapon = Laser
-  let face = game.commands.controls
+  let receiver = game.commands.controls
     .iter()
-    .find_first(fn(c) { c.id == "lens-return" })
-    .unwrap().position
-  let origin = face.add({ x: 4, y: 0, z: 0, })
-  let queries = @simulation.Queries::{ geometry: fn(_, _, _) { None }, }
-  game.laser(queries, origin, face, true, 0.02)
-  let impact = game.laser_path[0].to
-  assert_true(game.progress.pending.contains("lens-return"))
-  game.laser(queries, origin, face, true, 0.02)
-  assert_true(game.laser_path[0].contact)
-  assert_eq(game.laser_path[0].to.distance(impact), 0)
+    .find_first(c => c.id == "lens-return")
+    .unwrap()
+  let index = game.mirrors
+    .search_by(m => m.id == receiver.relay_mirror.unwrap())
+    .unwrap()
+  let mirror = game.mirrors[index].position
+  let queries = @simulation.Queries::{
+    geometry: fn(ray, _, _) {
+      if ray.direction.z > 0.99 && ray.origin.z < mirror.z {
+        Some({
+          distance: mirror.z - ray.origin.z,
+          point: mirror,
+          normal: None,
+          target: MirrorTarget(index),
+        })
+      } else {
+        None
+      }
+    },
+  }
+  let direct = receiver.position.add({ x: 4, y: 0, z: 0, })
+  game.laser(queries, direct, receiver.position, true, 0.02)
+  assert_false(game.commands.active(game.progress, receiver.id))
+  let emitter = mirror.add({ x: 0, y: 0, z: -8, })
+  game.laser(queries, emitter, mirror, false, 0.02)
+  assert_false(game.commands.active(game.progress, receiver.id))
+  game.laser(queries, emitter, mirror, true, 0.02)
+  assert_true(game.commands.active(game.progress, receiver.id))
+  let impact = game.laser_path[1].to
+  game.laser(queries, emitter, mirror, true, 0.02)
+  assert_true(game.laser_path[1].contact)
+  assert_eq(game.laser_path[1].to.distance(impact), 0)
 }

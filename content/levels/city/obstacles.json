@@ -55,5 +55,65 @@
       "min": 28,
       "max": 50
     }
+  },
+  {
+    "id": "rail-a-pedestal",
+    "x": -166.44,
+    "z": -80.38,
+    "w": 0.88,
+    "d": 0.76,
+    "y": 8,
+    "h": 1.7,
+    "permanent": true
+  },
+  {
+    "id": "rail-b-pedestal",
+    "x": -158.44,
+    "z": -76.38,
+    "w": 0.88,
+    "d": 0.76,
+    "y": 8,
+    "h": 1.7,
+    "permanent": true
+  },
+  {
+    "id": "rail-signal-pedestal",
+    "x": -176.44,
+    "z": -71.38,
+    "w": 0.88,
+    "d": 0.76,
+    "y": 8,
+    "h": 1.7,
+    "permanent": true
+  },
+  {
+    "id": "gutter-a-pedestal",
+    "x": 36.56,
+    "z": 34.62,
+    "w": 0.88,
+    "d": 0.76,
+    "y": -8,
+    "h": 1.7,
+    "permanent": true
+  },
+  {
+    "id": "gutter-b-pedestal",
+    "x": 48.56,
+    "z": 38.62,
+    "w": 0.88,
+    "d": 0.76,
+    "y": -8,
+    "h": 1.7,
+    "permanent": true
+  },
+  {
+    "id": "gutter-plug-pedestal",
+    "x": 35.56,
+    "z": 43.62,
+    "w": 0.88,
+    "d": 0.76,
+    "y": -8,
+    "h": 1.7,
+    "permanent": true
   }
 ]

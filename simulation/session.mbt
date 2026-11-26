@@ -65,7 +65,7 @@ pub fn Game::interactable(self : Game) -> String? {
         (pickup.requires is Some(id) && self.progress.has(id))
       ) &&
       Vec2::{ x: pickup.position.x - p.x, z: pickup.position.z - p.z, }.length() <
-      3.5 &&
+      4.25 &&
       (pickup.position.y - p.y).abs() < 0.5 {
       return Some(pickup.id)
     }
@@ -97,7 +97,7 @@ pub fn Game::interactable(self : Game) -> String? {
     }
     if c.actions.contains(Dock) &&
       self.progress.has("keeper") &&
-      (c.position.y - 1.3 - p.y).abs() < 0.6 &&
+      (c.ground - p.y).abs() < 0.6 &&
       Vec2::{ x: c.position.x - p.x, z: c.position.z - p.z, }.length() < 3 {
       return Some(c.id)
     }
@@ -202,7 +202,7 @@ pub fn Game::advance_world(self : Game, dt : Double) -> Unit {
   }
   if self.interactable() is Some(id) &&
     self.pickups.iter().find_first(fn(q) { q.id == id }) is Some(q) &&
-    Vec2::{ x: q.position.x - p.x, z: q.position.z - p.z, }.length() < 2.6 {
+    Vec2::{ x: q.position.x - p.x, z: q.position.z - p.z, }.length() < 3.35 {
     self.interact() |> ignore
   }
   self.world.step_machinery(self.progress, self.player, dt, self.enemies)

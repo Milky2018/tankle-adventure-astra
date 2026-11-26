@@ -47,6 +47,8 @@ priv struct Machinery {
   obstacles : Array[(@sim.Solid, @core.Object3D, @sim.Vec3)]
   side_roots : Array[@core.Object3D?]
   side_handles : Array[(@core.Object3D?, @core.Object3D?)]
+  leaves : Array[@core.Object3D?]
+  blossom : @core.Object3D?
   walls : Array[WallVisual]
   controls : Array[ControlVisual]
   lifts : Array[LiftVisual]
@@ -104,7 +106,8 @@ fn Machinery::new(
         .map(fn(o) {
           @core.box3_set_from_object(@m3.Box3::new(), o).get_size(
             @m3.Vector3::new(0, 0, 0),
-          ).y
+          ).y /
+          node.scale.y
         })
         .unwrap_or(0),
         wall,
@@ -183,6 +186,8 @@ fn Machinery::new(
     obstacles,
     side_roots,
     side_handles,
+    leaves: Array::makei(5, i => get("world/sidePuzzles/leaves/\{i}")),
+    blossom: get("world/sidePuzzles/blossom"),
   }
 }
 
@@ -249,8 +254,26 @@ fn Machinery::update(self : Machinery, game : @sim.Game, dt : Double) -> Unit {
     }
   }
   if self.side_roots[29] is Some(plant) {
-    plant.scale.set_y(0.12 + 0.88 * game.puzzles.gutter.fill) |> ignore
-    plant.update_matrix_world(force=true)
+    let gutter = game.puzzles.gutter
+    let height = 0.12 + 1.58 * gutter.fill
+    if height != plant.scale.y {
+      plant.scale.set_y(height) |> ignore
+      for i, leaf in self.leaves {
+        if leaf is Some(leaf) {
+          leaf.rotation.set(
+            -1.30 + 1.10 * gutter.fill,
+            i.to_double() * 2.4,
+            0,
+            order="YXZ",
+          )
+          |> ignore
+        }
+      }
+      plant.update_matrix_world(force=true)
+    }
+    if self.blossom is Some(lamp) {
+      lamp.visible = gutter.grown
+    }
   }
   for i, (handle, lamp) in self.side_handles {
     let lit = match i {

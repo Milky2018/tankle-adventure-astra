@@ -84,29 +84,31 @@ test "Scrap Ram exposes its front drive only on a mechanical opening" {
 }
 
 ///|
-test "wrong weapon cannot activate the optical receiver" {
+test "the furnace needs both counterweight power and light from its turning mirror" {
   let game = @simulation.Game::new()
-  assert_false(
+  fn activate(
+    id : String,
+    action : @simulation.Action,
+    mirror : String?,
+  ) -> Bool {
     game.commands.activate(
       game.progress,
-      "gallery",
-      CannonAction,
+      id,
+      action,
       game.player,
-      0,
-    ),
-  )
-  assert_true(
-    game.commands.activate(
-      game.progress,
-      "gallery",
-      LaserAction,
-      game.player,
-      0,
-    ),
-  )
-  assert_false(game.progress.has("gallery"))
-  assert_true(game.commands.advance(game.progress, 100, 100))
-  assert_true(game.progress.has("gallery"))
+      game.time,
+      reflected_by?=mirror,
+    )
+  }
+  assert_false(activate("garden-optical", CannonAction, None))
+  assert_true(activate("garden-optical", LaserAction, None))
+  assert_false(activate("core-feed", LaserAction, Some("final-feed-turn")))
+  assert_true(activate("hearth-transfer", MortarAction, None))
+  assert_false(activate("core-feed", LaserAction, Some("final-feed-turn")))
+  game.advance_world(4)
+  assert_false(activate("core-feed", LaserAction, None))
+  assert_false(activate("core-feed", LaserAction, Some("calibration")))
+  assert_true(activate("core-feed", LaserAction, Some("final-feed-turn")))
 }
 
 ///|

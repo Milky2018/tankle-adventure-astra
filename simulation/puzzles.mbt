@@ -85,13 +85,13 @@ pub fn Puzzles::new() -> Puzzles {
 ///|
 pub fn Puzzles::targets(self : Puzzles) -> Array[(String, Vec3)] {
   [
-    ("rail-a", { x: -166, y: 9.3, z: -80, }),
-    ("rail-b", { x: -158, y: 9.3, z: -76, }),
-    ("rail-signal", { x: -176, y: 9.3, z: -71, }),
-    ("rail-carrier", self.rail.position().add({ x: 0, y: 1.9, z: 0, })),
-    ("gutter-a", { x: 37, y: -6.7, z: 35, }),
-    ("gutter-b", { x: 49, y: -6.7, z: 39, }),
-    ("gutter-plug", { x: 36, y: -6.7, z: 44, }),
+    ("rail-a", { x: -166, y: 10.34, z: -80, }),
+    ("rail-b", { x: -158, y: 10.34, z: -76, }),
+    ("rail-signal", { x: -176, y: 10.34, z: -71, }),
+    ("rail-carrier", self.rail.position().add({ x: 0, y: 2.94, z: 0, })),
+    ("gutter-a", { x: 37, y: -5.66, z: 35, }),
+    ("gutter-b", { x: 49, y: -5.66, z: 39, }),
+    ("gutter-plug", { x: 36, y: -5.66, z: 44, }),
   ]
 }
 

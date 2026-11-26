@@ -212,7 +212,7 @@ pub(all) struct Commands {
   circuits : Map[String, Circuit]
   starts : Map[String, Double]
 }
-pub fn Commands::activate(Self, Progress, String, @interaction.Action, Player, Double) -> Bool
+pub fn Commands::activate(Self, Progress, String, @interaction.Action, Player, Double, reflected_by? : String) -> Bool
 pub fn Commands::active(Self, Progress, String) -> Bool
 pub fn Commands::advance(Self, Progress, Double, Double) -> Bool
 pub fn Commands::complete(Self, Progress, String, Double, delayed? : Bool, effects? : Array[String]) -> Bool
@@ -229,6 +229,7 @@ pub(all) struct Control {
   mount : String?
   facing : Vec3?
   optical_normal : Vec3?
+  relay_mirror : String?
   top : Bool
   rotor : Bool
   counterweight : Bool

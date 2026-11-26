@@ -126,6 +126,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
       view.room_visibility.apply(camera, view.cutaway)
     }
   }
+  view.install_mirrors(game.mirrors)
   view.update_player(game, 0)
   view.resize()
   view

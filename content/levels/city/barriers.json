@@ -2881,8 +2881,8 @@
     "z": 106,
     "w": 6,
     "d": 0.6,
-    "h": 1.2,
-    "y": -37.2,
+    "h": 0.24,
+    "y": -36.24,
     "permanent": true,
     "theme": "furnace",
     "circuitKey": "final-feed-lintel:22.0000:-37.2000:106.0000"

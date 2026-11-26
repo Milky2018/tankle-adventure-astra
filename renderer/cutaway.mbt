@@ -111,7 +111,8 @@ fn Cutaway::new(
   scene.traverse(fn(object) {
     if object.kind is Mesh(mesh) && scene_binding(object) != "city/sky" {
       for material in mesh_materials(mesh.material) {
-        if registered.contains(material.uuid) {
+        if registered.contains(material.uuid) ||
+          surface_finish(material) is Some(OpticalMirror) {
           continue
         }
         registered.add(material.uuid) |> ignore
@@ -268,8 +269,6 @@ fn CutawayEffect::patch(
   }
   let reflected = if !probe {
     ""
-  } else if finish is Some(OpticalMirror) {
-    mirror_reflection
   } else if finish is Some(Canal) {
     canal_reflection
   } else {

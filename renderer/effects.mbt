@@ -23,14 +23,23 @@ priv struct Effects {
   light : EffectBatch
   dust : EffectBatch
   particles : Array[FireParticle]
-  mines : Map[Int32, @core.Object3D]
-  sphere : @core.BufferGeometry
-  red : @core.Material
+  mine_hulls : EffectBatch
+  mine_caps : EffectBatch
 }
 
 ///|
 fn Effects::new(scene : @core.Object3D) -> Effects {
   let plane = @geometries.PlaneGeometry::new()
+  fn casting(profile : Array[(Double, Double)]) -> @core.BufferGeometry {
+    @geometries.LatheGeometry::new(
+      points=profile.map(fn(p) { @m3.Vector2::new(p.0, p.1) }),
+      segments=12,
+    )
+  }
+  let iron = @core.MeshStandardMaterial::new()
+  iron.roughness = Some(0.68)
+  iron.metalness = Some(0.28)
+  iron.flat_shading = Some(true)
   {
     strokes: EffectBatch::new(
       scene,
@@ -40,13 +49,35 @@ fn Effects::new(scene : @core.Object3D) -> Effects {
     light: EffectBatch::new(scene, plane, puff_material(dust=false)),
     dust: EffectBatch::new(scene, plane, puff_material(dust=true)),
     particles: [],
-    mines: {},
-    sphere: @geometries.SphereGeometry::new(
-      radius=1,
-      width_segments=10,
-      height_segments=8,
+    mine_hulls: EffectBatch::new(
+      scene,
+      casting([
+        (0.0, 0.03),
+        (0.84, 0.03),
+        (1.05, 0.16),
+        (1.05, 0.28),
+        (0.86, 0.32),
+        (0.91, 0.45),
+        (0.83, 0.56),
+        (0.42, 0.56),
+        (0.32, 0.64),
+        (0.31, 0.74),
+        (0.0, 0.74),
+      ]),
+      iron,
     ),
-    red: basic_material(0xff6846),
+    mine_caps: EffectBatch::new(
+      scene,
+      casting([
+        (0.83, 0.47),
+        (0.92, 0.47),
+        (0.92, 0.51),
+        (0.76, 0.59),
+        (0.60, 0.59),
+        (0.60, 0.55),
+      ]),
+      basic_material(0xffffff),
+    ),
   }
 }
 
@@ -219,35 +250,31 @@ fn View::update_effects(
       }
     }
   }
-  let active : Set[Int32] = Set([])
-  for m in game.mines {
-    active.add(m.id) |> ignore
-    let mesh = match effects.mines.get(m.id) {
-      Some(mesh) => mesh
-      None => {
-        let mesh = @core.Mesh::new(
-          geometry=effects.sphere,
-          material=Single(effects.red),
-        )
-        self.scene.add(mesh) |> ignore
-        effects.mines[m.id] = mesh
-        mesh
-      }
+  for mine in game.mines {
+    if mine.disarmed {
+      continue
     }
-    mesh.position.set(m.position.x, m.position.y + 0.3, m.position.z) |> ignore
-    mesh.scale.set(0.6, 0.25, 0.6) |> ignore
-    mesh.update_matrix_world(force=true)
+    let p = mine.position
+    effects.mine_hulls.pose.position.set(p.x, p.y, p.z) |> ignore
+    effects.mine_hulls.put(0x457b95)
+    let left = p.add({ x: -0.30, y: 0.91, z: 0, })
+    let right = p.add({ x: 0.30, y: 0.91, z: 0, })
+    strokes.stroke(left, p.add({ x: -0.32, y: 0.60, z: 0, }), 0.13, 0x76bbc8)
+    strokes.stroke(left, right, 0.13, 0x76bbc8)
+    strokes.stroke(right, p.add({ x: 0.32, y: 0.60, z: 0, }), 0.13, 0x76bbc8)
+    effects.mine_caps.pose.position.set(p.x, p.y, p.z) |> ignore
+    effects.mine_caps.put(
+      if mine.trigger > 0 {
+        0xffefe0
+      } else if mine.age > 1 {
+        0xff7948
+      } else {
+        0xfbc368
+      },
+    )
   }
-  let gone : Array[Int32] = []
-  for id, mesh in effects.mines {
-    if !active.contains(id) {
-      mesh.remove_from_parent() |> ignore
-      gone.push(id)
-    }
-  }
-  for id in gone {
-    effects.mines.remove(id)
-  }
+  effects.mine_hulls.finish()
+  effects.mine_caps.finish()
   let up = @sim.Vec3::{ x: 0, y: 1, z: 0, }
   fn emit(
     kind : ParticleKind,

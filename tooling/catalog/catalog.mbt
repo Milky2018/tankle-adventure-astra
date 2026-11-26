@@ -214,6 +214,18 @@ pub fn decode(catalog : Record) -> Level raise {
     }
   }
   for control in level.controls {
+    if control.relay_mirror is Some(id) &&
+      (
+        !level.mirrors.any(m => m.id == id) ||
+        control.normal is None ||
+        control.actions() != [LaserAction]
+      ) {
+      raise Failure(
+        "Optical relay " +
+        control.id +
+        " needs a mirror, a collecting face and a laser trigger",
+      )
+    }
     if control.effects is Some(effects) &&
       (effects.is_empty() || effects.any(s => s.trim().is_empty())) {
       raise Failure(
