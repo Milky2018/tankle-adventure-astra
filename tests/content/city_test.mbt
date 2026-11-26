@@ -114,16 +114,19 @@ test "workshop panes transmit the scene and sit in open window frames" {
   let bays = []
   @archive.walk(scene.get("object"), n => {
     if @model.str(n, "type") == "Group" &&
-      @model.str(n, "name").has_prefix("Engine house · ") {
+      @model.str(n, "name").has_prefix("Factory windows · ") {
       bays.push(n)
     }
   })
   let mut tested = 0
   for bay in bays {
     let children = rows(bay, "children")
-    let pane = children[children
-      .search_by(c => glazing.contains(@model.str(c, "material")))
-      .unwrap()]
+    guard children
+      .iter()
+      .find_first(c => glazing.contains(@model.str(c, "material")))
+      is Some(pane) else {
+      continue
+    }
     let vertices = position_geometry(
         geometries[@model.str(pane, "geometry")],
         bytes,
@@ -150,13 +153,21 @@ test "workshop panes transmit the scene and sit in open window frames" {
         )
       }
       let p = bounds.get_center(@math.Vector3::new(0, 0, 0))
-      p.x += (bounds.max.x - bounds.min.x) * 0.19
-      p.z = bounds.max.z + 0.04
-      let distance = distance_to(p, @math.Vector3::new(0, 0, -1), surround)
-      assert_true(
-        distance.is_finite() && distance > 0.45,
-        msg=@model.str(bay, "name"),
-      )
+      let normal = if bounds.max.x - bounds.min.x < bounds.max.z - bounds.min.z {
+        p.z += (bounds.max.z - bounds.min.z) * 0.19
+        @math.Vector3::new(1, 0, 0)
+      } else {
+        p.x += (bounds.max.x - bounds.min.x) * 0.19
+        @math.Vector3::new(0, 0, 1)
+      }
+      for sign in [-1.0, 1.0] {
+        let direction = normal.clone().multiply_scalar(sign)
+        let origin = p.clone().add_scaled_vector(direction, -0.2)
+        assert_true(
+          distance_to(origin, direction, surround) > 0.4,
+          msg=@model.str(bay, "name"),
+        )
+      }
       tested += 1
     }
   }

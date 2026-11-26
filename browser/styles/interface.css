@@ -162,10 +162,11 @@
   #drive-hint { top:20px; bottom:auto; left:62px; transform:none; }
 }
 
-#mortar-scope{position:absolute;right:24px;bottom:100px;width:clamp(90px,16vmin,160px);aspect-ratio:1;border:2px solid #a19c80;background:#182322;color:#fff0b4;pointer-events:none}
-#mortar-scope canvas{width:100%;height:100%;display:block}
+#mortar-scope{position:absolute;right:24px;bottom:100px;width:clamp(102px,20vmin,192px);aspect-ratio:1;border:2px solid #a19c80;background:transparent;color:#fff0b4;pointer-events:none}
 #mortar-scope i{position:absolute;top:50%;left:50%;width:12%;height:12%;border:1px solid currentColor;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 1px #23251c}
 #mortar-scope i:after,#mortar-scope i:before{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:currentColor;width:8px;height:2px}
 #mortar-scope i:after{width:2px;height:8px}
 #mortar-scope.intercept{color:#ff8b54;border-color:currentColor}
-#mortar-scope.lost canvas,#mortar-scope.lost i{visibility:hidden}
+#mortar-scope.intercept i{border-radius:0;transform:translate(-50%,-50%) rotate(45deg)}
+#mortar-scope.lost{background:#182322}
+#mortar-scope.lost i{visibility:hidden}

@@ -1,7 +1,9 @@
 ///|
 pub struct Audio {
   priv ctx : @audio.AudioContext
+  priv mix : @audio.AudioNode
   priv master : @audio.GainNode
+  priv mut volume : Double
   priv noise : @audio.AudioBuffer
   priv mut track_url : String
   priv mut requested_track : String?
@@ -32,9 +34,42 @@ extern "js" fn MusicTrack::new() -> MusicTrack = "()=>new Audio()"
 extern "js" fn MusicTrack::set_loop(self : MusicTrack, looped : Bool) -> Unit = "(m,v)=>{m.loop=v}"
 
 ///|
-pub fn create_audio() -> Audio {
+fn MusicTrack::to_js(self : MusicTrack) -> @core.JsValue = "%identity"
+
+///|
+extern "js" fn wave_shaper(
+  ctx : @audio.AudioContext,
+  curve : FixedArray[Float],
+) -> @audio.AudioNode = "(ctx,curve)=>{const node=ctx.createWaveShaper();node.curve=new Float32Array(curve);return node}"
+
+///|
+pub fn create_audio(volume : Double) -> Audio {
   let ctx = @audio.AudioContext::get_context()
+  // Allow four times full scale at the summing input. Ordinary samples pass
+  // through at unity; only peaks above the knee approach the 0.90 ceiling.
+  let input = ctx.create_gain()
+  set_audio_value(input.gain(), 0.25)
+  let curve = FixedArray::makei(1025, fn(i) {
+    let x = (i - 512).to_double() / 128
+    let excess = x.abs() - 0.65
+    let y = if excess <= 0 {
+      x
+    } else {
+      let peak = 0.65 + excess / (1 + excess / 0.25)
+      if x < 0 {
+        -peak
+      } else {
+        peak
+      }
+    }
+    Float::from_double(y)
+  })
+  let limiter = wave_shaper(ctx, curve)
   let master = ctx.create_gain()
+  set_audio_value(master.gain(), volume)
+  let mix = input.as_node()
+  mix.connect(limiter)
+  limiter.connect(master.as_node())
   master.as_node().connect(ctx.destination())
   let rate = sample_rate(ctx)
   let noise = mono_buffer(ctx, (rate * 2).to_int(), rate)
@@ -44,7 +79,17 @@ pub fn create_audio() -> Audio {
   }
   let track = MusicTrack::new()
   track.set_loop(true)
-  { ctx, master, noise, track, track_url: "", requested_track: None, }
+  ctx.create_media_element_source(track.to_js()).connect(mix)
+  {
+    ctx,
+    mix,
+    master,
+    volume,
+    noise,
+    track,
+    track_url: "",
+    requested_track: None,
+  }
 }
 
 ///|
@@ -284,7 +329,7 @@ pub fn Audio::play_voice(
   }
   let mix = panner.node()
   envelope.as_node().connect(mix)
-  mix.connect(self.master.as_node())
+  mix.connect(self.mix)
   source.schedule(at, at + duration + 0.012, fn() {
     match effect {
       Some(n) => {
@@ -294,7 +339,7 @@ pub fn Audio::play_voice(
       None => output.disconnect(envelope.as_node())
     }
     envelope.as_node().disconnect(mix)
-    mix.disconnect(self.master.as_node())
+    mix.disconnect(self.mix)
   })
 }
 
@@ -352,7 +397,12 @@ pub fn Audio::update_music(
 
 ///|
 pub fn audio_volume(audio : Audio, volume : Double) -> Unit {
-  audio.master.gain().set_target_at_time(volume, audio.ctx.current_time(), 0.1)
+  if audio.volume != volume {
+    audio.volume = volume
+    audio.master
+    .gain()
+    .set_target_at_time(volume, audio.ctx.current_time(), 0.1)
+  }
 }
 
 ///|

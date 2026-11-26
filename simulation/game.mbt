@@ -234,7 +234,7 @@ pub fn Game::hit_enemy(
   }
   if enemy.hp == 0 {
     enemy.dead_at = Some(self.time)
-    self.effects.push(Killed(index))
+    self.effects.push(Killed(index, kind))
     if enemy.definition.persistent || arena is Some(_) {
       self.commands.complete(
         self.progress,

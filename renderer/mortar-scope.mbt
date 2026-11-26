@@ -3,7 +3,7 @@ priv struct MortarScope {
   camera : @core.Object3D
   mut contact : @sim.Vec3?
   mut blocked : Bool
-  mut refresh_in : Double
+  mut viewport : (Double, Double, Double, Double)?
 }
 
 ///|
@@ -17,47 +17,46 @@ fn MortarScope::new() -> MortarScope {
     far=32,
   )
   camera.up.set(0, 0, -1) |> ignore
-  { camera, contact: None, blocked: false, refresh_in: 0, }
+  { camera, contact: None, blocked: false, viewport: None, }
 }
 
 ///|
-/// Render only the storey at the first impact. The driving pass replaces this
-/// scratch viewport immediately; the HUD keeps the image between updates.
+/// The driving pass has already updated the scene matrices and shadow maps.
 fn View::draw_mortar_scope(self : View, p : @sim.Player) -> Unit {
   let scope = self.mortar_scope
   let visible = p.weapon == @sim.Mortar && p.hp > 0 && !self.film
   @host.hidden("mortar-scope", !visible)
   if !visible {
-    scope.refresh_in = 0
     return
   }
   @host.class_toggle("mortar-scope", "lost", scope.contact is None)
   @host.class_toggle("mortar-scope", "intercept", scope.blocked)
-  guard scope.contact is Some(at) else {
-    scope.refresh_in = 0
-    return
+  guard scope.contact is Some(at) else { return }
+  let (x, y, width, height) = match scope.viewport {
+    Some(rect) => rect
+    None => {
+      let rect = @host.viewport_rect("mortar-scope")
+      scope.viewport = Some(rect)
+      rect
+    }
   }
-  if scope.refresh_in > 0 {
-    return
-  }
-  scope.refresh_in = 0.1
   scope.camera.position.set(at.x, at.y + 5.5, at.z) |> ignore
+  scope.camera.up.set(@math.sin(self.yaw), 0, @math.cos(self.yaw)) |> ignore
   scope.camera.look_at(vector(at))
-  scope.camera.update_matrix_world(force=true)
   let r = self.renderer
-  let size = Double::min(
-    192 / r.get_pixel_ratio(),
-    Double::min(@host.width().to_double(), @host.height().to_double()),
-  )
   let shadows = r.shadow_map.auto_update
+  let matrices = self.scene.matrix_world_auto_update
+  let cutaway = self.cutaway.enabled.value
   r.shadow_map.auto_update = false
-  r.set_viewport(0, 0, size, size)
-  r.set_scissor(0, 0, size, size)
-  r.set_scissor_test(true)
+  self.scene.matrix_world_auto_update = false
   self.cutaway.enabled.value = Number(0)
+  r.set_viewport(x, y, width, height)
+  r.set_scissor(x, y, width, height)
+  r.set_scissor_test(true)
   r.render(self.scene, scope.camera)
-  @host.copy_mortar_scope((size * r.get_pixel_ratio()).floor().to_int())
   r.set_scissor_test(false)
   r.set_viewport(0, 0, @host.width().to_double(), @host.height().to_double())
   r.shadow_map.auto_update = shadows
+  self.scene.matrix_world_auto_update = matrices
+  self.cutaway.enabled.value = cutaway
 }

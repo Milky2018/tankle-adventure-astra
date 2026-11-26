@@ -23,9 +23,9 @@ fn Sound::new() -> Sound {
 }
 
 ///|
-fn Sound::start(self : Sound) -> Unit {
+fn Sound::start(self : Sound, volume : Double) -> Unit {
   match self.audio {
-    None => self.audio = Some(@host.create_audio())
+    None => self.audio = Some(@host.create_audio(volume))
     Some(audio) => @host.audio_resume(audio)
   }
 }
@@ -71,7 +71,7 @@ fn Sound::update(
   if music_tracks.get(track) is Some((url, gain)) {
     audio.update_music(
       url,
-      volume=settings.volume * gain,
+      volume=gain,
       paused=paused || !settings.music || p.hp <= 0,
       restart=game.effects.any(event => event is Respawned),
     )
@@ -160,8 +160,18 @@ fn Sound::update_machinery(self : Sound, game : @sim.Game) -> Unit {
 
 ///|
 fn Sound::play_events(self : Sound, game : @sim.Game) -> Unit {
+  if game.effects.is_empty() {
+    return
+  }
   let p = game.player
+  let salvos : Array[(@sim.Vec3, @sim.Weapon)] = []
   for event in game.effects {
+    if event is EnemyFired(at, weapon) {
+      if salvos.contains((at, weapon)) {
+        continue
+      }
+      salvos.push((at, weapon))
+    }
     let (cue, origin) = match event {
       Fired(at, Cannon) if p.upgrades.cannon => {
         self.play("recoil-return")
@@ -169,7 +179,8 @@ fn Sound::play_events(self : Sound, game : @sim.Game) -> Unit {
       }
       Fired(at, Mortar) | EnemyFired(at, Mortar) => ("mortar", Some(at))
       Fired(at, _) | EnemyFired(at, _) => ("shot", Some(at))
-      Killed(index) => ("explode", Some(game.enemies[index].position()))
+      Killed(_, MortarHit) => continue // The blast already emitted its impact cue.
+      Killed(index, _) => ("explode", Some(game.enemies[index].position()))
       Impact(at, exploded) =>
         (if exploded { "explode" } else { "hit" }, Some(at))
       Chips(at, _) => ("chip", Some(at))

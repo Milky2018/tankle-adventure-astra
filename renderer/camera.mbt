@@ -133,6 +133,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
 
 ///|
 pub fn View::resize(self : View) -> Unit {
+  self.mortar_scope.viewport = None
   let w = @host.width()
   let h = @host.height()
   self.renderer.set_size(w.to_double(), h.to_double())
@@ -171,10 +172,6 @@ pub fn View::position_player(
   if self.cutaway.water_time.value is Number(elapsed) {
     self.cutaway.water_time.value = Number(elapsed + dt)
   }
-  self.mortar_scope.refresh_in = Double::max(
-    0,
-    self.mortar_scope.refresh_in - dt,
-  )
   self.ground_pose(player, world, dt)
   self.body.rotation.set(0, player.heading, 0) |> ignore
   self.root.update_matrix_world(force=true)
@@ -250,7 +247,6 @@ pub fn View::draw(
     self.scene,
   )
   self.cutaway.update(player, world, camera)
-  self.draw_mortar_scope(player)
   let blocked = !self.film &&
     self.camera_space.hull_hidden(
       self.body,
@@ -262,6 +258,7 @@ pub fn View::draw(
   self.cutaway.enabled.value = Number(if blocked { 1 } else { 0 })
   self.renderer.render(self.scene, camera)
   self.room_visibility.restore()
+  self.draw_mortar_scope(player)
 }
 
 ///|

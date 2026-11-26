@@ -7,13 +7,35 @@ priv struct Collider {
 }
 
 ///|
+priv struct MovingCollider {
+  mut bounds : Collider
+  matrix : @m3.Matrix4
+}
+
+///|
+fn collider_grid(
+  items : Array[Collider],
+) -> Map[(Int32, Int32), Array[Collider]] {
+  let cells = Map([])
+  for item in items {
+    for x in camera_cell(item.min.x)..<=camera_cell(item.max.x) {
+      for z in camera_cell(item.min.z)..<=camera_cell(item.max.z) {
+        cells.get_or_init((x, z), fn() { [] }).push(item)
+      }
+    }
+  }
+  cells
+}
+
+///|
 priv struct GeometryQueries {
   world : @sim.World
   state : @sim.Progress
   fixtures : Array[Collider]
   surfaces : Array[Collider]
   surface_grid : Map[(Int32, Int32), Array[Collider]]
-  housings : Array[Collider]
+  fixture_grid : Map[(Int32, Int32), Array[Collider]]
+  housings : Array[MovingCollider]
   walls : Array[(@sim.Solid, @core.Object3D)]
   lifts : Array[(@sim.Lift, @core.Object3D)]
   mirrors : Array[Collider]
@@ -56,7 +78,7 @@ pub fn View::queries(self : View, game : @sim.Game) -> @sim.Queries {
   let root = self.scene
   let fixtures : Array[Collider] = []
   let surfaces : Array[Collider] = []
-  let housings : Array[Collider] = []
+  let housings : Array[MovingCollider] = []
   let mirrors : Array[Collider] = []
   root.traverse(fn(object) {
     let name = scene_binding(object)
@@ -70,7 +92,10 @@ pub fn View::queries(self : View, game : @sim.Game) -> @sim.Queries {
     if name.has_prefix("world/controls/") && name.contains("/housing/") {
       for index, control in game.commands.controls {
         if name.has_prefix("world/controls/\{control.id}/housing/") {
-          housings.push(collider(object, @sim.BlockedControl(index)))
+          housings.push({
+            bounds: collider(object, @sim.BlockedControl(index)),
+            matrix: object.matrix_world.clone(),
+          })
           break
         }
       }
@@ -93,30 +118,13 @@ pub fn View::queries(self : View, game : @sim.Game) -> @sim.Queries {
       mirrors.push(collider(object, @sim.MirrorTarget(i)))
     }
   }
-  let surface_grid : Map[(Int32, Int32), Array[Collider]] = Map([])
-  for surface in surfaces {
-    for
-      x in (surface.min.x / 16).floor().to_int()..<=(surface.max.x / 16)
-      .floor()
-      .to_int() {
-      for
-        z in (surface.min.z / 16).floor().to_int()..<=(surface.max.z / 16)
-        .floor()
-        .to_int() {
-        let cell = (x, z)
-        match surface_grid.get(cell) {
-          Some(members) => members.push(surface)
-          None => surface_grid[cell] = [surface]
-        }
-      }
-    }
-  }
   let queries = GeometryQueries::{
     world: game.world,
     state: game.progress,
     fixtures,
     surfaces,
-    surface_grid,
+    surface_grid: collider_grid(surfaces),
+    fixture_grid: collider_grid(fixtures),
     housings,
     walls,
     lifts,
@@ -168,12 +176,11 @@ fn GeometryQueries::cast(
       break
     }
   }
-  let candidates = if ray.direction.x == 0 && ray.direction.z == 0 {
-    let cell = (
-      (ray.origin.x / 16).floor().to_int(),
-      (ray.origin.z / 16).floor().to_int(),
-    )
-    self.surface_grid.get(cell).unwrap_or([])
+  let start_cell = (camera_cell(ray.origin.x), camera_cell(ray.origin.z))
+  let end = ray.point(limit)
+  let single_cell = start_cell == (camera_cell(end.x), camera_cell(end.z))
+  let candidates = if single_cell {
+    self.surface_grid.get(start_cell).unwrap_or([])
   } else {
     self.surfaces
   }
@@ -186,7 +193,12 @@ fn GeometryQueries::cast(
     mesh_hit(object, @sim.Terrain, false)
   }
   if !ground {
-    for fixture in self.fixtures {
+    let fixtures = if single_cell {
+      self.fixture_grid.get(start_cell).unwrap_or([])
+    } else {
+      self.fixtures
+    }
+    for fixture in fixtures {
       if fixture.in_range(ray, limit) {
         mesh_hit(fixture.object, fixture.target, true)
       }
@@ -205,10 +217,13 @@ fn GeometryQueries::cast(
       }
     }
     for housing in self.housings {
-      let bounds = @core.box3_set_from_object(@m3.Box3::new(), housing.object)
-      if ray.box(point(bounds.min), point(bounds.max)) is Some((d, _)) &&
-        d <= limit {
-        mesh_hit(housing.object, housing.target, false)
+      let mesh = housing.bounds.object
+      if !mesh.matrix_world.equals(housing.matrix) {
+        housing.bounds = collider(mesh, housing.bounds.target)
+        housing.matrix.copy(mesh.matrix_world) |> ignore
+      }
+      if housing.bounds.in_range(ray, limit) {
+        mesh_hit(mesh, housing.bounds.target, false)
       }
     }
     for mirror in self.mirrors {
@@ -235,38 +250,44 @@ fn GeometryQueries::cast(
         })
       }
     }
-    // Query nearby architectural cells along the ray, independently of decorative meshes.
-    let seen : Set[(Int32, Int32)] = Set([])
-    let steps = Int32::max(1, (limit / 8).ceil().to_int())
-    for i in 0..<=steps {
-      let pos = ray.point(Double::min(limit, i.to_double() * 8))
-      let x = (pos.x / 16).floor().to_int()
-      let z = (pos.z / 16).floor().to_int()
-      for dx in -1..<=1 {
-        for dz in -1..<=1 {
-          let cell = (x + dx, z + dz)
-          if seen.contains(cell) {
-            continue
+    fn architecture_cell(cell : (Int32, Int32)) {
+      if self.world.architecture_grid.get(cell) is Some(solids) {
+        for solid in solids {
+          if ray.box({ x: solid.rect.x, y: solid.y, z: solid.rect.z, }, {
+              x: solid.rect.x + solid.rect.w,
+              y: solid.y + solid.h,
+              z: solid.rect.z + solid.rect.d,
+            })
+            is Some((distance, normal)) &&
+            distance < limit {
+            limit = distance
+            result = Some({
+              distance,
+              normal: Some(normal),
+              point: ray.point(distance),
+              target: @sim.Terrain,
+            })
           }
-          seen.add(cell) |> ignore
-          if self.world.architecture_grid.get(cell) is Some(solids) {
-            for solid in solids {
-              if ray.box({ x: solid.rect.x, y: solid.y, z: solid.rect.z, }, {
-                  x: solid.rect.x + solid.rect.w,
-                  y: solid.y + solid.h,
-                  z: solid.rect.z + solid.rect.d,
-                })
-                is Some((distance, normal)) &&
-                distance < limit {
-                limit = distance
-                result = Some({
-                  distance,
-                  normal: Some(normal),
-                  point: ray.point(distance),
-                  target: @sim.Terrain,
-                })
-              }
+        }
+      }
+    }
+    if single_cell {
+      architecture_cell(start_cell)
+    } else {
+      let seen : Set[(Int32, Int32)] = Set([])
+      let steps = Int32::max(1, (limit / 8).ceil().to_int())
+      for i in 0..<=steps {
+        let pos = ray.point(Double::min(limit, i.to_double() * 8))
+        let x = (pos.x / 16).floor().to_int()
+        let z = (pos.z / 16).floor().to_int()
+        for dx in -1..<=1 {
+          for dz in -1..<=1 {
+            let cell = (x + dx, z + dz)
+            if seen.contains(cell) {
+              continue
             }
+            seen.add(cell) |> ignore
+            architecture_cell(cell)
           }
         }
       }

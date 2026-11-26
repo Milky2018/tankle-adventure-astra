@@ -392,7 +392,7 @@
     "x": -44,
     "y": -16,
     "z": 54,
-    "hp": 1,
+    "hp": 1.5,
     "type": "scout",
     "openingCrossing": 2.2
   },
@@ -410,7 +410,7 @@
     "x": -43,
     "y": -16,
     "z": 46,
-    "hp": 1,
+    "hp": 1.5,
     "type": "scout",
     "encounter": "press-relay"
   },
@@ -550,8 +550,8 @@
     "x": -9,
     "y": 0,
     "z": -18,
-    "hp": 2,
-    "type": "skirmisher",
+    "hp": 1.5,
+    "type": "scout",
     "encounter": "dispatch-crossing",
     "patrol": {
       "x": -18,
@@ -593,8 +593,8 @@
     "x": 233,
     "y": 24,
     "z": -29,
-    "hp": 4,
-    "type": "skirmisher",
+    "hp": 1.5,
+    "type": "scout",
     "encounter": "emitter"
   },
   {

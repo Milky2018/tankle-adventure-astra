@@ -104,7 +104,7 @@ test "the recoil workbench still stops the hull beside the clear lane" {
 }
 
 ///|
-test "repair stations have a clear drive-through lane between solid tool cabinets" {
+test "repair stations allow drive-through and side entry beside a solid service arm" {
   let game = @simulation.Game::new()
   for hive in game.hives {
     let p = game.player
@@ -128,7 +128,11 @@ test "repair stations have a clear drive-through lane between solid tool cabinet
         game.progress,
       )
       let lateral = ((p.x - x) * dz - (p.z - z) * dx).abs()
-      assert_true(lateral > 1 && lateral < 3.5)
+      if sign > 0 {
+        assert_true((lateral - 4.35).abs() < 0.001)
+      } else {
+        assert_true(lateral > 1 && lateral < 3.5)
+      }
     }
   }
 }

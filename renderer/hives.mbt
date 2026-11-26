@@ -3,7 +3,7 @@ priv struct HiveVisual {
   body : @sim.Hive
   root : @core.Object3D
   scan : @core.Object3D?
-  arms : Array[@core.Object3D?]
+  arm : @core.Object3D?
   beacon : @core.Object3D?
   mut proximity : Double
   mut pulse : Double
@@ -26,7 +26,7 @@ fn hives(
       body,
       root: get("root").unwrap(),
       scan: get("scan"),
-      arms: Array::makei(2, fn(j) { get("arms/\{j}/pivot") }),
+      arm: get("arms/0/pivot"),
       beacon: get("lamps/0"),
       proximity: 0,
       pulse: 0,
@@ -58,16 +58,8 @@ fn View::update_hives(self : View, game : @sim.Game, dt : Double) -> Unit {
     } else {
       0.0
     }
-    for i, arm in v.arms {
-      if arm is Some(arm) {
-        arm.rotation.set(
-          0,
-          0,
-          (if i == 0 { 1.0 } else { -1.0 }) *
-          (0.82 - v.proximity * 0.44 - work * 0.95),
-        )
-        |> ignore
-      }
+    if v.arm is Some(arm) {
+      arm.rotation.set(0, 0, 0.82 - v.proximity * 0.44 - work * 0.95) |> ignore
     }
     if v.scan is Some(scan) {
       scan.visible = v.pulse > 0

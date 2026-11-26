@@ -57044,37 +57044,11 @@
     "permanent": true
   },
   {
-    "id": "repair-cabinet-awakening-2",
-    "room": "foundry-awakening",
-    "region": "foundry",
-    "kind": "machine",
-    "x": -1.43,
-    "y": -8,
-    "z": 89.46,
-    "w": 2.86,
-    "h": 2.32,
-    "d": 1.78,
-    "permanent": true
-  },
-  {
     "id": "repair-cabinet-turntable-0",
     "room": "turntable",
     "region": "transit",
     "kind": "machine",
     "x": 3.46,
-    "y": 0,
-    "z": 25.57,
-    "w": 1.78,
-    "h": 2.32,
-    "d": 2.86,
-    "permanent": true
-  },
-  {
-    "id": "repair-cabinet-turntable-2",
-    "room": "turntable",
-    "region": "transit",
-    "kind": "machine",
-    "x": -5.24,
     "y": 0,
     "z": 25.57,
     "w": 1.78,
@@ -57096,37 +57070,11 @@
     "permanent": true
   },
   {
-    "id": "repair-cabinet-distribution-2",
-    "room": "roof-junction",
-    "region": "testworks",
-    "kind": "machine",
-    "x": 148.57,
-    "y": 24,
-    "z": -33.24,
-    "w": 2.86,
-    "h": 2.32,
-    "d": 1.78,
-    "permanent": true
-  },
-  {
     "id": "repair-cabinet-last-refuge-0",
     "room": "last-refuge",
     "region": "furnace",
     "kind": "machine",
     "x": 38.76,
-    "y": -40,
-    "z": -11.43,
-    "w": 1.78,
-    "h": 2.32,
-    "d": 2.86,
-    "permanent": true
-  },
-  {
-    "id": "repair-cabinet-last-refuge-2",
-    "room": "last-refuge",
-    "region": "furnace",
-    "kind": "machine",
-    "x": 47.46,
     "y": -40,
     "z": -11.43,
     "w": 1.78,
@@ -63112,6 +63060,45 @@
     "w": 0.45,
     "h": 1.54,
     "d": 13.8,
+    "permanent": true
+  },
+  {
+    "id": "filter-intake-abutment-1",
+    "room": "reservoir-filter-bank",
+    "region": "garden",
+    "kind": "wall",
+    "x": -176.385,
+    "y": -12.8,
+    "z": 117.05,
+    "w": 3.65,
+    "h": 7.29,
+    "d": 1.25,
+    "permanent": true
+  },
+  {
+    "id": "filter-intake-abutment-2",
+    "room": "reservoir-filter-bank",
+    "region": "garden",
+    "kind": "wall",
+    "x": -176.385,
+    "y": -12.8,
+    "z": 105.7,
+    "w": 3.65,
+    "h": 7.29,
+    "d": 1.25,
+    "permanent": true
+  },
+  {
+    "id": "filter-intake-abutment-3",
+    "room": "reservoir-filter-bank",
+    "region": "garden",
+    "kind": "wall",
+    "x": -175.485,
+    "y": -12.8,
+    "z": 106.95,
+    "w": 2.65,
+    "h": 4.81,
+    "d": 10.1,
     "permanent": true
   }
 ]

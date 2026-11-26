@@ -109,7 +109,7 @@ fn Session::input(
     self.keys.remove(key) |> ignore
     return
   }
-  self.sound.start()
+  self.sound.start(self.settings.volume)
   if self.rebinding is Some(action) {
     if !repeat {
       self.settings.bindings.0[action] = key
@@ -189,7 +189,8 @@ fn Session::input(
   if is_action(Flotation) {
     if p.toggle_flotation(fn(x, z) {
         self.game.world.support(x, z, p.y, false) is Some(_)
-      }) {
+      }) &&
+      self.settings.sfx {
       self.sound.play("flotation")
     }
   }
@@ -288,7 +289,7 @@ fn Session::mount_settings(self : Session) -> Unit {
     self.has_journey = true
     self.menu_open = false
     @host.close_dialog("journey")
-    self.sound.start()
+    self.sound.start(self.settings.volume)
   }
   @host.on_click("journey-continue", play)
   @host.on_click("new-game", fn() { @host.remove_save() })

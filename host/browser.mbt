@@ -490,34 +490,12 @@ pub fn close_dialog(id : String) -> Unit {
 }
 
 ///|
-extern "js" fn draw_sub_image(
-  ctx : Canvas,
-  source : @webgl.HTMLCanvasElement,
-  sx : Int32,
-  sy : Int32,
-  sw : Int32,
-  sh : Int32,
-  dx : Int32,
-  dy : Int32,
-  dw : Int32,
-  dh : Int32,
-) -> Unit =
-  #| (ctx,src,sx,sy,sw,sh,dx,dy,dw,dh)=>ctx.drawImage(src,sx,sy,sw,sh,dx,dy,dw,dh)
-
-///|
-pub fn copy_mortar_scope(size : Int32) -> Unit {
-  let source = canvas_element("game")
-  let target = canvas_element("mortar-image")
-  draw_sub_image(
-    target.get_context_2d().unwrap(),
-    source,
-    0,
-    source.height() - size,
-    size,
-    size,
-    0,
-    0,
-    target.width(),
-    target.height(),
+pub fn viewport_rect(id : String) -> (Double, Double, Double, Double) {
+  let rect = element(id).get_bounding_client_rect()
+  (
+    rect.left.to_double(),
+    height().to_double() - rect.bottom.to_double(),
+    rect.width.to_double(),
+    rect.height.to_double(),
   )
 }

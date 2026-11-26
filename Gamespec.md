@@ -154,7 +154,7 @@ Phoenix upgrades Overdrive's existing input but counts as an acquisition. Circul
 
 **Mortar:** the launch-time aimed surface determines the arc, **actual collision determines explosion**, for player, ordinary-enemy and Boss shells alike. Contact with terrain, walls, ceilings, machinery or damage volumes detonates. A missing/moving support lets the shell continue forward under gravity; shells lost outside playable space disappear without a blast. Elevated trays are real aiming surfaces. Blasts respect solid cover. Overhead hits bypass ordinary frontal guard plates but not Boss roof armour. Survivors stagger as specified in their [enemy entries](#enemy-catalogue). Mortar does not home or pass roofs because the cursor lies beyond them.
 
-Mortar aim uses the normal reticle plus a light curved guide and dashed landing/blast ring. Forecast the continuing arc to its first collision, including lower floors beyond the intended point. Early interception shortens the guide and makes the ring amber; no predicted collision means no ring. A small vertical impact-camera view centres its crosshair on that same first collision and shows nearby terrain. It turns amber on interception and blanks when there is no return. Preview neither locks moving enemies nor promises damage through walls.
+Mortar aim uses the normal reticle plus a light curved guide and dashed landing/blast ring. When the reticle points down across the side of cover, aim at the floor behind it. Keep the next shot’s guide visible while a shell is airborne. Forecast the continuing arc to its first collision, including lower floors beyond the intended point. Early interception shortens the guide and makes the ring amber; no predicted collision means no ring. A small vertical impact-camera view centres its crosshair on that same first collision, updates with the driving view and shows the camera’s forward direction at the top. An early interception changes the reticle to an amber cross. The view blanks when there is no return. Preview neither locks moving enemies nor promises damage through walls.
 
 **Laser:** holding fire sustains a beam. Opaque structure and nearer bodies stop it; reflection follows actual faces, including tilted or enemy-mounted mirrors. Reflected damage direction is the **last arriving segment**, not the player's position. Selecting Laser shows a thin dashed actual-path preview and final contact light: no Heat, damage or activation, available during Overheat, removed on switching, death or docking. The damaging beam follows it, retaining a faint guide where foreground obscures segments. The preview never moves the reticle or selects a target. Mirror puzzle rules are in [machinery](#5-machinery).
 
@@ -379,7 +379,7 @@ All enemy types and Bosses are defined here. Regional chapters specify placement
 
 #### Clamp Scout
 
-HP: Foundry 1; freight and Overseer reserves 2; Testworks and Keeper reserves 3. Movement 5.6, charge speed 13, reach 11; warning 1.1 s, recovery 1.5 s. Committed charge deals 1 hull segment.
+The two opening Scouts and the returning Scouts at the freight dispatch crossing and optical calibration have 1.5 HP. Two base Cannon hits or one reinforced hit wreck them. Other freight and Overseer reserve Scouts have 2 HP. The Testworks return and Keeper reserve Scouts have 3 HP. Movement 5.6, charge speed 13, reach 11; warning 1.1 s, recovery 1.5 s. Committed charge deals 1 hull segment.
 
 Low rust-orange jaws and a horizontal sensor identify a whole-body charge. Sidestep, bait solid cover and punish the stagger; retreating along its line remains dangerous.
 
@@ -513,7 +513,7 @@ Target duration is 20–40 seconds with ordinary or fully reinforced weapons, wi
 
 ### Encounter allocation
 
-Foundry introduces Scout, Turret, Guard, Skirmisher and Welder; freight/water add long aim, artillery and mines; optics/late industry combine reflection and repair with familiar threats. Early revisits retain ordinary defenders.
+Foundry introduces Scout, Turret, Guard, Skirmisher and Welder; freight/water add long aim, artillery and mines; optics/late industry combine reflection and repair with familiar threats. At the dispatch crossing, a familiar Clamp Scout charges across the Fixed Turret’s firing lane. In optical calibration it closes distance beside a Mirror Inspector. Early revisits retain ordinary defenders.
 
 A bank-visible patrol previews water combat without blocking dry acquisition. Preserve the first Flotation crossing. Later introduce a lone Hunter with a pier, then a lone Dredger in a separate pump pocket. The optional condensate basin combines one each with cover and two banks, staggering suction before the Hunter commits. Calm canals separate encounters; required water routes are not extermination gates.
 

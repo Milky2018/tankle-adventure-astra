@@ -7,7 +7,7 @@ pub(all) enum Effect {
   Chips(Vec3, Vec3)
   Ricochet(Vec3, Vec3)
   Armored(Vec3)
-  Killed(Int32)
+  Killed(Int32, DamageKind)
   Hurt
   Acquired(String)
   Activated(String)

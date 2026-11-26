@@ -22,7 +22,6 @@ priv struct Effects {
   strokes : EffectBatch
   light : EffectBatch
   dust : EffectBatch
-  mut mortar_guide_after : Double
   particles : Array[FireParticle]
   mines : Map[Int32, @core.Object3D]
   sphere : @core.BufferGeometry
@@ -41,7 +40,6 @@ fn Effects::new(scene : @core.Object3D) -> Effects {
     light: EffectBatch::new(scene, plane, puff_material(dust=false)),
     dust: EffectBatch::new(scene, plane, puff_material(dust=true)),
     particles: [],
-    mortar_guide_after: -1,
     mines: {},
     sphere: @geometries.SphereGeometry::new(
       radius=1,
@@ -187,10 +185,6 @@ fn View::update_effects(
     }
   }
   if game.player.weapon == @sim.Mortar &&
-    game.shots.any(fn(s) { s.mortar && s.owner is None }) {
-    effects.mortar_guide_after = game.time + 0.16
-  }
-  if game.player.weapon == @sim.Mortar &&
     game.player.hp > 0 &&
     game.ending_at is None {
     let (points, hit, blocked) = game.predict_mortar(
@@ -201,22 +195,17 @@ fn View::update_effects(
     self.mortar_scope.contact = hit.map(fn(h) { h.point })
     self.mortar_scope.blocked = blocked
     let hue = if blocked { 0xffad62 } else { 0xffe4a9 }
-    let recovery = @sim.clamp(
-      (game.time - effects.mortar_guide_after) / 0.20,
-      0,
-      1,
-    )
     for i in 1..<points.length() {
       let start = points[i - 1]
       let end = points[i]
       strokes.stroke(
         start,
         start.lerp(end, if end.y < start.y { 0.53 } else { 0.96 }),
-        0.045 * recovery,
+        0.045,
         hue,
       )
     }
-    if recovery > 0 && hit is Some(hit) {
+    if hit is Some(hit) {
       let center = hit.point.add({ x: 0, y: 0.07, z: 0, })
       for i in 0..<24 {
         let a = i.to_double() * @math.PI / 12
@@ -224,7 +213,7 @@ fn View::update_effects(
         strokes.stroke(
           center.add({ x: @math.cos(a) * 3, y: 0, z: @math.sin(a) * 3, }),
           center.add({ x: @math.cos(b) * 3, y: 0, z: @math.sin(b) * 3, }),
-          0.045 * recovery,
+          0.045,
           hue,
         )
       }
@@ -402,7 +391,7 @@ fn View::update_effects(
         }
       @sim.Armored(p) => shower(p, up, false)
       @sim.Impact(p, blast) => shower(p, up, blast)
-      @sim.Killed(i) => {
+      @sim.Killed(i, _) => {
         let center = game.enemies[i].position().add(up)
         shower(center, up, true)
         for j in 0..<5 {

@@ -143,6 +143,15 @@ pub fn View::aim(
         point
       }
     }
+    Some(
+      { target: @sim.Terrain | @sim.CoverTarget(_), normal: Some(n), point, .. },
+    ) if game.player.weapon == @sim.Mortar && n.y.abs() < 0.5 && direction.y < 0 =>
+      // A low parapet can cross the sightline while the shell clears it.
+      // Select the floor behind it; the ballistic trace still tests the parapet.
+      game
+      .cast(queries, ray, 300, ground=true, refuge=false)
+      .map(fn(hit) { hit.point })
+      .unwrap_or(point)
     Some(hit) => hit.point
     None => ray.point(150)
   }
