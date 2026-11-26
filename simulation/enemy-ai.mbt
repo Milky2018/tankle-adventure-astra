@@ -171,7 +171,7 @@ fn Game::active_enemy(
         origin,
         direction: end.sub(origin).normalized(),
         length: end.distance(origin),
-        width: 0.08,
+        kind: RailTracer,
       })
       if e.timer <= 0 {
         e.enter(Vent(e.timing.post_recovery), spec.recovery)
@@ -188,6 +188,7 @@ fn Game::active_enemy(
         spec.reach,
         1,
         5,
+        emission=CuttingTorch,
       )
       |> ignore
       if e.timer <= 0 {
@@ -208,7 +209,7 @@ fn Game::active_enemy(
             origin,
             direction: end.sub(origin).normalized(),
             length: end.distance(origin),
-            width: 0.06,
+            kind: RepairArc,
           })
         }
       }

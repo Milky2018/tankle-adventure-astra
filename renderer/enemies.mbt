@@ -5,9 +5,6 @@ priv struct EnemyVisual {
   turret : @core.Object3D
   launcher : @core.Object3D?
   part_guns : Array[@core.Object3D?]
-  warning : @core.Object3D?
-  charge : @core.Object3D?
-  zone : @core.Object3D?
   armor : @core.Object3D?
   shield_mount : ShieldMount?
   wake : @core.Object3D?
@@ -20,14 +17,6 @@ priv struct EnemyVisual {
   hull_finish : @core.Material?
   shield_finish : @core.Material?
   mut wreck_settle : Double
-}
-
-///|
-fn line_points(line : @core.Object3D, points : Array[@m3.Vector3]) -> Unit {
-  let geometry = line.get_geometry().unwrap()
-  geometry.set_from_points(points) |> ignore
-  geometry.set_draw_range(0, points.length().to_double())
-  geometry.compute_bounding_sphere()
 }
 
 ///|
@@ -87,9 +76,6 @@ fn enemy_visuals(
       part_guns: Array::makei(enemy.parts.length(), fn(j) {
         get("/parts/\{j}/gun")
       }),
-      warning: get("/warning"),
-      charge: get("/charge/root"),
-      zone: get("/zone"),
       armor: get("/model/frontArmor"),
       shield_mount: if enemy.definition.magnetic_shield {
         get("/model/frontArmor").map(ShieldMount::new)
@@ -112,8 +98,6 @@ fn enemy_visuals(
         Some(root),
         Some(visual.body),
         Some(visual.turret),
-        visual.charge,
-        visual.zone,
         visual.armor,
         visual.arm,
       ] {
@@ -194,6 +178,9 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
     |> ignore
     if impact > 0 && e.armor <= 0 {
       v.body.rotate_x(-0.10 * @sim.clamp(e.flash / 0.14, 0, 1)) |> ignore
+    }
+    if alive && e.phase is @sim.Warn(Fire(ChargeAttack)) {
+      v.body.rotate_x(0.085 * @sim.clamp(e.warning_age * 3, 0, 1)) |> ignore
     }
     let pose = e.weapon_pose
     v.turret.rotation.set(0, pose.map(fn(p) { p.yaw }).unwrap_or(e.aim), 0)
@@ -297,49 +284,6 @@ fn View::update_enemies(self : View, game : @sim.Game, dt : Double) -> Unit {
     }
     if v.wake is Some(wake) {
       wake.visible = alive && e.afloat
-    }
-    if v.warning is Some(warning) {
-      warning.visible = alive &&
-        (e.phase.is_warning() || e.phase is @sim.RailShot(_))
-      if e.phase.is_warning() {
-        line_points(warning, [
-          vector(
-            pose
-            .map(fn(p) { p.muzzle })
-            .unwrap_or(e.position().add({ x: 0, y: 1.5, z: 0, })),
-          ),
-          vector(e.lock),
-        ])
-      }
-      if e.phase is @sim.RailShot(end) {
-        line_points(warning, [
-          vector(
-            pose
-            .map(fn(p) { p.muzzle })
-            .unwrap_or(e.position().add({ x: 0, y: 1.5, z: 0, })),
-          ),
-          vector(end),
-        ])
-      }
-    }
-    if v.charge is Some(charge) {
-      charge.visible = alive &&
-        e.phase.is_warning() &&
-        (
-          e.definition.kind != ScrapRam ||
-          e.phase is @sim.Warn(Fire(ChargeAttack))
-        ) &&
-        e.definition.kind != Sorter
-      charge.position.set(e.x, e.y, e.z) |> ignore
-      charge.rotation.set(0, e.aim, 0) |> ignore
-      charge.update_matrix_world(force=true)
-    }
-    if v.zone is Some(zone) {
-      zone.visible = alive &&
-        e.definition.kind is (Artillery | Siege) &&
-        e.phase.is_warning()
-      zone.position.set(e.lock.x, e.lock.y + 0.1, e.lock.z) |> ignore
-      zone.update_matrix_world(force=true)
     }
     if v.arm is Some(arm) && e.definition.kind == Sorter {
       let (turn, extension) = e.arm_pose()

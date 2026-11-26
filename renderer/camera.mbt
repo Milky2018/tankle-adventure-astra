@@ -112,9 +112,9 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     ),
     projectiles: Projectiles::new(),
     enemies,
-    ending: @core.PerspectiveCamera::new(fov=55, aspect=1, near=0.15, far=290),
+    ending: @core.PerspectiveCamera::new(fov=55, aspect=1, near=0.15, far=530),
     film: false,
-    third: @core.PerspectiveCamera::new(fov=60, aspect=1, near=0.15, far=290),
+    third: @core.PerspectiveCamera::new(fov=60, aspect=1, near=0.15, far=530),
     yaw: -@math.PI / 2,
     pitch: 15.3 * @math.PI / 180,
   }
@@ -274,8 +274,11 @@ pub fn View::project(self : View, position : @sim.Vec3) -> @sim.Vec2 {
 ///|
 pub fn View::set_render_distance(self : View, range : Double) -> Unit {
   self.cutaway.distance.value = Number(range)
-  self.third.as_perspective_camera().far = range + 70
-  self.ending.as_perspective_camera().far = range + 70
+  // Keep the roof and its supporting walls visible together beyond the equipment range.
+  let exterior_range = range * 2
+  self.cutaway.exterior_distance.value = Number(exterior_range)
+  self.third.as_perspective_camera().far = exterior_range + 70
+  self.ending.as_perspective_camera().far = exterior_range + 70
   self.third.update_projection_matrix()
   self.ending.update_projection_matrix()
 }

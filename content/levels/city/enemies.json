@@ -957,6 +957,16 @@
     "magneticShield": true
   },
   {
+    "id": "proving-impact-welder",
+    "type": "welder",
+    "hp": 3,
+    "x": 143,
+    "y": 16,
+    "z": -160,
+    "encounter": "proving-impact",
+    "startup": 1.2
+  },
+  {
     "id": "proving-return-scout-3",
     "type": "scout",
     "hp": 3,

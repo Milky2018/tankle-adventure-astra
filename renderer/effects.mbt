@@ -19,6 +19,8 @@ priv struct FireParticle {
 
 ///|
 priv struct Effects {
+  jets : EffectBatch
+  jet_time : @core.Uniform
   strokes : EffectBatch
   light : EffectBatch
   dust : EffectBatch
@@ -40,7 +42,14 @@ fn Effects::new(scene : @core.Object3D) -> Effects {
   iron.roughness = Some(0.68)
   iron.metalness = Some(0.28)
   iron.flat_shading = Some(true)
+  let jet_time = @core.Uniform::new(Number(0))
   {
+    jet_time,
+    jets: EffectBatch::new(
+      scene,
+      @geometries.PlaneGeometry::new(width_segments=40),
+      heat_jet_material(jet_time),
+    ),
     strokes: EffectBatch::new(
       scene,
       @geometries.BoxGeometry::new(),
@@ -91,42 +100,7 @@ fn View::update_effects(
   let effects = self.effects
   let strokes = effects.strokes
   let muzzle = self.visible_muzzle(game.player)
-  fn mark_impact(at : @sim.Vec3) {
-    let center = at.add({ x: 0, y: 0.12, z: 0, })
-    for j in 0..<12 {
-      let a = j.to_double() * @math.PI / 6
-      let b = a + @math.PI / 10
-      strokes.stroke(
-        center.add({ x: 2.4 * @math.sin(a), y: 0, z: 2.4 * @math.cos(a), }),
-        center.add({ x: 2.4 * @math.sin(b), y: 0, z: 2.4 * @math.cos(b), }),
-        0.10,
-        0xff8050,
-      )
-    }
-  }
-  if game.active_boss() is Some(e) {
-    if e.phase is @sim.Warn(Volley(pattern, _)) {
-      for target in e.impact_pattern(pattern.kind) {
-        mark_impact(target.position)
-      }
-    }
-    for shot in game.shots {
-      if shot.mortar &&
-        !shot.captured &&
-        shot.source is Some(src) &&
-        game.enemies[src.enemy].definition.id == e.definition.id {
-        mark_impact(shot.target)
-      }
-    }
-  }
-  for b in game.beams {
-    strokes.stroke(
-      b.origin,
-      b.origin.add(b.direction.scale(b.length)),
-      b.width,
-      0xff6c42,
-    )
-  }
+  effects.enemy_signals(game)
   for i, b in game.laser_path {
     let from = if i == 0 && b.from.distance(b.to) > b.from.distance(muzzle) {
       muzzle

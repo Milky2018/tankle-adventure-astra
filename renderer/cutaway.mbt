@@ -29,6 +29,7 @@ struct Cutaway {
   player : @m3.Vector3
   sight_length : @core.Uniform
   distance : @core.Uniform
+  exterior_distance : @core.Uniform
   water_time : @core.Uniform
   wake_speed : @core.Uniform
   currents : Array[(@sim.Current, @m3.Vector3)]
@@ -92,6 +93,7 @@ fn Cutaway::new(
     player: @m3.Vector3::new(0, -8, 86),
     sight_length: @core.Uniform::new(Number(0)),
     distance: @core.Uniform::new(Number(230)),
+    exterior_distance: @core.Uniform::new(Number(460)),
     direction: @m3.Vector3::new(28, 39.6, 28).normalize(),
     enabled: @core.Uniform::new(Number(0)),
     bounds: Array::makei(4, fn(_) { @m3.Vector4::new(0, 0, 0, 0) }),
@@ -201,7 +203,11 @@ fn Cutaway::apply(
     uniforms["hullHeading"] = self.heading
     uniforms["aperturePlayer"] = @core.Uniform::new(Vector3(self.player))
     uniforms["apertureDirection"] = @core.Uniform::new(Vector3(self.direction))
-    uniforms["renderDistance"] = self.distance
+    uniforms["renderDistance"] = match
+      scene_field(material.user_data, "renderRole") {
+      Some("enclosure" | "structure" | "backdrop") => self.exterior_distance
+      _ => self.distance
+    }
     uniforms["sightLength"] = self.sight_length
     uniforms["apertureEnabled"] = self.enabled
     for i in 0..<4 {
@@ -432,7 +438,7 @@ fn CutawayEffect::patch(
     )
     .replace(
       old="#include <aomap_fragment>",
-      new=lighting + "\n" + freight_daylight,
+      new=lighting + "\n" + freight_daylight + "\n" + proving_daylight,
     )
     .replace(old="#include <map_fragment>", new=map_fragment)
     .replace(

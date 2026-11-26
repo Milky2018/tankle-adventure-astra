@@ -222,6 +222,8 @@ The multiplier applies once to positive base contact tiers. All enemy categories
 
 The city occupies a horseshoe industrial excavation around a furnace shaft, crossed by a broken transport bridge. The Foundry lies under the southern transit deck, Gardens in the western basin, Testworks through the rear/west cliff to the roof, and optics/circulation in one eastern structure above the central furnace. Routes follow freight, drainage and maintenance. Scenic distance suggests a larger civilization without making every platform playable.
 
+From the upper road and the level below, a retained room has an identifiable use and an entrance or service approach. A bridge or gallery visibly carries its load into an abutment, retaining wall or frame. Place supports outside the driving and navigation clearances on every level, including waterways. Omit scenic rooms that serve no discernible purpose.
+
 R2's turntable is the reference height. Neighboring authoring bands begin about eight world units apart, with smaller local offsets; these are not identical storeys or player-facing floor numbers. Real walls, floors, water and landings define access, not matching height alone. R1's recycling furnace and R7's central furnace are different machines in the same material/Heat network.
 
 | Region / map name | Height bands | Spatial relationship |
@@ -421,7 +423,7 @@ Retreats while throwing a limited field of blue discs that arm after landing. Sh
 
 #### Welder
 
-HP: Foundry/benches 3; condensate basin 4; coolant yard 5; cooling service/return 8. Movement 6.8, reach 18; warning 0.9 s, recovery 0.9 s. Flame damage 1 segment.
+HP: Foundry, benches and Testworks impact court 3; condensate basin 4; coolant yard 5; cooling service/return 8. Movement 6.8, reach 18; warning 0.9 s, recovery 0.9 s. Flame damage 1 segment.
 
 Twin bottles and a short nozzle. Tracks and advances for the first 0.55 s of warning, locks for the final 0.35 s, then sweeps for 1.8 s while advancing at 3.74 units/s without tracking. Sidestep, get behind or use solid cover; warning and flame both stop at cover.
 
@@ -597,9 +599,11 @@ Flotation also reaches a stranded foundation tender and supported ramp. A shot r
 
 **Building:** pale enamel, bare impact-scarred steel, rubber buffers and scorched mounts form a controlled test facility. Compact reception/preparation bays face the proving floor sideways through thick windows and empty restraint frames. Even task lighting reveals apparatus; the roof exit opens brighter. One continuous runway with recessed side services and substantial end buffers dominates, with recovery pockets and observation galleries around it. Failed hulls occupy test berths or a deliberate breakthrough, never the braking apron.
 
+On the impact floor, a bottle-fed Welder works in front of the observation booth and the hydraulic load frame. The two lateral escape lanes stay clear. The upper gallery links the inspection window and the test equipment; daylight from the roof monitor crosses the floor, while warm lamps pick out the instruments.
+
 **Combined entrance:** freight frontage overlooks the load and upper trial floor; the garden channel reaches the same foundation beneath it. Magnet tears the blue inspection grille, Flotation crosses to a dry rear landing behind the freight bulkhead, and Mortar hits the protected horizontal load surface. The load changes cover and forms supported ascent. No early direct line or shorter dry reach solves the top target. Each step permits retreat. Immediately after ascent, an inside maintenance connection opens toward B before combat.
 
-**Preparation and climax:** observation rooms show failed hulls, buffers and the real runway. Fixed cover and firing positions develop the three tools; one short artillery-and-shield encounter around passing freight offers target choice without waves, reserves or kill-count exit. A quiet view back toward B and the near-arena direct service return separate it from Overseer. The earned route bypasses the water, machinery and preparation fight on repairs/retries; paired freight lanes support both directions.
+**Preparation and climax:** observation rooms show failed hulls, buffers and the real runway. Fixed cover and firing positions develop the three tools; an artillery unit, a guard and a Welder around passing freight offer a choice of targets in one short encounter, without waves, reserves or a kill-count exit. A quiet view back toward B and the near-arena direct service return separate it from Overseer. The earned route bypasses the water, machinery and preparation fight on repairs/retries; paired freight lanes support both directions.
 
 Overseer concludes the middle stage. After victory, a quiet supported approach reaches Phoenix, with no ordinary gauntlet between Boss and reward. The cradle faces the actual test axis, weakened partition and safe braking apron. After this lesson, the roof return reveals the familiar flywheel and descends to the **starting side of the original orange bulkhead**, remaining outside C. A calm apron permits cooling before the decisive run. Breaking that barrier completes the outer loop; C's far side can then release cage/express service. The fixed return ledge passes south of the open Transit–Testworks lift shaft without waiting for its platform. A crash-recovery branch offers optional armour.
 

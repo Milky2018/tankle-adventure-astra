@@ -1,4 +1,7 @@
 ///|
+pub const HostileBlastRadius : Double = 4.0
+
+///|
 pub(all) enum Effect {
   Fired(Vec3, Weapon)
   EnemyFired(Vec3, Weapon)
@@ -510,7 +513,7 @@ pub fn Game::impact(
     self.shots[index].captured = true
   }
   if shot.mortar {
-    let radius = if hostile { 4.0 } else { 3.0 }
+    let radius = if hostile { HostileBlastRadius } else { 3.0 }
     if hostile &&
       self.player.position().add({ x: 0, y: 1, z: 0, }).distance(blast) < radius &&
       self.blast_visible(

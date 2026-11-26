@@ -3,6 +3,7 @@ priv struct WorkLamp {
   position : @m3.Vector3
   tint : Int32
   bounce : @m3.Color
+  intensity : Double
 }
 
 ///|
@@ -46,6 +47,7 @@ fn CityLights::new(nodes : Map[String, @core.Object3D]) -> CityLights {
         position: node.position,
         tint,
         bounce: @m3.Color::from_hex(bounce),
+        intensity: scene_field(node.user_data, "lampIntensity").unwrap_or(135),
       })
     }
   }
@@ -153,7 +155,7 @@ fn CityLights::update(
       n.position.copy(lamp.position) |> ignore
       n.update_matrix()
       n.as_light().color.set_hex(lamp.tint) |> ignore
-      n.as_light().intensity = 135 *
+      n.as_light().intensity = lamp.intensity *
         @sim.clamp((32 - lamp.position.distance_to(self.previous)) / 10, 0, 1)
     } else {
       n.as_light().intensity = 0

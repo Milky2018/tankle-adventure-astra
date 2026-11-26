@@ -1,10 +1,18 @@
 ///|
+pub(all) enum BeamKind {
+  CuttingTorch
+  FurnaceSweep
+  RailTracer
+  RepairArc
+}
+
+///|
 pub(all) struct Beam {
   enemy : Int32
   origin : Vec3
   direction : Vec3
   length : Double
-  width : Double
+  kind : BeamKind
 }
 
 ///|
@@ -152,6 +160,7 @@ fn Game::beam(
   reach : Double,
   width : Double,
   damage : Double,
+  emission? : BeamKind,
   minimum~ : Double = 0,
 ) -> Hit? {
   let enemy = self.enemies[index]
@@ -169,8 +178,8 @@ fn Game::beam(
     refuge=false,
   )
   let length = hit.map(fn(h) { h.distance }).unwrap_or(reach)
-  if enemy.definition.kind != Sorter {
-    self.beams.push({ enemy: index, origin, direction, length, width, })
+  if emission is Some(kind) {
+    self.beams.push({ enemy: index, origin, direction, length, kind, })
   }
   let dx = self.player.x - origin.x
   let dz = self.player.z - origin.z
@@ -247,7 +256,8 @@ fn Game::sweep_boss(
   } else {
     let angle = enemy.aim +
       enemy.sweep_sign * (-0.8 + 1.6 * (1 - enemy.timer / 1.8))
-    self.beam(queries, index, angle, 38, 1.2, 10) |> ignore
+    self.beam(queries, index, angle, 38, 1.2, 10, emission=FurnaceSweep)
+    |> ignore
   }
   if enemy.timer <= 0 {
     enemy.enter(

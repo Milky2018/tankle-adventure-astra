@@ -9,6 +9,8 @@ import {
 }
 
 // Values
+pub const HostileBlastRadius : Double = 4.0
+
 pub fn angle_delta(Double, Double) -> Double
 
 pub fn apply_floor_heat(Player, Array[Belt], Double, Double, Progress) -> Unit
@@ -135,7 +137,14 @@ pub(all) struct Beam {
   origin : Vec3
   direction : Vec3
   length : Double
-  width : Double
+  kind : BeamKind
+}
+
+pub(all) enum BeamKind {
+  CuttingTorch
+  FurnaceSweep
+  RailTracer
+  RepairArc
 }
 
 pub(all) struct Belt {
