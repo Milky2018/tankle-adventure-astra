@@ -26,6 +26,8 @@ priv struct PatchedShader {
 
 ///|
 struct Cutaway {
+  basin : @core.Texture
+  roof : @core.Uniform
   player : @m3.Vector3
   sight_length : @core.Uniform
   distance : @core.Uniform
@@ -58,7 +60,7 @@ let world_declarations : String =
   #| varying vec3 apertureWorld;
   #| uniform vec3 aperturePlayer;
   #| uniform float hullHeading, waterTime;
-  #| uniform float sightLength;
+  #| uniform float sightLength, signalExposure;
   #| uniform float apertureEnabled, renderDistance;
   #| uniform vec3 apertureDirection;
   #| uniform vec4 bounds0, bounds1, bounds2, bounds3;
@@ -80,10 +82,14 @@ let support_shader : String =
 ///|
 fn Cutaway::new(
   scene : @core.Object3D,
+  roof? : @core.Uniform,
+  basin? : @core.Texture,
   currents~ : Array[@sim.Current] = [],
   player? : PlayerVisual,
 ) -> Cutaway {
   let cutaway = {
+    basin: basin.unwrap_or_else(() => @core.Texture::new()),
+    roof: roof.unwrap_or_else(() => @core.Uniform::new(Number(0))),
     water_time: @core.Uniform::new(Number(0)),
     wake_speed: @core.Uniform::new(Number(0)),
     currents: currents.map(fn(c) {
@@ -201,6 +207,9 @@ fn Cutaway::apply(
       }
     }
     uniforms["hullHeading"] = self.heading
+    uniforms["signalBasin"] = @core.Uniform::new(Texture(self.basin))
+    uniforms["signalBearing"] = @core.Uniform::new(Number(SignalSunBearing))
+    uniforms["signalExposure"] = self.roof
     uniforms["aperturePlayer"] = @core.Uniform::new(Vector3(self.player))
     uniforms["apertureDirection"] = @core.Uniform::new(Vector3(self.direction))
     uniforms["renderDistance"] = match
@@ -248,6 +257,12 @@ fn CutawayEffect::patch(
         #| vMapUv = (mapTransform * vec3(apertureWorld.xz, 1.0)).xy;
         #| vAoMapUv = (aoMapTransform * vec3(apertureWorld.xz,1.0)).xy;
       )
+    Some(SignalDeck) =>
+      (
+        #| vMapUv = apertureWorld.xz / vec2(6.,5.);
+        #| vRoughnessMapUv = vMapUv;
+        #| vBumpMapUv = vMapUv;
+      )
     Some(Apron) =>
       (
         #| vMapUv = (mapTransform * vec3(apertureWorld.xz*.30,1.0)).xy;
@@ -273,7 +288,9 @@ fn CutawayEffect::patch(
     Some(Vapor) => steam_alpha
     _ => "#include <map_fragment>"
   }
-  let reflected = if !probe {
+  let reflected = if finish is Some(SignalDeck) {
+    roof_paving_glaze
+  } else if !probe {
     ""
   } else if finish is Some(Canal) {
     canal_reflection
@@ -413,6 +430,8 @@ fn CutawayEffect::patch(
       old="#include <common>",
       new=world_declarations +
         "\n" +
+        signal_panorama +
+        "\n" +
         freight_declarations +
         extra_varying +
         "\n" +
@@ -427,6 +446,10 @@ fn CutawayEffect::patch(
       } else {
         "#include <emissivemap_pars_fragment>"
       },
+    )
+    .replace(
+      old="#include <tonemapping_fragment>",
+      new="#include <tonemapping_fragment>\n" + signal_air,
     )
     .replace(
       old="#include <emissivemap_fragment>",

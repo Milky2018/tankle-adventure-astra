@@ -74,11 +74,12 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
   }
   let enemies = enemy_visuals(nodes, game)
   let player_visual = PlayerVisual::new(nodes)
+  let lighting = CityLights::new(nodes)
   let view = {
     scene,
     nodes,
     renderer,
-    lighting: CityLights::new(nodes),
+    lighting,
     machinery: Machinery::new(nodes, game),
     feeds: feeds(scene),
     mortar_scope: MortarScope::new(),
@@ -105,7 +106,13 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     release_delay: 0,
     progress: game.progress,
     camera_space: CameraSpace::new(scene, game.world),
-    cutaway: Cutaway::new(scene, currents=game.currents, player=player_visual),
+    cutaway: Cutaway::new(
+      scene,
+      roof=lighting.exposure,
+      basin=lighting.basin,
+      currents=game.currents,
+      player=player_visual,
+    ),
     room_visibility: RoomVisibility::new(
       scene,
       enabled=@host.query("portals") != "off",

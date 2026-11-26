@@ -41,6 +41,7 @@ priv struct PickupVisual {
 ///|
 priv struct Machinery {
   mut installing : (String, Double)?
+  signal_drive : @core.Object3D?
   ram : @core.Object3D?
   flywheel : @core.Object3D?
   door_status : @core.Object3D?
@@ -175,6 +176,7 @@ fn Machinery::new(
   })
   {
     installing: None,
+    signal_drive: get("world/presentation/signal/traverse"),
     ram: get("opening/ram"),
     flywheel: get("opening/flywheel"),
     door_status: get("opening/door-status"),
@@ -198,6 +200,18 @@ fn damp(value : Double, target : Double, speed : Double, dt : Double) -> Double 
 
 ///|
 fn Machinery::update(self : Machinery, game : @sim.Game, dt : Double) -> Unit {
+  if self.signal_drive is Some(drive) {
+    let turn = match game.progress.pending.get("signal") {
+      Some(pulse) => smooth(0, pulse.duration, pulse.duration - pulse.remaining)
+      None => if game.progress.has("signal") { 1.0 } else { 0.0 }
+    }
+    // The standby dish faces the approaching vehicle. The signal slews it toward the basin.
+    let angle = -1.42 + turn * 0.94
+    if drive.rotation.y != angle {
+      drive.rotation.set_y(angle) |> ignore
+      drive.update_matrix_world(force=true)
+    }
+  }
   let cycle = game.press_cycle()
   if self.ram is Some(ram) {
     let stroke = smooth(0.32, 0.50, cycle) - smooth(0.57, 0.94, cycle)

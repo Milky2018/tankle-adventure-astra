@@ -20,6 +20,7 @@ fn scene_binding(object : @core.Object3D) -> String {
 #derive(Debug, FromJson(rename_cases="camelCase"))
 priv enum SurfaceFinish {
   Paving
+  SignalDeck
   Apron
   Masonry
   Ironwork

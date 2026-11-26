@@ -65921,5 +65921,70 @@
     "h": 7.86,
     "d": 1.69,
     "permanent": true
+  },
+  {
+    "id": "signal-bearing-house",
+    "room": "signal-deck",
+    "region": "optics",
+    "kind": "foundation",
+    "x": 201.15,
+    "y": 40,
+    "z": 143.44,
+    "w": 5.7,
+    "h": 2.27,
+    "d": 5.12,
+    "permanent": true
+  },
+  {
+    "id": "signal-bearing-steps",
+    "room": "signal-deck",
+    "region": "optics",
+    "kind": "foundation",
+    "x": 203.15,
+    "y": 40,
+    "z": 148.56,
+    "w": 1.7,
+    "h": 0.42,
+    "d": 0.62,
+    "permanent": true
+  },
+  {
+    "id": "signal-tower-masonry",
+    "room": "signal-deck",
+    "region": "optics",
+    "kind": "wall",
+    "x": 181.7,
+    "y": -73,
+    "z": 139.425,
+    "w": 32.6,
+    "h": 105.32,
+    "d": 13.45,
+    "permanent": true
+  },
+  {
+    "id": "signal-tower-crown",
+    "room": "signal-deck",
+    "region": "optics",
+    "kind": "wall",
+    "x": 180.885,
+    "y": 32.32,
+    "z": 138.825,
+    "w": 34.23,
+    "h": 7.04,
+    "d": 14.65,
+    "permanent": true
+  },
+  {
+    "id": "signal-outlook-parapet",
+    "room": "signal-deck",
+    "region": "optics",
+    "kind": "wall",
+    "x": 180.13,
+    "y": 40,
+    "z": 153.53,
+    "w": 35.56,
+    "h": 0.76,
+    "d": 0.45,
+    "permanent": true
   }
 ]
