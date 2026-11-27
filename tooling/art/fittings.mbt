@@ -209,7 +209,13 @@ fn FittingBake::batch_fittings(
     id
   }
 
-  fn visit(node : Raw, anchor : Raw, parent : @math.Matrix4, picking : Bool) {
+  fn visit(
+    node : Raw,
+    anchor : Raw,
+    parent : @math.Matrix4,
+    picking : Bool,
+    rigid : Bool,
+  ) {
     let id = binding(node)
     let path = id.split("/").to_array()
     let fixed_track = match path {
@@ -231,7 +237,14 @@ fn FittingBake::batch_fittings(
         _ => false
       })
     let name = str(node, "name")
-    let decoration = id.is_empty() && scenery(name)
+    let plain = str(node, "type") == "Group" || str(node, "type") == "Mesh"
+    let passive = rigid &&
+      id.is_empty() &&
+      plain &&
+      visible(node) &&
+      !has_field(node.get("userData"), "renderRole") &&
+      array_field(node, "animations").is_empty()
+    let decoration = id.is_empty() && (scenery(name) || passive)
     let collider = scenery(name) &&
       id.has_prefix("structure/") &&
       id.has_suffix("/fixture-collider")
@@ -245,11 +258,22 @@ fn FittingBake::batch_fittings(
       )
     let mesh = str(node, "type") == "Mesh"
     let leaf = children(node).length() == 0
-    if (fitting || (leaf && (fixed_track || decoration))) &&
+    let wall_surface = fixed_wall && leaf
+    if (wall_surface || fitting || (leaf && (fixed_track || decoration))) &&
       mesh &&
       visible(node) &&
       self.materials.get(str(node, "material")) is Some(m) &&
       visible(m) &&
+      (
+        !(passive || wall_surface) ||
+        (
+          !m.get("transparent").strict_equal(Raw::of(true)) &&
+          !has_field(m, "displacementMap") &&
+          [
+            "MeshStandardMaterial", "MeshToonMaterial", "MeshLambertMaterial", "MeshBasicMaterial",
+          ].contains(str(m, "type"))
+        )
+      ) &&
       !m.get("color").is_undefined() &&
       str(m.get("userData"), "surfaceFinish") != "glass" &&
       self.geometries.get(str(node, "geometry")) is Some(g) &&
@@ -296,7 +320,7 @@ fn FittingBake::batch_fittings(
           vertex_colors: m.get("vertexColors").strict_equal(Raw::of(true)),
           transform,
           center,
-          picking,
+          picking: picking || wall_surface,
         })
       }
     }
@@ -320,16 +344,29 @@ fn FittingBake::batch_fittings(
           )
         )
       )
+    // Bound transforms and independently animated assemblies retain their own
+    // frames. Only motionless unbound trim can pass through to a world batch.
+    let child_rigid = node.strict_equal(root) ||
+      passive ||
+      fixed_wall ||
+      fixtures.controls.contains(id) ||
+      placement ||
+      collider ||
+      (
+        id.has_prefix("world/controls/") &&
+        (id.has_suffix("/moving") || id.contains("/housing/"))
+      ) ||
+      (id.has_prefix("world/views/") && !id.contains("/mirrors/"))
     for child in children(node) {
       if flatten {
-        visit(child, anchor, transform, collider || picking)
+        visit(child, anchor, transform, collider || picking, child_rigid)
       } else {
-        visit(child, node, @math.Matrix4::new(), collider)
+        visit(child, node, @math.Matrix4::new(), collider, child_rigid)
       }
     }
   }
-  visit(root, root, @math.Matrix4::new(), false)
-  self.regroup_depth()
+  visit(root, root, @math.Matrix4::new(), false, false)
+  self.regroup_static()
   let replaced : @webgl.WeakMap[Raw, Bool] = @webgl.WeakMap::new()
   for key, group in groups {
     let (anchor, parts) = group

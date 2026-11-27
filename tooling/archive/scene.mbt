@@ -109,7 +109,7 @@ fn packed_scene(scene : Raw) -> Map[String, Bytes] raise {
       raise Failure("Missing scene attribute array: " + ty)
     }
     let offset = data.length()
-    data.write_bytes(byte_view(array))
+    data.write_bytesview(byte_view(array))
     attribute.set(
       "array",
       obj([
@@ -120,7 +120,7 @@ fn packed_scene(scene : Raw) -> Map[String, Bytes] raise {
     )
     let padding = (8 - data.length() % 8) % 8
     if padding > 0 {
-      data.write_bytes(Bytes::make(padding, 0))
+      data.write_bytesview(Bytes::make(padding, 0))
     }
   }
   {
@@ -166,7 +166,7 @@ pub fn reachable(
     if is_string(v) {
       let id : String = v.cast()
       if !used.contains(id) && index.get(id) is Some(entry) {
-        used.add(id)
+        used.insert(id)
         collect(entry)
       }
     } else if is_array(v) {

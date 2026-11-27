@@ -34,7 +34,7 @@ pub fn export_templates(definitions : Array[TemplateDefinition]) -> Raw raise {
       ) {
       let id = uuid(n)
       if !seen.contains(id) {
-        seen.add(id)
+        seen.insert(id)
         chosen.push(n)
       }
     }

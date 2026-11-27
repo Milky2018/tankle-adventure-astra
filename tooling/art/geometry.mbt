@@ -59,7 +59,7 @@ fn FittingBake::merge_parts(
     g.set_attribute("color", color) |> ignore
     pieces.push(g)
   }
-  let merged = @utils.BufferGeometryUtils::merge_geometries(pieces).unwrap()
+  let merged = merge_batch(pieces[:]).get_geometry().unwrap()
   merged.compute_bounding_sphere()
   merged
 }
@@ -85,10 +85,7 @@ fn geometry_json(g : @core.BufferGeometry, uuid : String) -> @core.JsValue {
 }
 
 ///|
-fn batch_json(
-  cells : FixedArray[@core.BufferGeometry],
-  uuid : String,
-) -> @core.JsValue {
+fn merge_batch(cells : ArrayView[@core.BufferGeometry]) -> @core.Object3D {
   let mut vertices = 0
   let mut indices = 0
   for g in cells {
@@ -103,6 +100,15 @@ fn batch_json(
   for g in cells {
     obj.add_instance(obj.add_geometry(g)) |> ignore
   }
+  obj
+}
+
+///|
+fn batch_json(
+  cells : FixedArray[@core.BufferGeometry],
+  uuid : String,
+) -> @core.JsValue {
+  let obj = merge_batch(cells[:])
   obj.compute_bounding_box()
   obj.compute_bounding_sphere()
   obj.uuid = uuid

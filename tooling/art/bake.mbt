@@ -23,7 +23,7 @@ fn user_data(v : Raw) -> Raw {
 fn validate_roles(scene : Raw, required : Array[String]) -> Unit raise {
   let geometries = Set([])
   for g in @archive.items(scene.get("geometries")) {
-    geometries.add(@archive.str(g, "uuid"))
+    geometries.insert(@archive.str(g, "uuid"))
   }
   let bindings = Set([])
   fn visit(n : @archive.Raw) -> Unit raise {
@@ -44,7 +44,7 @@ fn validate_roles(scene : Raw, required : Array[String]) -> Unit raise {
       if bindings.contains(binding) {
         raise Failure("Duplicate scene binding: " + binding)
       }
-      bindings.add(binding)
+      bindings.insert(binding)
     }
     for c in @archive.items(n.get("children")) {
       visit(c)
@@ -103,6 +103,7 @@ pub fn bake_city(
     }
   }
   prepare(root)
+  solid_faces(scene, view, fixtures)
   extract_repeats(scene, view)
   camera_faces(scene, view)
   bake_fittings(scene, view, fixtures)
@@ -125,7 +126,7 @@ pub fn bake_city(
     })
     let storage = if recipe is Some(_) { recipes } else { binary }
     let pad = (8 - storage.length() % 8) % 8
-    storage.write_bytes(Bytes::make(pad, 0))
+    storage.write_bytesview(Bytes::make(pad, 0))
     let descriptor : @scene_format.BufferView = {
       byte_offset: storage.length(),
       type_name: key.0,
@@ -133,7 +134,7 @@ pub fn bake_city(
       copy: false,
       recipe_bytes: recipe.map(Bytes::length).unwrap_or(0),
     }
-    storage.write_bytes(recipe.unwrap_or(bytes))
+    storage.write_bytesview(recipe.unwrap_or(bytes))
     stored[key] = descriptor
     descriptor
   }
@@ -205,7 +206,7 @@ pub fn bake_city(
         if uri.strip_prefix("data:image/" + ext + ";base64,") is Some(base64) {
           let b = @base64.decode(base64, ignore_whitespace=true)
           let name = @archive.digest(b)[:24].to_owned() + "." + ext
-          image_files.add(name)
+          image_files.insert(name)
           @fs.write_bytes_to_file(image_dir + "/" + name, b)
           img.set("url", Raw::of("/generated/art/images/" + name))
           break

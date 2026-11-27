@@ -99,7 +99,7 @@ pub fn decode(catalog : Record) -> Level raise {
         guard !ids.contains(key) else {
           raise Failure(path + " has a duplicate identity")
         }
-        ids.add(key)
+        ids.insert(key)
       }
       if k != "circuits" {
         for axis in ["x", "y", "z"] {
@@ -143,7 +143,7 @@ pub fn decode(catalog : Record) -> Level raise {
   for enemy in level.enemies {
     by_enemy[enemy.id] = enemy
     if enemy.battle is Some(battle) {
-      battles.add(battle)
+      battles.insert(battle)
     }
     guard enemy.hp.is_finite() && enemy.hp > 0 else {
       raise Failure("Enemy " + enemy.id + ".hp must be positive")
@@ -171,12 +171,12 @@ pub fn decode(catalog : Record) -> Level raise {
     guard !cleared.contains(battle) else {
       raise Failure("Battle " + battle + " has multiple clear signals")
     }
-    cleared.add(battle)
+    cleared.insert(battle)
   }
   let covers = Set([])
   for obstacle in level.obstacles {
     if obstacle.rail is Some(_) && obstacle.id is Some(id) {
-      covers.add(id)
+      covers.insert(id)
     }
   }
   let assigned = Set([])
@@ -187,7 +187,7 @@ pub fn decode(catalog : Record) -> Level raise {
     guard !assigned.contains(arena.boss) else {
       raise Failure("Boss " + arena.boss + " has multiple arenas")
     }
-    assigned.add(arena.boss)
+    assigned.insert(arena.boss)
     guard !arena.music.is_empty() else {
       raise Failure("Arena " + arena.id + " needs music")
     }

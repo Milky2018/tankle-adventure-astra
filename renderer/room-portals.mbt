@@ -61,16 +61,19 @@ const ShadowOnlyLayer = 29
 ///|
 priv struct SceneryBin {
   bounds : @m3.Box3
-  members : Array[(@core.Object3D, @m3.Matrix4)]
+  members : Array[(@core.Object3D, @m3.Matrix4, @m3.Box3)]
+  exterior : Bool
   rooms : Array[Int32]
   mut outer_faces : Int32
 }
 
 ///|
 priv struct RoomVisibility {
+  pass : Ref[OcclusionBuffer?]
+  faces : Array[OpaqueFace]
   rooms : Array[PortalRoom]
   bins : Array[SceneryBin]
-  hidden : Array[@core.Object3D]
+  mut hidden : Array[@core.Object3D]
   shadow_layers : Array[@core.Layers]
   projection : @m3.Matrix4
 }
@@ -81,6 +84,12 @@ fn RoomVisibility::new(
   enabled~ : Bool,
 ) -> RoomVisibility {
   let result : RoomVisibility = {
+    pass: Ref(None),
+    faces: if enabled {
+      opaque_faces(scene)
+    } else {
+      []
+    },
     rooms: [],
     bins: [],
     hidden: [],
@@ -109,7 +118,7 @@ fn RoomVisibility::new(
     })
     result.rooms.push({ bounds: box(room.bounds), edges, window: None, })
   }
-  let bins : Map[(Int32, Int32, Int32), SceneryBin] = Map([])
+  let bins : Map[(Int32, Int32, Int32, Bool, Int32), SceneryBin] = Map([])
   // Keep occluded casters available to the shadow pass on a dedicated layer.
   let reserved_in_use = Ref(false)
   scene.traverse(fn(node) {
@@ -136,6 +145,13 @@ fn RoomVisibility::new(
       mesh.morph_target_influences is None else {
       return
     }
+    let mut ancestor = Some(node)
+    while ancestor is Some(parent) {
+      if !parent.visible {
+        return
+      }
+      ancestor = parent.parent
+    }
     let bounds = match mesh.kind {
       PlainMesh => {
         let g = mesh.geometry
@@ -146,7 +162,10 @@ fn RoomVisibility::new(
         box.clone().apply_matrix4(node.matrix_world)
       }
       InstancedMesh(_) | BatchedMesh(_) => {
-        if scene_field(node.user_data, "portalStatic") != Some(true) {
+        if scene_field(node.user_data, "portalStatic") != Some(true) &&
+          node.name != "Instanced city detail" &&
+          node.name != "Workshop fittings" &&
+          !node.name.has_prefix("static/") {
           return
         }
         @core.box3_set_from_object(@m3.Box3::new(), node)
@@ -157,22 +176,34 @@ fn RoomVisibility::new(
       return
     }
     let size = bounds.get_size(@m3.Vector3::new(0, 0, 0))
-    if Double::max(size.x, Double::max(size.y, size.z)) > 96 {
-      return
+    let isolated = if size.x.max(size.y).max(size.z) > 48 {
+      node.id
+    } else {
+      -1
     }
     let center = bounds.get_center(@m3.Vector3::new(0, 0, 0))
+    let exterior = scene_field(material.user_data, "renderRole")
+      is Some("structure" | "enclosure" | "backdrop")
     let key = (
       (center.x / 16).floor().to_int(),
       (center.y / 12).floor().to_int(),
       (center.z / 16).floor().to_int(),
+      exterior,
+      isolated,
     )
     let bin = bins.get_or_init(key, fn() {
-      { bounds: @m3.Box3::new(), members: [], rooms: [], outer_faces: 0, }
+      {
+        bounds: @m3.Box3::new(),
+        members: [],
+        exterior,
+        rooms: [],
+        outer_faces: 0,
+      }
     })
     bin.bounds.union(bounds) |> ignore
     // A moving door or vehicle may leave this bin after loading. Its world
     // matrix must still match this placement before it can be hidden.
-    bin.members.push((node, node.matrix_world.clone()))
+    bin.members.push((node, node.matrix_world.clone(), bounds))
   })
   if reserved_in_use.val {
     return result
@@ -392,7 +423,7 @@ fn RoomVisibility::apply_portals(
 ///|
 fn RoomVisibility::hide_bin(self : RoomVisibility, bin : SceneryBin) -> Unit {
   for entry in bin.members {
-    let (node, original) = entry
+    let (node, original, _) = entry
     if node.visible &&
       node.layers.mask == 1 &&
       node.matrix_world.equals(original) {
@@ -407,18 +438,51 @@ fn RoomVisibility::apply(
   self : RoomVisibility,
   camera : @core.Object3D,
   cut : Cutaway,
+  reflected~ : Bool = false,
 ) -> Unit {
   if self.bins.is_empty() || camera.layers.mask != 1 {
     return
   }
   if cut.distance.value is Number(range) {
+    let buffer = self.occlusion_buffer(camera, cut, range, reflected~)
+    self.pass.val = Some(buffer)
+    let scratch = @m3.Box3::new()
     for bin in self.bins {
-      if bin.bounds.distance_to_point(cut.player) > range + 0.02 {
-        self.hide_bin(bin)
+      let distance = if bin.exterior && cut.exterior_distance.value is Number(d) {
+        d
+      } else {
+        range
+      }
+      let all = bin.bounds.distance_to_point(cut.player) > distance + 0.02 ||
+        buffer.hidden(bin.bounds)
+      for (node, original, bounds) in bin.members {
+        if !node.visible || node.layers.mask != 1 {
+          continue
+        }
+        let hidden = if node.matrix_world.equals(original) {
+          all ||
+          bounds.distance_to_point(cut.player) > distance + 0.02 ||
+          buffer.hidden(bounds)
+        } else if node.kind
+          is Mesh(
+            { kind: PlainMesh, geometry: { bounding_box: Some(box), .. }, .. },
+          ) {
+          scratch.copy(box).apply_matrix4(node.matrix_world) |> ignore
+          scratch.distance_to_point(cut.player) > distance + 0.02 ||
+          buffer.hidden(scratch)
+        } else {
+          false
+        }
+        if hidden {
+          node.layers.set(ShadowOnlyLayer)
+          self.hidden.push(node)
+        }
       }
     }
   }
-  self.apply_portals(camera, cut)
+  if !reflected {
+    self.apply_portals(camera, cut)
+  }
   if !self.hidden.is_empty() {
     for layers in self.shadow_layers {
       layers.enable(ShadowOnlyLayer)
@@ -428,6 +492,7 @@ fn RoomVisibility::apply(
 
 ///|
 fn RoomVisibility::restore(self : RoomVisibility) -> Unit {
+  self.pass.val = None
   if self.hidden.is_empty() {
     return
   }

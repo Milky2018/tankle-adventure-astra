@@ -9,6 +9,7 @@ pub(all) struct View {
   priv mortar_scope : MortarScope
   priv effects : Effects
   priv feeds : Array[Feed]
+  priv mirrors : Array[MirrorRefresh]
   priv machinery : Machinery
   priv enemies : Array[EnemyVisual]
   priv projectiles : Projectiles
@@ -40,6 +41,7 @@ pub(all) struct View {
 ///|
 pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
   scene.update_matrix_world(force=true)
+  scene.matrix_auto_update = false
   let nodes : Map[String, @core.Object3D] = Map([])
   scene.traverse(fn(node) {
     let binding = scene_binding(node)
@@ -80,6 +82,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     nodes,
     renderer,
     lighting,
+    mirrors: [],
     machinery: Machinery::new(nodes, game),
     feeds: feeds(scene),
     mortar_scope: MortarScope::new(),
@@ -133,6 +136,9 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
       view.room_visibility.apply(camera, view.cutaway)
     }
   }
+  scene.traverse(node => {
+    install_static_batch(node, view.room_visibility.pass, view.cutaway)
+  })
   view.install_mirrors(game.mirrors)
   view.update_player(game, 0)
   view.resize()
@@ -264,6 +270,7 @@ pub fn View::draw(
       self.progress,
     )
   self.cutaway.enabled.value = Number(if blocked { 1 } else { 0 })
+  self.schedule_mirrors(camera, player.weapon == @sim.Laser && !self.film)
   self.renderer.render(self.scene, camera)
   self.room_visibility.restore()
   self.draw_mortar_scope(player)

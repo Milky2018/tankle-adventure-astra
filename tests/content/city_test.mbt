@@ -107,7 +107,7 @@ test "workshop panes transmit the scene and sit in open window frames" {
       assert_true(@model.truth(m, "transparent"))
       assert_true(m.get("depthWrite").strict_equal(Raw::of(false)))
       assert_true(quantity(m, "opacity") > 0 && quantity(m, "opacity") < 1)
-      glazing.add(@model.str(m, "uuid"))
+      glazing.insert(@model.str(m, "uuid"))
     }
   }
   let geometries = resources(scene, "geometries")

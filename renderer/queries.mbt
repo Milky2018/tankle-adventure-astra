@@ -31,8 +31,6 @@ fn collider_grid(
 priv struct GeometryQueries {
   world : @sim.World
   state : @sim.Progress
-  fixtures : Array[Collider]
-  surfaces : Array[Collider]
   surface_grid : Map[(Int32, Int32), Array[Collider]]
   fixture_grid : Map[(Int32, Int32), Array[Collider]]
   housings : Array[MovingCollider]
@@ -82,8 +80,9 @@ pub fn View::queries(self : View, game : @sim.Game) -> @sim.Queries {
   let mirrors : Array[Collider] = []
   root.traverse(fn(object) {
     let name = scene_binding(object)
-    if name.has_suffix("/fixture-collider") ||
-      scene_field(object.user_data, "renderRole") == Some("enclosure") {
+    if scene_field(object.user_data, "renderRole") == Some("enclosure") {
+      enclosure_colliders(object, fixtures)
+    } else if name.has_suffix("/fixture-collider") {
       fixtures.push(collider(object, @sim.Terrain))
     }
     if name.has_prefix("world/surfaces/") && name.has_suffix("/mesh") {
@@ -121,8 +120,6 @@ pub fn View::queries(self : View, game : @sim.Game) -> @sim.Queries {
   let queries = GeometryQueries::{
     world: game.world,
     state: game.progress,
-    fixtures,
-    surfaces,
     surface_grid: collider_grid(surfaces),
     fixture_grid: collider_grid(fixtures),
     housings,
@@ -153,6 +150,7 @@ fn GeometryQueries::cast(
     target : @sim.HitTarget,
     recursive : Bool,
   ) -> Unit {
+    self.raycaster.far = limit
     let hits = self.raycaster.intersect_object(object, recursive~)
     for hit in hits {
       if hit.distance > limit {
@@ -179,30 +177,36 @@ fn GeometryQueries::cast(
   let start_cell = (camera_cell(ray.origin.x), camera_cell(ray.origin.z))
   let end = ray.point(limit)
   let single_cell = start_cell == (camera_cell(end.x), camera_cell(end.z))
-  let candidates = if single_cell {
-    self.surface_grid.get(start_cell).unwrap_or([])
-  } else {
-    self.surfaces
-  }
-  for surface in candidates {
-    if surface.in_range(ray, limit) {
-      mesh_hit(surface.object, surface.target, false)
+  fn test_grid(grid : Map[(Int32, Int32), Array[Collider]], recursive : Bool) {
+    fn visit_item(item : Collider) {
+      if item.in_range(ray, limit) {
+        mesh_hit(item.object, item.target, recursive)
+      }
+    }
+    if single_cell {
+      if grid.get(start_cell) is Some(items) {
+        items.each(visit_item)
+      }
+    } else {
+      let seen : Set[Int32] = Set([])
+      ray_cells(ray, limit, cell => {
+        if grid.get(cell) is Some(items) {
+          for item in items {
+            if !seen.contains(item.object.id) {
+              seen.insert(item.object.id) |> ignore
+              visit_item(item)
+            }
+          }
+        }
+      })
     }
   }
+  test_grid(self.surface_grid, false)
   for (_, object) in self.lifts {
     mesh_hit(object, @sim.Terrain, false)
   }
   if !ground {
-    let fixtures = if single_cell {
-      self.fixture_grid.get(start_cell).unwrap_or([])
-    } else {
-      self.fixtures
-    }
-    for fixture in fixtures {
-      if fixture.in_range(ray, limit) {
-        mesh_hit(fixture.object, fixture.target, true)
-      }
-    }
+    test_grid(self.fixture_grid, true)
     for (wall, object) in self.walls {
       let height = wall.exposed_height(self.state)
       if height > 0 &&
@@ -274,23 +278,7 @@ fn GeometryQueries::cast(
     if single_cell {
       architecture_cell(start_cell)
     } else {
-      let seen : Set[(Int32, Int32)] = Set([])
-      let steps = Int32::max(1, (limit / 8).ceil().to_int())
-      for i in 0..<=steps {
-        let pos = ray.point(Double::min(limit, i.to_double() * 8))
-        let x = (pos.x / 16).floor().to_int()
-        let z = (pos.z / 16).floor().to_int()
-        for dx in -1..<=1 {
-          for dz in -1..<=1 {
-            let cell = (x + dx, z + dz)
-            if seen.contains(cell) {
-              continue
-            }
-            seen.add(cell) |> ignore
-            architecture_cell(cell)
-          }
-        }
-      }
+      ray_cells(ray, limit, architecture_cell)
     }
   }
   result

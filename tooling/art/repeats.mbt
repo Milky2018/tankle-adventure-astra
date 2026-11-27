@@ -40,7 +40,8 @@ pub fn extract_repeats(scene : Raw, view : (Raw) -> @core.TypedArray) -> Unit {
     guard m.get("colorWrite").strict_equal(Raw::of(false)) ||
       (
         str(m.get("userData"), "renderRole") == "floor" &&
-        str(m, "type") == "MeshToonMaterial"
+        ["MeshToonMaterial", "MeshStandardMaterial"].contains(str(m, "type")) &&
+        !m.get("transparent").strict_equal(Raw::of(true))
       ) else {
       return []
     }

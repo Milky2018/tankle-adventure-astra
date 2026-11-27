@@ -47,7 +47,7 @@ fn Projectiles::update(
 ) -> Unit {
   let alive : Set[Int32] = Set([])
   for shot in shots {
-    alive.add(shot.id) |> ignore
+    alive.insert(shot.id) |> ignore
     let mesh = match self.meshes.get(shot.id) {
       Some(mesh) => mesh
       None => {

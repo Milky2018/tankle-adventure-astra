@@ -55,7 +55,7 @@ fn PlayerVisual::new(nodes : Map[String, @core.Object3D]) -> PlayerVisual {
     if node.kind is Mesh(mesh) {
       for material in mesh_materials(mesh.material) {
         if !seen.contains(material.uuid) {
-          seen.add(material.uuid) |> ignore
+          seen.insert(material.uuid) |> ignore
           materials.push({
             material,
             color: material.color.unwrap().clone(),

@@ -588,7 +588,7 @@ fn image_urls(scene : Raw) -> Set[String] {
   let urls = Set([])
   fn record(url : Raw) {
     if @archive.is_string(url) {
-      urls.add(url.cast())
+      urls.insert(url.cast())
     }
   }
   for image in @model.array(scene, "images") {
@@ -617,7 +617,7 @@ test "standalone templates can add machines, pickups and switches after the city
     for d in defs {
       if @model.str(d, "collection") == "enemies" {
         count += 1
-        machine_types.add(@model.str(d.get("defaults"), "type"))
+        machine_types.insert(@model.str(d.get("defaults"), "type"))
       }
     }
     assert_eq(count, machine_types.length())

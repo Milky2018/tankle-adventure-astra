@@ -10,7 +10,6 @@ import {
   "moonbit-community/three/core",
   "moonbit-community/three/renderers/webgl",
   "moonbit-community/three/math",
-  "moonbit-community/three/addons/utils",
 }
 
 supported_targets = "js"

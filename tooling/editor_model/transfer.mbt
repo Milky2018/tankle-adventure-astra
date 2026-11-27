@@ -42,7 +42,7 @@ fn encode_attribute(bytes : Bytes) -> String {
   // Multiples of three only need base64 padding in the final block.
   for start = 0; start < bytes.length(); start = start + 24576 {
     let end = (start + 24576).min(bytes.length())
-    encoded.write_bytes(@utf8.encode(@base64.encode(bytes[start:end])))
+    encoded.write_bytesview(@utf8.encode(@base64.encode(bytes[start:end])))
   }
   @utf8.decode_lossy(encoded.to_bytes())
 }

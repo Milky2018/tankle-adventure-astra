@@ -272,7 +272,7 @@ pub fn Encounters::update_arenas(
         !self.used_reserves.contains(enemy.definition.id) &&
         boss.hp / boss.max_hp <= enemy.definition.reserve_at {
         active += 1
-        self.used_reserves.add(enemy.definition.id) |> ignore
+        self.used_reserves.insert(enemy.definition.id) |> ignore
         enemy.x = enemy.definition.spawn.x
         enemy.y = enemy.definition.spawn.y
         enemy.z = enemy.definition.spawn.z

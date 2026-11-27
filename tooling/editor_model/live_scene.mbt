@@ -76,7 +76,7 @@ pub fn LiveProject::attach(
   @archive.walk(asset.get("object"), n => records[uuid(n)] = n)
   scene.traverse(n => {
     guard records.get(n.uuid) is Some(record) else { return }
-    library.loaded_nodes.add(n.uuid)
+    library.loaded_nodes.insert(n.uuid)
     if n.matrix_auto_update {
       n.update_matrix()
     }

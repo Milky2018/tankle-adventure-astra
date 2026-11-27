@@ -103,7 +103,7 @@ fn Sound::update(
       self.play("warn", gain=0.45, pan=@sim.clamp((e.x - p.x) / 24, -1, 1))
     }
     if warn {
-      self.warning_enemies.add(e.definition.id)
+      self.warning_enemies.insert(e.definition.id)
     } else {
       self.warning_enemies.remove(e.definition.id)
     }

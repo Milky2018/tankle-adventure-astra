@@ -122,7 +122,7 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
         guard !objects.contains(uid) else {
           raise Failure("Delete the complete entity: " + e.label())
         }
-        removed.add(uid)
+        removed.insert(uid)
       }
     }
     catalog.files[k] = Json::array(
@@ -144,7 +144,7 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
           ". Scene objects with runtime roles must have unique identities.",
         )
       }
-      bindings.add(b)
+      bindings.insert(b)
     }
     let name = str(n, "name")
     let raw = entity(n)
@@ -160,7 +160,7 @@ pub fn import_project(project : Raw, dry_run~ : Bool = false) -> Raw raise {
     guard !seen.contains(identity) else {
       raise Failure("Duplicate gameplay identity: " + identity)
     }
-    seen.add(identity)
+    seen.insert(identity)
     let old_entity = match originals.get(uid) {
       Some(old) => entity(old.node)
       None => Raw::undefined()

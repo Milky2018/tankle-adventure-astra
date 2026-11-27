@@ -41,6 +41,7 @@ pub fn View::camera(Self) -> @core.Object3D
 pub fn View::draw(Self, @simulation.Player, @simulation.World) -> Unit
 pub fn View::new(@core.Object3D, @simulation.Game) -> Self
 pub fn View::position_player(Self, @simulation.Player, @simulation.World, Double) -> Unit
+pub fn View::prepare(Self, () -> Unit) -> Unit
 pub fn View::present(Self, @simulation.Game, @simulation.Queries, @simulation.Vec3, Double) -> Unit
 pub fn View::project(Self, @simulation.Vec3) -> @simulation.Vec2
 pub fn View::queries(Self, @simulation.Game) -> @simulation.Queries

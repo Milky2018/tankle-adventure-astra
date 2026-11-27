@@ -75,7 +75,7 @@ fn box_positions(bytes : BytesView, vertices : Int32) -> Bytes? {
     let order = selectors.unsafe_reinterpret_as_bytes()
     let id = templates.get_or_init(order, () => {
       let id = templates.length()
-      table.write_bytes(order)
+      table.write_bytesview(order)
       id
     })
     if id >= 256 {
@@ -93,8 +93,8 @@ fn box_positions(bytes : BytesView, vertices : Int32) -> Bytes? {
   out.write_int_le(3)
   out.write_int_le(vertices)
   out.write_int_le(templates.length())
-  out.write_bytes(table.to_bytes())
-  out.write_bytes(boxes.to_bytes())
+  out.write_bytesview(table.to_bytes())
+  out.write_bytesview(boxes.to_bytes())
   Some(out.to_bytes())
 }
 
@@ -127,7 +127,7 @@ fn attribute_columns(bytes : BytesView, dims : Int32) -> Bytes {
     let width = if count <= 256 { 1 } else { 2 }
     if count >= 65536 || count * 4 + n * width >= n * 4 {
       out.write_int_le(0)
-      out.write_bytes(column)
+      out.write_bytesview(column)
       continue
     }
     let sorted = palette.keys().to_array()

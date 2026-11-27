@@ -27,7 +27,7 @@ pub fn FixtureLayout::from_catalog(
   let fixed = Set([])
   for control in controls {
     if control.mount.unwrap_or("").is_empty() {
-      fixed.add("world/controls/" + control.id + "/root")
+      fixed.insert("world/controls/" + control.id + "/root")
     }
   }
   { walls, controls: fixed, }

@@ -156,7 +156,7 @@ fn Session::input(
   if self.map_open {
     return
   }
-  self.keys.add(key) |> ignore
+  self.keys.insert(key) |> ignore
   if repeat {
     return
   }

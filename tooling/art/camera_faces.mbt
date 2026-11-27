@@ -82,7 +82,7 @@ pub fn camera_faces(scene : Raw, view : (Raw) -> @core.TypedArray) -> Unit {
         guard length >= spans[2] * spans[2] + spans[1] * spans[1] - 0.00001 else {
           continue
         }
-        faces.add({ min: (lo[0], lo[1], lo[2]), max: (hi[0], hi[1], hi[2]), })
+        faces.insert({ min: (lo[0], lo[1], lo[2]), max: (hi[0], hi[1], hi[2]), })
       }
     }
     for c in children(n) {

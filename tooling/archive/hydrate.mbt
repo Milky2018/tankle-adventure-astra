@@ -76,7 +76,7 @@ pub fn hydrate_scene(
       let (r, collected) = item
       let a = r.start.max(cursor) - cursor
       let b = r.end.min(end) - cursor
-      collected.write_bytes(bytes[a:b])
+      collected.write_bytesview(bytes[a:b])
       if r.end <= end {
         r.attribute.set(
           "array",

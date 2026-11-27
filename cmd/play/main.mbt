@@ -177,7 +177,12 @@ async fn main {
       [p.x, p.z]
     })
     @host.diagnostics(() => game.snapshot(), () => view.yaw)
-    @host.frame(fn(time) { session.advance(time) })
+    view.prepare(() => {
+      @host.frame(fn(time) {
+        session.previous = time
+        session.advance(time)
+      })
+    })
     @host.mark("view-created")
   } catch {
     err => @host.text("startup-message", err.to_string())

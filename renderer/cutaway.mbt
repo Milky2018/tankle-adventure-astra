@@ -123,7 +123,7 @@ fn Cutaway::new(
           surface_finish(material) is Some(OpticalMirror) {
           continue
         }
-        registered.add(material.uuid) |> ignore
+        registered.insert(material.uuid) |> ignore
         cutaway.apply(material, hull_fills.get(material.uuid), shaders)
       }
     }

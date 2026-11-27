@@ -85,7 +85,7 @@ fn EditableCatalog::references(
         if targets.get(id) is Some(matches) {
           for target in matches {
             if target != (lib, index) {
-              result[target.0 + ":" + id].add(label)
+              result[target.0 + ":" + id].insert(label)
             }
           }
         }
@@ -132,11 +132,11 @@ fn EditableCatalog::references(
     for owner in owners {
       let references = result[owner.0 + ":" + id]
       if circuits.contains(id) {
-        references.add("circuits: " + id)
+        references.insert("circuits: " + id)
       }
       for entry in sources {
         if entry.1.contains(query) {
-          references.add("simulation/" + entry.0)
+          references.insert("simulation/" + entry.0)
         }
       }
     }
