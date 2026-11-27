@@ -85,9 +85,9 @@
   {
     "id": "laser-focus",
     "upgrade": "laser",
-    "x": 210,
+    "x": 167.6,
     "y": 40,
-    "z": 148,
+    "z": 141.15,
     "place": "Signal tower instrument recess beyond the Guardian",
     "requires": "signal",
     "preview": true,

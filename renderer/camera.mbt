@@ -16,6 +16,7 @@ pub(all) struct View {
   priv lighting : CityLights
   priv room_visibility : RoomVisibility
   priv mut release_delay : Double
+  priv mut previous_orbit : (@sim.Vec3, @sim.Vec3)?
   priv mut boom_length : Double
   priv camera_space : CameraSpace
   priv progress : @sim.Progress
@@ -106,6 +107,7 @@ pub fn View::new(scene : @core.Object3D, game : @sim.Game) -> View {
     sensitivity: 3,
     ground_clearance: 0,
     boom_length: 15,
+    previous_orbit: None,
     release_delay: 0,
     progress: game.progress,
     camera_space: CameraSpace::new(scene, game.world),
@@ -208,16 +210,38 @@ pub fn View::position_player(
     z: player.z,
   }
   let desired = offset.length()
-  let free = self.camera_space.boom_limit(
-    anchor,
-    point(offset),
-    world,
-    self.progress,
-  )
-  // Compress immediately on contact, ease back after rounding the corner.
-  let target = Double::min(desired, Double::max(5.5, free))
+  let orbit = point(offset)
+  let free = self.camera_space.boom_limit(anchor, orbit, world, self.progress)
+  let limit = @sim.clamp(free, 5.5, desired)
+  // Begin compressing before a continuous drive or orbit reaches a wall edge.
+  // The current sweep still enforces clearance if the player abruptly changes direction.
+  let mut target = limit
+  if dt > 0 && self.previous_orbit is Some((last_anchor, last_orbit)) {
+    let shift = anchor.sub(last_anchor)
+    let turn = orbit.sub(last_orbit)
+    if (shift.length() + turn.length()) / dt > 0.1 &&
+      shift.length() < 2 &&
+      turn.length() < 4 {
+      let lead = 0.28 / dt
+      let future = self.camera_space.boom_limit(
+        anchor.add(shift.scale(lead)),
+        orbit.add(turn.scale(lead)).normalized().scale(desired),
+        world,
+        self.progress,
+      )
+      let ahead = future.max(5.5)
+      target = target.min(
+        if ahead < self.boom_length {
+          ahead.max(self.boom_length - 36 * dt)
+        } else {
+          ahead
+        },
+      )
+    }
+  }
+  self.previous_orbit = Some((anchor, orbit))
   if dt <= 0 {
-    self.boom_length = target
+    self.boom_length = limit
     self.release_delay = 0
   } else if target <= self.boom_length {
     if target < desired - 0.05 {

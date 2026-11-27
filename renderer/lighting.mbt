@@ -141,7 +141,7 @@ fn CityLights::update(
     if roof == 0 {
       n.position.set(p.x - 31, p.y + 42, p.z + 23) |> ignore
     } else {
-      let bearing = -0.932 + roof * (SignalSunBearing - 2 * @math.PI + 0.932)
+      let bearing = -0.932 + roof * (SignalSunBearing + 0.932)
       let reach = 38.6 + roof * 13
       n.position.set(
         p.x + @math.sin(bearing) * reach,

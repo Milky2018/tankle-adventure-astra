@@ -3,7 +3,7 @@
 /// Lower floors occupy the same plan coordinates.
 fn signal_exposure(p : @sim.Vec3) -> Double {
   smooth(29, 39.5, p.y) *
-  smooth(174, 180, p.x) *
+  smooth(150, 156, p.x) *
   (1 - smooth(216, 224, p.x)) *
   smooth(108, 138, p.z) *
   (1 - smooth(154, 163, p.z))
@@ -11,7 +11,7 @@ fn signal_exposure(p : @sim.Vec3) -> Double {
 
 ///|
 /// Both the billboard sun and the live shadow camera use this bearing.
-const SignalSunBearing : Double = 2.25
+const SignalSunBearing : Double = -0.98
 
 ///|
 fn signal_sky(

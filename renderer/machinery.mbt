@@ -206,7 +206,7 @@ fn Machinery::update(self : Machinery, game : @sim.Game, dt : Double) -> Unit {
       None => if game.progress.has("signal") { 1.0 } else { 0.0 }
     }
     // The standby dish faces the approaching vehicle. The signal slews it toward the basin.
-    let angle = -1.42 + turn * 0.94
+    let angle = 0.12 - turn * 0.75
     if drive.rotation.y != angle {
       drive.rotation.set_y(angle) |> ignore
       drive.update_matrix_world(force=true)
