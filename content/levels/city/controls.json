@@ -605,9 +605,14 @@
   },
   {
     "id": "coolant-bypass",
-    "x": 278,
-    "y": -21.79,
-    "z": 117,
+    "x": 274.1,
+    "y": -22.5,
+    "z": 108.65,
+    "facing": [
+      1,
+      0,
+      0
+    ],
     "kind": "shot",
     "requires": "coolant-return",
     "destinations": [

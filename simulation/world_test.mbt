@@ -93,14 +93,26 @@ test "the sluice bank allows a deployed hull to launch and land" {
 }
 
 ///|
-test "the recoil workbench still stops the hull beside the clear lane" {
-  let world = @simulation.authored_world()
-  let player = @simulation.Player::new()
-  player.x = 65.0
-  player.y = 16.0
-  player.z = -160.0
-  world.move_player(player, 3.0, 0.0, @simulation.Progress::new())
-  assert_true(player.x < 66.0)
+test "the unlocked inspection express carries a hull under both galleries in either direction" {
+  let game = @simulation.Game::new()
+  for gate in ["proving-transfer", "proving-inspection"] {
+    game.progress.complete(gate) |> ignore
+  }
+  for id in ["inspection-east", "inspection-west"] {
+    let belt = game.belts.iter().find_first(b => b.deck.id == id).unwrap()
+    let lane = belt.deck.rect
+    let (start, finish) = if belt.velocity.x > 0 {
+      (lane.x, lane.x + lane.w)
+    } else {
+      (lane.x + lane.w, lane.x)
+    }
+    let p = game.player
+    p.x = start
+    p.y = belt.deck.y
+    p.z = lane.z + lane.d / 2
+    game.world.move_player(p, finish - start, 0, game.progress)
+    assert_true((p.x - finish).abs() < 0.001)
+  }
 }
 
 ///|

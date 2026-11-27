@@ -241,17 +241,6 @@
     "circuitKey": "guardian:156.0000:24.0000:-16.5000"
   },
   {
-    "id": "bank-cover",
-    "x": 34,
-    "z": -5,
-    "w": 3,
-    "d": 3,
-    "y": -16,
-    "h": 2,
-    "permanent": true,
-    "circuitKey": "bank-cover:34.0000:-16.0000:-5.0000"
-  },
-  {
     "id": "canal-cover",
     "x": 29,
     "z": -13,
@@ -261,17 +250,6 @@
     "h": 1.6,
     "permanent": true,
     "circuitKey": "canal-cover:29.0000:-16.0000:-13.0000"
-  },
-  {
-    "id": "bench-cover",
-    "x": 124,
-    "z": -7,
-    "w": 3,
-    "d": 4,
-    "y": 0,
-    "h": 2,
-    "permanent": true,
-    "circuitKey": "bench-cover:124.0000:0.0000:-7.0000"
   },
   {
     "id": "gangway-casing",
@@ -363,19 +341,6 @@
     "circuitKey": "east-bank-valve:-82.0000:-9.3000:80.0000"
   },
   {
-    "id": "recoil-spares",
-    "kind": "rack",
-    "x": 66,
-    "y": 16,
-    "z": -164,
-    "w": 3,
-    "d": 8,
-    "h": 1.8,
-    "permanent": true,
-    "exploration": true,
-    "circuitKey": "recoil-spares:66.0000:14.7000:-164.0000"
-  },
-  {
     "id": "impact-wreck",
     "kind": "rack",
     "x": 135.5,
@@ -417,9 +382,9 @@
   {
     "id": "collimator-screen",
     "kind": "optics",
-    "x": 266,
+    "x": 265,
     "y": 24,
-    "z": -92,
+    "z": -97,
     "w": 6,
     "d": 2,
     "h": 2.5,
@@ -1867,17 +1832,6 @@
     "circuitKey": "press-cover:-45.0000:-16.0000:39.0000"
   },
   {
-    "id": "freight-shield-wall",
-    "x": 48,
-    "z": -40,
-    "w": 3,
-    "d": 5,
-    "y": 0,
-    "h": 2.6,
-    "permanent": true,
-    "circuitKey": "freight-shield-wall:48.0000:0.0000:-40.0000"
-  },
-  {
     "id": "loading-cover",
     "x": 38,
     "z": -79,
@@ -1899,17 +1853,6 @@
     "circuitKey": "loading-return:24.0000:-8.0000:-64.0000"
   },
   {
-    "id": "dispatch-screen",
-    "x": -18,
-    "z": -12,
-    "w": 5,
-    "d": 3,
-    "y": 0,
-    "h": 2.5,
-    "permanent": true,
-    "circuitKey": "dispatch-screen:-18.0000:0.0000:-12.0000"
-  },
-  {
     "id": "dispatch-cover",
     "x": -10,
     "z": -33,
@@ -1922,7 +1865,7 @@
   },
   {
     "id": "overseer-cover-west",
-    "x": 206,
+    "x": 211,
     "z": -141,
     "w": 4,
     "d": 3,
@@ -1933,7 +1876,7 @@
   },
   {
     "id": "overseer-cover-east",
-    "x": 234,
+    "x": 230,
     "z": -141,
     "w": 4,
     "d": 3,
@@ -1952,39 +1895,6 @@
     "h": 2,
     "permanent": true,
     "circuitKey": "outer-cover:210.0000:8.0000:-99.0000"
-  },
-  {
-    "id": "yard-inlet-cover",
-    "x": 164,
-    "z": 40,
-    "w": 4,
-    "d": 3,
-    "y": -8,
-    "h": 2,
-    "permanent": true,
-    "circuitKey": "yard-inlet-cover:164.0000:-8.0000:40.0000"
-  },
-  {
-    "id": "calibration-cover",
-    "x": 223,
-    "z": -26,
-    "w": 3,
-    "d": 4,
-    "y": 24,
-    "h": 2,
-    "permanent": true,
-    "circuitKey": "calibration-cover:223.0000:24.0000:-26.0000"
-  },
-  {
-    "id": "gallery-cover",
-    "x": 211,
-    "z": 32,
-    "w": 4,
-    "d": 3,
-    "y": 16,
-    "h": 2,
-    "permanent": true,
-    "circuitKey": "gallery-cover:211.0000:16.0000:32.0000"
   },
   {
     "id": "canal-hunter-pier",
@@ -2431,9 +2341,9 @@
   },
   {
     "id": "reservoir-sluice--107",
-    "x": -109,
+    "x": -118,
     "y": -8,
-    "z": 116,
+    "z": 117.6,
     "w": 4,
     "d": 4,
     "h": 3.5,
@@ -2443,9 +2353,9 @@
   },
   {
     "id": "reservoir-wreck--167",
-    "x": -169,
+    "x": -173,
     "y": -8,
-    "z": 58,
+    "z": 55,
     "w": 4,
     "d": 4,
     "h": 3.5,
@@ -2469,7 +2379,7 @@
     "id": "reservoir-planter--72",
     "x": -74,
     "y": -8,
-    "z": 112,
+    "z": 117.7,
     "w": 4,
     "d": 4,
     "h": 3.5,
@@ -2489,18 +2399,6 @@
     "localControl": "proving-transfer"
   },
   {
-    "id": "proving-cover-0",
-    "x": 122,
-    "y": 16,
-    "z": -187,
-    "w": 4,
-    "d": 8,
-    "h": 2.6,
-    "permanent": true,
-    "theme": "testworks",
-    "circuitKey": "proving-cover-0:122.0000:16.0000:-187.0000"
-  },
-  {
     "id": "proving-cover-1",
     "x": 158,
     "y": 16,
@@ -2511,18 +2409,6 @@
     "permanent": true,
     "theme": "testworks",
     "circuitKey": "proving-cover-1:158.0000:16.0000:-168.0000"
-  },
-  {
-    "id": "proving-cover-2",
-    "x": 176,
-    "y": 16,
-    "z": -190,
-    "w": 3,
-    "d": 8,
-    "h": 2.6,
-    "permanent": true,
-    "theme": "testworks",
-    "circuitKey": "proving-cover-2:176.0000:16.0000:-190.0000"
   },
   {
     "id": "proving-test-bed-145",
@@ -2559,30 +2445,6 @@
     "circuitKey": "lens-return:302.0000:24.0000:-34.0000"
   },
   {
-    "id": "lens-cover-0",
-    "x": 266,
-    "y": 24,
-    "z": -58,
-    "w": 5,
-    "d": 3,
-    "h": 2.6,
-    "permanent": true,
-    "theme": "optics",
-    "circuitKey": "lens-cover-0:266.0000:24.0000:-58.0000"
-  },
-  {
-    "id": "lens-cover-1",
-    "x": 295,
-    "y": 24,
-    "z": -99,
-    "w": 3,
-    "d": 9,
-    "h": 2.6,
-    "permanent": true,
-    "theme": "optics",
-    "circuitKey": "lens-cover-1:295.0000:24.0000:-99.0000"
-  },
-  {
     "id": "lens-cover-2",
     "x": 343,
     "y": 24,
@@ -2607,22 +2469,10 @@
     "circuitKey": "lens-cover-3:284.0000:24.0000:-82.0000"
   },
   {
-    "id": "lens-cover-4",
-    "x": 278,
-    "y": 24,
-    "z": -27,
-    "w": 3,
-    "d": 6,
-    "h": 2.6,
-    "permanent": true,
-    "theme": "optics",
-    "circuitKey": "lens-cover-4:278.0000:24.0000:-27.0000"
-  },
-  {
     "id": "lens-lens-284",
-    "x": 282,
+    "x": 280,
     "y": 24,
-    "z": -93,
+    "z": -98.5,
     "w": 4,
     "d": 4,
     "h": 3.8,
@@ -2702,18 +2552,6 @@
     "circuitKey": "coolant-cover-3:316.0000:-24.0000:146.0000"
   },
   {
-    "id": "coolant-separator-326",
-    "x": 319,
-    "y": -24,
-    "z": 146,
-    "w": 14,
-    "d": 14,
-    "h": 12,
-    "permanent": true,
-    "invisible": true,
-    "circuitKey": "coolant-separator-326:319.0000:-24.0000:146.0000"
-  },
-  {
     "id": "coolant-boiler-352",
     "x": 350,
     "y": -24,
@@ -2757,18 +2595,6 @@
     "h": 3.5,
     "localControl": "hearth-return",
     "circuitKey": "hearth-return:18.0000:-40.0000:58.0000"
-  },
-  {
-    "id": "hearth-cover-0",
-    "x": 19,
-    "y": -40,
-    "z": 80,
-    "w": 3,
-    "d": 7,
-    "h": 2.6,
-    "permanent": true,
-    "theme": "furnace",
-    "circuitKey": "hearth-cover-0:19.0000:-40.0000:80.0000"
   },
   {
     "id": "hearth-wreck-44",
@@ -2968,42 +2794,6 @@
     "circuitKey": "sorter-retry:23.5000:-8.0000:-124.0000"
   },
   {
-    "id": "assembly-carrier",
-    "x": -142,
-    "y": 8,
-    "z": -35,
-    "w": 10,
-    "d": 3,
-    "h": 3.5,
-    "permanent": true,
-    "theme": "transit",
-    "motion": {
-      "axis": "x",
-      "min": -142,
-      "max": -128,
-      "speed": 2.4
-    },
-    "circuitKey": "assembly-carrier:-142.0000:8.0000:-35.0000"
-  },
-  {
-    "id": "intro-cargo",
-    "x": -16,
-    "y": 0,
-    "z": -4,
-    "w": 4,
-    "d": 3,
-    "h": 2.8,
-    "permanent": true,
-    "theme": "transit",
-    "motion": {
-      "axis": "x",
-      "min": -17,
-      "max": -11,
-      "speed": 2.4
-    },
-    "circuitKey": "intro-cargo:-16.0000:0.0000:-4.0000"
-  },
-  {
     "id": "press-plinth",
     "x": -46,
     "y": -8,
@@ -3019,7 +2809,7 @@
     "id": "press-carrier",
     "x": -30,
     "y": -16,
-    "z": 48,
+    "z": 43,
     "w": 4,
     "d": 2.6,
     "h": 2.4,
@@ -3034,28 +2824,10 @@
     "circuitKey": "press-carrier:-30.0000:-16.0000:48.0000"
   },
   {
-    "id": "dispatch-carrier-a",
-    "x": -125,
-    "y": 8,
-    "z": -2,
-    "w": 6,
-    "d": 3,
-    "h": 2.8,
-    "permanent": true,
-    "theme": "transit",
-    "motion": {
-      "axis": "x",
-      "min": -138,
-      "max": -77,
-      "speed": 3.2
-    },
-    "circuitKey": "dispatch-carrier-a:-125.0000:8.0000:-2.0000"
-  },
-  {
     "id": "dispatch-carrier-b",
-    "x": -93,
+    "x": -127,
     "y": 8,
-    "z": 7,
+    "z": 26,
     "w": 5,
     "d": 3,
     "h": 2.8,
@@ -3063,8 +2835,8 @@
     "theme": "transit",
     "motion": {
       "axis": "x",
-      "min": -134,
-      "max": -74,
+      "min": -130,
+      "max": -124,
       "speed": 2.4
     },
     "circuitKey": "dispatch-carrier-b:-93.0000:8.0000:7.0000"

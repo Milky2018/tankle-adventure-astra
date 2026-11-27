@@ -179,6 +179,8 @@ Phoenix preserves acceleration and Heat rules. At the HUD's full-speed threshold
 
 Express routes connect actual neighbors through player-controlled travel, with long readable approaches, broad turns, physical guide rails and braking aprons. Broken shutters and service returns stay open. Normal routes fit the pre-Circulation Heat budget without mandatory repeated cooling stops.
 
+Keep a continuous tank-width passage through roads, turns, doorways and lift landings, with headroom beneath crossing structures. Put set dressing in verges, service bays or corners. Moving freight on a parallel work lane can provide cover while the travel lane stays clear throughout its cycle.
+
 ### Magnetic Traction
 
 | Parameter | Value |

@@ -2502,7 +2502,7 @@
     "x": 102,
     "z": -176,
     "w": 8,
-    "d": 26,
+    "d": 18,
     "y": 16,
     "rise": 4,
     "region": "testworks"
@@ -2512,7 +2512,7 @@
     "x": 188,
     "z": -176,
     "w": 8,
-    "d": 26,
+    "d": 18,
     "y": 16,
     "rise": 4,
     "region": "testworks"
@@ -3291,5 +3291,25 @@
     "d": 88,
     "y": -8,
     "region": "foundry"
+  },
+  {
+    "id": "proving-gallery-west-landing",
+    "x": 102,
+    "z": -158,
+    "w": 8,
+    "d": 8,
+    "y": 20,
+    "rise": 0,
+    "region": "testworks"
+  },
+  {
+    "id": "proving-gallery-east-landing",
+    "x": 188,
+    "z": -158,
+    "w": 8,
+    "d": 8,
+    "y": 20,
+    "rise": 0,
+    "region": "testworks"
   }
 ]
