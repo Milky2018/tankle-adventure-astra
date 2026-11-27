@@ -15,7 +15,8 @@
 .folded-ui #hud::after{content:'';position:absolute;inset:auto 0 0;height:185px;background:linear-gradient(transparent,#07141675);z-index:-1;pointer-events:none}
 .folded-ui .icon-button{border-radius:3px;background:#0d1e22df;border-color:var(--ui-line);backdrop-filter:none}
 .folded-ui .icon-button:hover{color:var(--ui-brass);border-color:var(--ui-brass);background:#223638}
-.folded-ui #settings-button{top:24px;left:24px}
+.folded-ui #settings-button{top:var(--bottom);left:var(--edge);width:max(40px,2.65em);height:max(40px,2.65em)}
+.folded-ui #settings-button svg{width:1.35em}
 .folded-ui #minimap-wrap{width:166px;height:166px;right:24px;top:24px;border-radius:0;border:1px solid #b5b89175;box-shadow:0 8px 25px #0003}
 .folded-ui .map-corners{inset:5px;border-color:#bdc8b329}
 .folded-ui #status{left:30px;bottom:28px;gap:12px}
@@ -75,10 +76,8 @@
   .folded-ui #bindings{grid-template-columns:1fr 135px}
   .folded-ui .panel-footer{gap:12px}
   .folded-ui #minimap-wrap{width:126px;height:126px;right:18px;top:18px}
-  .folded-ui #settings-button{left:18px;top:18px}
   .folded-ui #status{left:20px;bottom:20px}
   .folded-ui .meters{width:180px}
-  .folded-ui #boss-health{top:170px;width:45vw}
 }
 @media(max-height:600px){.folded-ui #settings .panel{padding:18px 26px}.folded-ui .panel h1{font-size:23px;margin:6px 0}.folded-ui .panel .subtitle{margin-bottom:8px}.folded-ui .panel-footer{padding-top:12px;margin-top:8px}}
 @media(prefers-reduced-motion:reduce){.folded-ui *{animation:none!important;transition:none!important}}
@@ -110,59 +109,82 @@
 #settings:has(#camera-adjust[open]) #camera-options { display: block; }
 
 /* Enamel instrument plates with a pressed brass lip. */
-.folded-ui #hud { --enamel: linear-gradient(155deg,#36493a,#152b24 48%,#10221d); --rim: linear-gradient(130deg,#e4c98c,#8d8054 45%,#d0ac66); }
+.folded-ui #hud {
+  --enamel:linear-gradient(155deg,#36493a,#152b24 48%,#10221d);
+  --rim:linear-gradient(130deg,#e4c98c,#8d8054 45%,#d0ac66);
+  --instrument-size:clamp(16px,2.3vmin,30px);
+  --map-size:clamp(112px,min(16vw,25vh),286px);
+  --edge:clamp(10px,2vw,32px);
+  --bottom:clamp(12px,2.8vh,32px);
+  --tray-bottom:var(--bottom);
+  font-size:var(--instrument-size);
+}
 .folded-ui :is(#status,#tools,#minimap-wrap) { isolation:isolate; clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px); background:var(--rim); border:0; }
 .folded-ui :is(#status,#tools,#minimap-wrap)::before { content:''; position:absolute; inset:1.5px; z-index:-1; clip-path:inherit; background:var(--enamel); }
-.folded-ui #status { left:clamp(10px,2vw,32px); bottom:clamp(12px,2.8vh,32px); gap:8px; padding:7px 15px 8px 9px; }
-.folded-ui .status-icon { width:25px; height:31px; border:none; background:none; }
-.folded-ui .status-icon svg { width:25px; }
-.folded-ui .meters { width:clamp(70px,8vw,130px); }
+.folded-ui #status { left:var(--edge); bottom:var(--bottom); gap:.55em; padding:.5em 1em .5em .65em; }
+.folded-ui .status-icon { width:2em; height:2.55em; border:none; background:none; }
+.folded-ui .status-icon svg { width:100%; }
+.folded-ui .meters { width:9em; }
 .map-readout { display:flex; justify-content:flex-end; align-items:center; color:#ecddb2; font:600 10px/1.2 ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; }
-.folded-ui #hp { height:10px; margin:3px 0 0; transform:skewX(-18deg); }
+.folded-ui #hp { height:.91em; gap:.24em; margin:0; transform:skewX(-18deg); }
 .folded-ui #hp i:not(.empty):not(.half) { background:#f2dfad; }
 .folded-ui #status.critical #hp i:not(.empty) { background:#ff926a; }
-.folded-ui #overdrive { opacity:1; margin-top:4px; }
-.folded-ui #tools { left:auto; right:clamp(10px,2vw,32px); bottom:clamp(12px,2.8vh,32px); padding:8px 13px; min-height:44px; gap:10px; color:#f7e5b3; }
-.folded-ui #tools>div { opacity:1; gap:6px; }
-#weapon-tool svg { width:38px;height:22px;fill:currentColor; }
+.folded-ui #overdrive { opacity:1; margin-top:.3em; gap:.36em; }
+.folded-ui #overdrive svg { width:1em; height:1em; flex:none; }
+.folded-ui #overdrive>div { height:.36em; }
+.folded-ui #tools { left:auto; right:var(--edge); bottom:var(--tray-bottom); padding:.5em .9em; min-height:3.55em; gap:.65em; font-size:inherit; color:#f7e5b3; }
+.folded-ui #tools>div { opacity:1; gap:.43em; }
+#weapon-tool svg { width:3.1em;height:1.7em;fill:currentColor; }
 #weapon-tool path { display:none; }
 #weapon-tool[data-weapon="Cannon"] .cannon,#weapon-tool[data-weapon="Mortar"] .mortar,#weapon-tool[data-weapon="Laser"] .laser { display:block; }
-#tools :is(#magnet-tool,#flotation-tool) { padding-left:8px;border-left:1px solid #b5a37280; }
-#tools :is(#magnet-tool,#flotation-tool) svg { width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8; }
+#tools :is(#magnet-tool,#flotation-tool) { padding-left:.6em;border-left:1px solid #b5a37280; }
+#tools :is(#magnet-tool,#flotation-tool) svg { width:1.65em;height:1.65em;fill:none;stroke:currentColor;stroke-width:1.8; }
 .folded-ui #tools .active { color:#fff4be; filter:drop-shadow(0 0 3px currentColor); }
 .folded-ui #tools #magnet-tool.active { color:#8edaff; }
-.folded-ui #tools kbd,.map-readout kbd { padding:2px 3px;font:9px ui-monospace,monospace; background:#e7d6ad; color:#17291f; border:0; }
+.folded-ui #tools kbd,.map-readout kbd { padding:.16em .32em;font:600 calc(var(--instrument-size) * .82)/1.15 ui-monospace,monospace; background:#e7d6ad; color:#17291f; border:0; }
 #hud kbd:has(> .mouse-key) { padding:0; border:0; background:none; color:inherit; }
-.mouse-key { display:inline-block; position:relative; width:15px; height:21px; box-sizing:border-box; border:1px solid currentColor; border-radius:7px; vertical-align:middle; }
-.mouse-key::before { content:""; position:absolute; top:1px; left:1px; width:5px; height:8px; border-radius:5px 0 0 0; background:currentColor; }
-.mouse-key[data-button="Mouse2"]::before { left:auto; right:1px; border-radius:0 5px 0 0; }
-.mouse-key[data-button="Mouse1"]::before { left:5px; top:3px; width:3px; height:6px; border-radius:2px; }
-.folded-ui #minimap-wrap { width:clamp(104px,11vw,158px); height:clamp(114px,11vw,158px); padding:22px 4px 18px; top:clamp(12px,2.8vh,32px); right:clamp(10px,2vw,32px); }
-.folded-ui #minimap { display:block; }
-.folded-ui .map-corners { inset:22px 5px 18px; background:repeating-linear-gradient(0deg,transparent 0 17px,#d0bd8d10 17px 18px),repeating-linear-gradient(90deg,transparent 0 17px,#d0bd8d10 17px 18px); }
-.map-readout { position:absolute; inset:auto 10px 4px; }
-.folded-ui #reticle { width:44px; height:44px; color:#ffedbf; }
+.mouse-key { display:inline-block; position:relative; width:1.55em; height:2.05em; box-sizing:border-box; border:1px solid currentColor; border-radius:.68em; vertical-align:middle; }
+.mouse-key::before { content:""; position:absolute; top:1px; left:1px; width:40%; height:39%; border-radius:.5em 0 0 0; background:currentColor; }
+.mouse-key[data-button="Mouse2"]::before { left:auto; right:1px; border-radius:0 .5em 0 0; }
+.mouse-key[data-button="Mouse1"]::before { left:50%; transform:translateX(-50%); top:13%; width:22%; height:33%; border-radius:2px; }
+.folded-ui #minimap-wrap { width:var(--map-size); height:auto; padding:1.55em .34em 1.38em; top:var(--bottom); right:var(--edge); }
+.folded-ui #minimap { display:block; width:100%; height:auto; aspect-ratio:1; }
+.folded-ui .map-corners { inset:1.55em .34em 1.38em; background:repeating-linear-gradient(0deg,transparent 0 17px,#d0bd8d10 17px 18px),repeating-linear-gradient(90deg,transparent 0 17px,#d0bd8d10 17px 18px); }
+.map-readout { position:absolute; inset:auto 8px 3px; }
+.folded-ui #reticle { width:clamp(48px,7.2vmin,78px); height:clamp(48px,7.2vmin,78px); color:#ffedbf; }
 .folded-ui #reticle svg { position:absolute; inset:0; width:100%; height:100%; transform:none; fill:none; stroke-linecap:round; }
-.sight { stroke:currentColor; stroke-width:1.25; }
+.sight { stroke:currentColor; stroke-width:1.6; }
 .folded-ui .reticle-heat { stroke-width:2; }
 .folded-ui .heat-track { stroke:#f0dcab66; }
-#drive-hint { position:absolute; bottom:24px; left:50%; transform:translateX(-50%); color:#fff3ce; font:12px Georgia,serif; text-shadow:0 1px 4px #111; white-space:nowrap; }
-#drive-hint kbd { padding:3px 4px; }
+#drive-hint { position:absolute; bottom:var(--bottom); left:50%; transform:translateX(-50%); color:#fff3ce; text-shadow:0 1px 4px #111; white-space:nowrap; }
+#drive-hint kbd, #interaction kbd { font-size:.85em; padding:.28em .35em; }
+#interaction kbd { font-size:1em; }
+#map-area { position:absolute; left:5px; right:5px; top:.21em; text-align:center; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; color:#f5e4bc; font:600 max(12px,.96em)/1.2 Georgia,serif; }
+.folded-ui #boss-health>div { height:.75em; }
+.folded-ui #boss-health i { width:.55em; height:.55em; flex:none; }
+#acquired, #mortar-scope { right:var(--edge); bottom:calc(var(--tray-bottom) + 4.35 * var(--instrument-size)); }
+#mortar-scope { position:absolute; width:clamp(102px,20vmin,224px); aspect-ratio:1; border:2px solid #a19c80; background:transparent; color:#fff0b4; pointer-events:none; }
+@media(max-width:760px) {
+  .folded-ui #hud { --instrument-size:15px; }
+  .folded-ui #boss-health { top:var(--bottom); width:30vw; }
+}
+@media(max-width:680px) {
+  #drive-hint { bottom:calc(var(--bottom) + 4.3em); }
+}
 @media(max-width:580px) {
-  #drive-hint { bottom:74px; }
-  .folded-ui #tools { gap:5px; padding:7px 9px; }
-  #weapon-tool svg { width:23px; }
-  #tools :is(#magnet-tool,#flotation-tool) { padding-left:4px; }
-  .folded-ui #status { padding:7px; gap:3px; }
+  .folded-ui #hud { --instrument-size:14px; }
+  .folded-ui .meters { width:7em; }
+  .folded-ui #tools { gap:.36em; padding:.4em .55em; }
+}
+@media(max-width:460px) {
+  .folded-ui #hud { --tray-bottom:calc(var(--bottom) + 4em); }
+  #drive-hint { left:auto; right:var(--edge); bottom:calc(var(--bottom) + 1em); transform:none; }
+  .folded-ui #boss-health { top:calc(var(--bottom) + var(--map-size) + 3.3em); }
 }
 
-#map-area { position:absolute; left:5px; right:5px; top:4px; text-align:center; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; color:#f5e4bc; font:600 clamp(10px,.9vw,13px)/1.2 Georgia,serif; }
-@media (max-width:360px) {
-  .folded-ui #tools { bottom:68px; }
-  #drive-hint { top:20px; bottom:auto; left:62px; transform:none; }
+@media(max-width:540px) and (max-height:380px) {
+  #mortar-scope { left:var(--edge); right:auto; bottom:calc(var(--bottom) + 4.35 * var(--instrument-size)); }
 }
-
-#mortar-scope{position:absolute;right:24px;bottom:100px;width:clamp(102px,20vmin,192px);aspect-ratio:1;border:2px solid #a19c80;background:transparent;color:#fff0b4;pointer-events:none}
 #mortar-scope i{position:absolute;top:50%;left:50%;width:12%;height:12%;border:1px solid currentColor;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 1px #23251c}
 #mortar-scope i:after,#mortar-scope i:before{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:currentColor;width:8px;height:2px}
 #mortar-scope i:after{width:2px;height:8px}
