@@ -115,5 +115,15 @@
     "y": -8,
     "h": 1.7,
     "permanent": true
+  },
+  {
+    "id": "coolant-intake-duplex-plinth",
+    "x": 273.92,
+    "z": 123.95,
+    "w": 2.66,
+    "d": 9.48,
+    "y": -24,
+    "h": 0.46,
+    "permanent": true
   }
 ]
